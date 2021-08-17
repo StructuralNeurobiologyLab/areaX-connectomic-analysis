@@ -1,11 +1,9 @@
 if __name__ == '__main__':
     from syconn import global_params
-    from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
-    from syconn.reps.segmentation import SegmentationDataset
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
     import numpy as np
     import seaborn as sns
     import matplotlib.pyplot as plt
-    import networkx as nx
     import pandas as pd
     import os as os
     import scipy
@@ -36,12 +34,12 @@ if __name__ == '__main__':
             return 0, 0, 0
         comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] == compartment)[0]
         comp_nodes = sso.skeleton["nodes"][comp_inds] * sso.scaling
-        min_x = np.min[comp_nodes[:,0]]
-        max_x = np.max[comp_nodes[:, 0]]
-        min_y = np.min[comp_nodes[:, 1]]
-        max_y = np.max[comp_nodes[:, 1]]
-        min_z = np.min[comp_nodes[:, 2]]
-        max_z = np.max[comp_nodes[:, 2]]
+        min_x = np.min(comp_nodes[:,0])
+        max_x = np.max(comp_nodes[:, 0])
+        min_y = np.min(comp_nodes[:, 1])
+        max_y = np.max(comp_nodes[:, 1])
+        min_z = np.min(comp_nodes[:, 2])
+        max_z = np.max(comp_nodes[:, 2])
         comp_volume = (max_x - min_x) * (max_y - min_y) * (max_z - min_z) * 10**(-9) #in µm
         return comp_length, comp_volume
 
@@ -84,7 +82,7 @@ if __name__ == '__main__':
         if not os.path.exists(f_name):
             os.mkdir(f_name)
         log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
-        log.info("parameters: min_comp_length = %.i" % min_comp_len)
+        log.info("parameters: celltype = %s, min_comp_length = %.i" % (ct_dict[celltype], min_comp_len))
         time_stamps = [time.time()]
         step_idents = ['t-0']
         if full_cells:
@@ -93,14 +91,14 @@ if __name__ == '__main__':
 
             if handpicked:
                 cellids = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_handpicked.pkl" % ct_dict[celltype])
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype])
             else:
                 cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
         else:
             cellids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype]
         log.info('Step 1/2 calculating volume estimate for axon/dendrite per cell')
         axon_length_ct = np.zeros(len(cellids))
-        dendrite_length_ct = np.zeros(cellids)
+        dendrite_length_ct = np.zeros(len(cellids))
         axon_vol_ct = np.zeros(len(cellids))
         dendrite_vol_ct = np.zeros(len(cellids))
         if full_cells:
@@ -128,15 +126,25 @@ if __name__ == '__main__':
         axon_vol_ct = axon_vol_ct[nonzero_inds]
         dendrite_vol_ct = dendrite_vol_ct[nonzero_inds]
         cellids = cellids[nonzero_inds]
+        ds_size = [256, 256, 394] #size of whole dataset
+        ds_vol = np.prod(ds_size)
+        axon_vol_perc = axon_vol_ct/ds_vol
+        dendrite_vol_perc = dendrite_vol_ct/ds_vol
+
         if full_cells:
             soma_centres = soma_centres[nonzero_inds]
             distances_between_soma = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean")
             avg_dist_soma = np.mean(distances_between_soma) / 1000
             ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
-                                "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct, "mean soma distance": avg_dist_soma}
+                                "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct,
+                                "axon volume percentage": axon_vol_perc, "dendrite volume percentage": dendrite_vol_perc,
+                                "mean soma distance": avg_dist_soma}
         else:
-            ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
-                                "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct}
+            ct_vol_comp_dict = {"cell ids": cellids, "axon length": axon_length_ct,
+                                "dendrite length": dendrite_length_ct,
+                                "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct,
+                                "axon volume percentage": axon_vol_perc,
+                                "dendrite volume percentage": dendrite_vol_perc}
         write_obj2pkl("%s/ct_vol_comp.pkl" % f_name, ct_vol_comp_dict)
         vol_comp_pd = pd.DataFrame(ct_vol_comp_dict)
         vol_comp_pd.to_csv("%s/ct_vol_comp.csv")
@@ -150,7 +158,10 @@ if __name__ == '__main__':
             if "length" in key:
                 plt.ylabel("pathlength in µm")
             if "vol" in key:
-                plt.ylabel("volume in µm³")
+                if "percentage" in key:
+                    plt.ylabel("% of whole dataset")
+                else:
+                    plt.ylabel("volume in µm³")
             else:
                 plt.ylabel("distance in µm")
             plt.title("%s" % key)
@@ -161,3 +172,6 @@ if __name__ == '__main__':
         time_stamps.append(time.time())
         step_idents.append('processing arrays per celltype, plotting')
         log.info("compartment volume estimation per celltype finished")
+
+
+    axon_den_arborization_ct(ssd, celltype=6)

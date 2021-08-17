@@ -84,9 +84,13 @@ if __name__ == '__main__':
         if not os.path.exists(f_name):
             os.mkdir(f_name)
         log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
+        log.info("parameters: min_comp_length = %.i" % min_comp_len)
         time_stamps = [time.time()]
         step_idents = ['t-0']
         if full_cells:
+            soma_centre_dict = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dict.pkl" % ct_dict[celltype])
+
             if handpicked:
                 cellids = load_pkl2obj(
                     "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_handpicked.pkl" % ct_dict[celltype])
@@ -99,6 +103,8 @@ if __name__ == '__main__':
         dendrite_length_ct = np.zeros(cellids)
         axon_vol_ct = np.zeros(len(cellids))
         dendrite_vol_ct = np.zeros(len(cellids))
+        if full_cells:
+            soma_centres = np.zeros(len(cellids))
         for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
             axon_length, axon_volume, dendrite_length, dendrite_volume = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len)
             if axon_length == 0:
@@ -107,13 +113,51 @@ if __name__ == '__main__':
             dendrite_length_ct[i] = dendrite_length
             axon_vol_ct[i] = axon_volume
             dendrite_vol_ct[i] = dendrite_volume
+            if full_cells:
+                soma_centres[i] = soma_centre_dict[cell.id]
 
+        celltime = time.time() - start
+        print("%.2f sec for iterating through cells" % celltime)
+        time_stamps.append(time.time())
+        step_idents.append('calculating bounding box volume per cell')
+
+        log.info('Step 2/2 processing and plotting ct arrays')
         nonzero_inds = axon_length_ct > 0
         axon_length_ct = axon_length_ct[nonzero_inds]
         dendrite_length_ct = dendrite_length_ct[nonzero_inds]
         axon_vol_ct = axon_vol_ct[nonzero_inds]
         dendrite_vol_ct = dendrite_vol_ct[nonzero_inds]
         cellids = cellids[nonzero_inds]
+        if full_cells:
+            soma_centres = soma_centres[nonzero_inds]
+            distances_between_soma = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean")
+            avg_dist_soma = np.mean(distances_between_soma) / 1000
+            ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
+                                "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct, "mean soma distance": avg_dist_soma}
+        else:
+            ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
+                                "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct}
+        write_obj2pkl("%s/ct_vol_comp.pkl" % f_name, ct_vol_comp_dict)
+        vol_comp_pd = pd.DataFrame(ct_vol_comp_dict)
+        vol_comp_pd.to_csv("%s/ct_vol_comp.csv")
 
-        ct_vol_
+        for key in ct_vol_comp_dict.keys():
+            if key is "cell ids":
+                continue
+            sns.distplot(ct_vol_comp_dict[key], hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "steelblue"},
+                         kde=False)
+            plt.ylabel("count of cells")
+            if "length" in key:
+                plt.ylabel("pathlength in µm")
+            if "vol" in key:
+                plt.ylabel("volume in µm³")
+            else:
+                plt.ylabel("distance in µm")
+            plt.title("%s" % key)
+            plt.savefig("%s/%s.png" % (f_name, key))
 
+        plottime = time.time() - celltime
+        print("%.2f sec for plotting" % plottime)
+        time_stamps.append(time.time())
+        step_idents.append('processing arrays per celltype, plotting')
+        log.info("compartment volume estimation per celltype finished")

@@ -31,7 +31,7 @@ if __name__ == '__main__':
         comp_graph.remove_nodes_from(non_comp_inds)
         comp_length = comp_graph.size(weight="weight") / 1000  # in µm
         if comp_length < min_comp_len:
-            return 0, 0, 0
+            return 0, 0
         comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] == compartment)[0]
         comp_nodes = sso.skeleton["nodes"][comp_inds] * sso.scaling
         min_x = np.min(comp_nodes[:,0])
@@ -177,3 +177,4 @@ if __name__ == '__main__':
 
 
     axon_den_arborization_ct(ssd, celltype=7)
+    axon_den_arborization_ct(ssd, celltype=6)

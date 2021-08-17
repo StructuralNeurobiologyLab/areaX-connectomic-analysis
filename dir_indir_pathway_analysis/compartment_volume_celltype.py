@@ -78,7 +78,7 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "u/arother/bio_analysis_results/210817_j0251v3__%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
+        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210817_j0251v3__%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
         log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         axon_vol_ct = np.zeros(len(cellids))
         dendrite_vol_ct = np.zeros(len(cellids))
         if full_cells:
-            soma_centres = np.zeros(len(cellids))
+            soma_centres = np.zeros((len(cellids), 3))
         for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
             axon_length, axon_volume, dendrite_length, dendrite_volume = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len)
             if axon_length == 0:
@@ -128,17 +128,18 @@ if __name__ == '__main__':
         cellids = cellids[nonzero_inds]
         ds_size = [256, 256, 394] #size of whole dataset
         ds_vol = np.prod(ds_size)
-        axon_vol_perc = axon_vol_ct/ds_vol
-        dendrite_vol_perc = dendrite_vol_ct/ds_vol
+        axon_vol_perc = axon_vol_ct/ds_vol * 100
+        dendrite_vol_perc = dendrite_vol_ct/ds_vol * 100
 
         if full_cells:
             soma_centres = soma_centres[nonzero_inds]
-            distances_between_soma = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean")
-            avg_dist_soma = np.mean(distances_between_soma) / 1000
+            distances_between_soma = scipy.spatial.distance.cdist(soma_centres, soma_centres, metric = "euclidean") / 1000
+            distances_between_soma = distances_between_soma[distances_between_soma > 0].reshape(len(cellids), len(cellids) - 1)
+            avg_soma_distance_per_cell = np.mean(distances_between_soma, axis=1)
             ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
                                 "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct,
                                 "axon volume percentage": axon_vol_perc, "dendrite volume percentage": dendrite_vol_perc,
-                                "mean soma distance": avg_dist_soma}
+                                "mean soma distance": avg_soma_distance_per_cell}
         else:
             ct_vol_comp_dict = {"cell ids": cellids, "axon length": axon_length_ct,
                                 "dendrite length": dendrite_length_ct,
@@ -147,25 +148,26 @@ if __name__ == '__main__':
                                 "dendrite volume percentage": dendrite_vol_perc}
         write_obj2pkl("%s/ct_vol_comp.pkl" % f_name, ct_vol_comp_dict)
         vol_comp_pd = pd.DataFrame(ct_vol_comp_dict)
-        vol_comp_pd.to_csv("%s/ct_vol_comp.csv")
+        vol_comp_pd.to_csv("%s/ct_vol_comp.csv" % f_name)
 
         for key in ct_vol_comp_dict.keys():
-            if key is "cell ids":
+            if "ids" in key:
                 continue
             sns.distplot(ct_vol_comp_dict[key], hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "steelblue"},
                          kde=False)
             plt.ylabel("count of cells")
             if "length" in key:
-                plt.ylabel("pathlength in µm")
-            if "vol" in key:
+                plt.xlabel("pathlength in µm")
+            elif "vol" in key:
                 if "percentage" in key:
-                    plt.ylabel("% of whole dataset")
+                    plt.xlabel("% of whole dataset")
                 else:
-                    plt.ylabel("volume in µm³")
+                    plt.xlabel("volume in µm³")
             else:
-                plt.ylabel("distance in µm")
+                plt.xlabel("distance in µm")
             plt.title("%s" % key)
             plt.savefig("%s/%s.png" % (f_name, key))
+            plt.close()
 
         plottime = time.time() - celltime
         print("%.2f sec for plotting" % plottime)
@@ -174,4 +176,4 @@ if __name__ == '__main__':
         log.info("compartment volume estimation per celltype finished")
 
 
-    axon_den_arborization_ct(ssd, celltype=6)
+    axon_den_arborization_ct(ssd, celltype=7)

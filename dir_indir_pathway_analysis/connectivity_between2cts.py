@@ -9,6 +9,7 @@ if __name__ == '__main__':
     import pandas as pd
     import os as os
     import scipy
+    from collections import defaultdict
     import time
     from syconn.handler.config import initialize_logging
     from syconn.handler.basics import load_pkl2obj
@@ -40,6 +41,7 @@ if __name__ == '__main__':
         looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
         the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic
         synapses. Uses cached synapse properties. Uses compartment_length per cell to ignore cells with not enough axon/dendrite
+        spiness values: 0 = dendritic shaft, 1 = spine head, 2 = spine neck, 3 = other
         :param ssd: super-segmentation dataset
         :param sd_synssv: segmentation dataset for synapses.
         :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
@@ -173,18 +175,129 @@ if __name__ == '__main__':
         step_idents.append('preprocessing synapses')
 
         log.info("Step 3b: iterate over synapses to get synaptic connectivity parameters")
+        ct2_2_ct1_syn_dict = {"cellids": cellids1, "syn amount": np.zeros(len(cellids1)), "sum syn size": np.zeros(len(cellids1)),
+                        "amount shaft syn": np.zeros(len(cellids1)), "sum size shaft syn": np.zeros(len(cellids1)),
+                              "amount spine head syn": np.zeros(len(cellids1)),
+                              "sum size spine head syn": np.zeros(len(cellids1)),
+                              "amount soma syn": np.zeros(len(cellids1)), "sum size soma syn": np.zeros(len(cellids1)),
+                              "avg amount one cell": np.zeros(len(cellids1)),
+                              "avg syn size one cell": np.zeros(len(cellids1)), "amount spine neck syn": np.zeros(len(cellids1)),
+                              "sum size spine neck syn": np.zeros(len(cellids1))}
+        ct2_2_ct1_percell_syn_amount = np.zeros((len(cellids1), len(cellids2)))
+        ct2_2_ct1_percell_syn_size = np.zeros((len(cellids1), len(cellids2)))
+        ct1_2_ct2_syn_dict = {"cellids": cellids2, "syn amount": np.zeros(len(cellids2)), "sum syn size": np.zeros(len(cellids2)),
+                        "amount shaft syn": np.zeros(len(cellids2)), "sum size shaft syn": np.zeros(len(cellids2)),
+                              "amount spine head syn": np.zeros(len(cellids2)),
+                              "sum size spine head syn": np.zeros(len(cellids2)),
+                              "amount soma syn": np.zeros(len(cellids2)), "sum size soma syn": np.zeros(len(cellids2)),
+                              "avg amount one cell": np.zeros(len(cellids2)),
+                              "avg syn size one cell": np.zeros(len(cellids2)), "amount spine neck syn": np.zeros(len(cellids2)),
+                              "sum size spine neck syn": np.zeros(len(cellids2))}
+        ct1_2_ct2_percell_syn_amount = np.zeros((len(cellids2), len(cellids1)))
+        ct1_2_ct2_percell_syn_size = np.zeros((len(cellids2), len(cellids1)))
         for i, syn_id in enumerate(tqdm(m_ids)):
             syn_ax = m_axs[i]
             if syn_ax[0] == syn_ax[1]:  # no axo-axonic synapses
                 continue
             #remove cells that are not in cellids:
-
+            if not np.any(np.in1d(m_ssv_partners, cellids1)):
+                continue
+            if not np.any(np.in1d(m_ssv_partners, cellids2)):
+                continue
             if syn_ax[0] == 1:
-                ct1, ct2 = m_cts[i]
-                ssv1, ssv2 = m_ssv_partners[i]
+                ct_ax, ct_deso = m_cts[i]
+                ssv_ax, ssv_deso = m_ssv_partners[i]
+                spin_ax, spin_deso = m_spiness[i]
+                ax, deso = syn_ax
             else:
-                ct2, ct1 = m_cts[i]
-                ssv2, ssv1 = m_ssv_partners[i]
+                ct_deso, ct_ax = m_cts[i]
+                ssv_deso, ssv_ax = m_ssv_partners[i]
+                spin_deso, spin_ax = m_spiness[i]
+                deso, ax = syn_ax
+            if ct_ax == ct_deso:
+                continue
+            syn_size = m_sizes[i]
+            if ct_ax == celltype1:
+                cell2_ind = np.where(ct1_2_ct2_syn_dict["cellids"] == ssv_deso)[0]
+                cell1_ind = np.where(ct2_2_ct1_syn_dict["cellids"] == ssv_ax)[0]
+                ct1_2_ct2_syn_dict["syn amount"][cell2_ind] += 1
+                ct1_2_ct2_syn_dict["sum syn size"][cell2_ind] += syn_size
+
+                ct1_2_ct2_percell_syn_amount[cell2_ind, cell1_ind] += 1
+                ct1_2_ct2_percell_syn_size[cell2_ind, cell1_ind] += syn_size
+                if deso == 0:
+                    if spin_deso == 0:
+                        ct1_2_ct2_syn_dict["amount shaft syn"][cell2_ind] += 1
+                        ct1_2_ct2_syn_dict["sum size shaft syn"][cell2_ind] += syn_size
+                    elif spin_deso == 1:
+                        ct1_2_ct2_syn_dict["amount spine head syn"][cell2_ind] += 1
+                        ct1_2_ct2_syn_dict["sum size spine head syn"][cell2_ind] += syn_size
+                    elif spin_deso == 2:
+                        ct1_2_ct2_syn_dict["amount spine neck syn"][cell2_ind] += 1
+                        ct1_2_ct2_syn_dict["sum size spine neck syn"][cell2_ind] += syn_size
+                else:
+                    ct1_2_ct2_syn_dict["amount soma syn"][cell2_ind] += 1
+                    ct1_2_ct2_syn_dict["sum size soma syn"][cell2_ind] += syn_size
+            else:
+                cell1_ind = np.where(ct2_2_ct1_syn_dict["cellids"] == ssv_deso)[0]
+                cell2_ind = np.where(ct1_2_ct2_syn_dict["cellids"] == ssv_ax)[0]
+                ct2_2_ct1_syn_dict["syn amount"][cell1_ind] += 1
+                ct2_2_ct1_syn_dict["sum syn size"][cell1_ind] += syn_size
+                ct2_2_ct1_percell_syn_amount[cell1_ind, cell2_ind] += 1
+                ct2_2_ct1_percell_syn_size[cell1_ind, cell2_ind] += syn_size
+                if deso == 0:
+                    if spin_deso == 0:
+                        ct2_2_ct1_syn_dict["amount shaft syn"][cell1_ind] += 1
+                        ct2_2_ct1_syn_dict["sum size shaft syn"][cell1_ind] += syn_size
+                    elif spin_deso == 1:
+                        ct2_2_ct1_syn_dict["amount spine head syn"][cell1_ind] += 1
+                        ct2_2_ct1_syn_dict["sum size spine head syn"][cell1_ind] += syn_size
+                    elif spin_deso == 2:
+                        ct2_2_ct1_syn_dict["amount spine neck syn"][cell1_ind] += 1
+                        ct2_2_ct1_syn_dict["sum size spine neck syn"][cell1_ind] += syn_size
+                else:
+                    ct2_2_ct1_syn_dict["amount soma syn"][cell1_ind] += 1
+                    ct2_2_ct1_syn_dict["sum size soma syn"][cell1_ind] += syn_size
+
+
+            ct2_syn_inds = ct1_2_ct2_syn_dict["syn amount"] > 0
+            for key in ct1_2_ct2_syn_dict.keys():
+                ct1_2_ct2_syn_dict[key] = ct1_2_ct2_syn_dict[key][ct2_syn_inds]
+
+            ct1_2_ct2_syn_dict["avg syn size"] = ct1_2_ct2_syn_dict["sum syn size"] / ct1_2_ct2_syn_dict["syn amount"]
+            ct1_2_ct2_syn_dict["avg size shaft syn"] = ct1_2_ct2_syn_dict["sum size shaft syn"] / ct1_2_ct2_syn_dict["amount shaft syn"]
+            ct1_2_ct2_syn_dict["avg size spine head syn"] = ct1_2_ct2_syn_dict["sum size spine head syn"] / ct1_2_ct2_syn_dict[
+                "amount spine head syn"]
+            ct1_2_ct2_syn_dict["avg size spine neck syn"] = ct1_2_ct2_syn_dict["sum size spine neck syn"] / ct1_2_ct2_syn_dict[
+                "amount spine neck syn"]
+            ct1_2_ct2_syn_dict["avg size soma syn"] = ct1_2_ct2_syn_dict["sum size soma syn"] / ct1_2_ct2_syn_dict[
+                "amount soma syn"]
+            ct1_2_ct2_syn_dict["percentage shaft syn amount"] = ct1_2_ct2_syn_dict["amount shaft syn"]/ ct1_2_ct2_syn_dict["syn amount"] * 100
+            ct1_2_ct2_syn_dict["percentage spine head syn amount"] = ct1_2_ct2_syn_dict["amount spine head syn"] / ct1_2_ct2_syn_dict[
+                "syn amount"] * 100
+            ct1_2_ct2_syn_dict["percentage spine neck syn amount"] = ct1_2_ct2_syn_dict["amount spine neck syn"] / ct1_2_ct2_syn_dict[
+                "syn amount"] * 100
+            ct1_2_ct2_syn_dict["percentage soma syn amount"] = ct1_2_ct2_syn_dict["amount soma syn"] / ct1_2_ct2_syn_dict[
+                "syn amount"] * 100
+            ct1_2_ct2_syn_dict["percentage shaft syn size"] = ct1_2_ct2_syn_dict["sum size shaft syn"] / ct1_2_ct2_syn_dict[
+                "sum syn size"] * 100
+            ct1_2_ct2_syn_dict["percentage spine head syn size"] = ct1_2_ct2_syn_dict["sum size spine head syn"] / \
+                                                                 ct1_2_ct2_syn_dict[
+                                                                     "sum syn size"] * 100
+            ct1_2_ct2_syn_dict["percentage spine neck syn size"] = ct1_2_ct2_syn_dict["sum size spine neck syn"] / \
+                                                                 ct1_2_ct2_syn_dict[
+                                                                     "sum syn size"] * 100
+            ct1_2_ct2_syn_dict["percentage soma syn size"] = ct1_2_ct2_syn_dict["sum size soma syn"] / ct1_2_ct2_syn_dict[
+                "sum syn size"] * 100
+
+            #TO DO: calculate average amount and size of synapses from one cell to another
+            ct1_2_ct2_percell_syn_amount = ct1_2_ct2_percell_syn_amount[ct2_syn_inds]
+
+            write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]), ct1_2_ct2_syn_dict)
+            ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
+            ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+
+            #TO DO: do same calculations for ct2_2_ct1_syn_dict, plotting
 
 
 
@@ -192,8 +305,3 @@ if __name__ == '__main__':
 
 
 
-
-#write analysis to compare connectivity of two celltypes
-# compare amount of synapses, average synapse area, average amount of synapses from one cell to another, average size of synapses from one cell to another
-#also compare percentage onto spine vs shaft from axo_dendritic synapses
-#amount and average size of soma synapses, percentage of soma synapses from totl

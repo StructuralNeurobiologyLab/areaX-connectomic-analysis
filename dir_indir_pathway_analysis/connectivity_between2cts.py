@@ -56,7 +56,7 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210818_j0251v3_syn_conn_%s_%s_mcl%i_sysi_%i_st_%i" % (
+        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210822_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%i_st_%i" % (
         ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -180,21 +180,19 @@ if __name__ == '__main__':
                               "amount spine head syn": np.zeros(len(cellids1)),
                               "sum size spine head syn": np.zeros(len(cellids1)),
                               "amount soma syn": np.zeros(len(cellids1)), "sum size soma syn": np.zeros(len(cellids1)),
-                              "avg amount one cell": np.zeros(len(cellids1)),
-                              "avg syn size one cell": np.zeros(len(cellids1)), "amount spine neck syn": np.zeros(len(cellids1)),
+                             "amount spine neck syn": np.zeros(len(cellids1)),
                               "sum size spine neck syn": np.zeros(len(cellids1))}
-        ct2_2_ct1_percell_syn_amount = np.zeros((len(cellids1), len(cellids2)))
-        ct2_2_ct1_percell_syn_size = np.zeros((len(cellids1), len(cellids2)))
+        ct2_2_ct1_percell_syn_amount = np.zeros((len(cellids1), len(cellids2))).astype(float)
+        ct2_2_ct1_percell_syn_size = np.zeros((len(cellids1), len(cellids2))).astype(float)
         ct1_2_ct2_syn_dict = {"cellids": cellids2, "syn amount": np.zeros(len(cellids2)), "sum syn size": np.zeros(len(cellids2)),
                         "amount shaft syn": np.zeros(len(cellids2)), "sum size shaft syn": np.zeros(len(cellids2)),
                               "amount spine head syn": np.zeros(len(cellids2)),
                               "sum size spine head syn": np.zeros(len(cellids2)),
                               "amount soma syn": np.zeros(len(cellids2)), "sum size soma syn": np.zeros(len(cellids2)),
-                              "avg amount one cell": np.zeros(len(cellids2)),
-                              "avg syn size one cell": np.zeros(len(cellids2)), "amount spine neck syn": np.zeros(len(cellids2)),
+                               "amount spine neck syn": np.zeros(len(cellids2)),
                               "sum size spine neck syn": np.zeros(len(cellids2))}
-        ct1_2_ct2_percell_syn_amount = np.zeros((len(cellids2), len(cellids1)))
-        ct1_2_ct2_percell_syn_size = np.zeros((len(cellids2), len(cellids1)))
+        ct1_2_ct2_percell_syn_amount = np.zeros((len(cellids2), len(cellids1))).astype(float)
+        ct1_2_ct2_percell_syn_size = np.zeros((len(cellids2), len(cellids1))).astype(float)
         for i, syn_id in enumerate(tqdm(m_ids)):
             syn_ax = m_axs[i]
             if syn_ax[0] == syn_ax[1]:  # no axo-axonic synapses
@@ -290,16 +288,121 @@ if __name__ == '__main__':
             ct1_2_ct2_syn_dict["percentage soma syn size"] = ct1_2_ct2_syn_dict["sum size soma syn"] / ct1_2_ct2_syn_dict[
                 "sum syn size"] * 100
 
-            #TO DO: calculate average amount and size of synapses from one cell to another
+            ct1_syn_inds = ct2_2_ct1_syn_dict["syn amount"] > 0
+            for key in ct2_2_ct1_syn_dict.keys():
+                ct2_2_ct1_syn_dict[key] = ct2_2_ct1_syn_dict[key][ct1_syn_inds]
+
+            ct2_2_ct1_syn_dict["avg syn size"] = ct2_2_ct1_syn_dict["sum syn size"] / ct2_2_ct1_syn_dict["syn amount"]
+            ct2_2_ct1_syn_dict["avg size shaft syn"] = ct2_2_ct1_syn_dict["sum size shaft syn"] / ct2_2_ct1_syn_dict[
+                "amount shaft syn"]
+            ct2_2_ct1_syn_dict["avg size spine head syn"] = ct2_2_ct1_syn_dict["sum size spine head syn"] / \
+                                                            ct2_2_ct1_syn_dict[
+                                                                "amount spine head syn"]
+            ct2_2_ct1_syn_dict["avg size spine neck syn"] = ct2_2_ct1_syn_dict["sum size spine neck syn"] / \
+                                                            ct2_2_ct1_syn_dict[
+                                                                "amount spine neck syn"]
+            ct2_2_ct1_syn_dict["avg size soma syn"] = ct2_2_ct1_syn_dict["sum size soma syn"] / ct2_2_ct1_syn_dict[
+                "amount soma syn"]
+            ct2_2_ct1_syn_dict["percentage shaft syn amount"] = ct2_2_ct1_syn_dict["amount shaft syn"] / \
+                                                                ct2_2_ct1_syn_dict["syn amount"] * 100
+            ct2_2_ct1_syn_dict["percentage spine head syn amount"] = ct2_2_ct1_syn_dict["amount spine head syn"] / \
+                                                                     ct2_2_ct1_syn_dict[
+                                                                         "syn amount"] * 100
+            ct2_2_ct1_syn_dict["percentage spine neck syn amount"] = ct2_2_ct1_syn_dict["amount spine neck syn"] / \
+                                                                     ct2_2_ct1_syn_dict[
+                                                                         "syn amount"] * 100
+            ct2_2_ct1_syn_dict["percentage soma syn amount"] = ct2_2_ct1_syn_dict["amount soma syn"] / \
+                                                               ct2_2_ct1_syn_dict[
+                                                                   "syn amount"] * 100
+            ct2_2_ct1_syn_dict["percentage shaft syn size"] = ct2_2_ct1_syn_dict["sum size shaft syn"] / \
+                                                              ct2_2_ct1_syn_dict[
+                                                                  "sum syn size"] * 100
+            ct2_2_ct1_syn_dict["percentage spine head syn size"] = ct2_2_ct1_syn_dict["sum size spine head syn"] / \
+                                                                   ct2_2_ct1_syn_dict[
+                                                                       "sum syn size"] * 100
+            ct2_2_ct1_syn_dict["percentage spine neck syn size"] = ct2_2_ct1_syn_dict["sum size spine neck syn"] / \
+                                                                   ct2_2_ct1_syn_dict[
+                                                                       "sum syn size"] * 100
+            ct2_2_ct1_syn_dict["percentage soma syn size"] = ct2_2_ct1_syn_dict["sum size soma syn"] / \
+                                                             ct2_2_ct1_syn_dict[
+                                                                 "sum syn size"] * 100
+
+            ct1_2_ct2_syn_dict.pop("sum syn size")
+            ct1_2_ct2_syn_dict.pop("sum  size soma syn")
+            ct1_2_ct2_syn_dict.pop("sum size spine head syn")
+            ct1_2_ct2_syn_dict.pop("sum size spine neck syn")
+            ct1_2_ct2_syn_dict.pop("sum size shaft syn")
+
+            ct2_2_ct1_syn_dict.pop("sum syn size")
+            ct2_2_ct1_syn_dict.pop("sum  size soma syn")
+            ct2_2_ct1_syn_dict.pop("sum size spine head syn")
+            ct2_2_ct1_syn_dict.pop("sum size spine neck syn")
+            ct2_2_ct1_syn_dict.pop("sum size shaft syn")
+
+            #average synapse amount and size for one cell form ct1 to one cell of ct2
             ct1_2_ct2_percell_syn_amount = ct1_2_ct2_percell_syn_amount[ct2_syn_inds]
+            ct1_2_ct2_percell_syn_amount[ct1_2_ct2_percell_syn_amount == 0] = np.nan
+            ct1_2_ct2_syn_dict["avg amount one cell"] = np.nanmean(ct1_2_ct2_percell_syn_amount, axis = 1)
+
+            ct1_2_ct2_percell_syn_size = ct1_2_ct2_percell_syn_size[ct2_syn_inds]
+            ct1_2_ct2_percell_syn_size[ct1_2_ct2_percell_syn_size == 0] = np.nan
+            ct1_2_ct2_syn_dict["avg syn size one cell"] = np.nanmean(ct1_2_ct2_percell_syn_size, axis = 1) / ct1_2_ct2_syn_dict["avg amount one cell"]
+
+            ct2_2_ct1_percell_syn_amount = ct2_2_ct1_percell_syn_amount[ct1_syn_inds]
+            ct2_2_ct1_percell_syn_amount[ct2_2_ct1_percell_syn_amount == 0] = np.nan
+            ct2_2_ct1_syn_dict["avg amount one cell"] = np.nanmean(ct2_2_ct1_percell_syn_amount, axis=1)
+
+            ct2_2_ct1_percell_syn_size = ct2_2_ct1_percell_syn_size[ct1_syn_inds]
+            ct2_2_ct1_percell_syn_size[ct2_2_ct1_percell_syn_size == 0] = np.nan
+            ct2_2_ct1_syn_dict["avg syn size one cell"] = np.nanmean(ct2_2_ct1_percell_syn_size, axis=1) / \
+                                                          ct2_2_ct1_syn_dict["avg amount one cell"]
+            
 
             write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]), ct1_2_ct2_syn_dict)
             ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
             ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
 
-            #TO DO: do same calculations for ct2_2_ct1_syn_dict, plotting
+            write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype2], ct_dict[celltype1]), ct2_2_ct1_syn_dict)
+            ct2_2_ct1_pd = pd.DataFrame(ct2_2_ct1_syn_dict)
+            ct2_2_ct1_pd.to_csv("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+
+            #plot parameters as distplot
+            for key in ct1_2_ct2_syn_dict.keys():
+                if "ids" in key:
+                    continue
+                sns.distplot(ct1_2_ct2_syn_dict[key],
+                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "steelblue"},
+                             kde=False)
+                plt.ylabel("count of cells")
+                if "amount" in key:
+                    plt.xlabel("amount of synapses")
+                elif "size" in key:
+                    plt.xlabel("average synapse size [µm²]")
+                elif "percentage" in key:
+                    plt.xlabel("percentage of synapses")
+                plt.title("%s from %s to %s" % (key, ct_dict[celltype1], ct_dict[celltype2]))
+                plt.savefig("%s/%s_%s_2_%s.png" % (f_name, key, ct_dict[celltype1], ct_dict[celltype2]))
+                plt.close()
+                sns.distplot(ct2_2_ct1_syn_dict[key],
+                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "steelblue"},
+                             kde=False)
+                plt.ylabel("count of cells")
+                if "amount" in key:
+                    plt.xlabel("amount of synapses")
+                elif "size" in key:
+                    plt.xlabel("average synapse size [µm²]")
+                elif "percentage" in key:
+                    plt.xlabel("percentage of synapses")
+                plt.title("%s from %s to %s" % (key, ct_dict[celltype2], ct_dict[celltype1]))
+                plt.savefig("%s/%s_%s_2_%s.png" % (f_name, key, ct_dict[celltype2], ct_dict[celltype1]))
+                plt.close()
 
 
+    synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=7, full_cells=True, handpicked1=True, handpicked2 = True)
+    synapses_between2cts(ssd, sd_synssv, celltype1=5, celltype2=7, full_cells=True, handpicked1=True, handpicked2=True)
+    synapses_between2cts(ssd, sd_synssv, celltype1=5, celltype2=6, full_cells=True, handpicked1=True, handpicked2=True)
+    synapses_between2cts(ssd, sd_synssv, celltype1=0, celltype2=6, full_cells=True, handpicked1=False, handpicked2=True)
+    synapses_between2cts(ssd, sd_synssv, celltype1=0, celltype2=7, full_cells=True, handpicked1=False, handpicked2=True)
 
 
 

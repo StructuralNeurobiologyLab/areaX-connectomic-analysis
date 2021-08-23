@@ -419,38 +419,196 @@ if __name__ == '__main__':
 
         #make violin plots for amount and size (absolute, relative) for different compartments
         x_labels = ["spine head", "spine neck", "shaft", "soma"]
-        sns.violinplot(x = ["amount spine head syn","amount spine neck syn", "amount shaft syn", "amount soma syn"], data = ct1_2_ct2_pd)
-        plt.xlabel(x_labels)
+        ticks = np.arange(4)
+        sns.violinplot(data = [ct1_2_ct2_pd["amount spine head syn"], ct1_2_ct2_pd["amount spine neck syn"], ct1_2_ct2_pd["amount shaft syn"], ct1_2_ct2_pd["amount soma syn"]], inner= "box")
+        sns.stripplot(data=[ct1_2_ct2_pd["amount spine head syn"], ct1_2_ct2_pd["amount spine neck syn"], ct1_2_ct2_pd["amount shaft syn"], ct1_2_ct2_pd["amount soma syn"]], color="black", alpha=0.2)
+        plt.xticks(ticks = ticks, labels=x_labels)
         plt.ylabel("amount of synapses")
         plt.title("synapse amount from %s to %s" % (ct_dict[celltype1], ct_dict[celltype2]))
-        plt.savefig("%s/syn_amount_violin_%s_2_%s.png" % (ct_dict[celltype1], ct_dict[celltype2]))
-        plt.close
+        plt.savefig("%s/syn_amount_violin_%s_2_%s.png" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+        plt.close()
 
-        sns.violinplot(x=["avg size spine head syn", "avg size spine neck syn", "avg size shaft syn", "avg size soma syn"],
-                       data=ct1_2_ct2_pd)
-        plt.xlabel(x_labels)
+        sns.boxplot(data=[ct1_2_ct2_pd["amount spine head syn"], ct1_2_ct2_pd["amount spine neck syn"],
+                             ct1_2_ct2_pd["amount shaft syn"], ct1_2_ct2_pd["amount soma syn"]], inner="box")
+        sns.stripplot(data=[ct1_2_ct2_pd["amount spine head syn"], ct1_2_ct2_pd["amount spine neck syn"],
+                            ct1_2_ct2_pd["amount shaft syn"], ct1_2_ct2_pd["amount soma syn"]], color="black",
+                      alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("amount of synapses")
+        plt.title("synapse amount from %s to %s" % (ct_dict[celltype1], ct_dict[celltype2]))
+        plt.savefig("%s/syn_amount_box_%s_2_%s.png" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+        plt.close()
+
+
+        sns.violinplot(data=[ct1_2_ct2_pd["avg size spine head syn"], ct1_2_ct2_pd["avg size spine neck syn"],
+                             ct1_2_ct2_pd["avg size shaft syn"], ct1_2_ct2_pd["avg size soma syn"]], inner="box")
+        sns.stripplot(data=[ct1_2_ct2_pd["avg size spine head syn"], ct1_2_ct2_pd["avg size spine neck syn"],
+                            ct1_2_ct2_pd["avg size shaft syn"], ct1_2_ct2_pd["avg size soma syn"]], color="black",
+                      alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
         plt.ylabel("average size of synapses [µm²]")
         plt.title("average synapse size from %s to %s" % (ct_dict[celltype1], ct_dict[celltype2]))
-        plt.savefig("%s/syn_size_violin_%s_2_%s.png" % (ct_dict[celltype1], ct_dict[celltype2]))
-        plt.close
+        plt.savefig("%s/syn_size_violin_%s_2_%s.png" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+        plt.close()
 
-        sns.violinplot(x=["percentage spine head syn amount", "percentage spine neck syn amount", "percentage shaft syn amount", "percentage soma syn amount"],
-                       data=ct1_2_ct2_pd)
-        plt.xlabel(x_labels)
+        sns.boxplot(data=[ct1_2_ct2_pd["avg size spine head syn"], ct1_2_ct2_pd["avg size spine neck syn"],
+                             ct1_2_ct2_pd["avg size shaft syn"], ct1_2_ct2_pd["avg size soma syn"]], inner="box")
+        sns.stripplot(data=[ct1_2_ct2_pd["avg size spine head syn"], ct1_2_ct2_pd["avg size spine neck syn"],
+                            ct1_2_ct2_pd["avg size shaft syn"], ct1_2_ct2_pd["avg size soma syn"]], color="black",
+                      alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("average size of synapses [µm²]")
+        plt.title("average synapse size from %s to %s" % (ct_dict[celltype1], ct_dict[celltype2]))
+        plt.savefig("%s/syn_size_box_%s_2_%s.png" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+        plt.close()
+
+        sns.violinplot(data=[ct1_2_ct2_pd["percentage spine head syn amount"], ct1_2_ct2_pd["percentage spine neck syn amount"],
+                             ct1_2_ct2_pd["percentage shaft syn amount"], ct1_2_ct2_pd["percentage soma syn amount"]], inner="box")
+        sns.stripplot(data=[ct1_2_ct2_pd["percentage spine head syn amount"], ct1_2_ct2_pd["percentage spine neck syn amount"],
+                            ct1_2_ct2_pd["percentage shaft syn amount"], ct1_2_ct2_pd["percentage soma syn amount"]], color="black",
+                      alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
         plt.ylabel("percentage of synapses")
         plt.title("percentage of synapses from %s to %s" % (ct_dict[celltype1], ct_dict[celltype2]))
-        plt.savefig("%s/syn_perc_violin_%s_2_%s.png" % (ct_dict[celltype1], ct_dict[celltype2]))
-        plt.close
+        plt.savefig("%s/syn_perc_violin_%s_2_%s.png" % (f_name,  ct_dict[celltype1], ct_dict[celltype2]))
+        plt.close()
+
+        sns.boxplot(
+            data=[ct1_2_ct2_pd["percentage spine head syn amount"], ct1_2_ct2_pd["percentage spine neck syn amount"],
+                  ct1_2_ct2_pd["percentage shaft syn amount"], ct1_2_ct2_pd["percentage soma syn amount"]], inner="box")
+        sns.stripplot(
+            data=[ct1_2_ct2_pd["percentage spine head syn amount"], ct1_2_ct2_pd["percentage spine neck syn amount"],
+                  ct1_2_ct2_pd["percentage shaft syn amount"], ct1_2_ct2_pd["percentage soma syn amount"]], color="black",
+            alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("percentage of synapses")
+        plt.title("percentage of synapses from %s to %s" % (ct_dict[celltype1], ct_dict[celltype2]))
+        plt.savefig("%s/syn_perc_box_%s_2_%s.png" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+        plt.close()
 
         sns.violinplot(
-            x=["percentage spine head syn size", "percentage spine neck syn size", "percentage shaft syn size",
-               "percentage soma syn size"],
-            data=ct1_2_ct2_pd)
-        plt.xlabel(x_labels)
+            data=[ct1_2_ct2_pd["percentage spine head syn size"], ct1_2_ct2_pd["percentage spine neck syn size"],
+                  ct1_2_ct2_pd["percentage shaft syn size"], ct1_2_ct2_pd["percentage soma syn size"]], inner="box")
+        sns.stripplot(
+            data=[ct1_2_ct2_pd["percentage spine head syn size"], ct1_2_ct2_pd["percentage spine neck syn size"],
+                  ct1_2_ct2_pd["percentage shaft syn size"], ct1_2_ct2_pd["percentage soma syn size"]], color="black",
+            alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
         plt.ylabel("percentage of synapse size")
         plt.title("percentage of synapse size from %s to %s" % (ct_dict[celltype1], ct_dict[celltype2]))
-        plt.savefig("%s/syn_size_perc_violin_%s_2_%s.png" % (ct_dict[celltype1], ct_dict[celltype2]))
-        plt.close
+        plt.savefig("%s/syn_size_perc_violin_%s_2_%s.png" % (f_name,ct_dict[celltype1], ct_dict[celltype2]))
+        plt.close()
+
+        sns.boxplot(
+            data=[ct1_2_ct2_pd["percentage spine head syn size"], ct1_2_ct2_pd["percentage spine neck syn size"],
+                  ct1_2_ct2_pd["percentage shaft syn size"], ct1_2_ct2_pd["percentage soma syn size"]], inner="box")
+        sns.stripplot(
+            data=[ct1_2_ct2_pd["percentage spine head syn size"], ct1_2_ct2_pd["percentage spine neck syn size"],
+                  ct1_2_ct2_pd["percentage shaft syn size"], ct1_2_ct2_pd["percentage soma syn size"]], color="black",
+            alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("percentage of synapse size")
+        plt.title("percentage of synapse size from %s to %s" % (ct_dict[celltype1], ct_dict[celltype2]))
+        plt.savefig("%s/syn_size_perc_box_%s_2_%s.png" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+        plt.close()
+
+        sns.violinplot(data=[ct2_2_ct1_pd["amount spine head syn"], ct2_2_ct1_pd["amount spine neck syn"],
+                             ct2_2_ct1_pd["amount shaft syn"], ct2_2_ct1_pd["amount soma syn"]], inner="box")
+        sns.stripplot(data=[ct2_2_ct1_pd["amount spine head syn"], ct2_2_ct1_pd["amount spine neck syn"],
+                            ct2_2_ct1_pd["amount shaft syn"], ct2_2_ct1_pd["amount soma syn"]], color="black",
+                      alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("amount of synapses")
+        plt.title("synapse amount from %s to %s" % (ct_dict[celltype2], ct_dict[celltype1]))
+        plt.savefig("%s/syn_amount_violin_%s_2_%s.png" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+        plt.close()
+
+        sns.boxplot(data=[ct2_2_ct1_pd["amount spine head syn"], ct2_2_ct1_pd["amount spine neck syn"],
+                             ct2_2_ct1_pd["amount shaft syn"], ct2_2_ct1_pd["amount soma syn"]], inner="box")
+        sns.stripplot(data=[ct2_2_ct1_pd["amount spine head syn"], ct2_2_ct1_pd["amount spine neck syn"],
+                            ct2_2_ct1_pd["amount shaft syn"], ct2_2_ct1_pd["amount soma syn"]], color="black",
+                      alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("amount of synapses")
+        plt.title("synapse amount from %s to %s" % (ct_dict[celltype2], ct_dict[celltype1]))
+        plt.savefig("%s/syn_amount_box_%s_2_%s.png" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+        plt.close()
+
+        sns.violinplot(data=[ct2_2_ct1_pd["avg size spine head syn"], ct2_2_ct1_pd["avg size spine neck syn"],
+                             ct2_2_ct1_pd["avg size shaft syn"], ct2_2_ct1_pd["avg size soma syn"]], inner="box")
+        sns.stripplot(data=[ct2_2_ct1_pd["avg size spine head syn"], ct2_2_ct1_pd["avg size spine neck syn"],
+                            ct2_2_ct1_pd["avg size shaft syn"], ct2_2_ct1_pd["avg size soma syn"]], color="black",
+                      alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("average size of synapses [µm²]")
+        plt.title("average synapse size from %s to %s" % (ct_dict[celltype2], ct_dict[celltype1]))
+        plt.savefig("%s/syn_size_violin_%s_2_%s.png" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+        plt.close()
+
+        sns.boxplot(data=[ct2_2_ct1_pd["avg size spine head syn"], ct2_2_ct1_pd["avg size spine neck syn"],
+                             ct2_2_ct1_pd["avg size shaft syn"], ct2_2_ct1_pd["avg size soma syn"]], inner="box")
+        sns.stripplot(data=[ct2_2_ct1_pd["avg size spine head syn"], ct2_2_ct1_pd["avg size spine neck syn"],
+                            ct2_2_ct1_pd["avg size shaft syn"], ct2_2_ct1_pd["avg size soma syn"]], color="black",
+                      alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("average size of synapses [µm²]")
+        plt.title("average synapse size from %s to %s" % (ct_dict[celltype2], ct_dict[celltype1]))
+        plt.savefig("%s/syn_size_box_%s_2_%s.png" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+        plt.close()
+
+        sns.violinplot(
+            data=[ct2_2_ct1_pd["percentage spine head syn amount"], ct2_2_ct1_pd["percentage spine neck syn amount"],
+                  ct2_2_ct1_pd["percentage shaft syn amount"], ct2_2_ct1_pd["percentage soma syn amount"]], inner="box")
+        sns.stripplot(
+            data=[ct2_2_ct1_pd["percentage spine head syn amount"], ct2_2_ct1_pd["percentage spine neck syn amount"],
+                  ct2_2_ct1_pd["percentage shaft syn amount"], ct2_2_ct1_pd["percentage soma syn amount"]],
+            color="black",
+            alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("percentage of synapses")
+        plt.title("percentage of synapses from %s to %s" % (ct_dict[celltype2], ct_dict[celltype1]))
+        plt.savefig("%s/syn_perc_violin_%s_2_%s.png" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+        plt.close()
+
+        sns.boxplot(
+            data=[ct2_2_ct1_pd["percentage spine head syn amount"], ct2_2_ct1_pd["percentage spine neck syn amount"],
+                  ct2_2_ct1_pd["percentage shaft syn amount"], ct2_2_ct1_pd["percentage soma syn amount"]], inner="box")
+        sns.stripplot(
+            data=[ct2_2_ct1_pd["percentage spine head syn amount"], ct2_2_ct1_pd["percentage spine neck syn amount"],
+                  ct2_2_ct1_pd["percentage shaft syn amount"], ct2_2_ct1_pd["percentage soma syn amount"]],
+            color="black",
+            alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("percentage of synapses")
+        plt.title("percentage of synapses from %s to %s" % (ct_dict[celltype2], ct_dict[celltype1]))
+        plt.savefig("%s/syn_perc_box_%s_2_%s.png" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+        plt.close()
+
+        sns.violinplot(
+            data=[ct2_2_ct1_pd["percentage spine head syn size"], ct2_2_ct1_pd["percentage spine neck syn size"],
+                  ct2_2_ct1_pd["percentage shaft syn size"], ct2_2_ct1_pd["percentage soma syn size"]], inner="box")
+        sns.stripplot(
+            data=[ct2_2_ct1_pd["percentage spine head syn size"], ct2_2_ct1_pd["percentage spine neck syn size"],
+                  ct2_2_ct1_pd["percentage shaft syn size"], ct2_2_ct1_pd["percentage soma syn size"]], color="black",
+            alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("percentage of synapse size")
+        plt.title("percentage of synapse size from %s to %s" % (ct_dict[celltype2], ct_dict[celltype1]))
+        plt.savefig("%s/syn_size_perc_violin_%s_2_%s.png" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+        plt.close()
+
+        sns.boxplot(
+            data=[ct2_2_ct1_pd["percentage spine head syn size"], ct2_2_ct1_pd["percentage spine neck syn size"],
+                  ct2_2_ct1_pd["percentage shaft syn size"], ct2_2_ct1_pd["percentage soma syn size"]], inner="box")
+        sns.stripplot(
+            data=[ct2_2_ct1_pd["percentage spine head syn size"], ct2_2_ct1_pd["percentage spine neck syn size"],
+                  ct2_2_ct1_pd["percentage shaft syn size"], ct2_2_ct1_pd["percentage soma syn size"]], color="black",
+            alpha=0.2)
+        plt.xticks(ticks=ticks, labels=x_labels)
+        plt.ylabel("percentage of synapse size")
+        plt.title("percentage of synapse size from %s to %s" % (ct_dict[celltype2], ct_dict[celltype1]))
+        plt.savefig("%s/syn_size_perc_box_%s_2_%s.png" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+        plt.close()
 
         plottime = time.time() - syntime
         print("%.2f sec for calculating parameters, plotting" % plottime)

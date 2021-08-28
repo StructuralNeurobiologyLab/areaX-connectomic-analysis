@@ -727,8 +727,10 @@ if __name__ == '__main__':
         for key in results_for_plotting_comps.keys():
             if "celltype" in key or "compartment" in key:
                 continue
-            sns.violinplot(x = "compartment", y = key, data=results_for_plotting_comps.reset_index(), inner="box", palette=colours_pal, hue="celltype")
-            sns.stripplot(x = "compartment", y = key, data=results_for_plotting_comps, hue = "celltype", color="black", alpha=0.3, dodge=True, legend = False)
+            sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="celltype", color="black",alpha=0.3, dodge=True)
+            ax = sns.violinplot(x = "compartment", y = key, data=results_for_plotting_comps.reset_index(), inner="box", palette=colours_pal, hue="celltype")
+            handles, labels = ax.get_legend_handles_labels()
+            plt.legend(handles[0:2], labels[0:2])
             if connected_ct != None:
                 plt.title('%s, %s to %s/ %s' % (key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
             else:
@@ -750,7 +752,6 @@ if __name__ == '__main__':
                 filename = ("%s/%s_comps_violin_%s_%s.png" % (f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
             plt.savefig(filename)
             plt.close()
-            raise ValueError
             sns.boxplot(x="compartment", y=key, data=results_for_plotting_comps, palette=colours_pal,
                            hue="celltype")
             if connected_ct != None:
@@ -992,9 +993,12 @@ if __name__ == '__main__':
                 if "celltype" in key or "compartment" in key:
                     continue
 
-                sns.violinplot(x="compartment", y=key, data=results_for_plotting_comps, inner="box",
-                               palette=colours_pal, hue="celltype")
-                sns.stripplot(x = "compartment", y = key, data=results_for_plotting_comps, hue = "celltype", color="black", alpha=0.3, dodge=True, legend = False)
+                sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="celltype", color="black",
+                              alpha=0.3, dodge=True)
+                ax = sns.violinplot(x="compartment", y=key, data=results_for_plotting_comps.reset_index(), inner="box",
+                                    palette=colours_pal, hue="celltype")
+                handles, labels = ax.get_legend_handles_labels()
+                plt.legend(handles[0:2], labels[0:2])S
                 plt.title('%s, %s, %s to %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
                 if "amount" in key:
                     if "percentage" in key:

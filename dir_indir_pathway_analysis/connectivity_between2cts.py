@@ -891,7 +891,10 @@ if __name__ == '__main__':
             plt.savefig(filename)
             plt.close()
 
-        ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+        if connected_ct != None:
+            ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], dict[comp_ct1], ct_dict[comp_ct2]))
+        else:
+            ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
 
         #also compare outgoing connections from celltype
         if connected_ct != None:
@@ -1124,7 +1127,7 @@ if __name__ == '__main__':
                 plt.savefig(filename)
                 plt.close()
 
-            ranksum_results.to_csv("%s/ranksum_%s_%s_outgoing.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+            ranksum_results.to_csv("%s/ranksum_%s_%s_2_%s_outgoing.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
 
         plottime = time.time() - start
         print("%.2f sec for statistics and plotting" % plottime)

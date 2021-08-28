@@ -998,7 +998,7 @@ if __name__ == '__main__':
                 ax = sns.violinplot(x="compartment", y=key, data=results_for_plotting_comps.reset_index(), inner="box",
                                     palette=colours_pal, hue="celltype")
                 handles, labels = ax.get_legend_handles_labels()
-                plt.legend(handles[0:2], labels[0:2])S
+                plt.legend(handles[0:2], labels[0:2])
                 plt.title('%s, %s, %s to %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
                 if "amount" in key:
                     if "percentage" in key:

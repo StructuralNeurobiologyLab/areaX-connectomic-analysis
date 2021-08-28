@@ -632,10 +632,10 @@ if __name__ == '__main__':
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
         if connected_ct != None:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210823_j0251v3__%s_%s_%s_syn_con_comp_mcl%i" % (
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210828_j0251v3__%s_%s_%s_syn_con_comp_mcl%i" % (
                 ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len)
         else:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210823_j0251v3__%s_%s_syn_con_comp_mcl%i" % (
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210828_j0251v3__%s_%s_syn_con_comp_mcl%i" % (
             ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -672,47 +672,51 @@ if __name__ == '__main__':
         results_for_plotting_comps.loc[0:sum_len - 1, "compartment"] = "spine head"
         results_for_plotting_comps.loc[0:len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
         results_for_plotting_comps.loc[len_ct1: sum_len - 1, "celltype"] = ct_dict[comp_ct2]
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "syn amount"] = ct1_syn_dict["amount spine head syn"].astype(float)
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1, "syn amount"] = ct2_syn_dict["amount spine head syn"].astype(float)
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine head syn"].astype(float)
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"avg syn size"] = ct2_syn_dict["avg size spine head syn"].astype(float)
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage amount"] = ct1_syn_dict["percentage spine head syn amount"].astype(float)
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"percentage amount"] = ct2_syn_dict["percentage spine head syn amount"].astype(float)
-        results_for_plotting_comps.loc[0:len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage spine head syn size"].astype(float)
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"percentage syn size"] = ct2_syn_dict["percentage spine head syn size"].astype(float)
+        results_for_plotting_comps.loc[0:len_ct1 - 1, "syn amount"] = ct1_syn_dict["amount spine head syn"]
+        results_for_plotting_comps.loc[len_ct1:sum_len - 1, "syn amount"] = ct2_syn_dict["amount spine head syn"]
+        results_for_plotting_comps.loc[0:len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine head syn"]
+        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"avg syn size"] = ct2_syn_dict["avg size spine head syn"]
+        results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage amount"] = ct1_syn_dict["percentage spine head syn amount"]
+        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"percentage amount"] = ct2_syn_dict["percentage spine head syn amount"]
+        results_for_plotting_comps.loc[0:len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage spine head syn size"]
+        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"percentage syn size"] = ct2_syn_dict["percentage spine head syn size"]
         results_for_plotting_comps.loc[sum_len:sum_len * 2 - 1, "compartment"] = "spine neck"
         results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
         results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1, "celltype"] = ct_dict[comp_ct2]
-        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1- 1,"syn amount"] = ct1_syn_dict["amount spine neck syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"syn amount"] = ct2_syn_dict["amount spine neck syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine neck syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"avg syn size"] = ct2_syn_dict["avg size spine neck syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "percentage amount"] = ct1_syn_dict["percentage spine neck syn amount"].astype(float)
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"percentage amount"] = ct2_syn_dict["percentage spine neck syn amount"].astype(float)
-        results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "percentage syn size"] = ct1_syn_dict["percentage spine neck syn size"].astype(float)
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"percentage syn size"] = ct2_syn_dict["percentage spine neck syn size"].astype(float)
+        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1- 1,"syn amount"] = ct1_syn_dict["amount spine neck syn"]
+        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"syn amount"] = ct2_syn_dict["amount spine neck syn"]
+        results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine neck syn"]
+        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"avg syn size"] = ct2_syn_dict["avg size spine neck syn"]
+        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "percentage amount"] = ct1_syn_dict["percentage spine neck syn amount"]
+        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"percentage amount"] = ct2_syn_dict["percentage spine neck syn amount"]
+        results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "percentage syn size"] = ct1_syn_dict["percentage spine neck syn size"]
+        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"percentage syn size"] = ct2_syn_dict["percentage spine neck syn size"]
         results_for_plotting_comps.loc[sum_len * 2:sum_len * 3 - 1, "compartment"] = "shaft"
         results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
         results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "celltype"] = ct_dict[comp_ct2]
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"syn amount"] = ct1_syn_dict["amount shaft syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "syn amount"] = ct2_syn_dict["amount shaft syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"avg syn size"] = ct1_syn_dict["avg size shaft syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"avg syn size"] = ct2_syn_dict["avg size shaft syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1,"percentage amount"] = ct1_syn_dict["percentage shaft syn amount"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"percentage amount"] = ct2_syn_dict["percentage shaft syn amount"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage shaft syn size"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"percentage syn size"] = ct2_syn_dict["percentage shaft syn size"].astype(float)
+        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"syn amount"] = ct1_syn_dict["amount shaft syn"]
+        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "syn amount"] = ct2_syn_dict["amount shaft syn"]
+        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"avg syn size"] = ct1_syn_dict["avg size shaft syn"]
+        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"avg syn size"] = ct2_syn_dict["avg size shaft syn"]
+        results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1,"percentage amount"] = ct1_syn_dict["percentage shaft syn amount"]
+        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"percentage amount"] = ct2_syn_dict["percentage shaft syn amount"]
+        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage shaft syn size"]
+        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"percentage syn size"] = ct2_syn_dict["percentage shaft syn size"]
         results_for_plotting_comps.loc[sum_len * 3:sum_len * 4 - 1, "compartment"] = "soma"
         results_for_plotting_comps.loc[sum_len * 3:sum_len * 3 + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
         results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "celltype"] = ct_dict[comp_ct2]
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"syn amount"] = ct1_syn_dict["amount soma syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"syn amount"] = ct2_syn_dict["amount soma syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"avg syn size"] = ct1_syn_dict["avg size soma syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"avg syn size"] = ct2_syn_dict["avg size soma syn"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"percentage amount"] = ct1_syn_dict["percentage soma syn amount"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"percentage amount"] = ct2_syn_dict["percentage soma syn amount"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage soma syn size"].astype(float)
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len*4 - 1,"percentage syn size"] = ct2_syn_dict["percentage soma syn size"].astype(float)
+        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"syn amount"] = ct1_syn_dict["amount soma syn"]
+        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"syn amount"] = ct2_syn_dict["amount soma syn"]
+        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"avg syn size"] = ct1_syn_dict["avg size soma syn"]
+        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"avg syn size"] = ct2_syn_dict["avg size soma syn"]
+        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"percentage amount"] = ct1_syn_dict["percentage soma syn amount"]
+        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"percentage amount"] = ct2_syn_dict["percentage soma syn amount"]
+        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage soma syn size"]
+        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len*4 - 1,"percentage syn size"] = ct2_syn_dict["percentage soma syn size"]
+        results_for_plotting_comps["syn amount"] = results_for_plotting_comps["syn amount"].astype("float64")
+        results_for_plotting_comps["avg syn size"] = results_for_plotting_comps["avg syn size"].astype("float64")
+        results_for_plotting_comps["percentage amount"] = results_for_plotting_comps["percentage amount"].astype('float64')
+        results_for_plotting_comps["percentage syn size"] = results_for_plotting_comps["percentage syn size"].astype("float64")
 
         if connected_ct != None:
             results_for_plotting_comps.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
@@ -723,9 +727,8 @@ if __name__ == '__main__':
         for key in results_for_plotting_comps.keys():
             if "celltype" in key or "compartment" in key:
                 continue
-
-            sns.violinplot(x = "compartment", y = key, data=results_for_plotting_comps, inner="box", palette=colours_pal, hue="celltype")
-            sns.stripplot(x = "compartment", y = key, data=results_for_plotting_comps, hue = "celltype", color="black", alpha=0.2)
+            sns.violinplot(x = "compartment", y = key, data=results_for_plotting_comps.reset_index(), inner="box", palette=colours_pal, hue="celltype")
+            sns.stripplot(x = "compartment", y = key, data=results_for_plotting_comps, hue = "celltype", color="black", alpha=0.3, dodge=True, legend = False)
             if connected_ct != None:
                 plt.title('%s, %s to %s/ %s' % (key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
             else:
@@ -904,79 +907,82 @@ if __name__ == '__main__':
             results_for_plotting_comps.loc[0:sum_len - 1, "compartment"] = "spine head"
             results_for_plotting_comps.loc[0:len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
             results_for_plotting_comps.loc[len_ct1: sum_len - 1, "celltype"] = ct_dict[comp_ct2]
-            results_for_plotting_comps.loc[0:len_ct1 - 1, "syn amount"] = ct1_syn_dict["amount spine head syn"].astype(
-                float)
-            results_for_plotting_comps.loc[len_ct1:sum_len - 1, "syn amount"] = ct2_syn_dict[
-                "amount spine head syn"].astype(float)
-            results_for_plotting_comps.loc[0:len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-                "avg size spine head syn"].astype(float)
+            results_for_plotting_comps.loc[0:len_ct1 - 1, "syn amount"] = ct1_syn_dict["amount spine head syn"]
+            results_for_plotting_comps.loc[len_ct1:sum_len - 1, "syn amount"] = ct2_syn_dict["amount spine head syn"]
+            results_for_plotting_comps.loc[0:len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine head syn"]
             results_for_plotting_comps.loc[len_ct1:sum_len - 1, "avg syn size"] = ct2_syn_dict[
-                "avg size spine head syn"].astype(float)
+                "avg size spine head syn"]
             results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-                "percentage spine head syn amount"].astype(float)
+                "percentage spine head syn amount"]
             results_for_plotting_comps.loc[len_ct1:sum_len - 1, "percentage amount"] = ct2_syn_dict[
-                "percentage spine head syn amount"].astype(float)
+                "percentage spine head syn amount"]
             results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage syn size"] = ct1_syn_dict[
-                "percentage spine head syn size"].astype(float)
+                "percentage spine head syn size"]
             results_for_plotting_comps.loc[len_ct1:sum_len - 1, "percentage syn size"] = ct2_syn_dict[
-                "percentage spine head syn size"].astype(float)
+                "percentage spine head syn size"]
             results_for_plotting_comps.loc[sum_len:sum_len * 2 - 1, "compartment"] = "spine neck"
             results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
             results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "celltype"] = ct_dict[comp_ct2]
             results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-                "amount spine neck syn"].astype(float)
+                "amount spine neck syn"]
             results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "syn amount"] = ct2_syn_dict[
-                "amount spine neck syn"].astype(float)
+                "amount spine neck syn"]
             results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-                "avg size spine neck syn"].astype(float)
+                "avg size spine neck syn"]
             results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "avg syn size"] = ct2_syn_dict[
-                "avg size spine neck syn"].astype(float)
+                "avg size spine neck syn"]
             results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-                "percentage spine neck syn amount"].astype(float)
+                "percentage spine neck syn amount"]
             results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "percentage amount"] = ct2_syn_dict[
-                "percentage spine neck syn amount"].astype(float)
+                "percentage spine neck syn amount"]
             results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "percentage syn size"] = ct1_syn_dict[
-                "percentage spine neck syn size"].astype(float)
+                "percentage spine neck syn size"]
             results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "percentage syn size"] = ct2_syn_dict[
-                "percentage spine neck syn size"].astype(float)
+                "percentage spine neck syn size"]
             results_for_plotting_comps.loc[sum_len * 2:sum_len * 3 - 1, "compartment"] = "shaft"
             results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
             results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "celltype"] = ct_dict[comp_ct2]
             results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-                "amount shaft syn"].astype(float)
+                "amount shaft syn"]
             results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "syn amount"] = ct2_syn_dict[
-                "amount shaft syn"].astype(float)
+                "amount shaft syn"]
             results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-                "avg size shaft syn"].astype(float)
+                "avg size shaft syn"]
             results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "avg syn size"] = ct2_syn_dict[
-                "avg size shaft syn"].astype(float)
+                "avg size shaft syn"]
             results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-                "percentage shaft syn amount"].astype(float)
+                "percentage shaft syn amount"]
             results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "percentage amount"] = ct2_syn_dict[
-                "percentage shaft syn amount"].astype(float)
+                "percentage shaft syn amount"]
             results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "percentage syn size"] = \
-            ct1_syn_dict["percentage shaft syn size"].astype(float)
+            ct1_syn_dict["percentage shaft syn size"]
             results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "percentage syn size"] = ct2_syn_dict[
-                "percentage shaft syn size"].astype(float)
+                "percentage shaft syn size"]
             results_for_plotting_comps.loc[sum_len * 3:sum_len * 4 - 1, "compartment"] = "soma"
             results_for_plotting_comps.loc[sum_len * 3:sum_len * 3 + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
             results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "celltype"] = ct_dict[comp_ct2]
             results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-                "amount soma syn"].astype(float)
+                "amount soma syn"]
             results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "syn amount"] = ct2_syn_dict[
-                "amount soma syn"].astype(float)
+                "amount soma syn"]
             results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-                "avg size soma syn"].astype(float)
+                "avg size soma syn"]
             results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "avg syn size"] = ct2_syn_dict[
-                "avg size soma syn"].astype(float)
+                "avg size soma syn"]
             results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-                "percentage soma syn amount"].astype(float)
+                "percentage soma syn amount"]
             results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "percentage amount"] = ct2_syn_dict[
-                "percentage soma syn amount"].astype(float)
+                "percentage soma syn amount"]
             results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "percentage syn size"] = \
-            ct1_syn_dict["percentage soma syn size"].astype(float)
+            ct1_syn_dict["percentage soma syn size"]
             results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "percentage syn size"] = ct2_syn_dict[
-                "percentage soma syn size"].astype(float)
+                "percentage soma syn size"]
+            results_for_plotting_comps["syn amount"] = results_for_plotting_comps["syn amount"].astype("float64")
+            results_for_plotting_comps["avg syn size"] = results_for_plotting_comps["avg syn size"].astype("float64")
+            results_for_plotting_comps["percentage amount"] = results_for_plotting_comps["percentage amount"].astype(
+                'float64')
+            results_for_plotting_comps["percentage syn size"] = results_for_plotting_comps[
+                "percentage syn size"].astype("float64")
 
 
             results_for_plotting_comps.to_csv("%s/%s_%s_2_%s_syn_compartments_outgoing.csv" % (
@@ -988,8 +994,7 @@ if __name__ == '__main__':
 
                 sns.violinplot(x="compartment", y=key, data=results_for_plotting_comps, inner="box",
                                palette=colours_pal, hue="celltype")
-                sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="celltype", color="black",
-                              alpha=0.2)
+                sns.stripplot(x = "compartment", y = key, data=results_for_plotting_comps, hue = "celltype", color="black", alpha=0.3, dodge=True, legend = False)
                 plt.title('%s, %s, %s to %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
                 if "amount" in key:
                     if "percentage" in key:

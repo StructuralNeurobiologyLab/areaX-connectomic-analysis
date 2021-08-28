@@ -892,7 +892,7 @@ if __name__ == '__main__':
             plt.close()
 
         if connected_ct != None:
-            ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], dict[comp_ct1], ct_dict[comp_ct2]))
+            ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
         else:
             ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
 

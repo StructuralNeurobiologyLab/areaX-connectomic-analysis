@@ -17,10 +17,10 @@ from scipy.stats import ranksums
 
 def compartment_length_cell(sso, compartment, cell_graph):
     """
-            calculates length of compartment per cell using the skeleton if given the networkx graph of the cell.
+            calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
             :param compartment: 0 = dendrite, 1 = axon, 2 = soma
             :param cell_graph: sso.weighted graph
-            :param min_comp_len: minimum compartment length, if not return 0
+            :param min_comp_len: minimum compartment length, if not return 0 [µm]
             :return: comp_len
             """
     non_comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] != compartment)[0]
@@ -32,7 +32,8 @@ def compartment_length_cell(sso, compartment, cell_graph):
 
 def counting_spines(cell, min_comp_len = 100):
     """
-    determines the amount of spines using the skeleton. Amount of spines is the number of connected_components with spiness = spines.
+    calculates the spine density of the dendrite.Therefore, the amount of spines per µm dendrite is calculated.
+     Amount of spines is the number of connected_components with spiness = spines.
     :param cell: super-segmentation object
     :param min_comp_len: minimum compartment length in µm
     :return: amount of spines on dendrite, 0 if not having min_comp_len
@@ -51,4 +52,5 @@ def counting_spines(cell, min_comp_len = 100):
     spine_graph = g.copy()
     spine_graph.remove_nodes_from(nonspine_inds)
     spine_amount = len(list(nx.connected_component_subgraphs(spine_graph)))
-    return spine_amount
+    spine_density = spine_amount/dendrite_length
+    return spine_density

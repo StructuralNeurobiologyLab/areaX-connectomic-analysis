@@ -62,7 +62,7 @@ if __name__ == '__main__':
             return 0, 0, 0, 0
         return axon_length, axon_volume, dendrite_length, dendrite_volume
 
-    def axon_den_arborization_ct(ssd, celltype, min_comp_len = 100, full_cells = True, handpicked = True):
+    def axon_den_arborization_ct(ssd, celltype, min_comp_len = 100, full_cells = True, handpicked = True, percentile = 0, low_percentile = False):
         '''
         estimate the axonal and dendritic aroborization by celltype. Uses axon_dendritic_arborization to get the aoxnal/dendritic bounding box volume per cell
         via comp_arborization. Plots the volume per compartment and the overall length as histograms.
@@ -72,13 +72,19 @@ if __name__ == '__main__':
         :param min_comp_len: minimum compartment length in µm
         :param full_cells: loads preprocessed cells that have axon, soma and dendrite
         :param handpicked: loads cells that were manually checked
+        :param if percentile given, percentile of the cell population can be compared, if preprocessed
+        :param: low_percentile: True if percentile of cell population analysed is in lower half.
         :return:
         '''
 
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210818_j0251v3_%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
+        if percentile != None:
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210928_j0251v3_%s_comp_volume_mcl%i_p%i" % (
+            ct_dict[celltype], min_comp_len, percentile)
+        else:
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210928_j0251v3_%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
         log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
@@ -92,6 +98,14 @@ if __name__ == '__main__':
             if handpicked:
                 cellids = load_pkl2obj(
                     "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype])
+            if percentile != 0:
+                if low_percentile:
+                    cellids = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_%i_l.pkl" % (ct_dict[celltype], percentile))
+                else:
+                    cellids = load_pkl2obj(
+                        "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_%i_h.pkl" % (ct_dict[celltype],
+                        percentile))
             else:
                 cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
         else:
@@ -195,7 +209,7 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210818_j0251v3__%s_%s_comp_volume_mcl%i" % (
+        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210928_j0251v3__%s_%s_comp_volume_mcl%i" % (
         ct_dict[celltype1],ct_dict[celltype2], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -319,9 +333,15 @@ if __name__ == '__main__':
 
 
     #axon_den_arborization_ct(ssd, celltype=7)
-    #axon_den_arborization_ct(ssd, celltype=6)
+    #axon_den_arborization_ct(ssd, celltype=2, full_cells= True, handpicked=False)
+    axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=10, low_percentile=True)
+    axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=25, low_percentile=True)
+    axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=50, low_percentile=True)
+    axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=50, low_percentile=False)
+    axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=75, low_percentile=False)
+    axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=90, low_percentile=False)
     foldername = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/"
-    ct1_filename = "%s/210818_j0251v3_GPe_comp_volume_mcl100" % foldername
-    ct2_filename = "%s/210818_j0251v3_GPi_comp_volume_mcl100" % foldername
-    compare_compartment_volume_ct(ssd, celltype1=6, celltype2=7, filename1=ct1_filename,
-                                  filename2=ct2_filename)
+    #ct1_filename = "%s/210818_j0251v3_GPe_comp_volume_mcl100" % foldername
+    #ct2_filename = "%s/210818_j0251v3_GPi_comp_volume_mcl100" % foldername
+    #compare_compartment_volume_ct(ssd, celltype1=6, celltype2=7, filename1=ct1_filename,
+                                  #filename2=ct2_filename)

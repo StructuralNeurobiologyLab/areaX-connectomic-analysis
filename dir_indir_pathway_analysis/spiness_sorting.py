@@ -17,7 +17,8 @@ if __name__ == '__main__':
 
     def saving_spiness_percentiles(ssd, celltype, full_cells = True, percentiles = [], min_comp_len = 100):
         """
-        saves MSN IDS depending on their spiness. Spiness is determined via spiness skeleton nodes using counting_spiness. Cells without a minimal compartment length are discarded.
+        saves MSN IDS depending on their spiness. Spiness is determined via spiness skeleton nodes using counting_spiness as spine density in relation to the skeelton length
+        of the dendrite. Cells without a minimal compartment length are discarded.
         :param ssd: super segmentation dataset
         :param celltype: ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
         :param full_cells: if True, cellids of preprocessed cells with axon, dendrite, soma are loaded
@@ -44,15 +45,15 @@ if __name__ == '__main__':
             cellids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype]
 
         log.info("Step 1/2: iterate over cells and get amount of spines")
-        spine_amounts = np.zeros(len(cellids))
+        spine_densities = np.zeros(len(cellids))
         for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
-            spine_amount  = counting_spines(cell, min_comp_len=min_comp_len)
-            if spine_amount == 0:
+            spine_density  = counting_spines(cell, min_comp_len=min_comp_len)
+            if spine_density == 0:
                 continue
-            spine_amounts[i] = spine_amount
+            spine_density[i] = spine_densities
 
-        spine_inds = spine_amounts > 0
-        spine_amounts = spine_amounts[spine_inds]
+        spine_inds = spine_densities > 0
+        spine_densities = spine_densities[spine_inds]
         cellids = cellids[spine_inds]
 
         spinetime = time.time() - start
@@ -63,17 +64,17 @@ if __name__ == '__main__':
         log.info("Step 2/2 sort into percentiles")
 
         for percentile in percentiles:
-            perc_low = np.percentile(spine_amounts, percentile)
-            perc_low_inds = np.where(spine_amounts <= perc_low)[0]
-            perc_high = np.percentile(spine_amounts, 100 - percentile)
-            perc_high_inds = np.where(spine_amounts >= perc_high)[0]
+            perc_low = np.percentile(spine_densities, percentile, interpolation="higher")
+            perc_low_inds = np.where(spine_densities < perc_low)[0]
+            perc_high = np.percentile(spine_densities, 100 - percentile, interpolation="lower")
+            perc_high_inds = np.where(spine_densities > perc_high)[0]
             cellids_low = cellids[perc_low_inds]
             cellids_high = cellids[perc_high_inds]
             write_obj2pkl("%s/full_%3s_arr_%i_l.pkl" % (f_name, ct_dict[celltype], percentile), cellids_low)
             write_obj2pkl("%s/full_%3s_arr_%i_h.pkl" % (f_name, ct_dict[celltype], 100 - percentile), cellids_high)
-            spine_amount_dict_low = {cellid: spine_amount for cellid, spine_amount in zip(cellids_low, spine_amounts[perc_low_inds])}
+            spine_amount_dict_low = {cellid: spine_amount for cellid, spine_amount in zip(cellids_low, spine_densities[perc_low_inds])}
             spine_amount_dict_high = {cellid: spine_amount for cellid, spine_amount in
-                                     zip(cellids_high, spine_amounts[perc_high_inds])}
+                                     zip(cellids_high, spine_densities[perc_high_inds])}
             write_obj2pkl("%s/full_%3s_spine_dict_%i_l.pkl" % (f_name, ct_dict[celltype], percentile), spine_amount_dict_low)
             write_obj2pkl("%s/full_%3s_spine_dict_%i_h.pkl" % (f_name, ct_dict[celltype], 100 - percentile),
                           spine_amount_dict_high)
@@ -84,6 +85,7 @@ if __name__ == '__main__':
         step_idents.append('creating and saving percentile arrays')
         log.info("Analysis finished")
 
+        raise ValueError
 
     saving_spiness_percentiles(ssd, celltype=2, min_comp_len=100, percentiles=[10, 25, 50])
 

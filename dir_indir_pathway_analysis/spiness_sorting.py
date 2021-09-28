@@ -50,7 +50,7 @@ if __name__ == '__main__':
             spine_density  = counting_spines(cell, min_comp_len=min_comp_len)
             if spine_density == 0:
                 continue
-            spine_density[i] = spine_densities
+            spine_densities[i] = spine_density
 
         spine_inds = spine_densities > 0
         spine_densities = spine_densities[spine_inds]

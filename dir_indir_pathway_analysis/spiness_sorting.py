@@ -1,49 +1,18 @@
 if __name__ == '__main__':
     from syconn import global_params
-    from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
-    from syconn.reps.segmentation import SegmentationDataset
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
     import numpy as np
-    import seaborn as sns
-    import matplotlib.pyplot as plt
     import networkx as nx
-    import pandas as pd
     import os as os
-    import scipy
-    from collections import defaultdict
     import time
     from syconn.handler.config import initialize_logging
     from syconn.handler.basics import load_pkl2obj
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
-    from scipy.stats import ranksums
-    from connectivity_between2cts import compartment_length
+    from general.analysis_helper import counting_spines
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-
-    def counting_spines(cell, min_comp_len = 100):
-        """
-        determines the amount of spines using the skeleton. Amount of spines is the number of connected_components with spiness = spines.
-        :param cell: super-segmentation object
-        :param min_comp_len: minimum compartment length in µm
-        :return: amount of spines on dendrite, 0 if not having min_comp_len
-        """
-        cell.load_skeleton()
-        g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-        axon_length = compartment_length(cell, compartment = 1, cell_graph = g)
-        if axon_length < min_comp_len:
-            return 0
-        dendrite_length = compartment_length(cell, compartment = 0, cell_graph = g)
-        if dendrite_length < min_comp_len:
-            return 0
-        spine_shaftinds = np.nonzero(cell.skeleton["spiness"] == 0)[0]
-        spine_otherinds = np.nonzero(cell.skeleton["spiness"] == 3)[0]
-        nonspine_inds = np.hstack([spine_shaftinds, spine_otherinds])
-        spine_graph = g.copy()
-        spine_graph.remove_nodes_from(nonspine_inds)
-        spine_amount = len(list(nx.connected_component_subgraphs(spine_graph)))
-        return spine_amount
-
 
     def saving_spiness_percentiles(ssd, celltype, full_cells = True, percentiles = [], min_comp_len = 100):
         """

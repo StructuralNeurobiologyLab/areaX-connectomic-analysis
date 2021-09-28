@@ -16,24 +16,13 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
+    from general.analysis_helper import compartment_length_cell
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
 
-    def compartment_length_cell(sso, compartment, cell_graph):
-        """
-                calculates length of compartment per cell using the skeleton if given the networkx graph of the cell.
-                :param compartment: 0 = dendrite, 1 = axon, 2 = soma
-                :param cell_graph: sso.weighted graph
-                :param min_comp_len: minimum compartment length, if not return 0
-                :return: comp_len
-                """
-        non_comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] != compartment)[0]
-        comp_graph = cell_graph.copy()
-        comp_graph.remove_nodes_from(non_comp_inds)
-        comp_length = comp_graph.size(weight="weight") / 1000  # in µm
-        return comp_length
+
 
     def synapses_between2cts(ssd, sd_synssv, celltype1, celltype2, full_cells = True, handpicked1 = True, handpicked2 = True,
                              min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.6):

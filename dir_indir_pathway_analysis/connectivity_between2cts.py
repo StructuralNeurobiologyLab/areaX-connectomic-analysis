@@ -56,7 +56,7 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210826_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210923_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
         ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -632,10 +632,10 @@ if __name__ == '__main__':
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
         if connected_ct != None:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210828_j0251v3__%s_%s_%s_syn_con_comp_mcl%i" % (
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210923_j0251v3__%s_%s_%s_syn_con_comp_mcl%i" % (
                 ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len)
         else:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210828_j0251v3__%s_%s_syn_con_comp_mcl%i" % (
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210923_j0251v3__%s_%s_syn_con_comp_mcl%i" % (
             ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -1136,21 +1136,21 @@ if __name__ == '__main__':
         log.info("comparing celltypes via connectivity finished")
 
 
-    #synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=7, full_cells=True, handpicked1=True, handpicked2 = True)
-    #synapses_between2cts(ssd, sd_synssv, celltype1=5, celltype2=7, full_cells=True, handpicked1=True, handpicked2=True)
+    #synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=2, full_cells=True, handpicked1=True, handpicked2 = False)
+    #synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=2, full_cells=True, handpicked1=True, handpicked2=False)
     #synapses_between2cts(ssd, sd_synssv, celltype1=5, celltype2=6, full_cells=True, handpicked1=True, handpicked2=True)
     #synapses_between2cts(ssd, sd_synssv, celltype1=0, celltype2=6, full_cells=True, handpicked1=False, handpicked2=True)
     #synapses_between2cts(ssd, sd_synssv, celltype1=0, celltype2=7, full_cells=True, handpicked1=False, handpicked2=True)
     foldername = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/"
-    ct1_filename = "%s/210823_j0251v3_syn_conn_GPe_2_GPi_mcl100_sysi_0.10_st_0.60" % foldername
-    compare_connectvity(comp_ct1=6, comp_ct2=7, foldername_ct1=ct1_filename, foldername_ct2=ct1_filename)
-    ct1_filename = "%s/210823_j0251v3_syn_conn_TAN_2_GPe_mcl100_sysi_0.10_st_0.60" % foldername
-    ct2_filename = "%s/210823_j0251v3_syn_conn_TAN_2_GPi_mcl100_sysi_0.10_st_0.60" % foldername
-    compare_connectvity(comp_ct1=6, comp_ct2=7, connected_ct=5, foldername_ct1=ct1_filename, foldername_ct2=ct2_filename)
-    ct1_filename = "%s/210823_j0251v3_syn_conn_STN_2_GPe_mcl100_sysi_0.10_st_0.60" % foldername
-    ct2_filename = "%s/210823_j0251v3_syn_conn_STN_2_GPi_mcl100_sysi_0.10_st_0.60" % foldername
-    compare_connectvity(comp_ct1=6, comp_ct2=7, connected_ct=0, foldername_ct1=ct1_filename,
-                        foldername_ct2=ct2_filename)
+    #ct1_filename = "%s/210823_j0251v3_syn_conn_GPe_2_GPi_mcl100_sysi_0.10_st_0.60" % foldername
+    #compare_connectvity(comp_ct1=6, comp_ct2=7, foldername_ct1=ct1_filename, foldername_ct2=ct1_filename)
+    ct1_filename = "%s/210923_j0251v3_syn_conn_GPe_2_MSN_mcl100_sysi_0.10_st_0.60" % foldername
+    ct2_filename = "%s/210923_j0251v3_syn_conn_GPi_2_MSN_mcl100_sysi_0.10_st_0.60" % foldername
+    compare_connectvity(comp_ct1=6, comp_ct2=7, connected_ct=2, foldername_ct1=ct1_filename, foldername_ct2=ct2_filename)
+    #ct1_filename = "%s/210823_j0251v3_syn_conn_STN_2_GPe_mcl100_sysi_0.10_st_0.60" % foldername
+    #ct2_filename = "%s/210823_j0251v3_syn_conn_STN_2_GPi_mcl100_sysi_0.10_st_0.60" % foldername
+    #compare_connectvity(comp_ct1=6, comp_ct2=7, connected_ct=0, foldername_ct1=ct1_filename,
+                        #foldername_ct2=ct2_filename)
 
 
 

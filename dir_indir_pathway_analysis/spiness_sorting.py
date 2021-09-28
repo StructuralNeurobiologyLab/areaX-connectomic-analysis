@@ -9,7 +9,7 @@ if __name__ == '__main__':
     from syconn.handler.basics import load_pkl2obj
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
-    from bio_analysis.general.analysis_helper import counting_spines
+    from u.arother.bio_analysis.general.analysis_helper import counting_spines
 
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
             os.mkdir(f_name)
         log = initialize_logging('sorting cellids according to spiness', log_dir=f_name + '/logs/')
         log.info(
-            "parameters: celltype1 = %s, min_comp_length = %.i" %
+            "parameters: celltype = %s, min_comp_length = %.i" %
             (ct_dict[celltype], min_comp_len))
         time_stamps = [time.time()]
         step_idents = ['t-0']

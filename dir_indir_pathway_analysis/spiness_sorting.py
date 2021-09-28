@@ -9,7 +9,7 @@ if __name__ == '__main__':
     from syconn.handler.basics import load_pkl2obj
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
-    from u.arother.bio_analysis.general.analysis_helper import counting_spines
+    from u.arother.bio_analysis.general.analysis_helper import get_spine_density
 
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         log.info("Step 1/2: iterate over cells and get amount of spines")
         spine_densities = np.zeros(len(cellids))
         for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
-            spine_density  = counting_spines(cell, min_comp_len=min_comp_len)
+            spine_density  = get_spine_density(cell, min_comp_len=min_comp_len)
             if spine_density == 0:
                 continue
             spine_densities[i] = spine_density

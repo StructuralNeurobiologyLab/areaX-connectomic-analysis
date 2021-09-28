@@ -30,7 +30,7 @@ def compartment_length_cell(sso, compartment, cell_graph):
     return comp_length
 
 
-def counting_spines(cell, min_comp_len = 100):
+def get_spine_density(cell, min_comp_len = 100):
     """
     calculates the spine density of the dendrite.Therefore, the amount of spines per µm dendrite is calculated.
      Amount of spines is the number of connected_components with spiness = spines.

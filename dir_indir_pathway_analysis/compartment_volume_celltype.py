@@ -81,10 +81,14 @@ if __name__ == '__main__':
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
         if percentile != None:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210928_j0251v3_%s_comp_volume_mcl%i_p%i" % (
-            ct_dict[celltype], min_comp_len, percentile)
+            if low_percentile:
+                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3_%s_comp_volume_mcl%i_p%il" % (
+                ct_dict[celltype], min_comp_len, percentile)
+            else:
+                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3_%s_comp_volume_mcl%i_p%ih" % (
+                    ct_dict[celltype], min_comp_len, percentile)
         else:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210928_j0251v3_%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3_%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
         log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
@@ -208,7 +212,7 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210928_j0251v3__%s_%s_comp_volume_mcl%i" % (
+        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3__%s_%s_comp_volume_mcl%i" % (
         ct_dict[celltype1],ct_dict[celltype2], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -342,7 +346,7 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210928_j0251v3__%s_comp_volume_mcl%i_p%i" % (
+        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3__%s_comp_volume_mcl%i_p%i" % (
         ct_dict[celltype], min_comp_len, percentile)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -466,12 +470,13 @@ if __name__ == '__main__':
     #axon_den_arborization_ct(ssd, celltype=7)
     #axon_den_arborization_ct(ssd, celltype=2, full_cells= True, handpicked=False)
     foldername = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/"
-    percentiles = [10, 25, 50]
+    #percentiles = [10, 25, 50]
+    percentiles = [50]
     for percentile in percentiles:
         axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=percentile, low_percentile=True)
         axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=100 - percentile,
                                  low_percentile=False)
-        p1_filename = "%s/210928_j0251v3_MSN_comp_volume_mcl100_p%i" % (foldername, percentile)
-        p2_filename = "%s/210928_j0251v3_MSN_comp_volume_mcl100_p%i" % (foldername, 100 - percentile)
+        p1_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%il" % (foldername, percentile)
+        p2_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%ih" % (foldername, 100 - percentile)
         compare_compartment_volume_percentiles(celltype=2, percentile=percentile, filename1=p1_filename,
                                   filename2=p2_filename)

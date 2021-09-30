@@ -352,6 +352,8 @@ if __name__ == '__main__':
             os.mkdir(f_name)
         log = initialize_logging('compare compartment volumes between two celltypes', log_dir=f_name + '/logs/')
         log.info("parameters: celltype1 = %s, min_comp_length = %.i, percentile = %i" % (ct_dict[celltype], min_comp_len, percentile))
+        if percentile == 100 - percentile:
+            percentile -= 1
         time_stamps = [time.time()]
         step_idents = ['t-0']
         p1_comp_dict = load_pkl2obj("%s/ct_vol_comp.pkl"% filename1)
@@ -473,9 +475,9 @@ if __name__ == '__main__':
     #percentiles = [10, 25, 50]
     percentiles = [50]
     for percentile in percentiles:
-        axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=percentile, low_percentile=True)
-        axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=100 - percentile,
-                                 low_percentile=False)
+        #axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=percentile, low_percentile=True)
+        #axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=100 - percentile,
+                                 #low_percentile=False)
         p1_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%il" % (foldername, percentile)
         p2_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%ih" % (foldername, 100 - percentile)
         compare_compartment_volume_percentiles(celltype=2, percentile=percentile, filename1=p1_filename,

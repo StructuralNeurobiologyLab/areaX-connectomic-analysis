@@ -1166,7 +1166,7 @@ if __name__ == '__main__':
             percentile -= 1
         ct1_axon_length = np.zeros(len(cellids1))
         ct2_axon_length = np.zeros(len(cellids2))
-        log.info("Step 1/4 Iterate over percentiles %i %s to check min_comp_len" % (ct_dict[celltype], percentile))
+        log.info("Step 1/4 Iterate over percentile %i in %s to check min_comp_len" % (percentile, ct_dict[celltype]))
         for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids1))):
             cell.load_skeleton()
             g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
@@ -1187,7 +1187,7 @@ if __name__ == '__main__':
         time_stamps.append(time.time())
         step_idents.append('iterating over %i percentile of %s cells' % (percentile, ct_dict[celltype]))
 
-        log.info("Step 2/4 Iterate over percentiles %i %s to check min_comp_len" % (ct_dict[celltype], 100 - percentile))
+        log.info("Step 2/4 Iterate over percentiles %i in %s to check min_comp_len" % (100 - percentile, ct_dict[celltype]))
         for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids2))):
             cell.load_skeleton()
             g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
@@ -1458,11 +1458,11 @@ if __name__ == '__main__':
         ct2_2_ct1_syn_dict["avg syn size one cell"] = np.nanmean(ct2_2_ct1_percell_syn_size, axis=1) / \
                                                       ct2_2_ct1_syn_dict["avg amount one cell"]
 
-        write_obj2pkl("%s/%s_%i_2_%i_dict.pkl" % (f_name, ct_dict[celltype], percentile, 100 - percentile, ct1_2_ct2_syn_dict))
+        write_obj2pkl("%s/%s_%i_2_%i_dict.pkl" % (f_name, ct_dict[celltype], percentile, 100 - percentile), ct1_2_ct2_syn_dict)
         ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
         ct1_2_ct2_pd.to_csv("%s/%s_%i_2_%i_dict.csv" % (f_name, ct_dict[celltype], percentile, 100 - percentile))
 
-        write_obj2pkl("%s/%s_%i_2_%i_dict.pkl" % (f_name, ct_dict[celltype], 100 - percentile, percentile, ct2_2_ct1_syn_dict))
+        write_obj2pkl("%s/%s_%i_2_%i_dict.pkl" % (f_name, ct_dict[celltype], 100 - percentile, percentile), ct2_2_ct1_syn_dict)
         ct2_2_ct1_pd = pd.DataFrame(ct2_2_ct1_syn_dict)
         ct2_2_ct1_pd.to_csv("%s/%s_%i_2_%i_dict.csv" % (f_name, ct_dict[celltype], 100 - percentile, percentile))
 
@@ -1498,7 +1498,7 @@ if __name__ == '__main__':
                 else:
                     plt.xlabel("average synapse size [µm²]")
 
-            plt.title("%s from %i to %i in %s" % (key, 100 - percentile, percentile))
+            plt.title("%s from %i to %i in %s" % (key, 100 - percentile, percentile, ct_dict[celltype]))
             plt.savefig("%s/%s_%i_2_%i_%s.png" % (f_name, key, 100 - percentile, percentile, ct_dict[celltype]))
             plt.close()
 
@@ -2287,7 +2287,7 @@ if __name__ == '__main__':
                         #foldername_ct2=ct2_filename)
     percentiles = [10, 25, 50]
     for percentile in percentiles:
-        synapses_between2percentiles(ssd, celltype=2, percentile=percentile)
+        synapses_between2percentiles(ssd, sd_synssv=sd_synssv, celltype=2, percentile=percentile)
 
 
 

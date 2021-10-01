@@ -2286,7 +2286,7 @@ if __name__ == '__main__':
                         #foldername_ct2=ct2_filename)
     percentiles = [10, 25, 50]
     for percentile in percentiles:
-        synapses_between2percentiles(ssd, sd_synssv=sd_synssv, celltype=2, percentile=percentile)
+        #synapses_between2percentiles(ssd, sd_synssv=sd_synssv, celltype=2, percentile=percentile)
         ct1_filename = "%s/211001_j0251v3_syn_conn_MSN_p%i_mcl100_sysi_0.10_st_0.60" % (foldername, percentile)
         compare_connectvity_percentiles(celltype=2, percentile=percentile, foldername_ct1=ct1_filename, foldername_ct2=ct1_filename)
 

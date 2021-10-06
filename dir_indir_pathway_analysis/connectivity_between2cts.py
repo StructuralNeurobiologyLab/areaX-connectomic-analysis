@@ -1748,9 +1748,9 @@ if __name__ == '__main__':
                 "%s/%s_2_%i_%s_dict.pkl" % (foldername_ct1, ct_dict[connected_ct], percentile, ct_dict[celltype]))
         else:
             ct2_syn_dict = load_pkl2obj(
-                "%s/%i_2_%i_%s_dict.pkl" % (foldername_ct2, percentile, 100 - percentile, ct_dict[celltype]))
+                "%s/%s_%i_2_%i_dict.pkl" % (foldername_ct2, ct_dict[celltype], percentile, 100 - percentile))
             ct1_syn_dict = load_pkl2obj(
-                "%s/%i_2_%i_%s_dict.pkl" % (foldername_ct1, 100 - percentile, percentile, ct_dict[celltype]))
+                "%s/%s_%i_2_%i_dict.pkl" % (foldername_ct1, ct_dict[celltype], 100 - percentile, percentile))
         syn_dict_keys = list(ct1_syn_dict.keys())
         log.info("compute statistics for comparison, create violinplot and histogram")
         ranksum_results = pd.DataFrame(columns=syn_dict_keys[1:], index=["stats", "p value"])
@@ -1853,10 +1853,10 @@ if __name__ == '__main__':
         for key in results_for_plotting_comps.keys():
             if "celltype" in key or "compartment" in key:
                 continue
-            sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="celltype", color="black",
+            sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="percentile", color="black",
                           alpha=0.3, dodge=True)
             ax = sns.violinplot(x="compartment", y=key, data=results_for_plotting_comps.reset_index(), inner="box",
-                                palette=colours_pal, hue="celltype")
+                                palette=colours_pal, hue="percentile")
             handles, labels = ax.get_legend_handles_labels()
             plt.legend(handles[0:2], labels[0:2])
             if connected_ct != None:
@@ -1882,7 +1882,7 @@ if __name__ == '__main__':
             plt.savefig(filename)
             plt.close()
             sns.boxplot(x="compartment", y=key, data=results_for_plotting_comps, palette=colours_pal,
-                        hue="celltype")
+                        hue="percentile")
             if connected_ct != None:
                 plt.title('%s, %s to %i/ %i in %s' % (key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
             else:

@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
 
 
-    def synapses_between2cts(ssd, sd_synssv, celltype1, celltype2, full_cells = True, handpicked1 = True, handpicked2 = True, percentile = 0, lower_percentile = False,
+    def synapses_between2cts(ssd, sd_synssv, celltype1, celltype2, full_cells = True, handpicked1 = True, handpicked2 = True, percentile_ct1 = 0, lower_percentile_ct1 = False,
                              min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.6):
         '''
         looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
@@ -37,6 +37,8 @@ if __name__ == '__main__':
     #                      FS=8, LTS=9, NGF=10
         :param full_cells: if True, load preprocessed full cells
         :param handpicked1, handpicked2: if True, load manually selected full cells. Can select for each celltype
+        :param percentile_ct1: if > 0, not all cells of ct1 will be compared but only a specific percentile
+        :param lower_percentile_ct1: if True the percentile is in lower half of cells in specific parameter
         :param min_comp_len: minimum length for axon/dendrite to have to include cell in analysis
         :param min_syn_size: minimum size for synapses
         :param syn_prob_thresh: threshold for synapse probability
@@ -45,7 +47,14 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210923_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+        if percentile_ct1 > 0:
+            if lower_percentile_ct1:
+                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211001_j0251v3_syn_conn_%s_p%il_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+                    ct_dict[celltype1], percentile_ct1, ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
+            else:
+                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211001_j0251v3_syn_conn_%s_p%ih_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+                    ct_dict[celltype1], 100 - percentile_ct1, ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
+        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211011_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
              ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -59,8 +68,17 @@ if __name__ == '__main__':
                 cellids1 = load_pkl2obj(
                     "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype1])
             else:
-                cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype1])
+                if percentile_ct1 > 0:
+                    if lower_percentile_ct1 == True:
+                        cellids1 = load_pkl2obj(
+                            "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_%i_l.pkl" % (ct_dict[celltype1],percentile))
+                    else:
+                        cellids1 = load_pkl2obj(
+                            "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_%i_h.pkl" % (
+                            ct_dict[celltype1], 100 - percentile))
+                else:
+                    cellids1 = load_pkl2obj(
+                        "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype1])
             if handpicked2:
                 cellids2 = load_pkl2obj(
                     "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype2])
@@ -70,6 +88,15 @@ if __name__ == '__main__':
         else:
             cellids1 = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype1]
             cellids2 = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype2]
+
+        if percentile_ct1 == 100 - percentile_ct1:
+            percentile_ct1 -= 1
+
+        if percentile_ct1 > 0:
+            if lower_percentile_ct1 == True:
+                ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % percentile_ct1
+            else:
+                ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % 100 - percentile_ct1
 
         ct1_axon_length = np.zeros(len(cellids1))
         ct2_axon_length = np.zeros(len(cellids2))
@@ -2287,8 +2314,15 @@ if __name__ == '__main__':
     percentiles = [10, 25, 50]
     for percentile in percentiles:
         #synapses_between2percentiles(ssd, sd_synssv=sd_synssv, celltype=2, percentile=percentile)
-        ct1_filename = "%s/211001_j0251v3_syn_conn_MSN_p%i_mcl100_sysi_0.10_st_0.60" % (foldername, percentile)
-        compare_connectvity_percentiles(celltype=2, percentile=percentile, foldername_ct1=ct1_filename, foldername_ct2=ct1_filename)
+        synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, full_cells=True, handpicked1=False, handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=True)
+        synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, full_cells=True, handpicked1=False,
+                             handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=False)
+        synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, full_cells=True, handpicked1=False,
+                             handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=True)
+        synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, full_cells=True, handpicked1=False,
+                             handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=False)
+        #ct1_filename = "%s/211001_j0251v3_syn_conn_MSN_p%i_mcl100_sysi_0.10_st_0.60" % (foldername, percentile)
+        #compare_connectvity_percentiles(celltype=2, percentile=percentile, foldername_ct1=ct1_filename, foldername_ct2=ct1_filename)
 
 
 

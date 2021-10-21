@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 class ResultsForPlotting():
 
      '''
-     this class is a dictionary with different results.
+     this class contains a dictionary with different results.
      '''
 
      def __init__(self, celltype, filename,dictionary):
@@ -24,7 +24,7 @@ class ResultsForPlotting():
      def color_palette(self, key1, key2, color1, color2):
          self.color_palette = {key1: color1, key2: color2}
 
-     def plot_hist(self, key, subcell, cells = True, color = "steelblue", norm_hist = False, bins = None, xlabel = None):
+     def plot_hist(self, key, subcell, cells = True, color = "steelblue", norm_hist = False, bins = None, xlabel = None, celltype2 = None):
          '''
          plots array given with key in histogram plot
          :param key: key of dictionary that should be plottet
@@ -87,10 +87,19 @@ class ResultsForPlotting():
                      plt.xlabel("distance in µm")
                  else:
                      raise ValueError ("unknown key description")
-         plt.title("%s in %s" % (key, self.celltype))
-         if norm_hist:
-             plt.savefig("%s/%s_%s_hist_norm.png" % (self.filename, key, self.celltype))
+         if celltype2 != None:
+             plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
          else:
-            plt.savefig("%s/%s_%s_hist.png" % (self.filename, key, self.celltype))
+            plt.title("%s in %s" % (key, self.celltype))
+         if celltype2 != None:
+             if norm_hist:
+                 plt.savefig("%s/%s_%s2%s_hist_norm.png" % (self.filename, key, celltype2, self.celltype))
+             else:
+                plt.savefig("%s/%s_%s2%s_hist.png" % (self.filename, key, celltype2, self.celltype))
+         else:
+             if norm_hist:
+                 plt.savefig("%s/%s_%s_hist_norm.png" % (self.filename, key, self.celltype))
+             else:
+                plt.savefig("%s/%s_%s_hist.png" % (self.filename, key, self.celltype))
          plt.close()
 

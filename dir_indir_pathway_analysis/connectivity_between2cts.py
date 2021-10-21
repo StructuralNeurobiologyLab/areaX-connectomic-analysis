@@ -17,6 +17,7 @@ if __name__ == '__main__':
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
     from u.arother.bio_analysis.general.analysis_helper import compartment_length_cell
+    from u.arother.bio_analysis.general.result_helper import ResultsForPlotting
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -398,41 +399,16 @@ if __name__ == '__main__':
         ct2_2_ct1_pd = pd.DataFrame(ct2_2_ct1_syn_dict)
         ct2_2_ct1_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
 
+        ct1_2_ct2_resultsdict = ResultsForPlotting(celltype = ct_dict[celltype2], filename = f_name, dictionary = ct1_2_ct2_syn_dict)
+        ct2_2_ct1_resultsdict = ResultsForPlotting(celltype=ct_dict[celltype1], filename=f_name,
+                                                   dictionary=ct1_2_ct2_syn_dict)
+
         #plot parameters as distplot
         for key in ct1_2_ct2_syn_dict.keys():
             if "ids" in key:
                 continue
-            sns.distplot(ct1_2_ct2_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "steelblue"},
-                         kde=False)
-            plt.ylabel("count of cells")
-            if "amount" in key:
-                plt.xlabel("amount of synapses")
-            elif "size" in key:
-                plt.xlabel("average synapse size [µm²]")
-            elif "percentage" in key:
-                plt.xlabel("percentage of synapses")
-            plt.title("%s from %s to %s" % (key, ct_dict[celltype1], ct_dict[celltype2]))
-            plt.savefig("%s/%s_%s_2_%s.png" % (f_name, key, ct_dict[celltype1], ct_dict[celltype2]))
-            plt.close()
-            sns.distplot(ct2_2_ct1_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "steelblue"},
-                         kde=False, bins=10)
-            plt.ylabel("count of cells")
-            if "amount" in key:
-                if "percentage" in key:
-                    plt.xlabel("percentage of synapses")
-                else:
-                    plt.xlabel("amount of synapses")
-            elif "size" in key:
-                if "percentage" in key:
-                    plt.xlabel("percentage of synapse size")
-                else:
-                    plt.xlabel("average synapse size [µm²]")
-
-            plt.title("%s from %s to %s" % (key, ct_dict[celltype2], ct_dict[celltype1]))
-            plt.savefig("%s/%s_%s_2_%s.png" % (f_name, key, ct_dict[celltype2], ct_dict[celltype1]))
-            plt.close()
+            ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct_dict[celltype1])
+            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct_dict[celltype2])
 
         #make violin plots for amount and size (absolute, relative) for different compartments
         x_labels = ["spine head", "spine neck", "shaft", "soma"]

@@ -49,13 +49,14 @@ if __name__ == '__main__':
                    10: "NGF"}
         if percentile_ct1 > 0:
             if lower_percentile_ct1:
-                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211001_j0251v3_syn_conn_%s_p%il_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211021_j0251v3_syn_conn_%s_p%il_%s_mcl%i_sysi_%.2f_st_%.2f" % (
                     ct_dict[celltype1], percentile_ct1, ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
             else:
-                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211001_j0251v3_syn_conn_%s_p%ih_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211021_j0251v3_syn_conn_%s_p%ih_%s_mcl%i_sysi_%.2f_st_%.2f" % (
                     ct_dict[celltype1], 100 - percentile_ct1, ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211011_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
-             ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
+        else:
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211021_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+                ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
         log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
@@ -96,7 +97,7 @@ if __name__ == '__main__':
             if lower_percentile_ct1 == True:
                 ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % percentile_ct1
             else:
-                ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % 100 - percentile_ct1
+                ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % (100 - percentile_ct1)
 
         ct1_axon_length = np.zeros(len(cellids1))
         ct2_axon_length = np.zeros(len(cellids2))

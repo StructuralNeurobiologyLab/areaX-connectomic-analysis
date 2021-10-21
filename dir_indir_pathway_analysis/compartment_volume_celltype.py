@@ -13,6 +13,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
+    from u.arother.bio_analysis.general.result_helper import ResultDict
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -167,7 +168,7 @@ if __name__ == '__main__':
         vol_comp_pd = pd.DataFrame(ct_vol_comp_dict)
         vol_comp_pd.to_csv("%s/ct_vol_comp.csv" % f_name)
 
-
+        ct_vol_comp_dict = ResultDict(celltype = ct_dict[celltype], filename = f_name)
         for key in ct_vol_comp_dict.keys():
             if "ids" in key:
                 continue

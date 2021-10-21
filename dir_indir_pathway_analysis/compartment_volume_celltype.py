@@ -13,7 +13,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
-    from u.arother.bio_analysis.general.result_helper import ResultDict
+    from u.arother.bio_analysis.general.result_helper import ResultsForPlotting
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -83,10 +83,10 @@ if __name__ == '__main__':
                    10: "NGF"}
         if percentile != None:
             if low_percentile:
-                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3_%s_comp_volume_mcl%i_p%il" % (
+                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211021_j0251v3_%s_comp_volume_mcl%i_p%il" % (
                 ct_dict[celltype], min_comp_len, percentile)
             else:
-                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3_%s_comp_volume_mcl%i_p%ih" % (
+                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211021_j0251v3_%s_comp_volume_mcl%i_p%ih" % (
                     ct_dict[celltype], min_comp_len, percentile)
         else:
             f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3_%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
@@ -150,6 +150,8 @@ if __name__ == '__main__':
         axon_vol_perc = axon_vol_ct/ds_vol * 100
         dendrite_vol_perc = dendrite_vol_ct/ds_vol * 100
 
+
+
         if full_cells:
             soma_centres = soma_centres[nonzero_inds]
             distances_between_soma = scipy.spatial.distance.cdist(soma_centres, soma_centres, metric = "euclidean") / 1000
@@ -168,25 +170,15 @@ if __name__ == '__main__':
         vol_comp_pd = pd.DataFrame(ct_vol_comp_dict)
         vol_comp_pd.to_csv("%s/ct_vol_comp.csv" % f_name)
 
-        ct_vol_comp_dict = ResultDict(celltype = ct_dict[celltype], filename = f_name)
+        vol_result_dict = ResultsForPlotting(celltype = ct_dict[celltype], filename = f_name, dictionary = ct_vol_comp_dict)
+
         for key in ct_vol_comp_dict.keys():
             if "ids" in key:
                 continue
-            sns.distplot(ct_vol_comp_dict[key], hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "steelblue"},
-                         kde=False)
-            plt.ylabel("count of cells")
-            if "length" in key:
-                plt.xlabel("pathlength in µm")
-            elif "vol" in key:
-                if "percentage" in key:
-                    plt.xlabel("% of whole dataset")
-                else:
-                    plt.xlabel("volume in µm³")
-            else:
-                plt.xlabel("distance in µm")
-            plt.title("%s" % key)
-            plt.savefig("%s/%s.png" % (f_name, key))
-            plt.close()
+            if "axon" in key:
+                vol_result_dict.plot_hist(key=key, subcell="axon")
+            elif "dendrite" in key:
+                vol_result_dict.plot_hist(key = key, subcell="dendrite")
 
         if full_cells:
             ct_vol_comp_dict["soma centre coords"] = soma_centres
@@ -474,12 +466,11 @@ if __name__ == '__main__':
     #axon_den_arborization_ct(ssd, celltype=2, full_cells= True, handpicked=False)
     foldername = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/"
     #percentiles = [10, 25, 50]
-    percentiles = [50]
+    percentiles = [10]
     for percentile in percentiles:
-        #axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=percentile, low_percentile=True)
+        axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=percentile, low_percentile=True)
         #axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=100 - percentile,
                                  #low_percentile=False)
-        p1_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%il" % (foldername, percentile)
-        p2_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%ih" % (foldername, 100 - percentile)
-        compare_compartment_volume_percentiles(celltype=2, percentile=percentile, filename1=p1_filename,
-                                  filename2=p2_filename)
+        #p1_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%il" % (foldername, percentile)
+        #p2_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%ih" % (foldername, 100 - percentile)
+        #compare_compartment_volume_percentiles(celltype=2, percentile=percentile, filename1=p1_filename, filename2=p2_filename)

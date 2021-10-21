@@ -6,33 +6,47 @@
 #one for single dictionary and one for comparing results from two dictionaries
 
 import seaborn as sns
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
-class ResultDict:
+class ResultsForPlotting():
+
      '''
      this class is a dictionary with different results.
      '''
-     def __init__(self, celltype, filename):
-         if type(self) != dict:
+
+     def __init__(self, celltype, filename,dictionary):
+         if type(dictionary) != dict:
              raise ValueError("must be dictionary")
          self.celltype = celltype
          self.filename = filename
+         self.dictionary = dictionary
 
      def color_palette(self, key1, key2, color1, color2):
          self.color_palette = {key1: color1, key2: color2}
 
-     def plot_hist(self, key, subcell, cells = True, color = "steelblue", norm_hist = False, bins = 10, xlabel = None):
+     def plot_hist(self, key, subcell, cells = True, color = "steelblue", norm_hist = False, bins = None, xlabel = None):
+         '''
+         plots array given with key in histogram plot
+         :param key: key of dictionary that should be plottet
+         :param subcell: compartment or subcellular structure that will be plotted
+         :param cells: True: cells are plotted, False: subcellular structures are plottet
+         :param color: color for plotting
+         :param norm_hist: if true: histogram will be normed
+         :param bins: amount of bins
+         :param xlabel: label of x axis, not needed if clear from key
+         :return:
+         '''
          if norm_hist == False:
-             sns.distplot(self[key],
-                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "color"},
+             sns.distplot(self.dictionary[key],
+                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color},
                           kde=False, bins=bins)
              if cells:
                  plt.ylabel("count of cells")
              else:
                  plt.ylabel("count of %s" % subcell)
          else:
-             sns.distplot(self[key],
-                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "color"},
+             sns.distplot(self.dictionary[key],
+                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color},
                           kde=False, bins=bins)
              if cells:
                  plt.ylabel("fraction of cells")

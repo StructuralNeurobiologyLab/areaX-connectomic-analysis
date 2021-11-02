@@ -1711,7 +1711,7 @@ if __name__ == '__main__':
 
 
     def compare_connectvity_percentiles(celltype, percentile, connected_ct=None, foldername_ct1=None, foldername_ct2=None,
-                            min_comp_len=100):
+                            min_comp_len=100, color1 = "gray", color2 = "darkturquoise"):
         '''
         compares connectivity parameters between two percentiles (percentile, 100 - percentile) within one celltypes or connectivity of another celltype to the two celltypes. Connectivity parameters are calculated in
         synapses_between2cts. Parameters include synapse amount and average synapse size, as well as amount and average synapse size in shaft, soma, spine head and spine neck.
@@ -1721,16 +1721,17 @@ if __name__ == '__main__':
         :param connected_ct: if given, connectivity of this celltype to two others will be compared
         :param foldername_ct1, foldername_ct2: foldernames where parameters of connectivity are stored
         :param min_comp_len: minimum compartment length
+        :param color1, color2: colours for different percentiles in plot
         :return:
         '''
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
         if connected_ct != None:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211001_j0251v3__%s_p%i_%s_syn_con_comp_mcl%i" % (
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211027_j0251v3__%s_p%i_%s_syn_con_comp_mcl%i" % (
                 ct_dict[celltype], percentile, ct_dict[connected_ct], min_comp_len)
         else:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211001_j0251v3__%s_p%i_syn_con_comp_mcl%i" % (
+            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211027_j0251v3__%s_p%i_syn_con_comp_mcl%i" % (
                 ct_dict[celltype], percentile, min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
@@ -1747,9 +1748,9 @@ if __name__ == '__main__':
             percentile -= 1
         if connected_ct != None:
             ct2_syn_dict = load_pkl2obj(
-                "%s/%s_2_%i_%s_dict.pkl" % (foldername_ct2, ct_dict[connected_ct], 100 - percentile, ct_dict[celltype]))
+                "%s/%s_2_%s p%i_dict.pkl" % (foldername_ct2, ct_dict[connected_ct], ct_dict[celltype], 100 - percentile, ))
             ct1_syn_dict = load_pkl2obj(
-                "%s/%s_2_%i_%s_dict.pkl" % (foldername_ct1, ct_dict[connected_ct], percentile, ct_dict[celltype]))
+                "%s/%s_2_%s p%i_dict.pkl" % (foldername_ct1, ct_dict[connected_ct], ct_dict[celltype], percentile))
         else:
             ct2_syn_dict = load_pkl2obj(
                 "%s/%s_%i_2_%i_dict.pkl" % (foldername_ct2, ct_dict[celltype], percentile, 100 - percentile))
@@ -1758,7 +1759,7 @@ if __name__ == '__main__':
         syn_dict_keys = list(ct1_syn_dict.keys())
         log.info("compute statistics for comparison, create violinplot and histogram")
         ranksum_results = pd.DataFrame(columns=syn_dict_keys[1:], index=["stats", "p value"])
-        colours_pal = {percentile: "gray", 100 - percentile: "darkturquoise"}
+        colours_pal = {percentile: color1, 100 - percentile: color2}
 
         # plot distribution of compartments togehter
         len_ct1 = len(ct1_syn_dict["amount spine head syn"])
@@ -1969,10 +1970,10 @@ if __name__ == '__main__':
                 plt.savefig(filename)
                 plt.close()
             sns.distplot(ct1_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color1},
                          kde=False, label=percentile, bins=10)
             sns.distplot(ct2_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "darkturquoise"},
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color2},
                          kde=False, label=100 - percentile, bins=10)
             plt.legend()
             if connected_ct != None:
@@ -1998,10 +1999,10 @@ if __name__ == '__main__':
             plt.savefig(filename)
             plt.close()
             sns.distplot(ct1_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color1},
                          kde=False, label=percentile, bins=10, norm_hist=True)
             sns.distplot(ct2_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color2},
                          kde=False, label=100 - percentile, bins=10, norm_hist=True)
             plt.legend()
             if connected_ct != None:
@@ -2035,9 +2036,9 @@ if __name__ == '__main__':
         # also compare outgoing connections from celltype
         if connected_ct != None:
             ct2_syn_dict = load_pkl2obj(
-                "%s/%i_%s_2_%s_dict.pkl" % (foldername_ct2, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
+                "%s/%s p%i_2_%s_dict.pkl" % (foldername_ct2, ct_dict[celltype], 100 - percentile, ct_dict[connected_ct]))
             ct1_syn_dict = load_pkl2obj(
-                "%s/%i_%s_2_%s_dict.pkl" % (foldername_ct1, percentile, ct_dict[celltype], ct_dict[connected_ct]))
+                "%s/%s p%i_2_%s_dict.pkl" % (foldername_ct1, ct_dict[celltype], percentile, ct_dict[connected_ct]))
             len_ct1 = len(ct1_syn_dict["amount spine head syn"])
             len_ct2 = len(ct2_syn_dict["amount spine head syn"])
             sum_len = len_ct1 + len_ct2
@@ -2132,10 +2133,10 @@ if __name__ == '__main__':
                 if "celltype" in key or "compartment" in key:
                     continue
 
-                sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="celltype", color="black",
+                sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="percentile", color="black",
                               alpha=0.3, dodge=True)
                 ax = sns.violinplot(x="compartment", y=key, data=results_for_plotting_comps.reset_index(), inner="box",
-                                    palette=colours_pal, hue="celltype")
+                                    palette=colours_pal, hue="percentile")
                 handles, labels = ax.get_legend_handles_labels()
                 plt.legend(handles[0:2], labels[0:2])
                 plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
@@ -2149,12 +2150,12 @@ if __name__ == '__main__':
                         plt.ylabel("percentage of synapse size")
                     else:
                         plt.ylabel("average synapse size [µm²]")
-                filename = ("%s/%s_comps_violin_%s_%i_%i_%s_2_%s_outgoing.png" % (
+                filename = ("%s/%s_comps_violin_%i_%i_%s_2_%s_outgoing.png" % (
                     f_name, key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
                 plt.savefig(filename)
                 plt.close()
                 sns.boxplot(x="compartment", y=key, data=results_for_plotting_comps, palette=colours_pal,
-                            hue="celltype")
+                            hue="percentile")
                 plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
                 if "amount" in key:
                     if "percentage" in key:
@@ -2165,7 +2166,7 @@ if __name__ == '__main__':
                     if "percentage" in key:
                         plt.ylabel("percentage of synapse size")
                     else:
-                        plt.ylabel("average synapse size [µm²]")
+                        plt.ylabel("average celltypesynapse size [µm²]")
                 filename = ("%s/%s_comps_box_%i_%i_%s_2_%s.png" % (
                     f_name, key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
                 plt.savefig(filename)
@@ -2202,7 +2203,7 @@ if __name__ == '__main__':
                     plt.savefig(filename)
                     plt.close()
                     sns.boxplot(data=results_for_plotting, palette=colours_pal)
-                    plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[connected_ct]))
+                    plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
                     if "amount" in key:
                         if "percentage" in key:
                             plt.ylabel("percentage of synapses")
@@ -2218,10 +2219,10 @@ if __name__ == '__main__':
                     plt.savefig(filename)
                     plt.close()
                 sns.distplot(ct1_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
+                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color1},
                              kde=False, label=percentile, bins=10)
                 sns.distplot(ct2_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
+                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color2},
                              kde=False, label=100 - percentile, bins=10)
                 plt.legend()
                 plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
@@ -2241,10 +2242,10 @@ if __name__ == '__main__':
                 plt.savefig(filename)
                 plt.close()
                 sns.distplot(ct1_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
+                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color1},
                              kde=False, label=percentile, bins=10, norm_hist=True)
                 sns.distplot(ct2_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
+                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color2},
                              kde=False, label=100 - percentile, bins=10, norm_hist=True)
                 plt.legend()
                 plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
@@ -2291,15 +2292,21 @@ if __name__ == '__main__':
     percentiles = [10, 25, 50]
     for percentile in percentiles:
         #synapses_between2percentiles(ssd, sd_synssv=sd_synssv, celltype=2, percentile=percentile)
-        synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, full_cells=True, handpicked1=False, handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=True)
-        synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, full_cells=True, handpicked1=False,
-                             handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=False)
-        synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, full_cells=True, handpicked1=False,
-                             handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=True)
-        synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, full_cells=True, handpicked1=False,
-                             handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=False)
-        #ct1_filename = "%s/211001_j0251v3_syn_conn_MSN_p%i_mcl100_sysi_0.10_st_0.60" % (foldername, percentile)
-        #compare_connectvity_percentiles(celltype=2, percentile=percentile, foldername_ct1=ct1_filename, foldername_ct2=ct1_filename)
+        #synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, full_cells=True, handpicked1=False, handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=True)
+        #synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, full_cells=True, handpicked1=False,
+         #                    handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=False)
+        #synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, full_cells=True, handpicked1=False,
+         #                    handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=True)
+        #synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, full_cells=True, handpicked1=False,
+        #                     handpicked2=True, percentile_ct1=percentile, lower_percentile_ct1=False)
+        ct1GPe_filename = "%s/211021_j0251v3_syn_conn_MSN_p%il_GPe_mcl100_sysi_0.10_st_0.60" % (foldername, percentile)
+        ct2GPe_filename = "%s/211021_j0251v3_syn_conn_MSN_p%ih_GPe_mcl100_sysi_0.10_st_0.60" % (foldername, 100 - percentile)
+        compare_connectvity_percentiles(celltype=2, connected_ct=6, percentile=percentile, foldername_ct1=ct1GPe_filename, foldername_ct2=ct2GPe_filename)
+        ct1GPi_filename = "%s/211021_j0251v3_syn_conn_MSN_p%il_GPi_mcl100_sysi_0.10_st_0.60" % (foldername, percentile)
+        ct2GPi_filename = "%s/211021_j0251v3_syn_conn_MSN_p%ih_GPi_mcl100_sysi_0.10_st_0.60" % (
+        foldername, 100 - percentile)
+        compare_connectvity_percentiles(celltype=2, connected_ct=7, percentile=percentile, foldername_ct1=ct1GPi_filename,
+                                        foldername_ct2=ct2GPi_filename)
 
 
 

@@ -70,13 +70,13 @@ if __name__ == '__main__':
             perc_high_inds = np.where(spine_densities > perc_high)[0]
             cellids_low = cellids[perc_low_inds]
             cellids_high = cellids[perc_high_inds]
-            write_obj2pkl("%s/full_%3s_arr_%i_l.pkl" % (f_name, ct_dict[celltype], percentile), cellids_low)
-            write_obj2pkl("%s/full_%3s_arr_%i_h.pkl" % (f_name, ct_dict[celltype], 100 - percentile), cellids_high)
+            write_obj2pkl("%s/full_%3s_arr_%i_l_%i.pkl" % (f_name, ct_dict[celltype], percentile, min_comp_len), cellids_low)
+            write_obj2pkl("%s/full_%3s_arr_%i_h_%i.pkl" % (f_name, ct_dict[celltype], 100 - percentile, min_comp_len), cellids_high)
             spine_amount_dict_low = {cellid: spine_amount for cellid, spine_amount in zip(cellids_low, spine_densities[perc_low_inds])}
             spine_amount_dict_high = {cellid: spine_amount for cellid, spine_amount in
                                      zip(cellids_high, spine_densities[perc_high_inds])}
-            write_obj2pkl("%s/full_%3s_spine_dict_%i_l.pkl" % (f_name, ct_dict[celltype], percentile), spine_amount_dict_low)
-            write_obj2pkl("%s/full_%3s_spine_dict_%i_h.pkl" % (f_name, ct_dict[celltype], 100 - percentile),
+            write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (f_name, ct_dict[celltype], percentile, min_comp_len), spine_amount_dict_low)
+            write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (f_name, ct_dict[celltype], 100 - percentile, min_comp_len),
                           spine_amount_dict_high)
 
         perctime = time.time() - spinetime
@@ -87,7 +87,9 @@ if __name__ == '__main__':
 
         raise ValueError
 
-    saving_spiness_percentiles(ssd, celltype=2, min_comp_len=100, percentiles=[10, 25, 50])
+    comp_lengths = [100, 200, 500, 1000]
+    for comp_length in comp_lengths:
+        saving_spiness_percentiles(ssd, celltype=2, min_comp_len=comp_length, percentiles=[10, 25, 50])
 
 
 

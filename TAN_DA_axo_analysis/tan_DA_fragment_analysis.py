@@ -15,6 +15,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
+    from u.arother.bio_analysis.general.analysis_helper import get_comp_radii
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -146,13 +147,13 @@ if __name__ == '__main__':
             if full_cells:
                 non_axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 1)[0]
                 axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
-                axon_radii = cell.skeleton["diameters"][axon_inds] * 2 * cell.scaling[0] / 1000 #in µm
+                axon_radii = get_comp_radii(cell, axon_inds)
                 g = cell.weighted_graph(add_node_attr=('axoness_avg10000', ))
                 axon_graph = g.copy()
                 axon_graph.remove_nodes_from(non_axon_inds)
             else:
                 axon_graph = cell.weighted_graph(add_node_attr=('axoness_avg10000', ))
-                axon_radii = cell.skeleton["diameters"] * 2 * cell.scaling[0] / 1000 #in µm
+                axon_radii = get_comp_radii(cell)
             axon_length = axon_graph.size(weight="weight") / 1000  # in µm
             if axon_length < min_axon_len:
                 continue

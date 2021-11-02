@@ -15,7 +15,7 @@ from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 
 
-def compartment_length_cell(sso, compartment, cell_graph):
+def get_compartment_length(sso, compartment, cell_graph):
     """
             calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
             :param compartment: 0 = dendrite, 1 = axon, 2 = soma
@@ -40,17 +40,99 @@ def get_spine_density(cell, min_comp_len = 100):
     """
     cell.load_skeleton()
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-    axon_length = compartment_length_cell(cell, compartment = 1, cell_graph = g)
+    axon_length = get_compartment_length(cell, compartment = 1, cell_graph = g)
     if axon_length < min_comp_len:
         return 0
-    dendrite_length = compartment_length_cell(cell, compartment = 0, cell_graph = g)
+    dendrite_length = get_compartment_length(cell, compartment = 0, cell_graph = g)
     if dendrite_length < min_comp_len:
         return 0
     spine_shaftinds = np.nonzero(cell.skeleton["spiness"] == 0)[0]
-    spine_otherinds = np.nonzero(cell.skeleton["spiness"] == 3)[0]
+    spine_otherinds = np.nonzero(cell.skeleton["spiness"] == 3)[0]cell.skeleton["diameters"] * 2 * cell.scaling[0] / 1000 #in µm
     nonspine_inds = np.hstack([spine_shaftinds, spine_otherinds])
     spine_graph = g.copy()
     spine_graph.remove_nodes_from(nonspine_inds)
     spine_amount = len(list(nx.connected_component_subgraphs(spine_graph)))
     spine_density = spine_amount/dendrite_length
     return spine_density
+
+def get_comparment_radii(cell, comp_inds):
+    """
+    get radii from compartment graph of one cell
+    :param comp_inds: indicies of compartment
+    :return: comp_radii as array
+    """
+    if comp_inds:
+        comp_radii = cell.skeleton["diameters"][comp_inds] * 2 * cell.scaling[0] / 1000 #in µm
+    else:
+        comp_radii = cell.skeleton["diameters"]* 2 * cell.scaling[0] / 1000  # in µm
+    return comp_radii
+
+def get_compartment_bbvolume(comp_nodes):
+    """
+    calculates the bounding box volume of a given compartment
+    :param comp_nodes: nodes belonging to a specific compartment
+    :return: compartment volume as µm³
+    """
+    min_x = np.min(comp_nodes[:, 0])
+    max_x = np.max(comp_nodes[:, 0])
+    min_y = np.min(comp_nodes[:, 1])
+    max_y = np.max(comp_nodes[:, 1])
+    min_z = np.min(comp_nodes[:, 2])
+    max_z = np.max(comp_nodes[:, 2])
+    comp_volume = (max_x - min_x) * (max_y - min_y) * (max_z - min_z) * 10 ** (-9)  # in µm
+    return comp_volume
+
+def get_compartment_tortuosity_complete(comp_len, comp_nodes):
+    """
+    calculates tortuosity as ratio of pathlength vs bounding box length to the power of 2
+    :param comp_len: pathlenght of compartment
+    :param comp_nodes: compartment nodes
+    :return: tortuosity
+    """
+    min_x = np.min(comp_nodes[:, 0])
+    max_x = np.max(comp_nodes[:, 0])
+    min_y = np.min(comp_nodes[:, 1])
+    max_y = np.max(comp_nodes[:, 1])
+    min_z = np.min(comp_nodes[:, 2])
+    max_z = np.max(comp_nodes[:, 2])
+    min = np.array([min_x, min_y, min_z])
+    max = np.array([max_x, max_y, max_z])
+    diagonal = np.linalg.norm(max - min)/ 1000 #in µm
+    tortuosity = (comp_len/diagonal)**2
+    return tortuosity
+
+def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000, n_radius = 25):
+    """
+    calculates tortuosity as average of tortuosity in different samples of the compartment. Torutosity is the quadrat of the
+    pathlength vs the bounding box diagonal
+    :param comp_graph: compartment graph
+    :param comp_nodes: compartment nodes in physical scale
+    :param n_samples: amount of samples drawn
+    :param n_length: length of sample in µm
+    :return: averaged tortuosity
+    """
+    kdtree = scipy.spatial.cKDTree(comp_nodes)
+    tortuosities = np.empty(n_samples)
+    for i in range(n_samples):
+        random_node = np.random.choice(comp_nodes)
+        sample_ids = kdtree.query_ball_point(random_node, n_radius)
+        sample_graph = comp_graph.subgraph(sample_ids)
+        sample_nodes = comp_nodes[sample_ids]
+        sample_length = sample_graph.size(weight="weight") / 1000  # in µm
+        min_x = np.min(sample_nodes[:, 0])
+        max_x = np.max(sample_nodes[:, 0])
+        min_y = np.min(sample_nodes[:, 1])
+        max_y = np.max(sample_nodes[:, 1])
+        min_z = np.min(sample_nodes[:, 2])
+        max_z = np.max(sample_nodes[:, 2])
+        min = np.array([min_x, min_y, min_z])
+        max = np.array([max_x, max_y, max_z])
+        sample_diagonal = np.linalg.norm(max - min) / 1000  # in µm
+        sample_tortuosity = (sample_length/ sample_diagonal) ** 2
+        tortuosities[i] = sample_tortuosity
+    avg_tortuosity = np.mean(tortuosities)
+    return avg_tortuosity
+
+
+
+

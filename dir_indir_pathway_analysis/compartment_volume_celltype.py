@@ -14,6 +14,8 @@ if __name__ == '__main__':
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
     from u.arother.bio_analysis.general.result_helper import ResultsForPlotting
+    from u.arother.bio_analysis.general.analysis_helper import get_compartment_length, get_compartment_bbvolume, \
+        get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -27,22 +29,17 @@ if __name__ == '__main__':
         :param min_comp_len: minimum compartment length, if not return 0
         :return: comp_len, comp_volume in µm³
         """
-        non_comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] != compartment)[0]
-        comp_graph = cell_graph.copy()
-        comp_graph.remove_nodes_from(non_comp_inds)
-        comp_length = comp_graph.size(weight="weight") / 1000  # in µm
+        comp_length = get_compartment_length(sso, compartment, cell_graph)
         if comp_length < min_comp_len:
             return 0, 0
         comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] == compartment)[0]
         comp_nodes = sso.skeleton["nodes"][comp_inds] * sso.scaling
-        min_x = np.min(comp_nodes[:,0])
-        max_x = np.max(comp_nodes[:, 0])
-        min_y = np.min(comp_nodes[:, 1])
-        max_y = np.max(comp_nodes[:, 1])
-        min_z = np.min(comp_nodes[:, 2])
-        max_z = np.max(comp_nodes[:, 2])
-        comp_volume = (max_x - min_x) * (max_y - min_y) * (max_z - min_z) * 10**(-9) #in µm
-        return comp_length, comp_volume
+        comp_volume = get_compartment_bbvolume(comp_nodes)
+        comp_radii = get_compartment_radii(sso, comp_inds)
+        median_comp_radius = np.median(comp_radii)
+        tortuosity_complete = get_compartment_tortuosity_complete(comp_length, comp_nodes)
+        tortosity_sampled = get_compartment_tortuosity_sampled(cell_graph, comp_nodes)
+        return comp_length, comp_volume, median_comp_radius, tortuosity_complete, tortosity_sampled
 
     def axon_dendritic_arborization_cell(sso, min_comp_len = 100):
         '''
@@ -54,14 +51,15 @@ if __name__ == '__main__':
         '''
         sso.load_skeleton()
         g = sso.weighted_graph(add_node_attr=('axoness_avg10000',))
-        axon_length, axon_volume = comp_aroborization(sso, compartment=1, cell_graph=g, min_comp_len = min_comp_len)
+        axon_length, axon_volume, ax_median_radius, ax_tortuosity_complete, ax_tortuosity_sampled = comp_aroborization(sso, compartment=1, cell_graph=g, min_comp_len = min_comp_len)
         if axon_length == 0:
             return 0,0, 0, 0
-        dendrite_length, dendrite_volume = comp_aroborization(sso, compartment=0, cell_graph=g,
+        dendrite_length, dendrite_volume, dendrite_median_radius, dendrite_tortuosity_complete, dendrite_tortuosity_sampled = comp_aroborization(sso, compartment=0, cell_graph=g,
                                                                               min_comp_len=min_comp_len)
         if dendrite_length == 0:
             return 0, 0, 0, 0
-        return axon_length, axon_volume, dendrite_length, dendrite_volume
+        return axon_length, axon_volume, dendrite_length, dendrite_volume, ax_median_radius, dendrite_median_radius, \
+               ax_tortuosity_complete, dendrite_tortuosity_complete, ax_tortuosity_sampled, dendrite_tortuosity_sampled
 
     def axon_den_arborization_ct(ssd, celltype, min_comp_len = 100, full_cells = True, handpicked = True, percentile = 0, low_percentile = False):
         '''

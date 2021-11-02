@@ -47,7 +47,8 @@ def get_spine_density(cell, min_comp_len = 100):
     if dendrite_length < min_comp_len:
         return 0
     spine_shaftinds = np.nonzero(cell.skeleton["spiness"] == 0)[0]
-    spine_otherinds = np.nonzero(cell.skeleton["spiness"] == 3)[0]cell.skeleton["diameters"] * 2 * cell.scaling[0] / 1000 #in µm
+    spine_otherinds = np.nonzero(cell.skeleton["spiness"] == 3)[0]
+    cell.skeleton["diameters"] * 2 * cell.scaling[0] / 1000 #in µm
     nonspine_inds = np.hstack([spine_shaftinds, spine_otherinds])
     spine_graph = g.copy()
     spine_graph.remove_nodes_from(nonspine_inds)

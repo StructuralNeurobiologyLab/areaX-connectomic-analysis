@@ -7,6 +7,8 @@
 
 import seaborn as sns
 import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
 
 class ResultsForPlotting():
     """
@@ -25,44 +27,46 @@ class ResultsForPlotting():
         specifies the label for x or y-axis based on the key and subcellular compartment.
         :param key: parameter as key in dictionary
         :param subcell: subcellular compartment
-        :return: None
+        :return: param_label
         """
         if "density" in key:
             if "amount" in key:
-                self.param_label = "%s density per µm" % subcell
+                param_label = "%s density per µm" % subcell
             elif "volume" in key:
-                self.param_label = "%s volume density [µm³/µm]" % subcell
+                param_label = "%s volume density [µm³/µm]" % subcell
             elif "size" in key and subcell == "synapse":
-                self.param_label = "%s size density [µm²/µm]" % subcell
+                param_label = "%s size density [µm²/µm]" % subcell
             elif "length" in key:
-                self.param_label = "%s length density [µm/µm]" % subcell
+                param_label = "%s length density [µm/µm]" % subcell
         else:
             if "amount" in key:
                 if "percentage" in key:
-                    self.param_label = "percentage of %ss" % subcell
+                    param_label = "percentage of %ss" % subcell
                 else:
-                    self.param_label = "amount of %ss" % subcell
+                    param_label = "amount of %ss" % subcell
             elif "size" in key:
                 if "percentage" in key:
-                    self.param_label = "percentage of %s size" % subcell
+                    param_label = "percentage of %s size" % subcell
                 else:
                     if subcell == "synapse":
-                        self.param_label = "average %s size [µm²]" % subcell
+                        param_label = "average %s size [µm²]" % subcell
             elif "length" in key:
                 plt.xlabel("pathlength in µm")
             elif "vol" in key:
                 if "percentage" in key:
-                    self.param_label = "% of whole dataset"
+                    param_label = "% of whole dataset"
                 else:
-                    self.param_label = " %s volume in µm³" % subcell
+                    param_label = " %s volume in µm³" % subcell
             elif "distance" in key:
-                self.param_label = "distance in µm"
+                param_label = "distance in µm"
             elif "median radius" in key:
-                self.param_label = "median radius in µm"
+                param_label = "median radius in µm"
             elif "tortuosity" in key:
-                self.param_label = "%s tortuosity" % subcell
+                param_label = "%s tortuosity" % subcell
             else:
                 raise ValueError("unknown key description")
+                param_label = 0
+            return param_label
 
     def plot_hist(self, key, subcell, cells = True, color = "steelblue", norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False):
         """
@@ -131,9 +135,9 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         self.dictionary2 = dictionary2
         self.color1 = color1
         self.color2 = color2
-
-    def color_palette(self, key1, key2):
-        self.color_palette = {key1: self.color1, key2: self.color2}
+        self.max_length_df = np.max(np.array(
+            [len(self.dictionary1[self.dictionary1.keys()[0]]), len(self.dictionary1[self.dictionary1.keys()[0]])]))
+        self.color_palette = {celltype1: color1, celltype2: color2}
 
     def plot_hist_comparison(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, conn_celltype = None, outgoing = False):
         """
@@ -196,6 +200,72 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         plt.close()
 
 
+    def result_df_perparam(self, key):
+        """
+        creates pd.Dataframe per parameter for easier plotting
+        :param key: parameter to be compared as key in dictionary
+        :return: result_df
+        """
 
+        results_for_plotting = pd.DataFrame(columns=[self.celltype1, self.celltype2], index=range(self.max_length_df))
+        results_for_plotting.loc[0:len(self.dictionary1[key]) - 1, self.celltype1] = self.dictionary1[key]
+        results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, self.celltype2] = self.dictionary1[key]
+        return results_for_plotting
+
+    def plot_violin(self, key, result_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
+        """
+        makes a violinplot of a specific parameter that is compared within two dictionaries.
+        :param key: parameter that is compared
+        :param result_df: dataframe containing results
+        :param subcell: subcellular compartment
+        :param stripplot: if true then stripplot will be overlayed
+        :param conn_celltype: if connectivity to third celltype tested
+        :param outgoing: if True, compared celltypes are presynaptic
+        :return: None
+        """
+        sns.violinplot(data=result_df, inner="box", palette=self.color_palette)
+        if stripplot:
+            sns.stripplot(data=result_df, color="black", alpha=0.2)
+        plt.ylabel(self.param_label(key, subcell))
+        if conn_celltype:
+            if outgoing:
+                plt.title("%s in %s, %s to%s" % (key, self.celltype1, self.celltype2, conn_celltype))
+                plt.savefig(
+                    "%s/%s_%s_%s_2_%s_violin.png" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+            else:
+                plt.title("%s in %s to %s, %s" % (key, conn_celltype, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_2_%s_%s_violin.png" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+        else:
+            plt.title("%s in %s, %s" % (key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_violin.png" % (self.filename, key, self.celltype1, self.celltype2))
+        plt.close()
+
+    def plot_box(self, key, result_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
+        """
+        makes a violinplot of a specific parameter that is compared within two dictionaries.
+        :param key: parameter that is compared
+        :param result_df: dataframe containing results
+        :param subcell: subcellular compartment
+        :param stripplot: if true then stripplot will be overlayed
+        :param conn_celltype: if connectivity to third celltype tested
+        :param outgoing: if True, compared celltypes are presynaptic
+        :return: None
+        """
+        sns.boxplot(data=result_df, palette=self.color_palette)
+        if stripplot:
+            sns.stripplot(data=result_df, color="black", alpha=0.2)
+        plt.ylabel(self.param_label(key, subcell))
+        if conn_celltype:
+            if outgoing:
+                plt.title("%s in %s, %s to%s" % (key, self.celltype1, self.celltype2, conn_celltype))
+                plt.savefig(
+                    "%s/%s_%s_%s_2_%s_box.png" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+            else:
+                plt.title("%s in %s to %s, %s" % (key, conn_celltype, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_2_%s_%s_box.png" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+        else:
+            plt.title("%s in %s, %s" % (key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_box.png" % (self.filename, key, self.celltype1, self.celltype2))
+        plt.close()
 
 

@@ -60,7 +60,7 @@ def get_comparment_radii(cell, comp_inds):
     """
     get radii from compartment graph of one cell
     :param comp_inds: indicies of compartment
-    :return: comp_radii as array
+    :return: comp_radii as array in µm
     """
     if comp_inds:
         comp_radii = cell.skeleton["diameters"][comp_inds] * 2 * cell.scaling[0] / 1000 #in µm

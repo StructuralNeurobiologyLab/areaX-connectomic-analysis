@@ -85,6 +85,10 @@ class ResultsForPlotting():
                          plt.xlabel(" %s volume in µm³" % subcell)
                  elif "distance" in key:
                      plt.xlabel("distance in µm")
+                 elif "median radius" in key:
+                     plt.xlabel("median radius in µm")
+                 elif "tortuosity" in key:
+                     plt.xlabel("%s tortuosity" % subcell)
                  else:
                      raise ValueError ("unknown key description")
          if celltype2 != None:

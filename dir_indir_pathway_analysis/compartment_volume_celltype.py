@@ -58,8 +58,9 @@ if __name__ == '__main__':
                                                                               min_comp_len=min_comp_len)
         if dendrite_length == 0:
             return 0, 0, 0, 0
-        return axon_length, axon_volume, dendrite_length, dendrite_volume, ax_median_radius, dendrite_median_radius, \
-               ax_tortuosity_complete, dendrite_tortuosity_complete, ax_tortuosity_sampled, dendrite_tortuosity_sampled
+        ax_dict = {"length": axon_length, "volume": axon_volume, "median radius": ax_median_radius, "tortuosity complete": ax_tortuosity_complete, "tortuosity sampled": ax_tortuosity_sampled}
+        den_dict = {"length": dendrite_length, "volume": dendrite_volume, "median radius": dendrite_median_radius, "tortuosity complete": dendrite_tortuosity_complete, "tortuosity sampled": dendrite_tortuosity_sampled}
+        return ax_dict, den_dict
 
     def axon_den_arborization_ct(ssd, celltype, min_comp_len = 100, full_cells = True, handpicked = True, percentile = 0, low_percentile = False):
         '''
@@ -118,16 +119,28 @@ if __name__ == '__main__':
         dendrite_length_ct = np.zeros(len(cellids))
         axon_vol_ct = np.zeros(len(cellids))
         dendrite_vol_ct = np.zeros(len(cellids))
+        axon_med_radius_ct = np.zeros(len(cellids))
+        dendrite_med_radius_ct = np.zeros(len(cellids))
+        axon_tortuosity_complete_ct = np.zeros(len(cellids))
+        dendrite_tortuosity_complete_ct = np.zeros(len(cellids))
+        axon_tortuosity_sampled_ct = np.zeros(len(cellids))
+        dendrite_tortuosity_sampled_ct = np.zeros(len(cellids))
         if full_cells:
             soma_centres = np.zeros((len(cellids), 3))
         for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
-            axon_length, axon_volume, dendrite_length, dendrite_volume = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len)
-            if axon_length == 0:
+            axon_dict, dendrite_dict = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len)
+            if axon_dict["length"] == 0:
                 continue
-            axon_length_ct[i] = axon_length
-            dendrite_length_ct[i] = dendrite_length
-            axon_vol_ct[i] = axon_volume
-            dendrite_vol_ct[i] = dendrite_volume
+            axon_length_ct[i] = axon_dict["length"]
+            dendrite_length_ct[i] = dendrite_dict["length"]
+            axon_vol_ct[i] = axon_dict["volume"]
+            dendrite_vol_ct[i] = dendrite_dict["volume"]
+            axon_med_radius_ct[i] = axon_dict["median radius"]
+            dendrite_med_radius_ct[i] = dendrite_dict["median radius"]
+            axon_tortuosity_complete_ct[i] = axon_dict["tortuosity complete"]
+            dendrite_tortuosity_complete_ct[i] = dendrite_dict["tortuosity complete"]
+            axon_tortuosity_sampled_ct[i] = axon_dict["tortuosity sampled"]
+            dendrite_tortuosity_sampled_ct[i] = dendrite_dict["tortuosity sampled"]
             if full_cells:
                 soma_centres[i] = soma_centre_dict[cell.id]
 
@@ -142,6 +155,12 @@ if __name__ == '__main__':
         dendrite_length_ct = dendrite_length_ct[nonzero_inds]
         axon_vol_ct = axon_vol_ct[nonzero_inds]
         dendrite_vol_ct = dendrite_vol_ct[nonzero_inds]
+        axon_med_radius_ct = axon_med_radius_ct[nonzero_inds]
+        dendrite_med_radius_ct = dendrite_med_radius_ct[nonzero_inds]
+        axon_tortuosity_complete_ct = axon_tortuosity_complete_ct[nonzero_inds]
+        dendrite_tortuosity_complete_ct = dendrite_tortuosity_complete_ct[nonzero_inds]
+        axon_tortuosity_sampled_ct = axon_tortuosity_sampled_ct[nonzero_inds]
+        dendrite_tortuosity_sampled_ct = dendrite_tortuosity_sampled_ct[nonzero_inds]
         cellids = cellids[nonzero_inds]
         ds_size = [256, 256, 394] #size of whole dataset
         ds_vol = np.prod(ds_size)
@@ -158,13 +177,19 @@ if __name__ == '__main__':
             ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
                                 "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct,
                                 "axon volume percentage": axon_vol_perc, "dendrite volume percentage": dendrite_vol_perc,
-                                "mean soma distance": avg_soma_distance_per_cell}
+                                "mean soma distance": avg_soma_distance_per_cell, "axon median radius": axon_med_radius_ct,
+                                "dendrite median radius": dendrite_med_radius_ct, "axon tortuosity complete": axon_tortuosity_complete_ct,
+                                "dendrite tortuosity complete": dendrite_tortuosity_complete_ct, "axon tortuosity sampled": axon_tortuosity_sampled_ct,
+                                "dendrite tortuosity sampled": dendrite_tortuosity_sampled_ct}
         else:
             ct_vol_comp_dict = {"cell ids": cellids, "axon length": axon_length_ct,
                                 "dendrite length": dendrite_length_ct,
                                 "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct,
                                 "axon volume percentage": axon_vol_perc,
-                                "dendrite volume percentage": dendrite_vol_perc}
+                                "dendrite volume percentage": dendrite_vol_perc, "axon median radius": axon_med_radius_ct,
+                                "dendrite median radius": dendrite_med_radius_ct, "axon tortuosity complete": axon_tortuosity_complete_ct,
+                                "dendrite tortuosity complete": dendrite_tortuosity_complete_ct, "axon tortuosity sampled": axon_tortuosity_sampled_ct,
+                                "dendrite tortuosity sampled": dendrite_tortuosity_sampled_ct}
         vol_comp_pd = pd.DataFrame(ct_vol_comp_dict)
         vol_comp_pd.to_csv("%s/ct_vol_comp.csv" % f_name)
 

@@ -31,7 +31,7 @@ if __name__ == '__main__':
         looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
         the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic
         synapses. Uses cached synapse properties. Uses compartment_length per cell to ignore cells with not enough axon/dendrite
-        spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+
         :param ssd: super-segmentation dataset
         :param sd_synssv: segmentation dataset for synapses.
         :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
@@ -84,6 +84,7 @@ if __name__ == '__main__':
                 raise ValueError("percentiles can only be used on preprocessed cellids")
             cellids1 = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype1]
             cellids2 = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype2]
+
 
         ct1_axon_length = np.zeros(len(cellids1))
         ct2_axon_length = np.zeros(len(cellids2))
@@ -188,22 +189,21 @@ if __name__ == '__main__':
         step_idents.append('preprocessing synapses')
 
         log.info("Step 3b: iterate over synapses to get synaptic connectivity parameters")
-        ct2_2_ct1_syn_dict = {"cellids": cellids1, "syn amount": np.zeros(len(cellids1)), "sum syn size": np.zeros(len(cellids1)),
-                        "amount shaft syn": np.zeros(len(cellids1)), "sum size shaft syn": np.zeros(len(cellids1)),
-                              "amount spine head syn": np.zeros(len(cellids1)),
-                              "sum size spine head syn": np.zeros(len(cellids1)),
-                              "amount soma syn": np.zeros(len(cellids1)), "sum size soma syn": np.zeros(len(cellids1)),
-                             "amount spine neck syn": np.zeros(len(cellids1)),
-                              "sum size spine neck syn": np.zeros(len(cellids1))}
+        param_labels = ["amount synapses", "sum size synapses"]
+        # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+        comp_labels = ["spine neck", "spine head", "shaft", "soma"]
+
+        ct2_2_ct1_syn_dict = {"cellids": cellids1}
+        ct1_2_ct2_syn_dict = {"cellids": cellids2}
+        for pi in param_labels:
+            ct2_2_ct1_syn_dict[pi] = np.zeros(len(cellids1))
+            ct1_2_ct2_syn_dict[pi] = np.zeros(len(cellids2))
+            for ci in comp_labels:
+                ct2_2_ct1_syn_dict[pi + " - " + ci] = np.zeros(len(cellids1))
+                ct1_2_ct2_syn_dict[pi + " - " + ci] = np.zeros(len(cellids2))
+
         ct2_2_ct1_percell_syn_amount = np.zeros((len(cellids1), len(cellids2))).astype(float)
         ct2_2_ct1_percell_syn_size = np.zeros((len(cellids1), len(cellids2))).astype(float)
-        ct1_2_ct2_syn_dict = {"cellids": cellids2, "syn amount": np.zeros(len(cellids2)), "sum syn size": np.zeros(len(cellids2)),
-                        "amount shaft syn": np.zeros(len(cellids2)), "sum size shaft syn": np.zeros(len(cellids2)),
-                              "amount spine head syn": np.zeros(len(cellids2)),
-                              "sum size spine head syn": np.zeros(len(cellids2)),
-                              "amount soma syn": np.zeros(len(cellids2)), "sum size soma syn": np.zeros(len(cellids2)),
-                               "amount spine neck syn": np.zeros(len(cellids2)),
-                              "sum size spine neck syn": np.zeros(len(cellids2))}
         ct1_2_ct2_percell_syn_amount = np.zeros((len(cellids2), len(cellids1))).astype(float)
         ct1_2_ct2_percell_syn_size = np.zeros((len(cellids2), len(cellids1))).astype(float)
         for i, syn_id in enumerate(tqdm(m_ids)):
@@ -229,44 +229,32 @@ if __name__ == '__main__':
             if ct_ax == celltype1:
                 cell2_ind = np.where(ct1_2_ct2_syn_dict["cellids"] == ssv_deso)[0]
                 cell1_ind = np.where(ct2_2_ct1_syn_dict["cellids"] == ssv_ax)[0]
-                ct1_2_ct2_syn_dict["syn amount"][cell2_ind] += 1
-                ct1_2_ct2_syn_dict["sum syn size"][cell2_ind] += syn_size
+                ct1_2_ct2_syn_dict[param_labels[0]][cell2_ind] += 1
+                ct1_2_ct2_syn_dict[param_labels[1]][cell2_ind] += syn_size
 
                 ct1_2_ct2_percell_syn_amount[cell2_ind, cell1_ind] += 1
                 ct1_2_ct2_percell_syn_size[cell2_ind, cell1_ind] += syn_size
                 if deso == 0:
-                    if spin_deso == 2:
-                        ct1_2_ct2_syn_dict["amount shaft syn"][cell2_ind] += 1
-                        ct1_2_ct2_syn_dict["sum size shaft syn"][cell2_ind] += syn_size
-                    elif spin_deso == 1:
-                        ct1_2_ct2_syn_dict["amount spine head syn"][cell2_ind] += 1
-                        ct1_2_ct2_syn_dict["sum size spine head syn"][cell2_ind] += syn_size
-                    elif spin_deso == 0:
-                        ct1_2_ct2_syn_dict["amount spine neck syn"][cell2_ind] += 1
-                        ct1_2_ct2_syn_dict["sum size spine neck syn"][cell2_ind] += syn_size
+                    if spin_deso <= 2:
+                        ct1_2_ct2_syn_dict[param_labels[0] + " - " + comp_labels[spin_deso]][cell2_ind] += 1
+                        ct1_2_ct2_syn_dict[param_labels[1] + " - " + comp_labels[spin_deso][cell2_ind]] += syn_size
                 else:
-                    ct1_2_ct2_syn_dict["amount soma syn"][cell2_ind] += 1
-                    ct1_2_ct2_syn_dict["sum size soma syn"][cell2_ind] += syn_size
+                    ct1_2_ct2_syn_dict[param_labels[0] + " - " + "soma"][cell2_ind] += 1
+                    ct1_2_ct2_syn_dict[param_labels[1] + " - " + "soma"][cell2_ind] += syn_size
             else:
                 cell1_ind = np.where(ct2_2_ct1_syn_dict["cellids"] == ssv_deso)[0]
                 cell2_ind = np.where(ct1_2_ct2_syn_dict["cellids"] == ssv_ax)[0]
-                ct2_2_ct1_syn_dict["syn amount"][cell1_ind] += 1
-                ct2_2_ct1_syn_dict["sum syn size"][cell1_ind] += syn_size
+                ct2_2_ct1_syn_dict[param_labels[0]][cell1_ind] += 1
+                ct2_2_ct1_syn_dict[param_labels[1]][cell1_ind] += syn_size
                 ct2_2_ct1_percell_syn_amount[cell1_ind, cell2_ind] += 1
                 ct2_2_ct1_percell_syn_size[cell1_ind, cell2_ind] += syn_size
                 if deso == 0:
-                    if spin_deso == 2:
-                        ct2_2_ct1_syn_dict["amount shaft syn"][cell1_ind] += 1
-                        ct2_2_ct1_syn_dict["sum size shaft syn"][cell1_ind] += syn_size
-                    elif spin_deso == 1:
-                        ct2_2_ct1_syn_dict["amount spine head syn"][cell1_ind] += 1
-                        ct2_2_ct1_syn_dict["sum size spine head syn"][cell1_ind] += syn_size
-                    elif spin_deso == 0:
-                        ct2_2_ct1_syn_dict["amount spine neck syn"][cell1_ind] += 1
-                        ct2_2_ct1_syn_dict["sum size spine neck syn"][cell1_ind] += syn_size
+                    if spin_deso <= 2:
+                        ct2_2_ct1_syn_dict[param_labels[0] + " - " + comp_labels[spin_deso]][cell1_ind] += 1
+                        ct2_2_ct1_syn_dict[param_labels[1] + " - " + comp_labels[spin_deso][cell1_ind]] += syn_size
                 else:
-                    ct2_2_ct1_syn_dict["amount soma syn"][cell1_ind] += 1
-                    ct2_2_ct1_syn_dict["sum size soma syn"][cell1_ind] += syn_size
+                    ct2_2_ct1_syn_dict[param_labels[0] + " - " + "soma"][cell1_ind] += 1
+                    ct2_2_ct1_syn_dict[param_labels[1] + " - " + "soma"][cell1_ind] += syn_size
 
         syntime = time.time() - prepsyntime
         print("%.2f sec for processing synapses" % syntime)
@@ -482,6 +470,10 @@ if __name__ == '__main__':
         syn_dict_keys = list(ct1_syn_dict.keys())
         log.info("compute statistics for comparison, create violinplot and histogram")
         ranksum_results = pd.DataFrame(columns=syn_dict_keys[1:], index=["stats", "p value"])
+
+        param_labels = ["amount synapses", "sum size synapses"]
+        # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+        comp_labels = ["spine neck", "spine head", "shaft", "soma"]
 
         #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
         if percentile:

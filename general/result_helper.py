@@ -401,7 +401,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if stripplot:
             sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
                           dodge=True)
-            ax = sns.boxplot(x=x, y=key, data=results_df.reset_index(), inner="box",
+            ax = sns.boxplot(x=x, y=key, data=results_df.reset_index(),
                                 palette=self.color_palette, hue=hue)
             handles, labels = ax.get_legend_handles_labels()
             plt.legend(handles[0:2], labels[0:2])

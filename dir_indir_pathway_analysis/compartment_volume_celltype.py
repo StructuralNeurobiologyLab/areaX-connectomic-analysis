@@ -256,7 +256,13 @@ if __name__ == '__main__':
             comp_dict_keys = list(ct1_comp_dict.keys())
         log.info("compute statistics for comparison, create violinplot and histogram")
         ranksum_results = pd.DataFrame(columns=comp_dict_keys[1:], index=["stats", "p value"])
-        results_comparision = ComparingResultsForPLotting(celltype1 = ct_dict[celltype1], celltype2 = ct_dict[celltype2], filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "mediumorchid", color2 = "springgreen")
+        if percentile:
+            results_comparision = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
+                                                              celltype2=ct_dict[celltype2], filename=f_name,
+                                                              dictionary1=ct1_comp_dict, dictionary2=ct2_comp_dict,
+                                                              color1="gray", color2="darkturquoise")
+        else:
+            results_comparision = ComparingResultsForPLotting(celltype1 = ct_dict[celltype1], celltype2 = ct_dict[celltype2], filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "mediumorchid", color2 = "springgreen")
         for key in ct1_comp_dict.keys():
             if "ids" in key:
                 continue
@@ -291,7 +297,7 @@ if __name__ == '__main__':
     #percentiles = [10, 25, 50]
     percentiles = [10]
     for percentile in percentiles:
-        axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=percentile, low_percentile=True)
+        axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=percentile)
         #axon_den_arborization_ct(ssd, celltype=2, full_cells=True, handpicked=False, percentile=100 - percentile,
                                  #low_percentile=False)
         #p1_filename = "%s/210929_j0251v3_MSN_comp_volume_mcl100_p%il" % (foldername, percentile)

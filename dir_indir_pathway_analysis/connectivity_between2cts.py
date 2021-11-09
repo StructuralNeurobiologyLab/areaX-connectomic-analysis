@@ -17,7 +17,7 @@ if __name__ == '__main__':
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
     from u.arother.bio_analysis.general.analysis_helper import compartment_length_cell
-    from u.arother.bio_analysis.general.result_helper import ResultsForPlotting
+    from u.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -610,13 +610,14 @@ if __name__ == '__main__':
 
         log.info("Connectivity analysis between 2 celltypes (%s, %s) finished" % (ct_dict[celltype1], ct_dict[celltype2]))
 
-    def compare_connectvity(comp_ct1, comp_ct2, connected_ct = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100):
+    def compare_connectvity(comp_ct1, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100):
         '''
         compares connectivity parameters between two celltypes or connectivity of a third celltype to the two celltypes. Connectivity parameters are calculated in
         synapses_between2cts. Parameters include synapse amount and average synapse size, as well as amount and average synapse size in shaft, soma, spine head and spine neck.
         P-value will be calculated with scipy.stats.ranksum.
         :param comp_ct1, comp_ct2: celltypes to compare to each other
         :param connected_ct: if given, connectivity of this celltype to two others will be compared
+        :param percentile: if given not two celltypes but different population swithin a celltype will be compared
         :param foldername_ct1, foldername_ct2: foldernames where parameters of connectivity are stored
         :param min_comp_len: minimum compartment length
         :return:
@@ -624,24 +625,33 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        if connected_ct != None:
+        if percentile is None and comp_ct2 is None:
+            raise ValueError("either celltypes or percentiles must be compared")
+        if percentile:
+            if percentile == 50:
+                raise ValueError("Due to ambiguity, value has to be either 49 or 51")
+            if percentile < 50:
+                ct_dict[comp_ct1] = ct_dict[comp_ct1] + " p%.2i" % percentile
+            else:
+                ct_dict[comp_ct2] = ct_dict[comp_ct1] + " p%.2i" % (100 - percentile)
+        if connected_ct:
             f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210923_j0251v3__%s_%s_%s_syn_con_comp_mcl%i" % (
                 ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len)
         else:
             f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210923_j0251v3__%s_%s_syn_con_comp_mcl%i" % (
-            ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len)
+                ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
         log = initialize_logging('compare connectivty between two celltypes', log_dir=f_name + '/logs/')
-        if connected_ct != None:
+        if connected_ct:
             log.info("parameters: celltype1 = %s,celltype2 = %s , connected ct = %s, min_comp_length = %.i" % (
-            ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len))
+                ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len))
         else:
             log.info("parameters: celltype1 = %s,celltype2 = %s, min_comp_length = %.i" % (
                 ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len))
         time_stamps = [time.time()]
         step_idents = ['t-0']
-        if connected_ct != None:
+        if connected_ct:
             ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct_dict[connected_ct], ct_dict[comp_ct2]))
             ct1_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct_dict[connected_ct], ct_dict[comp_ct1]))
         else:
@@ -711,11 +721,11 @@ if __name__ == '__main__':
         results_for_plotting_comps["percentage amount"] = results_for_plotting_comps["percentage amount"].astype('float64')
         results_for_plotting_comps["percentage syn size"] = results_for_plotting_comps["percentage syn size"].astype("float64")
 
-        if connected_ct != None:
+        if connected_ct:
             results_for_plotting_comps.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
         else:
             results_for_plotting_comps.to_csv("%s/%s_%s_syn_compartments.csv" % (
-            f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+                f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
 
         for key in results_for_plotting_comps.keys():
             if "celltype" in key or "compartment" in key:
@@ -770,6 +780,17 @@ if __name__ == '__main__':
             plt.savefig(filename)
             plt.close()
 
+        if percentile:
+            results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
+                                                             celltype2=ct_dict[comp_ct2], filename=f_name,
+                                                             dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
+                                                             color1="gray", color2="darkturquoise")
+        else:
+            results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1], celltype2=ct_dict[comp_ct2],
+                                                             filename=f_name, dictionary1=ct1_syn_dict,
+                                                             dictionary2=ct2_syn_dict, color1="mediumorchid",
+                                                             color2="springgreen")
+
         for key in ct1_syn_dict.keys():
             if "ids" in key:
                 continue
@@ -779,118 +800,29 @@ if __name__ == '__main__':
             ranksum_results.loc["p value", key] = p_value
             # plot parameter as violinplot
             if not "spine" in key and not "soma" in key and not "shaft" in key:
-                results_for_plotting = pd.DataFrame(columns=[ct_dict[comp_ct1], ct_dict[comp_ct2]], index=range(sum_len))
-                results_for_plotting.loc[0:len(ct1_syn_dict[key]) - 1, ct_dict[comp_ct1]] = ct1_syn_dict[key]
-                results_for_plotting.loc[0:len(ct2_syn_dict[key]) - 1, ct_dict[comp_ct2]] = ct2_syn_dict[key]
-                sns.violinplot(data=results_for_plotting, inner="box", palette=colours_pal)
-                sns.stripplot(data=results_for_plotting, color="black", alpha=0.2)
-                if connected_ct != None:
-                    plt.title('%s, %s to %s/ %s' % (key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
+                results_for_plotting = results_comparison.result_df_perparam(key)
+                if connected_ct:
+                    results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, conn_celltype=ct_dict[connected_ct], outgoing=False)
+                    results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot= False,
+                                            conn_celltype=ct_dict[connected_ct], outgoing = False)
                 else:
-                    plt.title('%s, between %s and %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
-                if "amount" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapses")
-                    else:
-                        plt.ylabel("amount of synapses")
-                elif "size" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapse size")
-                    else:
-                        plt.ylabel("average synapse size [µm²]")
-                if connected_ct != None:
-                    filename = ("%s/%s_violin_%s_2_%s_%s.png" % (f_name, key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
-                else:
-                    filename = ("%s/%s_violin_%s_%s.png" % (f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
-                plt.savefig(filename)
-                plt.close()
-                sns.boxplot(data=results_for_plotting, palette=colours_pal)
-                if connected_ct != None:
-                    plt.title('%s, %s to %s/ %s' % (key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
-                else:
-                    plt.title('%s, between %s and %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
-                if "amount" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapses")
-                    else:
-                        plt.ylabel("amount of synapses")
-                elif "size" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapse size")
-                    else:
-                        plt.ylabel("average synapse size [µm²]")
-                if connected_ct != None:
-                    filename = ("%s/%s_box_%s_2_%s_%s.png" % (
-                    f_name, key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
-                else:
-                    filename = ("%s/%s_box_%s_%s.png" % (f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
-                plt.savefig(filename)
-                plt.close()
-            sns.distplot(ct1_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
-                         kde=False, label=ct_dict[comp_ct1], bins=10)
-            sns.distplot(ct2_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
-                         kde=False, label=ct_dict[comp_ct2], bins=10)
-            plt.legend()
-            if connected_ct != None:
-                plt.title('%s, %s to %s/ %s' % (key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
+                    results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True)
+                    results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False)
+            if connected_ct:
+                results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=ct_dict[connected_ct], outgoing=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
+                                                        conn_celltype=ct_dict[connected_ct], outgoing=False)
             else:
-                plt.title('%s, between %s and %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
-            plt.ylabel("count of cells")
-            if "amount" in key:
-                if "percentage" in key:
-                    plt.xlabel("percentage of synapses")
-                else:
-                    plt.xlabel("amount of synapses")
-            elif "size" in key:
-                if "percentage" in key:
-                    plt.xlabel("percentage of synapse size")
-                else:
-                    plt.xlabel("average synapse size [µm²]")
-            if connected_ct != None:
-                filename = ("%s/%s_hist_%s_2_%s_%s.png" % (
-                    f_name, key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
-            else:
-                filename = ("%s/%s_hist_%s_%s.png" % (f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
-            plt.savefig(filename)
-            plt.close()
-            sns.distplot(ct1_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
-                         kde=False, label=ct_dict[comp_ct1], bins=10, norm_hist=True)
-            sns.distplot(ct2_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
-                         kde=False, label=ct_dict[comp_ct2], bins=10, norm_hist=True)
-            plt.legend()
-            if connected_ct != None:
-                plt.title('%s, %s to %s/ %s' % (key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
-            else:
-                plt.title('%s, between %s and %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
-            plt.ylabel("fraction of cells")
-            if "length" in key:
-                plt.xlabel("pathlength in µm")
-            elif "vol" in key:
-                if "percentage" in key:
-                    plt.xlabel("% of whole dataset")
-                else:
-                    plt.xlabel("volume in µm³")
-            else:
-                plt.xlabel("distance in µm")
-            if connected_ct != None:
-                filename = ("%s/%s_hist_norm_%s_2_%s_%s.png" % (
-                    f_name, key, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
-            else:
-                filename = ("%s/%s_hist_norm_%s_%s.png" % (f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
-            plt.savefig(filename)
-            plt.close()
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True)
 
-        if connected_ct != None:
+        if connected_ct:
             ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
         else:
             ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
 
         #also compare outgoing connections from celltype
-        if connected_ct != None:
+        if connected_ct:
             ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct_dict[comp_ct2], ct_dict[connected_ct]))
             ct1_syn_dict = load_pkl2obj(
                 "%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct_dict[comp_ct1], ct_dict[connected_ct]))
@@ -1028,6 +960,18 @@ if __name__ == '__main__':
                 plt.savefig(filename)
                 plt.close()
 
+            if percentile:
+                results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
+                                                                 celltype2=ct_dict[comp_ct2], filename=f_name,
+                                                                 dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
+                                                                 color1="gray", color2="darkturquoise")
+            else:
+                results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
+                                                                 celltype2=ct_dict[comp_ct2],
+                                                                 filename=f_name, dictionary1=ct1_syn_dict,
+                                                                 dictionary2=ct2_syn_dict, color1="mediumorchid",
+                                                                 color2="springgreen")
+
             for key in ct1_syn_dict.keys():
                 if "ids" in key:
                     continue
@@ -1037,88 +981,15 @@ if __name__ == '__main__':
                 ranksum_results.loc["p value", key] = p_value
                 # plot parameter as violinplot
                 if not "spine" in key and not "soma" in key and not "shaft" in key:
-                    results_for_plotting = pd.DataFrame(columns=[ct_dict[comp_ct1], ct_dict[comp_ct2]],
-                                                        index=range(sum_len))
-                    results_for_plotting.loc[0:len(ct1_syn_dict[key]) - 1, ct_dict[comp_ct1]] = ct1_syn_dict[key]
-                    results_for_plotting.loc[0:len(ct2_syn_dict[key]) - 1, ct_dict[comp_ct2]] = ct2_syn_dict[key]
-                    sns.violinplot(data=results_for_plotting, inner="box", palette=colours_pal)
-                    sns.stripplot(data=results_for_plotting, color="black", alpha=0.2)
-                    plt.title('%s, %s, %s to %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-                    if "amount" in key:
-                        if "percentage" in key:
-                            plt.ylabel("percentage of synapses")
-                        else:
-                            plt.ylabel("amount of synapses")
-                    elif "size" in key:
-                        if "percentage" in key:
-                            plt.ylabel("percentage of synapse size")
-                        else:
-                            plt.ylabel("average synapse size [µm²]")
-                    filename = ("%s/%s_violin_%s_%s_2_%s_outgoing.png" % (
-                            f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-                    plt.savefig(filename)
-                    plt.close()
-                    sns.boxplot(data=results_for_plotting, palette=colours_pal)
-                    plt.title('%s, %s, %s to %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-                    if "amount" in key:
-                        if "percentage" in key:
-                            plt.ylabel("percentage of synapses")
-                        else:
-                            plt.ylabel("amount of synapses")
-                    elif "size" in key:
-                        if "percentage" in key:
-                            plt.ylabel("percentage of synapse size")
-                        else:
-                            plt.ylabel("average synapse size [µm²]")
-                    filename = ("%s/%s_box_%s_%s_2_%s_outgoing.png" % (
-                                f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-                    plt.savefig(filename)
-                    plt.close()
-                sns.distplot(ct1_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
-                             kde=False, label=ct_dict[comp_ct1], bins=10)
-                sns.distplot(ct2_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
-                             kde=False, label=ct_dict[comp_ct2], bins=10)
-                plt.legend()
-                plt.title('%s, %s, %s to %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-                plt.ylabel("count of cells")
-                if "amount" in key:
-                    if "percentage" in key:
-                        plt.xlabel("percentage of synapses")
-                    else:
-                        plt.xlabel("amount of synapses")
-                elif "size" in key:
-                    if "percentage" in key:
-                        plt.xlabel("percentage of synapse size")
-                    else:
-                        plt.xlabel("average synapse size [µm²]")
-                filename = ("%s/%s_hist_%s_%s_2_%s_outgoing.png" % (
-                            f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-                plt.savefig(filename)
-                plt.close()
-                sns.distplot(ct1_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
-                             kde=False, label=ct_dict[comp_ct1], bins=10, norm_hist=True)
-                sns.distplot(ct2_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
-                             kde=False, label=ct_dict[comp_ct2], bins=10, norm_hist=True)
-                plt.legend()
-                plt.title('%s, %s, %s to %s' % (key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-                plt.ylabel("fraction of cells")
-                if "length" in key:
-                    plt.xlabel("pathlength in µm")
-                elif "vol" in key:
-                    if "percentage" in key:
-                        plt.xlabel("% of whole dataset")
-                    else:
-                        plt.xlabel("volume in µm³")
-                else:
-                    plt.xlabel("distance in µm")
-                filename = ("%s/%s_hist_norm_%s_%s_2_%s_outgoing.png" % (
-                            f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-                plt.savefig(filename)
-                plt.close()
+                    results_for_plotting = results_comparison.result_df_perparam(key)
+                    results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True,
+                                                   conn_celltype=ct_dict[connected_ct], outgoing=True)
+                    results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False,
+                                                conn_celltype=ct_dict[connected_ct], outgoing=True)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False,
+                                                        conn_celltype=ct_dict[connected_ct], outgoing=True)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
+                                                        conn_celltype=ct_dict[connected_ct], outgoing=True)
 
             ranksum_results.to_csv("%s/ranksum_%s_%s_2_%s_outgoing.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
 
@@ -1709,569 +1580,6 @@ if __name__ == '__main__':
         log.info(
             "Connectivity analysis between 2 percentiles (%s, %s) in %s finished" % (percentile, 100 - percentile, ct_dict[celltype]))
 
-
-    def compare_connectvity_percentiles(celltype, percentile, connected_ct=None, foldername_ct1=None, foldername_ct2=None,
-                            min_comp_len=100, color1 = "gray", color2 = "darkturquoise"):
-        '''
-        compares connectivity parameters between two percentiles (percentile, 100 - percentile) within one celltypes or connectivity of another celltype to the two celltypes. Connectivity parameters are calculated in
-        synapses_between2cts. Parameters include synapse amount and average synapse size, as well as amount and average synapse size in shaft, soma, spine head and spine neck.
-        P-value will be calculated with scipy.stats.ranksum.
-        :param celltype celltype of percentiles to be compared
-        :param percentile: given percentile will be compared to 100 - percentile
-        :param connected_ct: if given, connectivity of this celltype to two others will be compared
-        :param foldername_ct1, foldername_ct2: foldernames where parameters of connectivity are stored
-        :param min_comp_len: minimum compartment length
-        :param color1, color2: colours for different percentiles in plot
-        :return:
-        '''
-        start = time.time()
-        ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-                   10: "NGF"}
-        if connected_ct != None:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211027_j0251v3__%s_p%i_%s_syn_con_comp_mcl%i" % (
-                ct_dict[celltype], percentile, ct_dict[connected_ct], min_comp_len)
-        else:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211027_j0251v3__%s_p%i_syn_con_comp_mcl%i" % (
-                ct_dict[celltype], percentile, min_comp_len)
-        if not os.path.exists(f_name):
-            os.mkdir(f_name)
-        log = initialize_logging('compare connectivty between two celltypes', log_dir=f_name + '/logs/')
-        if connected_ct != None:
-            log.info("parameters: celltype = %s, percentile = %i , connected ct = %s, min_comp_length = %.i" % (
-                ct_dict[celltype], percentile, ct_dict[connected_ct], min_comp_len))
-        else:
-            log.info("parameters: celltype = %s, percentile = %i, min_comp_length = %.i" % (
-                ct_dict[celltype], percentile, min_comp_len))
-        time_stamps = [time.time()]
-        step_idents = ['t-0']
-        if percentile == 100 - percentile:
-            percentile -= 1
-        if connected_ct != None:
-            ct2_syn_dict = load_pkl2obj(
-                "%s/%s_2_%s p%i_dict.pkl" % (foldername_ct2, ct_dict[connected_ct], ct_dict[celltype], 100 - percentile, ))
-            ct1_syn_dict = load_pkl2obj(
-                "%s/%s_2_%s p%i_dict.pkl" % (foldername_ct1, ct_dict[connected_ct], ct_dict[celltype], percentile))
-        else:
-            ct2_syn_dict = load_pkl2obj(
-                "%s/%s_%i_2_%i_dict.pkl" % (foldername_ct2, ct_dict[celltype], percentile, 100 - percentile))
-            ct1_syn_dict = load_pkl2obj(
-                "%s/%s_%i_2_%i_dict.pkl" % (foldername_ct1, ct_dict[celltype], 100 - percentile, percentile))
-        syn_dict_keys = list(ct1_syn_dict.keys())
-        log.info("compute statistics for comparison, create violinplot and histogram")
-        ranksum_results = pd.DataFrame(columns=syn_dict_keys[1:], index=["stats", "p value"])
-        colours_pal = {percentile: color1, 100 - percentile: color2}
-
-        # plot distribution of compartments togehter
-        len_ct1 = len(ct1_syn_dict["amount spine head syn"])
-        len_ct2 = len(ct2_syn_dict["amount spine head syn"])
-        sum_len = len_ct1 + len_ct2
-        results_for_plotting_comps = pd.DataFrame(
-            columns=["syn amount", "avg syn size", "percentage amount", "percentage syn size", "percentile",
-                     "compartment"], index=range(sum_len * 4))
-        results_for_plotting_comps["compartment"] = str()
-        results_for_plotting_comps.loc[0:sum_len - 1, "compartment"] = "spine head"
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "percentile"] = percentile
-        results_for_plotting_comps.loc[len_ct1: sum_len - 1, "percentile"] = 100 - percentile
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "syn amount"] = ct1_syn_dict["amount spine head syn"]
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1, "syn amount"] = ct2_syn_dict["amount spine head syn"]
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine head syn"]
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1, "avg syn size"] = ct2_syn_dict["avg size spine head syn"]
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-            "percentage spine head syn amount"]
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1, "percentage amount"] = ct2_syn_dict[
-            "percentage spine head syn amount"]
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage syn size"] = ct1_syn_dict[
-            "percentage spine head syn size"]
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1, "percentage syn size"] = ct2_syn_dict[
-            "percentage spine head syn size"]
-        results_for_plotting_comps.loc[sum_len:sum_len * 2 - 1, "compartment"] = "spine neck"
-        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "percentile"] = percentile
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "percentile"] = 100 - percentile
-        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-            "amount spine neck syn"]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "syn amount"] = ct2_syn_dict[
-            "amount spine neck syn"]
-        results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-            "avg size spine neck syn"]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "avg syn size"] = ct2_syn_dict[
-            "avg size spine neck syn"]
-        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-            "percentage spine neck syn amount"]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "percentage amount"] = ct2_syn_dict[
-            "percentage spine neck syn amount"]
-        results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "percentage syn size"] = ct1_syn_dict[
-            "percentage spine neck syn size"]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "percentage syn size"] = ct2_syn_dict[
-            "percentage spine neck syn size"]
-        results_for_plotting_comps.loc[sum_len * 2:sum_len * 3 - 1, "compartment"] = "shaft"
-        results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1, "percentile"] = percentile
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "percentile"] = 100 - percentile
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-            "amount shaft syn"]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "syn amount"] = ct2_syn_dict[
-            "amount shaft syn"]
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-            "avg size shaft syn"]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "avg syn size"] = ct2_syn_dict[
-            "avg size shaft syn"]
-        results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-            "percentage shaft syn amount"]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "percentage amount"] = ct2_syn_dict[
-            "percentage shaft syn amount"]
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "percentage syn size"] = ct1_syn_dict[
-            "percentage shaft syn size"]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "percentage syn size"] = ct2_syn_dict[
-            "percentage shaft syn size"]
-        results_for_plotting_comps.loc[sum_len * 3:sum_len * 4 - 1, "compartment"] = "soma"
-        results_for_plotting_comps.loc[sum_len * 3:sum_len * 3 + len_ct1 - 1, "percentile"] = percentile
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "percentile"] = 100 - percentile
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-            "amount soma syn"]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "syn amount"] = ct2_syn_dict[
-            "amount soma syn"]
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-            "avg size soma syn"]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "avg syn size"] = ct2_syn_dict[
-            "avg size soma syn"]
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-            "percentage soma syn amount"]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "percentage amount"] = ct2_syn_dict[
-            "percentage soma syn amount"]
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "percentage syn size"] = ct1_syn_dict[
-            "percentage soma syn size"]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "percentage syn size"] = ct2_syn_dict[
-            "percentage soma syn size"]
-        results_for_plotting_comps["syn amount"] = results_for_plotting_comps["syn amount"].astype("float64")
-        results_for_plotting_comps["avg syn size"] = results_for_plotting_comps["avg syn size"].astype("float64")
-        results_for_plotting_comps["percentage amount"] = results_for_plotting_comps["percentage amount"].astype(
-            'float64')
-        results_for_plotting_comps["percentage syn size"] = results_for_plotting_comps["percentage syn size"].astype(
-            "float64")
-
-        if connected_ct != None:
-            results_for_plotting_comps.to_csv("%s/%s_2_%i_%s_syn_compartments.csv" % (
-            f_name, ct_dict[connected_ct], percentile, ct_dict[celltype]))
-        else:
-            results_for_plotting_comps.to_csv("%s/%i_%s_syn_compartments.csv" % (
-                f_name, percentile, ct_dict[celltype]))
-
-        for key in results_for_plotting_comps.keys():
-            if "celltype" in key or "compartment" in key:
-                continue
-            sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="percentile", color="black",
-                          alpha=0.3, dodge=True)
-            ax = sns.violinplot(x="compartment", y=key, data=results_for_plotting_comps.reset_index(), inner="box",
-                                palette=colours_pal, hue="percentile")
-            handles, labels = ax.get_legend_handles_labels()
-            plt.legend(handles[0:2], labels[0:2])
-            if connected_ct != None:
-                plt.title('%s, %s to %i/ %i in %s' % (key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-            else:
-                plt.title(
-                    '%s, between %i and %i in %s in different compartments' % (key, percentile, 100 - percentile, ct_dict[celltype]))
-            if "amount" in key:
-                if "percentage" in key:
-                    plt.ylabel("percentage of synapses")
-                else:
-                    plt.ylabel("amount of synapses")
-            elif "size" in key:
-                if "percentage" in key:
-                    plt.ylabel("percentage of synapse size")
-                else:
-                    plt.ylabel("average synapse size [µm²]")
-            if connected_ct != None:
-                filename = ("%s/%s_comps_violin_%s_2_%i_%i_%s.png" % (
-                    f_name, key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-            else:
-                filename = ("%s/%s_comps_violin_%i_%i_%s.png" % (f_name, key, percentile, 100 - percentile, ct_dict[celltype]))
-            plt.savefig(filename)
-            plt.close()
-            sns.boxplot(x="compartment", y=key, data=results_for_plotting_comps, palette=colours_pal,
-                        hue="percentile")
-            if connected_ct != None:
-                plt.title('%s, %s to %i/ %i in %s' % (key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-            else:
-                plt.title(
-                    '%s, between %i and %i in %s in different compartments' % (key, percentile, 100 - percentile, ct_dict[celltype]))
-            if "amount" in key:
-                if "percentage" in key:
-                    plt.ylabel("percentage of synapses")
-                else:
-                    plt.ylabel("amount of synapses")
-            elif "size" in key:
-                if "percentage" in key:
-                    plt.ylabel("percentage of synapse size")
-                else:
-                    plt.ylabel("average synapse size [µm²]")
-            if connected_ct != None:
-                filename = ("%s/%s_comps_box_%s_2_%i_%i_%s.png" % (
-                    f_name, key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-            else:
-                filename = ("%s/%s_comps_box_%i_%i_%s.png" % (f_name, key, percentile, 100 - percentile, ct_dict[celltype]))
-            plt.savefig(filename)
-            plt.close()
-
-        for key in ct1_syn_dict.keys():
-            if "ids" in key:
-                continue
-            # calculate p_value for parameter
-            stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])
-            ranksum_results.loc["stats", key] = stats
-            ranksum_results.loc["p value", key] = p_value
-            # plot parameter as violinplot
-            if not "spine" in key and not "soma" in key and not "shaft" in key:
-                results_for_plotting = pd.DataFrame(columns=[percentile, 100 - percentile],
-                                                    index=range(sum_len))
-                results_for_plotting.loc[0:len(ct1_syn_dict[key]) - 1, percentile] = ct1_syn_dict[key]
-                results_for_plotting.loc[0:len(ct2_syn_dict[key]) - 1, 100 - percentile] = ct2_syn_dict[key]
-                sns.violinplot(data=results_for_plotting, inner="box", palette=colours_pal)
-                sns.stripplot(data=results_for_plotting, color="black", alpha=0.2)
-                if connected_ct != None:
-                    plt.title('%s, %s to %i/ %i in %s' % (key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-                else:
-                    plt.title('%s, between %i and %i in %s' % (key, percentile, 100 - percentile, ct_dict[celltype]))
-                if "amount" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapses")
-                    else:
-                        plt.ylabel("amount of synapses")
-                elif "size" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapse size")
-                    else:
-                        plt.ylabel("average synapse size [µm²]")
-                if connected_ct != None:
-                    filename = ("%s/%s_violin_%s_2_%i_%i_%s.png" % (
-                    f_name, key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-                else:
-                    filename = ("%s/%s_violin_%i_%i_%s.png" % (f_name, key, percentile, 100 - percentile, ct_dict[celltype]))
-                plt.savefig(filename)
-                plt.close()
-                sns.boxplot(data=results_for_plotting, palette=colours_pal)
-                if connected_ct != None:
-                    plt.title('%s, %s to %i/ %i in %s' % (key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-                else:
-                    plt.title('%s, between %i and %i in %s' % (key, percentile, 100 - percentile, ct_dict[celltype]))
-                if "amount" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapses")
-                    else:
-                        plt.ylabel("amount of synapses")
-                elif "size" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapse size")
-                    else:
-                        plt.ylabel("average synapse size [µm²]")
-                if connected_ct != None:
-                    filename = ("%s/%s_box_%s_2_%i_%i_%s.png" % (
-                        f_name, key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-                else:
-                    filename = ("%s/%s_box_%i_%i_%s.png" % (f_name, key, percentile, 100 - percentile, ct_dict[celltype]))
-                plt.savefig(filename)
-                plt.close()
-            sns.distplot(ct1_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color1},
-                         kde=False, label=percentile, bins=10)
-            sns.distplot(ct2_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color2},
-                         kde=False, label=100 - percentile, bins=10)
-            plt.legend()
-            if connected_ct != None:
-                plt.title('%s, %s to %i/ %i in %s' % (key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-            else:
-                plt.title('%s, between %i and %i in %s' % (key, percentile, 100 - percentile, ct_dict[celltype]))
-            plt.ylabel("count of cells")
-            if "amount" in key:
-                if "percentage" in key:
-                    plt.xlabel("percentage of synapses")
-                else:
-                    plt.xlabel("amount of synapses")
-            elif "size" in key:
-                if "percentage" in key:
-                    plt.xlabel("percentage of synapse size")
-                else:
-                    plt.xlabel("average synapse size [µm²]")
-            if connected_ct != None:
-                filename = ("%s/%s_hist_%s_2_%i_%i_%s.png" % (
-                    f_name, key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-            else:
-                filename = ("%s/%s_hist_%i_%i_%s.png" % (f_name, key, percentile, 100 - percentile, ct_dict[celltype]))
-            plt.savefig(filename)
-            plt.close()
-            sns.distplot(ct1_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color1},
-                         kde=False, label=percentile, bins=10, norm_hist=True)
-            sns.distplot(ct2_syn_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color2},
-                         kde=False, label=100 - percentile, bins=10, norm_hist=True)
-            plt.legend()
-            if connected_ct != None:
-                plt.title('%s, %s to %i/ %i in %s' % (key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-            else:
-                plt.title('%s, between %i and %i in %s' % (key, percentile, 100 - percentile, ct_dict[celltype]))
-            plt.ylabel("fraction of cells")
-            if "length" in key:
-                plt.xlabel("pathlength in µm")
-            elif "vol" in key:
-                if "percentage" in key:
-                    plt.xlabel("% of whole dataset")
-                else:
-                    plt.xlabel("volume in µm³")
-            else:
-                plt.xlabel("distance in µm")
-            if connected_ct != None:
-                filename = ("%s/%s_hist_norm_%s_2_%i_%i_%s.png" % (
-                    f_name, key, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-            else:
-                filename = ("%s/%s_hist_norm_%i_%i_%s.png" % (f_name, key, percentile, 100 - percentile, ct_dict[celltype]))
-            plt.savefig(filename)
-            plt.close()
-
-        if connected_ct != None:
-            ranksum_results.to_csv(
-                "%s/ranksum_%s_2_%i_%i_%s.csv" % (f_name, ct_dict[connected_ct], percentile, 100 - percentile, ct_dict[celltype]))
-        else:
-            ranksum_results.to_csv("%s/ranksum_%i_%i_%s.csv" % (f_name, percentile, 100 - percentile, ct_dict[celltype]))
-
-        # also compare outgoing connections from celltype
-        if connected_ct != None:
-            ct2_syn_dict = load_pkl2obj(
-                "%s/%s p%i_2_%s_dict.pkl" % (foldername_ct2, ct_dict[celltype], 100 - percentile, ct_dict[connected_ct]))
-            ct1_syn_dict = load_pkl2obj(
-                "%s/%s p%i_2_%s_dict.pkl" % (foldername_ct1, ct_dict[celltype], percentile, ct_dict[connected_ct]))
-            len_ct1 = len(ct1_syn_dict["amount spine head syn"])
-            len_ct2 = len(ct2_syn_dict["amount spine head syn"])
-            sum_len = len_ct1 + len_ct2
-            results_for_plotting_comps = pd.DataFrame(
-                columns=["syn amount", "avg syn size", "percentage amount", "percentage syn size", "percentile",
-                         "compartment"], index=range(sum_len * 4))
-            results_for_plotting_comps["compartment"] = str()
-            results_for_plotting_comps.loc[0:sum_len - 1, "compartment"] = "spine head"
-            results_for_plotting_comps.loc[0:len_ct1 - 1, "percentile"] = percentile
-            results_for_plotting_comps.loc[len_ct1: sum_len - 1, "percentile"] = 100 - percentile
-            results_for_plotting_comps.loc[0:len_ct1 - 1, "syn amount"] = ct1_syn_dict["amount spine head syn"]
-            results_for_plotting_comps.loc[len_ct1:sum_len - 1, "syn amount"] = ct2_syn_dict["amount spine head syn"]
-            results_for_plotting_comps.loc[0:len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine head syn"]
-            results_for_plotting_comps.loc[len_ct1:sum_len - 1, "avg syn size"] = ct2_syn_dict[
-                "avg size spine head syn"]
-            results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-                "percentage spine head syn amount"]
-            results_for_plotting_comps.loc[len_ct1:sum_len - 1, "percentage amount"] = ct2_syn_dict[
-                "percentage spine head syn amount"]
-            results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage syn size"] = ct1_syn_dict[
-                "percentage spine head syn size"]
-            results_for_plotting_comps.loc[len_ct1:sum_len - 1, "percentage syn size"] = ct2_syn_dict[
-                "percentage spine head syn size"]
-            results_for_plotting_comps.loc[sum_len:sum_len * 2 - 1, "compartment"] = "spine neck"
-            results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "percentile"] = percentile
-            results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "percentile"] = 100 - percentile
-            results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-                "amount spine neck syn"]
-            results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "syn amount"] = ct2_syn_dict[
-                "amount spine neck syn"]
-            results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-                "avg size spine neck syn"]
-            results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "avg syn size"] = ct2_syn_dict[
-                "avg size spine neck syn"]
-            results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-                "percentage spine neck syn amount"]
-            results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "percentage amount"] = ct2_syn_dict[
-                "percentage spine neck syn amount"]
-            results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "percentage syn size"] = ct1_syn_dict[
-                "percentage spine neck syn size"]
-            results_for_plotting_comps.loc[sum_len + len_ct1:sum_len * 2 - 1, "percentage syn size"] = ct2_syn_dict[
-                "percentage spine neck syn size"]
-            results_for_plotting_comps.loc[sum_len * 2:sum_len * 3 - 1, "compartment"] = "shaft"
-            results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1, "percentile"] = percentile
-            results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "percentile"] = 100 - percentile
-            results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-                "amount shaft syn"]
-            results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "syn amount"] = ct2_syn_dict[
-                "amount shaft syn"]
-            results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-                "avg size shaft syn"]
-            results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "avg syn size"] = ct2_syn_dict[
-                "avg size shaft syn"]
-            results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-                "percentage shaft syn amount"]
-            results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "percentage amount"] = ct2_syn_dict[
-                "percentage shaft syn amount"]
-            results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1, "percentage syn size"] = \
-                ct1_syn_dict["percentage shaft syn size"]
-            results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "percentage syn size"] = ct2_syn_dict[
-                "percentage shaft syn size"]
-            results_for_plotting_comps.loc[sum_len * 3:sum_len * 4 - 1, "compartment"] = "soma"
-            results_for_plotting_comps.loc[sum_len * 3:sum_len * 3 + len_ct1 - 1, "percentile"] = percentile
-            results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "percentile"] = 100 - percentile
-            results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "syn amount"] = ct1_syn_dict[
-                "amount soma syn"]
-            results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "syn amount"] = ct2_syn_dict[
-                "amount soma syn"]
-            results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "avg syn size"] = ct1_syn_dict[
-                "avg size soma syn"]
-            results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "avg syn size"] = ct2_syn_dict[
-                "avg size soma syn"]
-            results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "percentage amount"] = ct1_syn_dict[
-                "percentage soma syn amount"]
-            results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "percentage amount"] = ct2_syn_dict[
-                "percentage soma syn amount"]
-            results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1, "percentage syn size"] = \
-                ct1_syn_dict["percentage soma syn size"]
-            results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "percentage syn size"] = ct2_syn_dict[
-                "percentage soma syn size"]
-            results_for_plotting_comps["syn amount"] = results_for_plotting_comps["syn amount"].astype("float64")
-            results_for_plotting_comps["avg syn size"] = results_for_plotting_comps["avg syn size"].astype("float64")
-            results_for_plotting_comps["percentage amount"] = results_for_plotting_comps["percentage amount"].astype(
-                'float64')
-            results_for_plotting_comps["percentage syn size"] = results_for_plotting_comps[
-                "percentage syn size"].astype("float64")
-
-            results_for_plotting_comps.to_csv("%s/%i_%i_%s_2_%s_syn_compartments_outgoing.csv" % (
-                f_name, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-
-            for key in results_for_plotting_comps.keys():
-                if "celltype" in key or "compartment" in key:
-                    continue
-
-                sns.stripplot(x="compartment", y=key, data=results_for_plotting_comps, hue="percentile", color="black",
-                              alpha=0.3, dodge=True)
-                ax = sns.violinplot(x="compartment", y=key, data=results_for_plotting_comps.reset_index(), inner="box",
-                                    palette=colours_pal, hue="percentile")
-                handles, labels = ax.get_legend_handles_labels()
-                plt.legend(handles[0:2], labels[0:2])
-                plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                if "amount" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapses")
-                    else:
-                        plt.ylabel("amount of synapses")
-                elif "size" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapse size")
-                    else:
-                        plt.ylabel("average synapse size [µm²]")
-                filename = ("%s/%s_comps_violin_%i_%i_%s_2_%s_outgoing.png" % (
-                    f_name, key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                plt.savefig(filename)
-                plt.close()
-                sns.boxplot(x="compartment", y=key, data=results_for_plotting_comps, palette=colours_pal,
-                            hue="percentile")
-                plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                if "amount" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapses")
-                    else:
-                        plt.ylabel("amount of synapses")
-                elif "size" in key:
-                    if "percentage" in key:
-                        plt.ylabel("percentage of synapse size")
-                    else:
-                        plt.ylabel("average celltypesynapse size [µm²]")
-                filename = ("%s/%s_comps_box_%i_%i_%s_2_%s.png" % (
-                    f_name, key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                plt.savefig(filename)
-                plt.close()
-
-            for key in ct1_syn_dict.keys():
-                if "ids" in key:
-                    continue
-                # calculate p_value for parameter
-                stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])
-                ranksum_results.loc["stats", key] = stats
-                ranksum_results.loc["p value", key] = p_value
-                # plot parameter as violinplot
-                if not "spine" in key and not "soma" in key and not "shaft" in key:
-                    results_for_plotting = pd.DataFrame(columns=[percentile, 100 - percentile],
-                                                        index=range(sum_len))
-                    results_for_plotting.loc[0:len(ct1_syn_dict[key]) - 1, percentile] = ct1_syn_dict[key]
-                    results_for_plotting.loc[0:len(ct2_syn_dict[key]) - 1, 100 - percentile] = ct2_syn_dict[key]
-                    sns.violinplot(data=results_for_plotting, inner="box", palette=colours_pal)
-                    sns.stripplot(data=results_for_plotting, color="black", alpha=0.2)
-                    plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                    if "amount" in key:
-                        if "percentage" in key:
-                            plt.ylabel("percentage of synapses")
-                        else:
-                            plt.ylabel("amount of synapses")
-                    elif "size" in key:
-                        if "percentage" in key:
-                            plt.ylabel("percentage of synapse size")
-                        else:
-                            plt.ylabel("average synapse size [µm²]")
-                    filename = ("%s/%s_violin_%i_%i_%s_2_%s_outgoing.png" % (
-                        f_name, key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                    plt.savefig(filename)
-                    plt.close()
-                    sns.boxplot(data=results_for_plotting, palette=colours_pal)
-                    plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                    if "amount" in key:
-                        if "percentage" in key:
-                            plt.ylabel("percentage of synapses")
-                        else:
-                            plt.ylabel("amount of synapses")
-                    elif "size" in key:
-                        if "percentage" in key:
-                            plt.ylabel("percentage of synapse size")
-                        else:
-                            plt.ylabel("average synapse size [µm²]")
-                    filename = ("%s/%s_box_%si_%i_%s_2_%s_outgoing.png" % (
-                        f_name, key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                    plt.savefig(filename)
-                    plt.close()
-                sns.distplot(ct1_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color1},
-                             kde=False, label=percentile, bins=10)
-                sns.distplot(ct2_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color2},
-                             kde=False, label=100 - percentile, bins=10)
-                plt.legend()
-                plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                plt.ylabel("count of cells")
-                if "amount" in key:
-                    if "percentage" in key:
-                        plt.xlabel("percentage of synapses")
-                    else:
-                        plt.xlabel("amount of synapses")
-                elif "size" in key:
-                    if "percentage" in key:
-                        plt.xlabel("percentage of synapse size")
-                    else:
-                        plt.xlabel("average synapse size [µm²]")
-                filename = ("%s/%s_hist_%i_%i_%s_2_%s_outgoing.png" % (
-                    f_name, key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                plt.savefig(filename)
-                plt.close()
-                sns.distplot(ct1_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color1},
-                             kde=False, label=percentile, bins=10, norm_hist=True)
-                sns.distplot(ct2_syn_dict[key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color2},
-                             kde=False, label=100 - percentile, bins=10, norm_hist=True)
-                plt.legend()
-                plt.title('%s, %i, %i %s to %s' % (key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                plt.ylabel("fraction of cells")
-                if "length" in key:
-                    plt.xlabel("pathlength in µm")
-                elif "vol" in key:
-                    if "percentage" in key:
-                        plt.xlabel("% of whole dataset")
-                    else:
-                        plt.xlabel("volume in µm³")
-                else:
-                    plt.xlabel("distance in µm")
-                filename = ("%s/%s_hist_norm_%i_%i_%s_2_%s_outgoing.png" % (
-                    f_name, key, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-                plt.savefig(filename)
-                plt.close()
-
-            ranksum_results.to_csv("%s/ranksum_%i_%i_%s_2_%s_outgoing.csv" % (
-            f_name, percentile, 100 - percentile, ct_dict[celltype], ct_dict[connected_ct]))
-
-        plottime = time.time() - start
-        print("%.2f sec for statistics and plotting" % plottime)
-        time_stamps.append(time.time())
-        step_idents.append('comparing celltypes')
-        log.info("comparing celltypes via connectivity finished")
 
 
     #synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=2, full_cells=True, handpicked1=True, handpicked2 = False)

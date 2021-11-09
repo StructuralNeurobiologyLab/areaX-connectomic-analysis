@@ -62,7 +62,7 @@ if __name__ == '__main__':
         den_dict = {"length": dendrite_length, "volume": dendrite_volume, "median radius": dendrite_median_radius, "tortuosity complete": dendrite_tortuosity_complete, "tortuosity sampled": dendrite_tortuosity_sampled}
         return ax_dict, den_dict
 
-    def axon_den_arborization_ct(ssd, celltype, min_comp_len = 100, full_cells = True, handpicked = True, percentile = 0, low_percentile = False):
+    def axon_den_arborization_ct(ssd, celltype, min_comp_len = 100, full_cells = True, handpicked = True, percentile = None):
         '''
         estimate the axonal and dendritic aroborization by celltype. Uses axon_dendritic_arborization to get the aoxnal/dendritic bounding box volume per cell
         via comp_arborization. Plots the volume per compartment and the overall length as histograms.
@@ -72,23 +72,19 @@ if __name__ == '__main__':
         :param min_comp_len: minimum compartment length in µm
         :param full_cells: loads preprocessed cells that have axon, soma and dendrite
         :param handpicked: loads cells that were manually checked
-        :param if percentile given, percentile of the cell population can be compared, if preprocessed
-        :param: low_percentile: True if percentile of cell population analysed is in lower half.
+        :param if percentile given, percentile of the cell population can be compared, if preprocessed, in case of 50 have to give either 49 or 51
         :return:
         '''
 
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        if percentile != None:
-            if low_percentile:
-                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211021_j0251v3_%s_comp_volume_mcl%i_p%il" % (
-                ct_dict[celltype], min_comp_len, percentile)
+        if percentile:
+            if percentile == 50:
+                raise ValueError("Due to ambiguity, value has to be either 49 or 51")
             else:
-                f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211021_j0251v3_%s_comp_volume_mcl%i_p%ih" % (
-                    ct_dict[celltype], min_comp_len, percentile)
-        else:
-            f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3_%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
+                ct_dict[celltype] = ct_dict[celltype] + " p%.2i" % percentile
+        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210929_j0251v3_%s_comp_volume_mcl%i" % (ct_dict[celltype], min_comp_len)
         if not os.path.exists(f_name):
             os.mkdir(f_name)
         log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
@@ -102,18 +98,13 @@ if __name__ == '__main__':
             if handpicked:
                 cellids = load_pkl2obj(
                     "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype])
-            if percentile != 0:
-                if low_percentile:
-                    cellids = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_%i_l.pkl" % (ct_dict[celltype], percentile))
-                else:
-                    cellids = load_pkl2obj(
-                        "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_%i_h.pkl" % (ct_dict[celltype],
-                        percentile))
             else:
                 cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
         else:
-            cellids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype]
+            if percentile:
+                raise ValueError("percentiles can only be used on preprocessed cellids")
+            else:
+                cellids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype]
         log.info('Step 1/2 calculating volume estimate for axon/dendrite per cell')
         axon_length_ct = np.zeros(len(cellids))
         dendrite_length_ct = np.zeros(len(cellids))
@@ -221,7 +212,7 @@ if __name__ == '__main__':
         :param celltype1: j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
     #                      FS=8, LTS=9, NGF=10
         :param celltype2: compared against celltype 2,not needed if percentiles are compared
-        :param percentile: if percentile given not two celltypes but two different populations within a celltye will be compared
+        :param percentile: if percentile given not two celltypes but two different populations within a celltye will be compared, has to be either 49 or 51 not 50
         :param filename1, filename2: only if data preprocessed: filename were preprocessed data is stored
         :param min_comp_len: minimum comparment length used by analysis
         :return:
@@ -232,8 +223,8 @@ if __name__ == '__main__':
         if percentile is None and celltype2 is None:
             raise ValueError("either celltypes or percentiles must be compared")
         if percentile:
-            if percentile == 100 - percentile:
-                percentile -= 1
+            if percentile == 50:
+                raise ValueError("Due to ambiguity, value has to be either 49 or 51")
             if percentile < 50:
                 ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % percentile
             else:

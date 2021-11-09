@@ -430,7 +430,7 @@ if __name__ == '__main__':
 
         log.info("Connectivity analysis between 2 celltypes (%s, %s) finished" % (ct_dict[celltype1], ct_dict[celltype2]))
 
-    def compare_connectvity(comp_ct1, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100):
+    def compare_connectivity(comp_ct1, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100):
         '''
         compares connectivity parameters between two celltypes or connectivity of a third celltype to the two celltypes. Connectivity parameters are calculated in
         synapses_between2cts. Parameters include synapse amount and average synapse size, as well as amount and average synapse size in shaft, soma, spine head and spine neck.
@@ -482,69 +482,26 @@ if __name__ == '__main__':
         syn_dict_keys = list(ct1_syn_dict.keys())
         log.info("compute statistics for comparison, create violinplot and histogram")
         ranksum_results = pd.DataFrame(columns=syn_dict_keys[1:], index=["stats", "p value"])
-        colours_pal = {ct_dict[comp_ct1]: "mediumorchid", ct_dict[comp_ct2]: "springgreen"}
 
-        # plot distribution of compartments togehter
-        len_ct1 = len(ct1_syn_dict["amount spine head syn"])
-        len_ct2 = len(ct2_syn_dict["amount spine head syn"])
-        sum_len = len_ct1 + len_ct2
-        results_for_plotting_comps = pd.DataFrame(
-            columns=["syn amount", "avg syn size", "percentage amount", "percentage syn size", "celltype",
-                     "compartment"], index=range(sum_len * 4))
-        results_for_plotting_comps["compartment"] = str()
-        results_for_plotting_comps.loc[0:sum_len - 1, "compartment"] = "spine head"
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
-        results_for_plotting_comps.loc[len_ct1: sum_len - 1, "celltype"] = ct_dict[comp_ct2]
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "syn amount"] = ct1_syn_dict["amount spine head syn"]
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1, "syn amount"] = ct2_syn_dict["amount spine head syn"]
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine head syn"]
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"avg syn size"] = ct2_syn_dict["avg size spine head syn"]
-        results_for_plotting_comps.loc[0:len_ct1 - 1, "percentage amount"] = ct1_syn_dict["percentage spine head syn amount"]
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"percentage amount"] = ct2_syn_dict["percentage spine head syn amount"]
-        results_for_plotting_comps.loc[0:len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage spine head syn size"]
-        results_for_plotting_comps.loc[len_ct1:sum_len - 1,"percentage syn size"] = ct2_syn_dict["percentage spine head syn size"]
-        results_for_plotting_comps.loc[sum_len:sum_len * 2 - 1, "compartment"] = "spine neck"
-        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1, "celltype"] = ct_dict[comp_ct2]
-        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1- 1,"syn amount"] = ct1_syn_dict["amount spine neck syn"]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"syn amount"] = ct2_syn_dict["amount spine neck syn"]
-        results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "avg syn size"] = ct1_syn_dict["avg size spine neck syn"]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"avg syn size"] = ct2_syn_dict["avg size spine neck syn"]
-        results_for_plotting_comps.loc[sum_len:sum_len + len_ct1 - 1, "percentage amount"] = ct1_syn_dict["percentage spine neck syn amount"]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"percentage amount"] = ct2_syn_dict["percentage spine neck syn amount"]
-        results_for_plotting_comps.loc[sum_len: sum_len + len_ct1 - 1, "percentage syn size"] = ct1_syn_dict["percentage spine neck syn size"]
-        results_for_plotting_comps.loc[sum_len + len_ct1:sum_len*2 - 1,"percentage syn size"] = ct2_syn_dict["percentage spine neck syn size"]
-        results_for_plotting_comps.loc[sum_len * 2:sum_len * 3 - 1, "compartment"] = "shaft"
-        results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "celltype"] = ct_dict[comp_ct2]
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"syn amount"] = ct1_syn_dict["amount shaft syn"]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1, "syn amount"] = ct2_syn_dict["amount shaft syn"]
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"avg syn size"] = ct1_syn_dict["avg size shaft syn"]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"avg syn size"] = ct2_syn_dict["avg size shaft syn"]
-        results_for_plotting_comps.loc[sum_len * 2:sum_len * 2 + len_ct1 - 1,"percentage amount"] = ct1_syn_dict["percentage shaft syn amount"]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"percentage amount"] = ct2_syn_dict["percentage shaft syn amount"]
-        results_for_plotting_comps.loc[sum_len * 2: sum_len * 2 + len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage shaft syn size"]
-        results_for_plotting_comps.loc[sum_len * 2 + len_ct1:sum_len * 3 - 1,"percentage syn size"] = ct2_syn_dict["percentage shaft syn size"]
-        results_for_plotting_comps.loc[sum_len * 3:sum_len * 4 - 1, "compartment"] = "soma"
-        results_for_plotting_comps.loc[sum_len * 3:sum_len * 3 + len_ct1 - 1, "celltype"] = ct_dict[comp_ct1]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1, "celltype"] = ct_dict[comp_ct2]
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"syn amount"] = ct1_syn_dict["amount soma syn"]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"syn amount"] = ct2_syn_dict["amount soma syn"]
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"avg syn size"] = ct1_syn_dict["avg size soma syn"]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"avg syn size"] = ct2_syn_dict["avg size soma syn"]
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"percentage amount"] = ct1_syn_dict["percentage soma syn amount"]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len * 4 - 1,"percentage amount"] = ct2_syn_dict["percentage soma syn amount"]
-        results_for_plotting_comps.loc[sum_len * 3: sum_len * 3 + len_ct1 - 1,"percentage syn size"] = ct1_syn_dict["percentage soma syn size"]
-        results_for_plotting_comps.loc[sum_len * 3 + len_ct1:sum_len*4 - 1,"percentage syn size"] = ct2_syn_dict["percentage soma syn size"]
-        results_for_plotting_comps["syn amount"] = results_for_plotting_comps["syn amount"].astype("float64")
-        results_for_plotting_comps["avg syn size"] = results_for_plotting_comps["avg syn size"].astype("float64")
-        results_for_plotting_comps["percentage amount"] = results_for_plotting_comps["percentage amount"].astype('float64')
-        results_for_plotting_comps["percentage syn size"] = results_for_plotting_comps["percentage syn size"].astype("float64")
+        #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
+        if percentile:
+            results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
+                                                             celltype2=ct_dict[comp_ct2], filename=f_name,
+                                                             dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
+                                                             color1="gray", color2="darkturquoise")
+        else:
+            results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1], celltype2=ct_dict[comp_ct2],
+                                                             filename=f_name, dictionary1=ct1_syn_dict,
+                                                             dictionary2=ct2_syn_dict, color1="mediumorchid",
+                                                             color2="springgreen")
+        two_param_labels = ["spine head", "spine neck", "shaft", "soma"]
+        column_labels = ["amount synapses", "average synapse size", "percentage amount synapses", "percentage synapse size", "celltype", "compartment"]
+        result_df_multi_params = results_comparison.result_df_two_params(labels= two_param_labels, column_labels= column_labels, label_category= "compartment")
 
         if connected_ct:
-            results_for_plotting_comps.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
+            result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
         else:
-            results_for_plotting_comps.to_csv("%s/%s_%s_syn_compartments.csv" % (
+            result_df_multi_params.to_csv("%s/%s_%s_syn_compartments.csv" % (
                 f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
 
         for key in results_for_plotting_comps.keys():
@@ -599,17 +556,6 @@ if __name__ == '__main__':
                 filename = ("%s/%s_comps_box_%s_%s.png" % (f_name, key, ct_dict[comp_ct1], ct_dict[comp_ct2]))
             plt.savefig(filename)
             plt.close()
-
-        if percentile:
-            results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
-                                                             celltype2=ct_dict[comp_ct2], filename=f_name,
-                                                             dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
-                                                             color1="gray", color2="darkturquoise")
-        else:
-            results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1], celltype2=ct_dict[comp_ct2],
-                                                             filename=f_name, dictionary1=ct1_syn_dict,
-                                                             dictionary2=ct2_syn_dict, color1="mediumorchid",
-                                                             color2="springgreen")
 
         for key in ct1_syn_dict.keys():
             if "ids" in key:

@@ -350,4 +350,76 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             plt.savefig("%s/%s_%s_%s_box.png" % (self.filename, key, self.celltype1, self.celltype2))
         plt.close()
 
+    def plot_violin_hue(self, key, x, hue, results_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
+        """
+        creates violin plot with more than one parameter. Dataframe with results oat least two parameter is required
+        :param key: parameter to be plotted on y axis
+        :param x: dataframe column on x axis
+        :param hue: dataframe column acting as hue
+        :param results_df: datafram, suitable one can be created with results_df_two_params
+        :param stripplot: if True creates stripplot overlay
+        :param conn_celltype: if third celltype connectivty is analysed
+        :param outgoing: if true, connected_ct is post_synapse
+        :return: None
+        """
+        if stripplot:
+            sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
+                          dodge=True)
+            ax = sns.violinplot(x=x, y=key, data=results_df.reset_index(), inner="box",
+                                palette=self.color_palette, hue=hue)
+            handles, labels = ax.get_legend_handles_labels()
+            plt.legend(handles[0:2], labels[0:2])
+            plt.ylabel(self.param_label(key, subcell))
+        else:
+            sns.violinplot(x = x, y= key, data = results_df, inner = "box", palette=self.color_palette, hue=hue)
+        if conn_celltype:
+            if outgoing:
+                plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
+                plt.savefig("%s/%s_%s_%s_2_%s_multi_violin.png" % (
+                    self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+            else:
+                plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_2_%s_%s_multi_violin.png" % (
+                    self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+        else:
+            plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_multi_violin.png" % (self.filename, key, self.celltype1, self.celltype2))
+        plt.close()
+
+    def plot_box_hue(self, key, x, hue, results_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
+        """
+        creates box plot with more than one parameter. Dataframe with results oat least two parameter is required
+        :param key: parameter to be plotted on y axis
+        :param x: dataframe column on x axis
+        :param hue: dataframe column acting as hue
+        :param results_df: datafram, suitable one can be created with results_df_two_params
+        :param stripplot: if True creates stripplot overlay
+        :param conn_celltype: if third celltype connectivty is analysed
+        :param outgoing: if true, connected_ct is post_synapse
+        :return: None
+        """
+        if stripplot:
+            sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
+                          dodge=True)
+            ax = sns.boxplot(x=x, y=key, data=results_df.reset_index(), inner="box",
+                                palette=self.color_palette, hue=hue)
+            handles, labels = ax.get_legend_handles_labels()
+            plt.legend(handles[0:2], labels[0:2])
+            plt.ylabel(self.param_label(key, subcell))
+        else:
+            sns.boxplot(x=x, y=key, data=results_df, inner="box", palette=self.color_palette, hue=hue)
+        if conn_celltype:
+            if outgoing:
+                plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
+                plt.savefig("%s/%s_%s_%s_2_%s_multi_box.png" % (
+                    self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+            else:
+                plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_2_%s_%s_multi_box.png" % (
+                    self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+        else:
+            plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_multi_box.png" % (self.filename, key, self.celltype1, self.celltype2))
+        plt.close()
+
 

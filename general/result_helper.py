@@ -164,13 +164,13 @@ class ResultsForPlotting():
             if celltype2:
                 if outgoing:
                     plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
-                    plt.savefig("%s/%s_%s_2_%s_violin.png" % (self.filename, key, self.celltype, celltype2))
+                    plt.savefig("%s/%s_%s_2_%s_box.png" % (self.filename, key, self.celltype, celltype2))
                 else:
                     plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
-                    plt.savefig("%s/%s_%s_2_%s_violin.png" % (self.filename, key, celltype2, self.celltype))
+                    plt.savefig("%s/%s_%s_2_%s_box.png" % (self.filename, key, celltype2, self.celltype))
                 else:
                 plt.title("%s in %s %s" % (key, self.celltype, subcell))
-                plt.savefig("%s/%s_%s_%s_violin.png" % (self.filename, key, subcell, self.celltype))
+                plt.savefig("%s/%s_%s_%s_box.png" % (self.filename, key, subcell, self.celltype))
             plt.close()
 
 

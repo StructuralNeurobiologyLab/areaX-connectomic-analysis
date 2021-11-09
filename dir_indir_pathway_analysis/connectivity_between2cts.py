@@ -31,7 +31,7 @@ if __name__ == '__main__':
         looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
         the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic
         synapses. Uses cached synapse properties. Uses compartment_length per cell to ignore cells with not enough axon/dendrite
-        spiness values: 0 = dendritic shaft, 1 = spine head, 2 = spine neck, 3 = other
+        spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
         :param ssd: super-segmentation dataset
         :param sd_synssv: segmentation dataset for synapses.
         :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
@@ -235,13 +235,13 @@ if __name__ == '__main__':
                 ct1_2_ct2_percell_syn_amount[cell2_ind, cell1_ind] += 1
                 ct1_2_ct2_percell_syn_size[cell2_ind, cell1_ind] += syn_size
                 if deso == 0:
-                    if spin_deso == 0:
+                    if spin_deso == 2:
                         ct1_2_ct2_syn_dict["amount shaft syn"][cell2_ind] += 1
                         ct1_2_ct2_syn_dict["sum size shaft syn"][cell2_ind] += syn_size
                     elif spin_deso == 1:
                         ct1_2_ct2_syn_dict["amount spine head syn"][cell2_ind] += 1
                         ct1_2_ct2_syn_dict["sum size spine head syn"][cell2_ind] += syn_size
-                    elif spin_deso == 2:
+                    elif spin_deso == 0:
                         ct1_2_ct2_syn_dict["amount spine neck syn"][cell2_ind] += 1
                         ct1_2_ct2_syn_dict["sum size spine neck syn"][cell2_ind] += syn_size
                 else:
@@ -255,13 +255,13 @@ if __name__ == '__main__':
                 ct2_2_ct1_percell_syn_amount[cell1_ind, cell2_ind] += 1
                 ct2_2_ct1_percell_syn_size[cell1_ind, cell2_ind] += syn_size
                 if deso == 0:
-                    if spin_deso == 0:
+                    if spin_deso == 2:
                         ct2_2_ct1_syn_dict["amount shaft syn"][cell1_ind] += 1
                         ct2_2_ct1_syn_dict["sum size shaft syn"][cell1_ind] += syn_size
                     elif spin_deso == 1:
                         ct2_2_ct1_syn_dict["amount spine head syn"][cell1_ind] += 1
                         ct2_2_ct1_syn_dict["sum size spine head syn"][cell1_ind] += syn_size
-                    elif spin_deso == 2:
+                    elif spin_deso == 0:
                         ct2_2_ct1_syn_dict["amount spine neck syn"][cell1_ind] += 1
                         ct2_2_ct1_syn_dict["sum size spine neck syn"][cell1_ind] += syn_size
                 else:

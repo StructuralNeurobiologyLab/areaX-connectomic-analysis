@@ -25,7 +25,7 @@ sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.work
 
 
 
-def synapses_between2cts(ssd, sd_synssv, celltype1, celltype2 = None, full_cells = True, handpicked1 = True, handpicked2 = True, percentile_ct1 = None,
+def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, full_cells = True, handpicked1 = True, handpicked2 = True, percentile_ct1 = None,
                          min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.6):
     '''
     looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
@@ -47,18 +47,18 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, celltype2 = None, full_cells
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
-    if percentile is None and celltype2 is None:
+    if percentile_ct1 is None and celltype2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
-    if percentile:
-        if percentile == 50:
+    if percentile_ct1:
+        if percentile_ct1 == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
-        if percentile < 50:
-            ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % percentile
+        if percentile_ct1 < 50:
+            ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % percentile_ct1
         else:
-            ct_dict[celltype2] = ct_dict[celltype1] + " p%.2i" % (100 - percentile)
+            ct_dict[celltype2] = ct_dict[celltype1] + " p%.2i" % (100 - percentile_ct1)
 
-    f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211021_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
-            ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
+    f_name = "%s_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+            filename, ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
@@ -358,7 +358,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, celltype2 = None, full_cells
 
     log.info("Connectivity analysis between 2 celltypes (%s, %s) finished" % (ct_dict[celltype1], ct_dict[celltype2]))
 
-def compare_connectivity(comp_ct1, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100):
+def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100):
     '''
     compares connectivity parameters between two celltypes or connectivity of a third celltype to the two celltypes. Connectivity parameters are calculated in
     synapses_between2cts. Parameters include synapse amount and average synapse size, as well as amount and average synapse size in shaft, soma, spine head and spine neck.
@@ -383,11 +383,11 @@ def compare_connectivity(comp_ct1, comp_ct2 = None, connected_ct = None, percent
         else:
             ct_dict[comp_ct2] = ct_dict[comp_ct1] + " p%.2i" % (100 - percentile)
     if connected_ct:
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210923_j0251v3__%s_%s_%s_syn_con_comp_mcl%i" % (
-            ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len)
+        f_name = "%s_j0251v3_comp_conn_%s_%s_%s_syn_con_comp_mcl%i" % (
+            filename, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len)
     else:
-        f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/210923_j0251v3__%s_%s_syn_con_comp_mcl%i" % (
-            ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len)
+        f_name = "%s_j0251v3_comp_conn_%s_%s_syn_con_comp_mcl%i" % (
+            filename, ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compare connectivty between two celltypes', log_dir=f_name + '/logs/')

@@ -398,6 +398,9 @@ if __name__ == '__main__':
         #make violin plots for amount and size (absolute, relative) for different compartments
         x_labels = ["spine head", "spine neck", "shaft", "soma"]
         ticks = np.arange(4)
+        ct1_2_ct2_resultsdict.multiple_param_labels(x_labels, ticks)
+        ct2_2_ct1_resultsdict.multiple_param_labels(x_labels, ticks)
+
         sns.violinplot(data = [ct1_2_ct2_pd["amount spine head syn"], ct1_2_ct2_pd["amount spine neck syn"], ct1_2_ct2_pd["amount shaft syn"], ct1_2_ct2_pd["amount soma syn"]], inner= "box")
         sns.stripplot(data=[ct1_2_ct2_pd["amount spine head syn"], ct1_2_ct2_pd["amount spine neck syn"], ct1_2_ct2_pd["amount shaft syn"], ct1_2_ct2_pd["amount soma syn"]], color="black", alpha=0.2)
         plt.xticks(ticks = ticks, labels=x_labels)

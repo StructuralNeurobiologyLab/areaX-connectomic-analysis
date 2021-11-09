@@ -123,6 +123,57 @@ class ResultsForPlotting():
                plt.savefig("%s/%s_%s_%s_hist.png" % (self.filename, subcell, key, self.celltype))
         plt.close()
 
+        def multiple_param_label(labels, ticks):
+            self.m_labels = labels
+            self.m_ticks = ticks
+
+        def plot_violin_params(key, param_list,subcell, xlabel = None, ticks = None, stripplot = True, celltype2 = None, outgoing = False):
+            sns.violinplot(data=param_list, inner="box")
+            if stripplot:
+                sns.stripplot(data=param_list, color="black", alpha=0.2)
+            if xlabel:
+                if ticks is None:
+                    raise ValueError("need labels and ticks")
+                plt.xticks(ticks = ticks, labels= xlabel)
+            else:
+                plt.xticks(ticks=self.m_ticks, labels=self.m_labels)
+            plt.ylabel(self.param_label(key, subcell))
+            if celltype2:
+                if outgoing:
+                    plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
+                    plt.savefig("%s/%s_%s_2_%s_violin.png" % (self.filename, key, self.celltype, celltype2))
+                else:
+                    plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
+                    plt.savefig("%s/%s_%s_2_%s_violin.png" % (self.filename, key, celltype2, self.celltype))
+            else:
+                plt.title("%s in %s %s" % (key, self.celltype, subcell))
+                plt.savefig("%s/%s_%s_%s_violin.png" % (self.filename, key, subcell, self.celltype))
+            plt.close()
+
+        def plot_box_params(key, param_list,subcell, xlabel = None, ticks = None, stripplot = True, celltype2 = None, outgoing = False):
+            sns.violinplot(data=param_list, inner="box")
+            if stripplot:
+                sns.stripplot(data=param_list, color="black", alpha=0.2)
+            if xlabel:
+                if ticks is None:
+                    raise ValueError("need labels and ticks")
+                plt.xticks(ticks = ticks, labels= xlabel)
+            else:
+                plt.xticks(ticks=self.m_ticks, labels=self.m_labels)
+            plt.ylabel(self.param_label(key, subcell))
+            if celltype2:
+                if outgoing:
+                    plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
+                    plt.savefig("%s/%s_%s_2_%s_violin.png" % (self.filename, key, self.celltype, celltype2))
+                else:
+                    plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
+                    plt.savefig("%s/%s_%s_2_%s_violin.png" % (self.filename, key, celltype2, self.celltype))
+                else:
+                plt.title("%s in %s %s" % (key, self.celltype, subcell))
+                plt.savefig("%s/%s_%s_%s_violin.png" % (self.filename, key, subcell, self.celltype))
+            plt.close()
+
+
 class ComparingResultsForPLotting(ResultsForPlotting):
     """
     makes plots from two dictionaries with the same keys to compare their results.

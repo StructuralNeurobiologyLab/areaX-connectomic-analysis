@@ -264,86 +264,34 @@ if __name__ == '__main__':
         log.info("Step 4/4: calculate last parameters (average syn size, average syn amount and syn size between 2 cells) and plotting")
 
 
-        ct2_syn_inds = ct1_2_ct2_syn_dict["syn amount"] > 0
+        ct2_syn_inds = ct1_2_ct2_syn_dict["amount synapses"] > 0
+        ct1_syn_inds = ct2_2_ct1_syn_dict["amount_synapses"] > 0
+
         for key in ct1_2_ct2_syn_dict.keys():
             ct1_2_ct2_syn_dict[key] = ct1_2_ct2_syn_dict[key][ct2_syn_inds]
-
-        ct1_2_ct2_syn_dict["avg syn size"] = ct1_2_ct2_syn_dict["sum syn size"] / ct1_2_ct2_syn_dict["syn amount"]
-        ct1_2_ct2_syn_dict["avg size shaft syn"] = ct1_2_ct2_syn_dict["sum size shaft syn"] / ct1_2_ct2_syn_dict["amount shaft syn"]
-        ct1_2_ct2_syn_dict["avg size spine head syn"] = ct1_2_ct2_syn_dict["sum size spine head syn"] / ct1_2_ct2_syn_dict[
-            "amount spine head syn"]
-        ct1_2_ct2_syn_dict["avg size spine neck syn"] = ct1_2_ct2_syn_dict["sum size spine neck syn"] / ct1_2_ct2_syn_dict[
-            "amount spine neck syn"]
-        ct1_2_ct2_syn_dict["avg size soma syn"] = ct1_2_ct2_syn_dict["sum size soma syn"] / ct1_2_ct2_syn_dict[
-            "amount soma syn"]
-        ct1_2_ct2_syn_dict["percentage shaft syn amount"] = ct1_2_ct2_syn_dict["amount shaft syn"]/ ct1_2_ct2_syn_dict["syn amount"] * 100
-        ct1_2_ct2_syn_dict["percentage spine head syn amount"] = ct1_2_ct2_syn_dict["amount spine head syn"] / ct1_2_ct2_syn_dict[
-            "syn amount"] * 100
-        ct1_2_ct2_syn_dict["percentage spine neck syn amount"] = ct1_2_ct2_syn_dict["amount spine neck syn"] / ct1_2_ct2_syn_dict[
-            "syn amount"] * 100
-        ct1_2_ct2_syn_dict["percentage soma syn amount"] = ct1_2_ct2_syn_dict["amount soma syn"] / ct1_2_ct2_syn_dict[
-            "syn amount"] * 100
-        ct1_2_ct2_syn_dict["percentage shaft syn size"] = ct1_2_ct2_syn_dict["sum size shaft syn"] / ct1_2_ct2_syn_dict[
-            "sum syn size"] * 100
-        ct1_2_ct2_syn_dict["percentage spine head syn size"] = ct1_2_ct2_syn_dict["sum size spine head syn"] / \
-                                                             ct1_2_ct2_syn_dict[
-                                                                 "sum syn size"] * 100
-        ct1_2_ct2_syn_dict["percentage spine neck syn size"] = ct1_2_ct2_syn_dict["sum size spine neck syn"] / \
-                                                             ct1_2_ct2_syn_dict[
-                                                                 "sum syn size"] * 100
-        ct1_2_ct2_syn_dict["percentage soma syn size"] = ct1_2_ct2_syn_dict["sum size soma syn"] / ct1_2_ct2_syn_dict[
-            "sum syn size"] * 100
-
-        ct1_syn_inds = ct2_2_ct1_syn_dict["syn amount"] > 0
-        for key in ct2_2_ct1_syn_dict.keys():
             ct2_2_ct1_syn_dict[key] = ct2_2_ct1_syn_dict[key][ct1_syn_inds]
 
-        ct2_2_ct1_syn_dict["avg syn size"] = ct2_2_ct1_syn_dict["sum syn size"] / ct2_2_ct1_syn_dict["syn amount"]
-        ct2_2_ct1_syn_dict["avg size shaft syn"] = ct2_2_ct1_syn_dict["sum size shaft syn"] / ct2_2_ct1_syn_dict[
-            "amount shaft syn"]
-        ct2_2_ct1_syn_dict["avg size spine head syn"] = ct2_2_ct1_syn_dict["sum size spine head syn"] / \
-                                                        ct2_2_ct1_syn_dict[
-                                                            "amount spine head syn"]
-        ct2_2_ct1_syn_dict["avg size spine neck syn"] = ct2_2_ct1_syn_dict["sum size spine neck syn"] / \
-                                                        ct2_2_ct1_syn_dict[
-                                                            "amount spine neck syn"]
-        ct2_2_ct1_syn_dict["avg size soma syn"] = ct2_2_ct1_syn_dict["sum size soma syn"] / ct2_2_ct1_syn_dict[
-            "amount soma syn"]
-        ct2_2_ct1_syn_dict["percentage shaft syn amount"] = ct2_2_ct1_syn_dict["amount shaft syn"] / \
-                                                            ct2_2_ct1_syn_dict["syn amount"] * 100
-        ct2_2_ct1_syn_dict["percentage spine head syn amount"] = ct2_2_ct1_syn_dict["amount spine head syn"] / \
-                                                                 ct2_2_ct1_syn_dict[
-                                                                     "syn amount"] * 100
-        ct2_2_ct1_syn_dict["percentage spine neck syn amount"] = ct2_2_ct1_syn_dict["amount spine neck syn"] / \
-                                                                 ct2_2_ct1_syn_dict[
-                                                                     "syn amount"] * 100
-        ct2_2_ct1_syn_dict["percentage soma syn amount"] = ct2_2_ct1_syn_dict["amount soma syn"] / \
-                                                           ct2_2_ct1_syn_dict[
-                                                               "syn amount"] * 100
-        ct2_2_ct1_syn_dict["percentage shaft syn size"] = ct2_2_ct1_syn_dict["sum size shaft syn"] / \
-                                                          ct2_2_ct1_syn_dict[
-                                                              "sum syn size"] * 100
-        ct2_2_ct1_syn_dict["percentage spine head syn size"] = ct2_2_ct1_syn_dict["sum size spine head syn"] / \
-                                                               ct2_2_ct1_syn_dict[
-                                                                   "sum syn size"] * 100
-        ct2_2_ct1_syn_dict["percentage spine neck syn size"] = ct2_2_ct1_syn_dict["sum size spine neck syn"] / \
-                                                               ct2_2_ct1_syn_dict[
-                                                                   "sum syn size"] * 100
-        ct2_2_ct1_syn_dict["percentage soma syn size"] = ct2_2_ct1_syn_dict["sum size soma syn"] / \
-                                                         ct2_2_ct1_syn_dict[
-                                                             "sum syn size"] * 100
+        ct1_2_ct2_syn_dict["average synapse size"] = ct1_2_ct2_syn_dict["sum size synapses"] / ct1_2_ct2_syn_dict["amount synapses"]
+        ct2_2_ct1_syn_dict["average synapse size"] = ct2_2_ct1_syn_dict["sum size synapses"] / ct2_2_ct1_syn_dict[
+            "amount synapses"]
 
-        ct1_2_ct2_syn_dict.pop("sum syn size")
-        ct1_2_ct2_syn_dict.pop("sum size soma syn")
-        ct1_2_ct2_syn_dict.pop("sum size spine head syn")
-        ct1_2_ct2_syn_dict.pop("sum size spine neck syn")
-        ct1_2_ct2_syn_dict.pop("sum size shaft syn")
+        for ci in comp_labels:
+            ct1_2_ct2_syn_dict["average synapse size - " + ci] = ct1_2_ct2_syn_dict["sum size synapses - " + ci]/ ct1_2_ct2_syn_dict["amount synapses - " + ci]
+            ct2_2_ct1_syn_dict["average synapse size - " + ci] = ct2_2_ct1_syn_dict["sum size synapses - " + ci] / \
+                                                                 ct2_2_ct1_syn_dict["amount synapses - " + ci]
+            ct1_2_ct2_syn_dict["percentage synapse size - " + ci] = ct1_2_ct2_syn_dict["sum size synapses - " + ci] / \
+                                                                 ct1_2_ct2_syn_dict["sum size synapses"] * 100
+            ct2_2_ct1_syn_dict["percentage synapse size - " + ci] = ct2_2_ct1_syn_dict["sum size synapses - " + ci] / \
+                                                                 ct2_2_ct1_syn_dict["sum size synapses"] * 100
+            ct1_2_ct2_syn_dict["percentage synapse amount- " + ci] = ct1_2_ct2_syn_dict["amount synapses - " + ci] / \
+                                                                    ct1_2_ct2_syn_dict["amount synapses"] * 100
+            ct2_2_ct1_syn_dict["percentage synapse size - " + ci] = ct2_2_ct1_syn_dict["amount synapses - " + ci] / \
+                                                                    ct2_2_ct1_syn_dict["amount synapses" * 100]
+            ct1_2_ct2_syn_dict.pop("sum size synapses - " + ci)
+            ct2_2_ct1_syn_dict.pop("sum size synapses - " + ci)
 
-        ct2_2_ct1_syn_dict.pop("sum syn size")
-        ct2_2_ct1_syn_dict.pop("sum size soma syn")
-        ct2_2_ct1_syn_dict.pop("sum size spine head syn")
-        ct2_2_ct1_syn_dict.pop("sum size spine neck syn")
-        ct2_2_ct1_syn_dict.pop("sum size shaft syn")
+        ct1_2_ct2_syn_dict.pop("sum size synapses")
+        ct2_2_ct1_syn_dict.pop("sum size synapses")
 
         #average synapse amount and size for one cell form ct1 to one cell of ct2
         ct1_2_ct2_percell_syn_amount = ct1_2_ct2_percell_syn_amount[ct2_syn_inds]

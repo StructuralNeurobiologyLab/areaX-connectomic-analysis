@@ -13,7 +13,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
-    from u.arother.bio_analysis.general.result_helper import ResultsForPlotting
+    from u.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
     from u.arother.bio_analysis.general.analysis_helper import get_compartment_length, get_compartment_bbvolume, \
         get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
@@ -255,8 +255,7 @@ if __name__ == '__main__':
             comp_dict_keys = list(ct1_comp_dict.keys())
         log.info("compute statistics for comparison, create violinplot and histogram")
         ranksum_results = pd.DataFrame(columns=comp_dict_keys[1:], index=["stats", "p value"])
-        colours_pal = {ct_dict[celltype1]: "mediumorchid", ct_dict[celltype2]: "springgreen"}
-        max_len = np.max(np.array([len(ct1_comp_dict[comp_dict_keys[0]]), len(ct2_comp_dict[comp_dict_keys[0]])]))
+        results_comparision = ComparingResultsForPLotting(celltype1 = ct_dict[celltype1], celltype2 = ct_dict[celltype2], filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "mediumorchid", color2 = "springgreen")
         for key in ct1_comp_dict.keys():
             if "ids" in key:
                 continue
@@ -265,80 +264,15 @@ if __name__ == '__main__':
             ranksum_results.loc["stats", key] = stats
             ranksum_results.loc["p value", key] = p_value
             #plot parameter as violinplot
-            results_for_plotting = pd.DataFrame(columns=[ct_dict[celltype1], ct_dict[celltype2]], index=range(max_len))
-            results_for_plotting.loc[0:len(ct1_comp_dict[key]) - 1, ct_dict[celltype1]] = ct1_comp_dict[key]
-            results_for_plotting.loc[0:len(ct2_comp_dict[key]) - 1, ct_dict[celltype2]] = ct2_comp_dict[key]
-            sns.violinplot(data= results_for_plotting, inner="box", palette=colours_pal)
-            sns.stripplot(data=results_for_plotting, color="black", alpha=0.2)
-            plt.title('%s' % key)
-            if "length" in key:
-                plt.ylabel("pathlength in µm")
-            elif "vol" in key:
-                if "percentage" in key:
-                    plt.ylabel("% of whole dataset")
-                else:
-                    plt.ylabel("volume in µm³")
+            results_for_plotting = results_comparision.result_df_per_param(key)
+            if "axon" in key:
+                subcell = "axon"
             else:
-                plt.ylabel("distance in µm")
-            filename = ("%s/%s_violin.png" % (f_name, key))
-            plt.savefig(filename)
-            plt.close()
-            sns.boxplot(data=results_for_plotting, palette=colours_pal)
-            plt.title('%s' % key)
-            if "length" in key:
-                plt.ylabel("pathlength in µm")
-            elif "vol" in key:
-                if "percentage" in key:
-                    plt.ylabel("% of whole dataset")
-                else:
-                    plt.ylabel("volume in µm³")
-            else:
-                plt.ylabel("distance in µm")
-            filename = ("%s/%s_box.png" % (f_name, key))
-            plt.savefig(filename)
-            plt.close()
-            sns.distplot(ct1_comp_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
-                         kde=False, label=ct_dict[celltype1], bins=10)
-            sns.distplot(ct2_comp_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
-                         kde=False, label=ct_dict[celltype2], bins=10)
-            plt.legend()
-            plt.title('%s' % key)
-            plt.ylabel("count of cells")
-            if "length" in key:
-                plt.xlabel("pathlength in µm")
-            elif "vol" in key:
-                if "percentage" in key:
-                    plt.xlabel("% of whole dataset")
-                else:
-                    plt.xlabel("volume in µm³")
-            else:
-                plt.xlabel("distance in µm")
-            filename = ("%s/%s_hist.png" % (f_name, key))
-            plt.savefig(filename)
-            plt.close()
-            sns.distplot(ct1_comp_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "mediumorchid"},
-                         kde=False, label=ct_dict[celltype1], bins=10, norm_hist=True)
-            sns.distplot(ct2_comp_dict[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "springgreen"},
-                         kde=False, label=ct_dict[celltype2], bins=10, norm_hist=True)
-            plt.legend()
-            plt.title('%s' % key)
-            plt.ylabel("fraction of cells")
-            if "length" in key:
-                plt.xlabel("pathlength in µm")
-            elif "vol" in key:
-                if "percentage" in key:
-                    plt.xlabel("% of whole dataset")
-                else:
-                    plt.xlabel("volume in µm³")
-            else:
-                plt.xlabel("distance in µm")
-            filename = ("%s/%s_hist_norm.png" % (f_name, key))
-            plt.savefig(filename)
-            plt.close()
+                subcell = "dendrite"
+            results_comparision.plot_violin(key, results_for_plotting, subcell, stripplot=True)
+            results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
+            results_comparision.plot_hist_comparison(key, subcell, bins= 10, norm_hist=False)
+            results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=True)
 
         ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
 

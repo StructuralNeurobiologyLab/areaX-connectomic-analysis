@@ -263,18 +263,25 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, self.celltype2] = self.dictionary1[key]
         return results_for_plotting
 
-    def result_df_two_params(self, labels, column_labels, label_category):
+    def result_df_two_params(self, label_category):
         """
-        creates da dataframe for comparison across two parameters, one category will be a celltype comparison.
+        creates da dataframe for comparisnp.empty(len(self.dictionary1.keys()))on across two parameters, one category will be a celltype comparison.
         keys should be organized in the way: column label - label e.g. amount synapses - spine head
         :param: keys: list that includes one label
-        :param labels: category labels,
-        :param column_labels = label for columns of dataframe including label_category and celltype as last two
         :param label_category = in column_labels, category corresponding to labels
         :return: results_df
         """
-        if column_labels[0] == label_category or column_labels[0] == "celltype":
-            raise ValueError("labes that are included in keys should be the first columns")
+        column_labels = []
+        labels = []
+        for ki, key in enumerate(self.dictionary1.keys()):
+            if "-" in key:
+                key_split = key.split(" - ")
+                column_labels[ki] = key_split[0]
+                labels[ki] = key_split[1]
+        if len(column_labels) == 0:
+            raise ValueError("keys in dictionary not labelled correctly")
+        column_labels = np.hstack([np.unique(column_labels), ["celltype", label_category]])
+        labels = np.unique(labels)
         key_example = column_labels[0] + " - " + labels[0]
         len_ct1 = len(self.dictionary1[key_example])
         len_ct2 = len(self.dictionary1[key_example])

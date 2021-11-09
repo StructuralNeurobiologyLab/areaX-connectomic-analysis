@@ -326,31 +326,23 @@ if __name__ == '__main__':
 
         #plot parameters as distplot
         # also make plots for amount and size (absolute, relative) for different compartments
-        x_labels = ["spine head", "spine neck", "shaft", "soma"]
         ticks = np.arange(4)
-        ct1_2_ct2_resultsdict.multiple_param_labels(x_labels, ticks)
-        ct2_2_ct1_resultsdict.multiple_param_labels(x_labels, ticks)
+        ct1_2_ct2_resultsdict.multiple_param_labels(comp_labels, ticks)
+        ct2_2_ct1_resultsdict.multiple_param_labels(comp_labels, ticks)
 
         for key in ct1_2_ct2_syn_dict.keys():
             if "ids" in key:
                 continue
             ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct_dict[celltype1])
             ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct_dict[celltype2])
-            if "spine head" in key:
-                key_split = key.split()
-                if "percentage" in key:
-                    key2 = key_split[0] + " " + x_labels[1] + " " + key_split[-2] + " " + key_split[-1]
-                    key3 = key_split[0] + " " + x_labels[2] + " " + key_split[-2] + " " + key_split[-1]
-                    key4 = key_split[0] + " " + x_labels[3] + " " + key_split[-2] + " " + key_split[-1]
-                    new_key = key_split[0] + " " + key_split[-2] + " " + key_split[-1]
-                else:
-                    key2 = key_split[0] + " " + x_labels[1] + " " + key_split[-1]
-                    key3 = key_split[0] + " " + x_labels[2] + " " + key_split[-1]
-                    key4 = key_split[0] + " " + x_labels[3] + " " + key_split[-1]
-                    new_key = key_split[0] + " " + key_split[-1]
+            if comp_labels[0] in key:
+                key_split = key.split("-")
+                key2 = key_split[0] + "-" + comp_labels[1]
+                key3 = key_split[0] + "-" + comp_labels[2]
+                key4 = key_split[0] + "-" + comp_labels[3]
                 param_list_ct2= [ct1_2_ct2_pd[key], ct1_2_ct2_pd[key2], ct1_2_ct2_pd[key3], ct1_2_ct2_pd[key4]]
-                ct1_2_ct2_resultsdict.plot_violin_params(key = new_key, param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = celltype1, outgoing = False)
-                ct1_2_ct2_resultsdict.plot_box_params(key=new_key, param_list=param_list_ct2, subcell="synapse",
+                ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = celltype1, outgoing = False)
+                ct1_2_ct2_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct2, subcell="synapse",
                                                          stripplot=False, celltype2= celltype1, outgoing = False)
                 param_list_ct1 = [ct2_2_ct1_pd[key], ct2_2_ct1_pd[key2], ct2_2_ct1_pd[key3], ct2_2_ct1_pd[key4]]
                 ct2_2_ct1_resultsdict.plot_violin_params(key=new_key, param_list=param_list_ct1, subcell="synapse",
@@ -419,9 +411,6 @@ if __name__ == '__main__':
         log.info("compute statistics for comparison, create violinplot and histogram")
         ranksum_results = pd.DataFrame(columns=syn_dict_keys[1:], index=["stats", "p value"])
 
-        param_labels = ["amount synapses", "sum size synapses"]
-        # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
-        comp_labels = ["spine neck", "spine head", "shaft", "soma"]
 
         #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
         if percentile:
@@ -434,7 +423,12 @@ if __name__ == '__main__':
                                                              filename=f_name, dictionary1=ct1_syn_dict,
                                                              dictionary2=ct2_syn_dict, color1="mediumorchid",
                                                              color2="springgreen")
-        two_param_labels = ["spine head", "spine neck", "shaft", "soma"]
+
+        # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+
+
+
+        two_param_labels = ["spine neck", "spine head", "shaft", "soma"]
         column_labels = ["amount synapses", "average synapse size", "percentage amount synapses", "percentage synapse size", "celltype", "compartment"]
         result_df_multi_params = results_comparison.result_df_two_params(labels= two_param_labels, column_labels= column_labels, label_category= "compartment")
 

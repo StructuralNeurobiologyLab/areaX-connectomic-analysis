@@ -263,6 +263,37 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, self.celltype2] = self.dictionary1[key]
         return results_for_plotting
 
+    def result_df_two_params(self, labels, column_labels, label_category):
+        """
+        creates da dataframe for comparison across two parameters, one category will be a celltype comparison.
+        keys should be organized in the way: column label - label e.g. amount synapses - spine head
+        :param: keys: list that includes one label
+        :param labels: category labels,
+        :param column_labels = label for columns of dataframe including label_category and celltype as last two
+        :param label_category = in column_labels, category corresponding to labels
+        :return: results_df
+        """
+        if column_labels[0] == label_category or column_labels[0] == "celltype":
+            raise ValueError("labes that are included in keys should be the first columns")
+        key_example = column_labels[0] + " - " + labels[0]
+        len_ct1 = len(self.dictionary1[key_example])
+        len_ct2 = len(self.dictionary1[key_example])
+        sum_length =  len_ct1 + len_ct2
+        result_df = pd.DataFrame(
+            columns=column_labels, index=range(sum_length * len(labels)))
+
+        result_df[label_category] = type(labels[0])
+        for i in range(labels):
+            result_df.loc[sum_length * i: sum_length * (i + 1) - 1, label_category] = labels[i]
+            result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, "celltype"] = self.celltype1
+            result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, "celltype"] = self.celltype2
+            for ci in range(column_labels - 2):
+                result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, column_labels[ci]] = self.dictionary1[column_labels[ci] + " - " + labels[i]]
+                result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, column_labels[ci]] = self.dictionary2[column_labels[ci] + " - " + labels[i]]
+        for ci in range(column_labels - 2):
+            result_df[column_labels[ci]] = result_df[column_labels[ci]].astype("float64")
+        return result_df
+
     def plot_violin(self, key, result_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
         """
         makes a violinplot of a specific parameter that is compared within two dictionaries.

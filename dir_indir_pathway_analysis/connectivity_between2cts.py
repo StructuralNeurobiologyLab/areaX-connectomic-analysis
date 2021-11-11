@@ -206,6 +206,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct2_2_ct1_percell_syn_size = np.zeros((len(cellids1), len(cellids2))).astype(float)
     ct1_2_ct2_percell_syn_amount = np.zeros((len(cellids2), len(cellids1))).astype(float)
     ct1_2_ct2_percell_syn_size = np.zeros((len(cellids2), len(cellids1))).astype(float)
+    ct1_2_ct2_all_syn_sizes = np.zeros(len(m_ids))
+    ct2_2_ct1_all_syn_sizes = np.zeros(len(m_ids))
     for i, syn_id in enumerate(tqdm(m_ids)):
         syn_ax = m_axs[i]
         #remove cells that are not in cellids:
@@ -231,6 +233,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             cell1_ind = np.where(ct2_2_ct1_syn_dict["cellids"] == ssv_ax)[0]
             ct1_2_ct2_syn_dict[param_labels[0]][cell2_ind] += 1
             ct1_2_ct2_syn_dict[param_labels[1]][cell2_ind] += syn_size
+            ct1_2_ct2_all_syn_sizes[i] = syn_size
 
             ct1_2_ct2_percell_syn_amount[cell2_ind, cell1_ind] += 1
             ct1_2_ct2_percell_syn_size[cell2_ind, cell1_ind] += syn_size
@@ -248,6 +251,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             ct2_2_ct1_syn_dict[param_labels[1]][cell1_ind] += syn_size
             ct2_2_ct1_percell_syn_amount[cell1_ind, cell2_ind] += 1
             ct2_2_ct1_percell_syn_size[cell1_ind, cell2_ind] += syn_size
+            ct2_2_ct1_all_syn_sizes[i] = syn_size
             if deso == 0:
                 if spin_deso <= 2:
                     ct2_2_ct1_syn_dict[param_labels[0] + " - " + comp_labels[spin_deso]][cell1_ind] += 1
@@ -263,6 +267,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
 
     log.info("Step 4/4: calculate last parameters (average syn size, average syn amount and syn size between 2 cells) and plotting")
 
+    ct2_2_ct1_all_syn_sizes = ct2_2_ct1_all_syn_sizes[ct2_2_ct1_all_syn_sizes > 0]
+    ct1_2_ct2_all_syn_sizes = ct1_2_ct2_all_syn_sizes[ct1_2_ct2_all_syn_sizes > 0]
 
     ct2_syn_inds = ct1_2_ct2_syn_dict["amount synapses"] > 0
     ct1_syn_inds = ct2_2_ct1_syn_dict["amount_synapses"] > 0
@@ -312,13 +318,20 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                                                   ct2_2_ct1_syn_dict["avg amount one cell"]
 
 
-    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]), ct1_2_ct2_syn_dict)
+
     ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
     ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
 
-    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype2], ct_dict[celltype1]), ct2_2_ct1_syn_dict)
+
     ct2_2_ct1_pd = pd.DataFrame(ct2_2_ct1_syn_dict)
     ct2_2_ct1_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+
+    #put all synsizes array into dictionary (but not into dataframe)
+    ct1_2_ct2_syn_dict["all synapse sizes"] = ct1_2_ct2_all_syn_sizes
+    ct2_2_ct1_syn_dict["all synapse sizes"] = ct2_2_ct1_all_syn_sizes
+
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]), ct1_2_ct2_syn_dict)
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype2], ct_dict[celltype1]), ct2_2_ct1_syn_dict)
 
     ct1_2_ct2_resultsdict = ResultsForPlotting(celltype = ct_dict[celltype2], filename = f_name, dictionary = ct1_2_ct2_syn_dict)
     ct2_2_ct1_resultsdict = ResultsForPlotting(celltype=ct_dict[celltype1], filename=f_name,
@@ -452,7 +465,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ranksum_results.loc["stats", key] = stats
         ranksum_results.loc["p value", key] = p_value
         # plot parameter as violinplot
-        if not "spine" in key and not "soma" in key and not "shaft" in key:
+        if "-" not in key:
             results_for_plotting = results_comparison.result_df_perparam(key)
             if connected_ct:
                 results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, conn_celltype=ct_dict[connected_ct], outgoing=False)

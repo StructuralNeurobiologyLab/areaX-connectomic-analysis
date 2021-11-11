@@ -190,7 +190,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             [len(self.dictionary1[self.dictionary1.keys()[0]]), len(self.dictionary1[self.dictionary1.keys()[0]])]))
         self.color_palette = {celltype1: color1, celltype2: color2}
 
-    def plot_hist_comparison(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, conn_celltype = None, outgoing = False):
+    def plot_hist_comparison(self, key, subcell, cells = True, add_key = None, norm_hist = False, bins = None, xlabel = None, title = None, conn_celltype = None, outgoing = False):
         """
                  plots two arrays and compares them in histogram and saves it.
                  :param key: key of dictionary that should be plotted
@@ -210,8 +210,19 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             sns.distplot(self.dictionary2[key],
                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color2},
                          kde=False, bins=bins, label=self.celltype2, norm_hist=True)
+            if add_key:
+                try:
+                    sns.distplot(self.dictionary1[add_key],
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 kde=False, bins=bins, label=add_key, norm_hist=True)
+                except KeyError:
+                    sns.distplot(self.dictionary2[add_key],
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 kde=False, bins=bins, label=add_key, norm_hist=True)
             if cells:
                 plt.ylabel("fraction of cells")
+            elif "pair" in key:
+                plt.ylabel("fraction of %s pairs" % subcell)
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
@@ -221,8 +232,19 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             sns.distplot(self.dictionary2[key],
                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color2},
                          kde=False, bins=bins, label=self.celltype2)
+            if add_key:
+                try:
+                    sns.distplot(self.dictionary1[add_key],
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 kde=False, bins=bins, label=add_key)
+                except KeyError:
+                    sns.distplot(self.dictionary2[add_key],
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 kde=False, bins=bins, label=add_key)
             if cells:
                 plt.ylabel("count of cells")
+            elif "pair" in key:
+                plt.ylabel("count of %s pairs" % subcell)
             else:
                 plt.ylabel("count of %s" % subcell)
         if xlabel:
@@ -231,13 +253,19 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             plt.xlabel(self.param_label(key, subcell))
         if conn_celltype:
             if outgoing:
-                plt.title("%s from %s, %s to %s" % (key, self.celltype1, self.celltype2, conn_celltype))
+                if title:
+                    plt.title(title)
+                else:
+                    plt.title("%s from %s, %s to %s" % (key, self.celltype1, self.celltype2, conn_celltype))
                 if norm_hist:
                     plt.savefig("%s/%s_%s_%s2%s_hist_norm.png" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
                 else:
                     plt.savefig("%s/%s_%s_%s2%s_hist.png" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
             else:
-                plt.title("%s from %s to %s, %s" % (key, conn_celltype, self.celltype1, self.celltype2))
+                if title:
+                    plt.title(title)
+                else:
+                    plt.title("%s from %s to %s, %s" % (key, conn_celltype, self.celltype1, self.celltype2))
                 if norm_hist:
                     plt.savefig("%s/%s_%s2%s_%s_hist_norm.png" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
                 else:
@@ -251,16 +279,33 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         plt.close()
 
 
-    def result_df_perparam(self, key):
+    def result_df_perparam(self, key, key2 = None, column_labels = None):
         """
         creates pd.Dataframe per parameter for easier plotting
         :param key: parameter to be compared as key in dictionary
+        :param key2: if more than two groups
+        :param column_labels: different column labels than celltypes when more than two groups
         :return: result_df
         """
-
-        results_for_plotting = pd.DataFrame(columns=[self.celltype1, self.celltype2], index=range(self.max_length_df))
-        results_for_plotting.loc[0:len(self.dictionary1[key]) - 1, self.celltype1] = self.dictionary1[key]
-        results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, self.celltype2] = self.dictionary1[key]
+        max_length = self.max_length_df
+        if key2 is None:
+            results_for_plotting = pd.DataFrame(columns=[self.celltype1, self.celltype2], index=range(max_length))
+            results_for_plotting.loc[0:len(self.dictionary1[key]) - 1, self.celltype1] = self.dictionary1[key]
+            results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, self.celltype2] = self.dictionary1[key]
+        else:
+            try:
+                key2_array = self.dictionary1[key2]
+            except KeyError:
+                key2_array = self.dictionary2[key2]
+            key2_length = len(key2_array)
+            if key2_length > self.max_length_df:
+                max_length = key2_length
+            if not column_labels:
+                column_labels = [self.celltype1, self.celltype2, key2]
+            results_for_plotting = pd.DataFrame(columns=column_labels, index=range(max_length))
+            results_for_plotting.loc[0:len(self.dictionary1[key]) - 1, column_labels[0]] = self.dictionary1[key]
+            results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, column_labels[1]] = self.dictionary1[key]
+            results_for_plotting.loc[0:key2_length - 1, column_labels[3]] = key2_array
         return results_for_plotting
 
     def result_df_two_params(self, label_category):

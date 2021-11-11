@@ -165,6 +165,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
         distances_between_soma = scipy.spatial.distance.cdist(soma_centres, soma_centres, metric = "euclidean") / 1000
         distances_between_soma = distances_between_soma[distances_between_soma > 0].reshape(len(cellids), len(cellids) - 1)
         avg_soma_distance_per_cell = np.mean(distances_between_soma, axis=1)
+        pairwise_soma_distances = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean") / 1000
         ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
                             "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct,
                             "axon volume percentage": axon_vol_perc, "dendrite volume percentage": dendrite_vol_perc,
@@ -184,6 +185,11 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     vol_comp_pd = pd.DataFrame(ct_vol_comp_dict)
     vol_comp_pd.to_csv("%s/ct_vol_comp.csv" % f_name)
 
+    #write soma centre coords and pairwise distances into dictionary but not dataframe (different length than other parameters
+    if full_cells:
+        ct_vol_comp_dict["soma centre coords"] = soma_centres
+        ct_vol_comp_dict["pairwise soma distance"] = pairwise_soma_distances
+
     vol_result_dict = ResultsForPlotting(celltype = ct_dict[celltype], filename = f_name, dictionary = ct_vol_comp_dict)
 
     for key in ct_vol_comp_dict.keys():
@@ -193,9 +199,11 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
             vol_result_dict.plot_hist(key=key, subcell="axon")
         elif "dendrite" in key:
             vol_result_dict.plot_hist(key = key, subcell="dendrite")
-
-    if full_cells:
-        ct_vol_comp_dict["soma centre coords"] = soma_centres
+        elif "soma distance" in key:
+            if "pairwise" in key:
+                vol_result_dict.plot_hist(key=key, subcell="soma", cells=False)
+            else:
+                vol_result_dict.plot_hist(key= key, subcell="soma")
 
     write_obj2pkl("%s/ct_vol_comp.pkl" % f_name, ct_vol_comp_dict)
 
@@ -249,8 +257,11 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
         ct2_distances2ct1 = scipy.spatial.distance.cdist(ct2_soma_coords, ct1_soma_coords,
                                                          metric="euclidean") / 1000
         ct2avg_soma_distance2ct1_per_cell = np.mean(ct2_distances2ct1, axis=1)
+        pairwise_distances_cts = scipy.spatial.distance.pdist(ct1_soma_coords, ct2_soma_coords, metric = "euclidean") / 1000
         ct1_comp_dict["avg soma distance to other celltype"] = ct1avg_soma_distance2ct2_per_cell
         ct2_comp_dict["avg soma distance to other celltype"] = ct2avg_soma_distance2ct1_per_cell
+        ct1_comp_dict["pairwise soma distance to other celltype"] = pairwise_distances_cts
+        ct2_comp_dict["pairwise_soma distance to other celltype"] = pairwise_distances_cts
         ct1_comp_dict.pop("soma centre coords")
         ct2_comp_dict.pop("soma centre coords")
         comp_dict_keys = list(ct1_comp_dict.keys())
@@ -264,22 +275,39 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
     else:
         results_comparision = ComparingResultsForPLotting(celltype1 = ct_dict[celltype1], celltype2 = ct_dict[celltype2], filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "mediumorchid", color2 = "springgreen")
     for key in ct1_comp_dict.keys():
-        if "ids" in key:
+        if "ids" in key or ("pairwise" in key and "other" in key):
             continue
         #calculate p_value for parameter
         stats, p_value = ranksums(ct1_comp_dict[key], ct2_comp_dict[key])
         ranksum_results.loc["stats", key] = stats
         ranksum_results.loc["p value", key] = p_value
         #plot parameter as violinplot
-        results_for_plotting = results_comparision.result_df_per_param(key)
         if "axon" in key:
             subcell = "axon"
-        else:
+        elif "dendrite" in key:
             subcell = "dendrite"
+        else:
+            subcell = "soma"
+        if "pairwise" in key:
+            column_labels = ["distances within %s" % ct_dict[celltype1], "distances within %s" % ct_dict[celltype2], "distances between %s and %s" % (ct_dict[celltype1], ct_dict[celltype2])]
+            results_for_plotting = results_comparision.result_df_per_param(key, key2 = "pairwise soma distance to other celltype", column_labels= column_labels)
+            s1, p1 = ranksums(ct1_comp_dict[key], ct1_comp_dict["pairwise soma distance to other celltype"])
+            s2, p2 = ranksums(ct2_comp_dict[key], ct1_comp_dict["pairwise soma distance to other celltype"])
+            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct_dict[celltype1]] = s1
+            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct_dict[celltype1]] = p1
+            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct_dict[celltype2]] = s2
+            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct_dict[celltype2]] = p2
+            ptitle = "pairwise soma distances within and between %s and %s" % (ct_dict[celltype1], ct_dict[celltype2])
+            results_comparision.plot_hist_comparison(key, subcell, add_key = "pairwise distance to other celltype", cells=False, title=ptitle, norm_hist=False)
+            results_comparision.plot_hist_comparison(key, subcell, add_key="pairwise distance to other celltype",
+                                                     cells=False, title=ptitle, norm_hist=True)
+        else:
+            results_for_plotting = results_comparision.result_df_per_param(key)
+            results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=False)
+            results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=True)
         results_comparision.plot_violin(key, results_for_plotting, subcell, stripplot=True)
         results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
-        results_comparision.plot_hist_comparison(key, subcell, bins= 10, norm_hist=False)
-        results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=True)
+
 
     ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
 

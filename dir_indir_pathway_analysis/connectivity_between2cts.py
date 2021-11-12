@@ -296,9 +296,6 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         ct1_2_ct2_syn_dict.pop("sum size synapses - " + ci)
         ct2_2_ct1_syn_dict.pop("sum size synapses - " + ci)
 
-    ct1_2_ct2_syn_dict.pop("sum size synapses")
-    ct2_2_ct1_syn_dict.pop("sum size synapses")
-
     #average synapse amount and size for one cell form ct1 to one cell of ct2
     ct1_2_ct2_percell_syn_amount = ct1_2_ct2_percell_syn_amount[ct2_syn_inds]
     ct1_2_ct2_percell_syn_amount[ct1_2_ct2_percell_syn_amount == 0] = np.nan
@@ -344,7 +341,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct2_2_ct1_resultsdict.multiple_param_labels(comp_labels, ticks)
 
     for key in ct1_2_ct2_syn_dict.keys():
-        if "ids" in key:
+        if "ids" in key or "sum" in key:
             continue
         if "all" in key:
             ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct_dict[celltype1])
@@ -462,7 +459,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                             stripplot=False)
 
     for key in ct1_syn_dict.keys():
-        if "ids" in key:
+        if "ids" in key or "sum" in key:
             continue
         # calculate p_value for parameter
         stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])
@@ -490,6 +487,16 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
     else:
         ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+
+    #calculate summed synapse size per celltype
+    summed_synapse_sizes = {}
+    if connected_ct:
+        summed_synapse_sizes[(ct_dict[connected_ct], ct_dict[comp_ct1])] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct_dict[connected_ct], ct_dict[comp_ct2])] = np.sum(ct2_syn_dict["sum size synapses"])
+    else:
+        summed_synapse_sizes[(ct_dict[comp_ct2], ct_dict[comp_ct1])] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct_dict[comp_ct1], ct_dict[comp_ct2])] = np.sum(ct2_syn_dict["sum size synapses"])
+
 
     #also compare outgoing connections from celltype
     if connected_ct:
@@ -524,7 +531,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                             stripplot=False)
 
         for key in ct1_syn_dict.keys():
-            if "ids" in key:
+            if "ids" in key or "sum" in key:
                 continue
             # calculate p_value for parameter
             stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])
@@ -549,6 +556,38 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                                         conn_celltype=ct_dict[connected_ct], outgoing=True)
 
         ranksum_results.to_csv("%s/ranksum_%s_%s_2_%s_outgoing.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+
+        summed_synapse_sizes[(ct_dict[comp_ct1], ct_dict[connected_ct])] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct_dict[comp_ct2], ct_dict[connected_ct])] = np.sum(ct2_syn_dict["sum size synapses"])
+
+    sum_synapses_pd = pd.DataFrame(summed_synapse_sizes)
+    if connected_ct:
+        sum_synapses_pd.to_csv("%s/%s_%s_%s_sum_synapses_per_ct.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+    else:
+        sum_synapses_pd.to_csv("%s/%s_%s_sum_synapses_per_ct.csv" % (
+        f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+
+    #make networkx graph for sum of synapses per celltype
+    G = nx.DiGraph()
+    edges = [(u, v, summed_synapse_sizes[(u, v)] for (u, v) in summed_synapse_sizes.keys())]
+    G.add_weighted_edges_from(edges)
+    weights = [G[u][v]["weight"]/10 for u, v in edges]
+    labels = nx.get_edge_attributes(G, "weight")
+    pos = nx.spring_layout(G, seed=7)
+    nx.draw_networkx_nodes(G, pos, node_size=1000)
+    nx.draw_networkx_labels(G, pos, font_size=18)
+    nx.draw_networkx_edges(G, pos, width=weights, arrows=True, connectionstyle="arc3, rad=0.3", arrowstyle="->")
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, label_pos=0.2)
+    ax = plt.gca()
+    ax.margins(0.08)
+    plt.axis("off")
+    plt.tight_layout()
+    plt.title("sum of synapse sizes")
+    if connected_ct:
+        plt.savefig("%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+    else:
+        plt.savefig("%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (
+        f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
 
     plottime = time.time() - start
     print("%.2f sec for statistics and plotting" % plottime)

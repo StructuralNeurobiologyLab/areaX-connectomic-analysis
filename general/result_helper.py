@@ -473,5 +473,3 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
             plt.savefig("%s/%s_%s_%s_multi_box.png" % (self.filename, key, self.celltype1, self.celltype2))
         plt.close()
-
-

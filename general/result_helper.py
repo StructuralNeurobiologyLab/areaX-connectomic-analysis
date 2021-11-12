@@ -308,9 +308,9 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             results_for_plotting.loc[0:key2_length - 1, column_labels[3]] = key2_array
         return results_for_plotting
 
-    def result_df_two_params(self, label_category):
+    def result_df_categories(self, label_category):
         """
-        creates da dataframe for comparisnp.empty(len(self.dictionary1.keys()))on across two parameters, one category will be a celltype comparison.
+        creates da dataframe for comparison across keys and two parameters, one category will be a celltype comparison.
         keys should be organized in the way: column label - label e.g. amount synapses - spine head
         :param: keys: list that includes one label
         :param label_category = in column_labels, category corresponding to labels
@@ -329,7 +329,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         labels = np.unique(labels)
         key_example = column_labels[0] + " - " + labels[0]
         len_ct1 = len(self.dictionary1[key_example])
-        len_ct2 = len(self.dictionary1[key_example])
+        len_ct2 = len(self.dictionary2[key_example])
         sum_length =  len_ct1 + len_ct2
         result_df = pd.DataFrame(
             columns=column_labels, index=range(sum_length * len(labels)))
@@ -342,6 +342,32 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             for ci in range(column_labels - 2):
                 result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, column_labels[ci]] = self.dictionary1[column_labels[ci] + " - " + labels[i]]
                 result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, column_labels[ci]] = self.dictionary2[column_labels[ci] + " - " + labels[i]]
+        for ci in range(column_labels - 2):
+            result_df[column_labels[ci]] = result_df[column_labels[ci]].astype("float64")
+        return result_df
+
+    def result_df_two_params(self):
+        """
+                creates da dataframe for comparison across keys and celltype comparison.
+                :return: results_df
+                """
+        keys = self.dictionary1.keys()
+        column_labels = np.hstack([keys,"celltype"])
+        key_example = keys[0]
+        len_ct1 = len(self.dictionary1[key_example])
+        len_ct2 = len(self.dictionary2[key_example])
+        sum_length = len_ct1 + len_ct2
+        result_df = pd.DataFrame(
+            columns=column_labels, index=range(sum_length))
+        for i, key in enumerate(keys):
+            result_df.loc[sum_length * i: sum_length * (i + 1) - 1, label_category] = labels[i]
+            result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, "celltype"] = self.celltype1
+            result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, "celltype"] = self.celltype2
+            for ci in range(column_labels - 2):
+                result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, column_labels[ci]] = self.dictionary1[
+                    column_labels[ci] + " - " + labels[i]]
+                result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, column_labels[ci]] = self.dictionary2[
+                    column_labels[ci] + " - " + labels[i]]
         for ci in range(column_labels - 2):
             result_df[column_labels[ci]] = result_df[column_labels[ci]].astype("float64")
         return result_df
@@ -473,3 +499,30 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
             plt.savefig("%s/%s_%s_%s_multi_box.png" % (self.filename, key, self.celltype1, self.celltype2))
         plt.close()
+
+        def plot_bar_hue(self, key, x, hue, results_df, subcell, conn_celltype=None, outgoing=False):
+            """
+            creates box plot with more than one parameter. Dataframe with results oat least two parameter is required
+            :param key: parameter to be plotted on y axis
+            :param x: dataframe column on x axis
+            :param hue: dataframe column acting as hue
+            :param results_df: datafram, suitable one can be created with results_df_two_params
+            :param stripplot: if True creates stripplot overlay
+            :param conn_celltype: if third celltype connectivty is analysed
+            :param outgoing: if true, connected_ct is post_synapse
+            :return: None
+            """
+            sns.barplot(x=x, y=key, data=results_df, inner="box", palette=self.color_palette, hue=hue)
+            if conn_celltype:
+                if outgoing:
+                    plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
+                    plt.savefig("%s/%s_%s_%s_2_%s_multi_bar.png" % (
+                        self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+                else:
+                    plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltype1, self.celltype2))
+                    plt.savefig("%s/%s_%s_2_%s_%s_multi_bar.png" % (
+                        self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+            else:
+                plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_%s_multi_bar.png" % (self.filename, key, self.celltype1, self.celltype2))
+            plt.close()

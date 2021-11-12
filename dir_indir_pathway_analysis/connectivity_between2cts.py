@@ -314,6 +314,48 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct2_2_ct1_syn_dict["avg syn size one cell"] = np.nanmean(ct2_2_ct1_percell_syn_size, axis=1) / \
                                                   ct2_2_ct1_syn_dict["avg amount one cell"]
 
+    # group average amount one cell by amount of synapses
+    # make barplot
+    ct1_2_ct2_max_multisyn = np.max(ct1_2_ct2_percell_syn_amount)
+    ct2_2_ct1_max_multisyn = np.max(ct1_2_ct2_percell_syn_amount)
+    max_multisyn = np.max(np.array([ct1_2_ct2_max_multisyn, ct2_2_ct1_max_multisyn]))
+    multisyn_amount = range(1, max_multisyn + 1)
+    ct1_2_ct2_multi_syn_amount = {}
+    ct2_2_ct1_multi_syn_amount = {}
+    ct1_2_ct2_multi_syn_sumsize = {}
+    ct2_2_ct1_multi_syn_sumsize = {}
+    ct1_2_ct2_max_multisyn = {}
+    for i in multisyn_amount:
+        ct1_2_ct2_multi_syn_amount[i] = len(np.where(ct1_2_ct2_percell_syn_amount == i)[0])
+        ct2_2_ct1_multi_syn_amount[i] = len(np.where(ct2_2_ct1_percell_syn_amount == i)[0])
+        ct1_2_ct2_multi_syn_sumsize[i] = np.sum(ct1_2_ct2_percell_syn_size[np.where(ct1_2_ct2_percell_syn_amount == i)])
+        ct2_2_ct1_multi_syn_sumsize[i] = np.sum(ct2_2_ct1_percell_syn_size[np.where(ct2_2_ct1_percell_syn_amount == i)])
+
+    if percentile_ct1:
+        multisyn_plotting_amount = ComparingResultsForPLotting(celltype1 = ct_dict[celltype1], celltype2 = ct_dict[celltype2], filename=f_name,
+                                                        dictionary1= ct2_2_ct1_multi_syn_amount, dictionary2 = ct1_2_ct2_multi_syn_amount, color1 = "gray",
+                                                        color2 = "darkturquoise")
+        multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
+                                                               celltype2=ct_dict[celltype2], filename=f_name,
+                                                               dictionary1=ct2_2_ct1_multi_syn_sumsize,
+                                                               dictionary2=ct1_2_ct2_multi_syn_sumsize, color1="gray",
+                                                               color2="darkturquoise")
+    else:
+        multisyn_plotting_amount= ComparingResultsForPLotting(celltype1=ct_dict[celltype1], celltype2=ct_dict[celltype2],
+                                                        filename=f_name,
+                                                        dictionary1=ct2_2_ct1_multi_syn_amount,
+                                                        dictionary2=ct1_2_ct2_multi_syn_amount)
+        multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
+                                                                celltype2=ct_dict[celltype2], filename=f_name,
+                                                                dictionary1=ct2_2_ct1_multi_syn_sumsize,
+                                                                dictionary2=ct1_2_ct2_multi_syn_sumsize)
+
+    multisyn_amount_df = multisyn_plotting_amount.result_df_two_params()
+    multisyn_sumsize_df = multisyn_plotting_amount.result_df_two_params()
+
+    multisyn_plotting_amount.plot_bar_hue(x = "amount cells")
+
+
 
 
     ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
@@ -363,6 +405,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                                                      stripplot=True, celltype2=celltype2, outgoing=False)
             ct2_2_ct1_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
                                                   stripplot=False, celltype2=celltype2, outgoing=False)
+
+
 
 
     plottime = time.time() - syntime
@@ -438,7 +482,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                                          dictionary2=ct2_syn_dict, color1="mediumorchid",
                                                          color2="springgreen")
 
-    result_df_multi_params = results_comparison.result_df_two_params(label_category= "compartment")
+    result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
 
     if connected_ct:
         result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
@@ -516,7 +560,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                                              dictionary2=ct2_syn_dict, color1="mediumorchid",
                                                              color2="springgreen")
 
-        result_df_multi_params = results_comparison.result_df_two_params(label_category="compartment")
+        result_df_multi_params = results_comparison.result_df_categories(label_category="compartment")
         result_df_multi_params.to_csv("%s/%s_%s_2_%s_syn_compartments_outgoing.csv" % (
             f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
 

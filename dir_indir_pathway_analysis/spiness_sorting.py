@@ -15,12 +15,13 @@ if __name__ == '__main__':
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 
-    def saving_spiness_percentiles(ssd, celltype, full_cells = True, percentiles = [], min_comp_len = 100):
+    def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting = None, full_cells = True, percentiles = [], min_comp_len = 100):
         """
         saves MSN IDS depending on their spiness. Spiness is determined via spiness skeleton nodes using counting_spiness as spine density in relation to the skeelton length
         of the dendrite. Cells without a minimal compartment length are discarded.
         :param ssd: super segmentation dataset
         :param celltype: ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
+        :param filename_saving: directory where cells should be saved
         :param full_cells: if True, cellids of preprocessed cells with axon, dendrite, soma are loaded
         :param percentiles: list of percentiles, that should be saved
         :param min_comp_len: minimal compartment length in µm
@@ -29,10 +30,11 @@ if __name__ == '__main__':
         start = time.time()
         ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    10: "NGF"}
-        f_name = "/wholebrain/scratch/arother/j0251v3_prep"
-        if not os.path.exists(f_name):
-            os.mkdir(f_name)
-        log = initialize_logging('sorting cellids according to spiness', log_dir=f_name + '/logs/')
+        if not os.path.exists(filename_saving):
+            os.mkdir(filename_saving)
+        if not filename_plotting:
+            filename_plotting = filename_saving
+        log = initialize_logging('sorting cellids according to spiness', log_dir=filename_plotting + '/logs/')
         log.info(
             "parameters: celltype = %s, min_comp_length = %.i" %
             (ct_dict[celltype], min_comp_len))
@@ -70,14 +72,16 @@ if __name__ == '__main__':
             perc_high_inds = np.where(spine_densities > perc_high)[0]
             cellids_low = cellids[perc_low_inds]
             cellids_high = cellids[perc_high_inds]
-            write_obj2pkl("%s/full_%3s_arr_%i_l_%i.pkl" % (f_name, ct_dict[celltype], percentile, min_comp_len), cellids_low)
-            write_obj2pkl("%s/full_%3s_arr_%i_h_%i.pkl" % (f_name, ct_dict[celltype], 100 - percentile, min_comp_len), cellids_high)
+            write_obj2pkl("%s/full_%3s_arr_%i_l_%i.pkl" % (filename_saving, ct_dict[celltype], percentile, min_comp_len), cellids_low)
+            write_obj2pkl("%s/full_%3s_arr_%i_h_%i.pkl" % (filename_saving, ct_dict[celltype], 100 - percentile, min_comp_len), cellids_high)
             spine_amount_dict_low = {cellid: spine_amount for cellid, spine_amount in zip(cellids_low, spine_densities[perc_low_inds])}
             spine_amount_dict_high = {cellid: spine_amount for cellid, spine_amount in
                                      zip(cellids_high, spine_densities[perc_high_inds])}
-            write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (f_name, ct_dict[celltype], percentile, min_comp_len), spine_amount_dict_low)
-            write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (f_name, ct_dict[celltype], 100 - percentile, min_comp_len),
+            write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (filename_saving, ct_dict[celltype], percentile, min_comp_len), spine_amount_dict_low)
+            write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (filename_saving, ct_dict[celltype], 100 - percentile, min_comp_len),
                           spine_amount_dict_high)
+
+            #To DO: save spine parameters and plot them
 
         perctime = time.time() - spinetime
         print("%.2f sec for creating percentile arrays" % perctime)

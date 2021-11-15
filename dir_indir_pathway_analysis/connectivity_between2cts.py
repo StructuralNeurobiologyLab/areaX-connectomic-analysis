@@ -322,17 +322,6 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct2_2_ct1_pd = pd.DataFrame(ct2_2_ct1_syn_dict)
     ct2_2_ct1_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
 
-    #put all synsizes array into dictionary (but not into dataframe)
-    ct1_2_ct2_syn_dict["all synapse sizes"] = ct1_2_ct2_all_syn_sizes
-    ct2_2_ct1_syn_dict["all synapse sizes"] = ct2_2_ct1_all_syn_sizes
-
-    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]), ct1_2_ct2_syn_dict)
-    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype2], ct_dict[celltype1]), ct2_2_ct1_syn_dict)
-
-    ct1_2_ct2_resultsdict = ResultsForPlotting(celltype = ct_dict[celltype2], filename = f_name, dictionary = ct1_2_ct2_syn_dict)
-    ct2_2_ct1_resultsdict = ResultsForPlotting(celltype=ct_dict[celltype1], filename=f_name,
-                                               dictionary=ct1_2_ct2_syn_dict)
-
     # group average amount one cell by amount of synapses
     # make barplot
     ct1_2_ct2_max_multisyn = np.max(ct1_2_ct2_percell_syn_amount)
@@ -389,6 +378,24 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", result_df = multisyn_df, hue = "celltype", subcell = "synapse")
     multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum synapse size", result_df=multisyn_df,
                                           hue="celltype", subcell="synapse")
+
+    # put all synsizes array into dictionary (but not into dataframe)
+    ct1_2_ct2_syn_dict["all synapse sizes"] = ct1_2_ct2_all_syn_sizes
+    ct2_2_ct1_syn_dict["all synapse sizes"] = ct2_2_ct1_all_syn_sizes
+
+    #put multisynapse dictionary into dict but not dataframe
+    ct1_2_ct2_syn_dict["multisynapse amount"] = ct1_2_ct2_multi_syn_amount
+    ct1_2_ct2_syn_dict["multisynapse sum size"] = ct1_2_ct2_multi_syn_sumsize
+    ct2_2_ct1_syn_dict["multisynapse amount"] = ct2_2_ct1_multi_syn_amount
+    ct2_2_ct1_syn_dict["multisynapse sum size"] = ct2_2_ct1_multi_syn_sumsize
+
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]), ct1_2_ct2_syn_dict)
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype2], ct_dict[celltype1]), ct2_2_ct1_syn_dict)
+
+    ct1_2_ct2_resultsdict = ResultsForPlotting(celltype=ct_dict[celltype2], filename=f_name,
+                                               dictionary=ct1_2_ct2_syn_dict)
+    ct2_2_ct1_resultsdict = ResultsForPlotting(celltype=ct_dict[celltype1], filename=f_name,
+                                               dictionary=ct1_2_ct2_syn_dict)
 
     #plot parameters as distplot
     # also make plots for amount and size (absolute, relative) for different compartments

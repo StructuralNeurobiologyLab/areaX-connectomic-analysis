@@ -314,6 +314,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         keys should be organized in the way: column label - label e.g. amount synapses - spine head
         :param: keys: list that includes one label
         :param label_category = in column_labels, category corresponding to labels
+        :param key_split: if given, where key will be split into columns and labels
         :return: results_df
         """
         column_labels = []
@@ -342,32 +343,6 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             for ci in range(column_labels - 2):
                 result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, column_labels[ci]] = self.dictionary1[column_labels[ci] + " - " + labels[i]]
                 result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, column_labels[ci]] = self.dictionary2[column_labels[ci] + " - " + labels[i]]
-        for ci in range(column_labels - 2):
-            result_df[column_labels[ci]] = result_df[column_labels[ci]].astype("float64")
-        return result_df
-
-    def result_df_two_params(self):
-        """
-                creates da dataframe for comparison across keys and celltype comparison.
-                :return: results_df
-                """
-        keys = self.dictionary1.keys()
-        column_labels = np.hstack([keys,"celltype"])
-        key_example = keys[0]
-        len_ct1 = len(self.dictionary1[key_example])
-        len_ct2 = len(self.dictionary2[key_example])
-        sum_length = len_ct1 + len_ct2
-        result_df = pd.DataFrame(
-            columns=column_labels, index=range(sum_length))
-        for i, key in enumerate(keys):
-            result_df.loc[sum_length * i: sum_length * (i + 1) - 1, label_category] = labels[i]
-            result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, "celltype"] = self.celltype1
-            result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, "celltype"] = self.celltype2
-            for ci in range(column_labels - 2):
-                result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, column_labels[ci]] = self.dictionary1[
-                    column_labels[ci] + " - " + labels[i]]
-                result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, column_labels[ci]] = self.dictionary2[
-                    column_labels[ci] + " - " + labels[i]]
         for ci in range(column_labels - 2):
             result_df[column_labels[ci]] = result_df[column_labels[ci]].astype("float64")
         return result_df

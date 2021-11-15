@@ -387,7 +387,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
 
     multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
     multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", result_df = multisyn_df, hue = "celltype", subcell = "synapse")
-    multisyn_plotting_amount.plot_bar_hue(key="multisynapse amount", x="sum synapse size", result_df=multisyn_df,
+    multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum synapse size", result_df=multisyn_df,
                                           hue="celltype", subcell="synapse")
 
     #plot parameters as distplot

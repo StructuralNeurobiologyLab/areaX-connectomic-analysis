@@ -22,7 +22,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
     the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic
     synapses. Uses cached synapse properties. Uses compartment_length per cell to ignore cells with not enough axon/dendrite
-
+    # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
     :param ssd: super-segmentation dataset
     :param sd_synssv: segmentation dataset for synapses.
     :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
@@ -231,7 +231,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             if deso == 0:
                 if spin_deso <= 2:
                     ct1_2_ct2_syn_dict[param_labels[0] + " - " + comp_labels[spin_deso]][cell2_ind] += 1
-                    ct1_2_ct2_syn_dict[param_labels[1] + " - " + comp_labels[spin_deso][cell2_ind]] += syn_size
+                    ct1_2_ct2_syn_dict[param_labels[1] + " - " + comp_labels[spin_deso]][cell2_ind] += syn_size
             else:
                 ct1_2_ct2_syn_dict[param_labels[0] + " - " + "soma"][cell2_ind] += 1
                 ct1_2_ct2_syn_dict[param_labels[1] + " - " + "soma"][cell2_ind] += syn_size
@@ -246,7 +246,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             if deso == 0:
                 if spin_deso <= 2:
                     ct2_2_ct1_syn_dict[param_labels[0] + " - " + comp_labels[spin_deso]][cell1_ind] += 1
-                    ct2_2_ct1_syn_dict[param_labels[1] + " - " + comp_labels[spin_deso][cell1_ind]] += syn_size
+                    ct2_2_ct1_syn_dict[param_labels[1] + " - " + comp_labels[spin_deso]][cell1_ind] += syn_size
             else:
                 ct2_2_ct1_syn_dict[param_labels[0] + " - " + "soma"][cell1_ind] += 1
                 ct2_2_ct1_syn_dict[param_labels[1] + " - " + "soma"][cell1_ind] += syn_size

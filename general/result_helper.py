@@ -189,8 +189,14 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         self.dictionary2 = dictionary2
         self.color1 = color1
         self.color2 = color2
-        self.max_length_df = np.max(np.array(
-            [len(self.dictionary1[list(self.dictionary1.keys())[0]]), len(self.dictionary2[list(self.dictionary2.keys())[0]])]))
+        try:
+            self.max_length_df = np.max(np.array(
+                [len(self.dictionary1[list(self.dictionary1.keys())[0]]), len(self.dictionary2[list(self.dictionary2.keys())[0]])]))
+        except TypeError:
+            if type(self.dictionary1[list(self.dictionary1.keys())[0]]) == int and type(self.dictionary2[list(self.dictionary2.keys())[0]]) == int:
+                self.max_length_df = 1
+            else:
+                TypeError("unknown dictionary entry")
         self.color_palette = {celltype1: color1, celltype2: color2}
 
     def plot_hist_comparison(self, key, subcell, cells = True, add_key = None, norm_hist = False, bins = None, xlabel = None, title = None, conn_celltype = None, outgoing = False):

@@ -31,7 +31,7 @@ def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100):
     """
     comp_length = get_compartment_length(sso, compartment, cell_graph)
     if comp_length < min_comp_len:
-        return 0, 0
+        return 0, 0, 0, 0, 0
     comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] == compartment)[0]
     comp_nodes = sso.skeleton["nodes"][comp_inds] * sso.scaling
     comp_volume = get_compartment_bbvolume(comp_nodes)
@@ -53,11 +53,11 @@ def axon_dendritic_arborization_cell(sso, min_comp_len = 100):
     g = sso.weighted_graph(add_node_attr=('axoness_avg10000',))
     axon_length, axon_volume, ax_median_radius, ax_tortuosity_complete, ax_tortuosity_sampled = comp_aroborization(sso, compartment=1, cell_graph=g, min_comp_len = min_comp_len)
     if axon_length == 0:
-        return 0,0, 0, 0
+        return 0, 0
     dendrite_length, dendrite_volume, dendrite_median_radius, dendrite_tortuosity_complete, dendrite_tortuosity_sampled = comp_aroborization(sso, compartment=0, cell_graph=g,
                                                                           min_comp_len=min_comp_len)
     if dendrite_length == 0:
-        return 0, 0, 0, 0
+        return 0, 0
     ax_dict = {"length": axon_length, "volume": axon_volume, "median radius": ax_median_radius, "tortuosity complete": ax_tortuosity_complete, "tortuosity sampled": ax_tortuosity_sampled}
     den_dict = {"length": dendrite_length, "volume": dendrite_volume, "median radius": dendrite_median_radius, "tortuosity complete": dendrite_tortuosity_complete, "tortuosity sampled": dendrite_tortuosity_sampled}
     return ax_dict, den_dict
@@ -84,7 +84,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         else:
             ct_dict[celltype] = ct_dict[celltype] + " p%.2i" % percentile
-    f_name = "%s_j0251v3_%s_comp_volume_mcl%i" % (filename, ct_dict[celltype], min_comp_len)
+    f_name = "%s/%s_comp_volume_mcl%i" % (filename, ct_dict[celltype], min_comp_len)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
@@ -120,7 +120,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
         soma_centres = np.zeros((len(cellids), 3))
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
         axon_dict, dendrite_dict = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len)
-        if axon_dict["length"] == 0:
+        if type(axon_dict) == int:
             continue
         axon_length_ct[i] = axon_dict["length"]
         dendrite_length_ct[i] = dendrite_dict["length"]
@@ -239,7 +239,7 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
             ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % percentile
         else:
             ct_dict[celltype2] = ct_dict[celltype1] + " p%.2i" % (100 - percentile)
-    f_name = "%s_j0251v3_comp_compartment_%s_%s_comp_volume_mcl%i" % (
+    f_name = "%s/comp_compartment_%s_%s_comp_volume_mcl%i" % (
         filename, ct_dict[celltype1],ct_dict[celltype2], min_comp_len)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -259,7 +259,8 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
         ct2_distances2ct1 = scipy.spatial.distance.cdist(ct2_soma_coords, ct1_soma_coords,
                                                          metric="euclidean") / 1000
         ct2avg_soma_distance2ct1_per_cell = np.mean(ct2_distances2ct1, axis=1)
-        pairwise_distances_cts = scipy.spatial.distance.pdist(ct1_soma_coords, ct2_soma_coords, metric = "euclidean") / 1000
+        ct_soma_coords = np.array([ct1_soma_coords, ct2_soma_coords]).reshape(len(ct1_soma_coords) + len(ct2_soma_coords), 3)
+        pairwise_distances_cts = scipy.spatial.distance.pdist(ct_soma_coords, metric = "euclidean") / 1000
         ct1_comp_dict["avg soma distance to other celltype"] = ct1avg_soma_distance2ct2_per_cell
         ct2_comp_dict["avg soma distance to other celltype"] = ct2avg_soma_distance2ct1_per_cell
         ct1_comp_dict["pairwise soma distance to other celltype"] = pairwise_distances_cts
@@ -300,15 +301,15 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
             ranksum_results.loc["stats", "pairwise among %s to mixed" % ct_dict[celltype2]] = s2
             ranksum_results.loc["p value", "pairwise among %s to mixed" % ct_dict[celltype2]] = p2
             ptitle = "pairwise soma distances within and between %s and %s" % (ct_dict[celltype1], ct_dict[celltype2])
-            results_comparision.plot_hist_comparison(key, subcell, add_key = "pairwise distance to other celltype", cells=False, title=ptitle, norm_hist=False)
-            results_comparision.plot_hist_comparison(key, subcell, add_key="pairwise distance to other celltype",
+            results_comparision.plot_hist_comparison(key, subcell, add_key = "pairwise soma distance to other celltype", cells=False, title=ptitle, norm_hist=False)
+            results_comparision.plot_hist_comparison(key, subcell, add_key="pairwise soma distance to other celltype",
                                                      cells=False, title=ptitle, norm_hist=True)
         else:
             results_for_plotting = results_comparision.result_df_per_param(key)
             results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=False)
             results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=True)
-        results_comparision.plot_violin(key, results_for_plotting, subcell, stripplot=True)
-        results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
+            results_comparision.plot_violin(key, results_for_plotting, subcell, stripplot=True)
+            results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
 
 
     ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))

@@ -1,8 +1,8 @@
 #script for looking at GPe/i connectivity with FS, STN, TAN
 
 
-from .compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
-from .connectivity_between2cts import synapses_between2cts, compare_connectivity
+from u.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
+from u.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
 import time
 from syconn.handler.config import initialize_logging
 from syconn import global_params
@@ -15,10 +15,10 @@ global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
 start = time.time()
-f_name = "u/arother/bio_analysis_results/dir_indir_pathway/211120"
+f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211120_j0251v3_GPe_i_comparison"
 if not os.path.exists(f_name):
     os.mkdir(f_name)
-log = initialize_logging('GPe/i comparison connectivity', log_dir=f_name + '/logs/')
+log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
 log.info("GPe/i comparison starts")
 time_stamps = [time.time()]
 step_idents = ['t-0']

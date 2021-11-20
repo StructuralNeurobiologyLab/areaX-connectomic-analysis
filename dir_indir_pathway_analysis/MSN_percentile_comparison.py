@@ -1,0 +1,93 @@
+#script for looking at MSN percentile connectivity with GPe/i, FS, STN, TAN
+
+
+from u.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
+from u.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
+import time
+from syconn.handler.config import initialize_logging
+from syconn import global_params
+from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
+from syconn.reps.segmentation import SegmentationDataset
+import os as os
+
+global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
+
+ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
+sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
+start = time.time()
+f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211120_j0251v3_MSN_percentile_comparison"
+if not os.path.exists(f_name):
+    os.mkdir(f_name)
+log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
+log.info("MSN percentile comparison starts")
+time_stamps = [time.time()]
+step_idents = ['t-0']
+#ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               #10: "NGF"}
+percentile = [10, 25, 50]
+
+log.info("Step 1/7: MSN percentile compartment comparison")
+# calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
+for p in percentile:
+    result_MSN_filename_p1 = axon_den_arborization_ct(ssd, celltype=2, percentile = percentile, filename=f_name, full_cells=True, handpicked=False)
+    result_MSN_filename_p2 = axon_den_arborization_ct(ssd, celltype=2, percentile = 100 - percentile, filename=f_name, full_cells=True, handpicked=False)
+    compare_compartment_volume_ct(celltype1=2, percentile = percentile, filename=f_name, filename1=result_MSN_filename_p1, filename2=result_MSN_filename_p2)
+
+time_stamps = [time.time()]
+step_idents = ["compartment comparison finished"]
+
+log.info("Step 2/7: MSN connectivity between percentiles")
+# see how MSN percentiles are connected
+for p in percentile:
+    MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, percentile_ct1 = percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False)
+    compare_connectivity(comp_ct1=2, percentile = percentile, filename=f_name, foldername_ct1=MSN_connectivity_resultsfolder, foldername_ct2=MSN_connectivity_resultsfolder)
+
+time_stamps = [time.time()]
+step_idents = ["connctivity between MSN percentiles finished"]
+
+log.info("Step 3/7: MSN - GPe connectivity different percentiles")
+# see how MSN percentiles are connected to GPe
+for p in percentile:
+    MSN_GPe_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, percentile_ct1 = percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=True)
+    MSN_GPe_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, percentile_ct1 = 100 - percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=True)
+    compare_connectivity(comp_ct1=2, percentile = percentile, connected_ct=6, filename=f_name, foldername_ct1=MSN_GPe_p1_connectivity_resultsfolder, foldername_ct2=MSN_GPe_p2_connectivity_resultsfolder)
+
+log.info("Step 4/7: MSN - GPi connectivity different percentiles")
+# see how MSN percentiles are connected to GPi
+for p in percentile:
+    MSN_GPi_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, percentile_ct1 = percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=True)
+    MSN_GPi_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, percentile_ct1 = 100 - percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=True)
+    compare_connectivity(comp_ct1=2, percentile = percentile, connected_ct=7, filename=f_name, foldername_ct1=MSN_GPi_p1_connectivity_resultsfolder, foldername_ct2=MSN_GPi_p2_connectivity_resultsfolder)
+
+log.info("Step 5/7: MSN - STN connectivity different percentiles")
+# see how MSN percentiles are connected to STN
+for p in percentile:
+    MSN_STN_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=0, percentile_ct1 = percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False)
+    MSN_STN_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=0, percentile_ct1 = 100 - percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False)
+    compare_connectivity(comp_ct1=2, percentile = percentile, connected_ct=0, filename=f_name, foldername_ct1=MSN_STN_p1_connectivity_resultsfolder, foldername_ct2=MSN_STN_p2_connectivity_resultsfolder)
+
+time_stamps = [time.time()]
+step_idents = ["connctivity MSN - STN finished"]
+
+log.info("Step 6/7: MSN - FS connectivity")
+# see how MSN percentiles are connected to FS
+for p in percentile:
+    MSN_FS_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=8, percentile_ct1 = percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False)
+    MSN_FS_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=8, percentile_ct1 = 100 - percentile, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False)
+    compare_connectivity(comp_ct1=2, percentile = percentile, connected_ct=8, filename=f_name, foldername_ct1=MSN_FS_p1_connectivity_resultsfolder, foldername_ct2=MSN_FS_p2_connectivity_resultsfolder)
+
+time_stamps = [time.time()]
+step_idents = ["connctivity MSN - FS finished"]
+
+log.info("Step 7/7: MSN - TAN connectivity")
+# see how MSN percentiles are connected to TAN
+for p in percentile:
+    MSN_TAN_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = percentile, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True)
+    MSN_TAN_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = 100 - percentile, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True)
+    compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=5, filename=f_name, foldername_ct1=GPe_TAN_connectivity_resultsfolder, foldername_ct2=GPi_TAN_connectivity_resultsfolder)
+
+time_stamps = [time.time()]
+step_idents = ["connctivity MSN - TAN finished"]
+
+log.info("MSN percentile compartment and connectivity analysis finished")
+step_idents = ["MSN percentile compartment and connectivity analysis finished"]

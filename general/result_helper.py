@@ -38,6 +38,9 @@ class ResultsForPlotting():
                 param_label = "%s size density [µm²/µm]" % subcell
             elif "length" in key:
                 param_label = "%s length density [µm/µm]" % subcell
+            else:
+                raise ValueError("unknown key description")
+                param_label = 0
         else:
             if "amount" in key:
                 if "percentage" in key:
@@ -51,7 +54,7 @@ class ResultsForPlotting():
                     if subcell == "synapse":
                         param_label = "average %s size [µm²]" % subcell
             elif "length" in key:
-                plt.xlabel("pathlength in µm")
+                param_label = "pathlength in µm"
             elif "vol" in key:
                 if "percentage" in key:
                     param_label = "% of whole dataset"
@@ -66,7 +69,7 @@ class ResultsForPlotting():
             else:
                 raise ValueError("unknown key description")
                 param_label = 0
-            return param_label
+        return param_label
 
     def plot_hist(self, key, subcell, cells = True, color = "steelblue", norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False):
         """
@@ -187,7 +190,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         self.color1 = color1
         self.color2 = color2
         self.max_length_df = np.max(np.array(
-            [len(self.dictionary1[self.dictionary1.keys()[0]]), len(self.dictionary1[self.dictionary1.keys()[0]])]))
+            [len(self.dictionary1[list(self.dictionary1.keys())[0]]), len(self.dictionary2[list(self.dictionary2.keys())[0]])]))
         self.color_palette = {celltype1: color1, celltype2: color2}
 
     def plot_hist_comparison(self, key, subcell, cells = True, add_key = None, norm_hist = False, bins = None, xlabel = None, title = None, conn_celltype = None, outgoing = False):
@@ -279,7 +282,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         plt.close()
 
 
-    def result_df_perparam(self, key, key2 = None, column_labels = None):
+    def result_df_per_param(self, key, key2 = None, column_labels = None):
         """
         creates pd.Dataframe per parameter for easier plotting
         :param key: parameter to be compared as key in dictionary
@@ -305,7 +308,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             results_for_plotting = pd.DataFrame(columns=column_labels, index=range(max_length))
             results_for_plotting.loc[0:len(self.dictionary1[key]) - 1, column_labels[0]] = self.dictionary1[key]
             results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, column_labels[1]] = self.dictionary1[key]
-            results_for_plotting.loc[0:key2_length - 1, column_labels[3]] = key2_array
+            results_for_plotting.loc[0:key2_length - 1, column_labels[2]] = key2_array
         return results_for_plotting
 
     def result_df_categories(self, label_category):

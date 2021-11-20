@@ -11,7 +11,7 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from u.arother.bio_analysis.general.analysis_helper import compartment_length_cell
+from u.arother.bio_analysis.general.analysis_helper import get_compartment_length
 from u.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
 
 
@@ -48,7 +48,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         else:
             ct_dict[celltype2] = ct_dict[celltype1] + " p%.2i" % (100 - percentile_ct1)
 
-    f_name = "%s_j0251v3_syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+    f_name = "%s/syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
             filename, ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -83,10 +83,10 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids1))):
         cell.load_skeleton()
         g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-        cell_axon_length = compartment_length_cell(cell, compartment=1, cell_graph=g)
+        cell_axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
         if cell_axon_length < min_comp_len:
             continue
-        cell_den_length = compartment_length_cell(cell, compartment=0, cell_graph=g)
+        cell_den_length = get_compartment_length(cell, compartment=0, cell_graph=g)
         if cell_den_length < min_comp_len:
             continue
         ct1_axon_length[i] = cell_axon_length
@@ -104,10 +104,10 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids2))):
         cell.load_skeleton()
         g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-        cell_axon_length = compartment_length_cell(cell, compartment=1, cell_graph=g)
+        cell_axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
         if cell_axon_length < min_comp_len:
             continue
-        cell_den_length = compartment_length_cell(cell, compartment=0, cell_graph=g)
+        cell_den_length = get_compartment_length(cell, compartment=0, cell_graph=g)
         if cell_den_length < min_comp_len:
             continue
         ct2_axon_length[i] = cell_axon_length
@@ -452,10 +452,10 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         else:
             ct_dict[comp_ct2] = ct_dict[comp_ct1] + " p%.2i" % (100 - percentile)
     if connected_ct:
-        f_name = "%s_j0251v3_comp_conn_%s_%s_%s_syn_con_comp_mcl%i" % (
+        f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i" % (
             filename, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len)
     else:
-        f_name = "%s_j0251v3_comp_conn_%s_%s_syn_con_comp_mcl%i" % (
+        f_name = "%s/comp_conn_%s_%s_syn_con_comp_mcl%i" % (
             filename, ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -673,9 +673,9 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
     #make networkx graph for sum of synapses per celltype
     G = nx.DiGraph()
-    edges = [(u, v, summed_synapse_sizes[(u, v)] for (u, v) in summed_synapse_sizes.keys())]
+    edges = [[u, v, summed_synapse_sizes[(u, v)]] for (u, v) in summed_synapse_sizes.keys()]
     G.add_weighted_edges_from(edges)
-    weights = [G[u][v]["weight"]/10 for u, v in edges]
+    weights = [G[u][v]["weight"]/10 for (u, v) in summed_synapse_sizes.keys()]
     labels = nx.get_edge_attributes(G, "weight")
     pos = nx.spring_layout(G, seed=7)
     nx.draw_networkx_nodes(G, pos, node_size=1000)

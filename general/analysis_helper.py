@@ -56,13 +56,13 @@ def get_spine_density(cell, min_comp_len = 100):
     spine_density = spine_amount/dendrite_length
     return spine_density
 
-def get_comparment_radii(cell, comp_inds):
+def get_compartment_radii(cell, comp_inds = None):
     """
     get radii from compartment graph of one cell
     :param comp_inds: indicies of compartment
     :return: comp_radii as array in µm
     """
-    if comp_inds:
+    if not np.all(comp_inds) is None:
         comp_radii = cell.skeleton["diameters"][comp_inds] * 2 * cell.scaling[0] / 1000 #in µm
     else:
         comp_radii = cell.skeleton["diameters"]* 2 * cell.scaling[0] / 1000  # in µm
@@ -115,7 +115,8 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
     kdtree = scipy.spatial.cKDTree(comp_nodes)
     tortuosities = np.empty(n_samples)
     for i in range(n_samples):
-        random_node = np.random.choice(comp_nodes)
+        random_node_ind = np.random.choice(range(len(comp_nodes)))
+        random_node = comp_nodes[random_node_ind]
         sample_ids = kdtree.query_ball_point(random_node, n_radius)
         sample_graph = comp_graph.subgraph(sample_ids)
         sample_nodes = comp_nodes[sample_ids]

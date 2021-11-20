@@ -262,7 +262,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct1_2_ct2_all_syn_sizes = ct1_2_ct2_all_syn_sizes[ct1_2_ct2_all_syn_sizes > 0]
 
     ct2_syn_inds = ct1_2_ct2_syn_dict["amount synapses"] > 0
-    ct1_syn_inds = ct2_2_ct1_syn_dict["amount_synapses"] > 0
+    ct1_syn_inds = ct2_2_ct1_syn_dict["amount synapses"] > 0
 
     for key in ct1_2_ct2_syn_dict.keys():
         ct1_2_ct2_syn_dict[key] = ct1_2_ct2_syn_dict[key][ct2_syn_inds]
@@ -283,7 +283,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         ct1_2_ct2_syn_dict["percentage synapse amount- " + ci] = ct1_2_ct2_syn_dict["amount synapses - " + ci] / \
                                                                 ct1_2_ct2_syn_dict["amount synapses"] * 100
         ct2_2_ct1_syn_dict["percentage synapse size - " + ci] = ct2_2_ct1_syn_dict["amount synapses - " + ci] / \
-                                                                ct2_2_ct1_syn_dict["amount synapses" * 100]
+                                                                ct2_2_ct1_syn_dict["amount synapses"] * 100
         ct1_2_ct2_syn_dict.pop("sum size synapses - " + ci)
         ct2_2_ct1_syn_dict.pop("sum size synapses - " + ci)
 
@@ -315,9 +315,9 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
 
     # group average amount one cell by amount of synapses
     # make barplot
-    ct1_2_ct2_max_multisyn = np.max(ct1_2_ct2_percell_syn_amount)
-    ct2_2_ct1_max_multisyn = np.max(ct1_2_ct2_percell_syn_amount)
-    max_multisyn = np.max(np.array([ct1_2_ct2_max_multisyn, ct2_2_ct1_max_multisyn]))
+    ct1_2_ct2_max_multisyn = np.nanmax(ct1_2_ct2_percell_syn_amount)
+    ct2_2_ct1_max_multisyn = np.nanmax(ct1_2_ct2_percell_syn_amount)
+    max_multisyn = int(np.nanmax(np.array([ct1_2_ct2_max_multisyn, ct2_2_ct1_max_multisyn])))
     multisyn_amount = range(1, max_multisyn + 1)
     ct1_2_ct2_multi_syn_amount = {}
     ct2_2_ct1_multi_syn_amount = {}

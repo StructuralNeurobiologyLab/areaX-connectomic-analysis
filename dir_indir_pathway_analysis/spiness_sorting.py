@@ -10,6 +10,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
     from u.arother.bio_analysis.general.analysis_helper import get_spine_density
+    from u.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
 
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
@@ -72,16 +73,33 @@ if __name__ == '__main__':
             perc_high_inds = np.where(spine_densities > perc_high)[0]
             cellids_low = cellids[perc_low_inds]
             cellids_high = cellids[perc_high_inds]
-            write_obj2pkl("%s/full_%3s_arr_%i_l_%i.pkl" % (filename_saving, ct_dict[celltype], percentile, min_comp_len), cellids_low)
-            write_obj2pkl("%s/full_%3s_arr_%i_h_%i.pkl" % (filename_saving, ct_dict[celltype], 100 - percentile, min_comp_len), cellids_high)
+            if percentile == 50:
+                percentile = percentile - 1
+            write_obj2pkl("%s/full_%3s_arr_%i_%i.pkl" % (filename_saving, ct_dict[celltype], percentile, min_comp_len), cellids_low)
+            write_obj2pkl("%s/full_%3s_arr_%i_%i.pkl" % (filename_saving, ct_dict[celltype], 100 - percentile, min_comp_len), cellids_high)
             spine_amount_dict_low = {cellid: spine_amount for cellid, spine_amount in zip(cellids_low, spine_densities[perc_low_inds])}
             spine_amount_dict_high = {cellid: spine_amount for cellid, spine_amount in
                                      zip(cellids_high, spine_densities[perc_high_inds])}
             write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (filename_saving, ct_dict[celltype], percentile, min_comp_len), spine_amount_dict_low)
             write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (filename_saving, ct_dict[celltype], 100 - percentile, min_comp_len),
                           spine_amount_dict_high)
+            if percentile < 50:
+                ct1_str = ct_dict[celltype] + " p%.2i" % percentile
+            else:
+                ct2_str = ct_dict[celltype] + " p%.2i" % (100 - percentile)
+            spine_amount_results_low = {"spine amount": spine_densities[perc_low_inds], "cellids": cellids_low}
+            spine_amount_results_high = {"spine amount": spine_densities[perc_high_inds], "cellids": cellids_high}
+            spine_amount_results = ComparingResultsForPLotting(celltype1 = ct1_str, celltype2 = ct2_str, filename = filename_plotting, dictionary1 = spine_amount_results_low, dictionary2 = spine_amount_results_high, color1 = "gray", color2 = "darkturquoise")
+            spine_amount_results.plot_hist_comparison(key = "spine amount", subcell = "spine", bins = 10, norm_hist=False)
+            spine_amount_results.plot_hist_comparison(key = "spine amount", subcell = "spine", bins = 10, norm_hist=True)
+            spine_results_df = spine_amount_results.result_df_per_param(key = "spine amount")
+            spine_amount_results.plot_violin(key = "spine amount", result_df=spine_results_df, subcell = "spine")
+            spine_results_df.loc[0: len(cellids_low) - 1, "cellids"] = cellids_low
+            spine_results_df.loc[0: len(cellids_low) - 1, "percentile"] = percentile
+            spine_results_df.loc[len(cellids_low): len(cellids_high) - 1, "cellids"] = cellids_high
+            spine_results_df.loc[len(cellids_low): len(cellids_high) - 1, "percentile"] = 100 - percentile
+            spine_results_df.to_csv("%s/spine_amounts_%s_%i_%i.csv" % (filename_plotting, ct_dict[celltype], percentile, min_comp_len))
 
-            #To DO: save spine parameters and plot them
 
         perctime = time.time() - spinetime
         print("%.2f sec for creating percentile arrays" % perctime)

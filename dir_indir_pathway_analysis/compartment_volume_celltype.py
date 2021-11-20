@@ -73,7 +73,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     :param full_cells: loads preprocessed cells that have axon, soma and dendrite
     :param handpicked: loads cells that were manually checked
     :param if percentile given, percentile of the cell population can be compared, if preprocessed, in case of 50 have to give either 49 or 51
-    :return:
+    :return: f_name: foldername in which results are stored
     '''
 
     start = time.time()
@@ -212,6 +212,8 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     time_stamps.append(time.time())
     step_idents.append('processing arrays per celltype, plotting')
     log.info("compartment volume estimation per celltype finished")
+
+    return f_name
 
 def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percentile = None, filename1 = None, filename2 = None, min_comp_len = 100):
     '''

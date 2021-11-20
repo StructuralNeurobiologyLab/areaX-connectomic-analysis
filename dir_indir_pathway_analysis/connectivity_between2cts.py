@@ -1,15 +1,10 @@
 
-from syconn import global_params
-from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
-from syconn.reps.segmentation import SegmentationDataset
+
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 import os as os
-import scipy
-from collections import defaultdict
 import time
 from syconn.handler.config import initialize_logging
 from syconn.handler.basics import load_pkl2obj
@@ -18,10 +13,6 @@ from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from u.arother.bio_analysis.general.analysis_helper import compartment_length_cell
 from u.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
-global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
-
-ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
 
 
 
@@ -42,7 +33,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     :param min_comp_len: minimum length for axon/dendrite to have to include cell in analysis
     :param min_syn_size: minimum size for synapses
     :param syn_prob_thresh: threshold for synapse probability
-    :return:
+    :return: f_name: foldername in which results are stored
     '''
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
@@ -433,6 +424,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     step_idents.append('calculating last parameters, plotting')
 
     log.info("Connectivity analysis between 2 celltypes (%s, %s) finished" % (ct_dict[celltype1], ct_dict[celltype2]))
+
+    return f_name
 
 def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100):
     '''

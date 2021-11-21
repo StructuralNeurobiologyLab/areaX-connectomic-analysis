@@ -297,6 +297,10 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         :return: result_df
         """
         max_length = self.max_length_df
+        if len(self.dictionary1[key]) > max_length:
+            max_length = len(self.dictionary1[key])
+        if len(self.dictionary2[key]) > max_length:
+            max_length = len(self.dictionary2[key])
         if key2 is None:
             results_for_plotting = pd.DataFrame(columns=[self.celltype1, self.celltype2], index=range(max_length))
             results_for_plotting.loc[0:len(self.dictionary1[key]) - 1, self.celltype1] = self.dictionary1[key]

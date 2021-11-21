@@ -680,7 +680,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                         hue="celltype", conn_celltype=ct_dict[connected_ct],
                                         outgoing=True)
 
-    sum_synapses_pd = pd.DataFrame(summed_synapse_sizes)
+    sum_synapses_pd = pd.DataFrame(summed_synapse_sizes, index = [0])
     if connected_ct:
         sum_synapses_pd.to_csv("%s/%s_%s_%s_sum_synapses_per_ct.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
     else:
@@ -706,8 +706,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     if connected_ct:
         plt.savefig("%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
     else:
-        plt.savefig("%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (
-        f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+        plt.savefig("%s/sum_synapse_size_ct_%s_%_nxgraph.png" % (
+        f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
 
     plottime = time.time() - start
     print("%.2f sec for statistics and plotting" % plottime)

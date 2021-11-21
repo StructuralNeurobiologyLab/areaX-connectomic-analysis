@@ -82,7 +82,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     if full_cells:
         soma_centre_dict = load_pkl2obj(
                 "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dict.pkl" % ct_dict[celltype])
-    if percentile:
+    if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         else:
@@ -108,7 +108,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
             except FileNotFoundError:
                 cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
     else:
-        if percentile:
+        if percentile is not None:
             raise ValueError("percentiles can only be used on preprocessed cellids")
         else:
             cellids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype]
@@ -239,7 +239,7 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
                10: "NGF"}
     if percentile is None and celltype2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
-    if percentile:
+    if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         if percentile < 50:
@@ -277,7 +277,7 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
         comp_dict_keys = list(ct1_comp_dict.keys())
     log.info("compute statistics for comparison, create violinplot and histogram")
     ranksum_results = pd.DataFrame(columns=comp_dict_keys[1:], index=["stats", "p value"])
-    if percentile:
+    if percentile is not None:
         results_comparision = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
                                                           celltype2=ct_dict[celltype2], filename=f_name,
                                                           dictionary1=ct1_comp_dict, dictionary2=ct2_comp_dict,

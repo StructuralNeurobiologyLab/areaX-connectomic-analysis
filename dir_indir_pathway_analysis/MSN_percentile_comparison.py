@@ -16,7 +16,7 @@ global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
 start = time.time()
-f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211120_j0251v3_MSN_percentile_comparison"
+f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211121_j0251v3_MSN_percentile_comparison"
 if not os.path.exists(f_name):
     os.mkdir(f_name)
 log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')

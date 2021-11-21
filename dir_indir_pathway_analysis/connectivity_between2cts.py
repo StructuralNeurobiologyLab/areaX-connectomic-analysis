@@ -40,7 +40,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                10: "NGF"}
     if percentile_ct1 is None and celltype2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
-    if percentile_ct1:
+    if percentile_ct1 is not None:
         if percentile_ct1 == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         if percentile_ct1 < 50:
@@ -87,7 +87,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                 cellids2 = load_pkl2obj(
                     "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype2])
     else:
-        if percentile_ct1:
+        if percentile_ct1 is not None:
             raise ValueError("percentiles can only be used on preprocessed cellids")
         cellids1 = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype1]
         cellids2 = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype2]
@@ -345,7 +345,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         ct1_2_ct2_multi_syn_sumsize[i] = np.sum(ct1_2_ct2_percell_syn_size[np.where(ct1_2_ct2_percell_syn_amount == i)])
         ct2_2_ct1_multi_syn_sumsize[i] = np.sum(ct2_2_ct1_percell_syn_size[np.where(ct2_2_ct1_percell_syn_amount == i)])
 
-    if percentile_ct1:
+    if percentile_ct1 is not None:
         multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
                                                                celltype2=ct_dict[celltype2], filename=f_name,
                                                                dictionary1=ct2_2_ct1_multi_syn_amount,
@@ -460,14 +460,14 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                10: "NGF"}
     if percentile is None and comp_ct2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
-    if percentile:
+    if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         if percentile < 50:
             ct_dict[comp_ct1] = ct_dict[comp_ct1] + " p%.2i" % percentile
         else:
             ct_dict[comp_ct2] = ct_dict[comp_ct1] + " p%.2i" % (100 - percentile)
-    if connected_ct:
+    if connected_ct is not None:
         f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i" % (
             filename, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len)
     else:
@@ -476,7 +476,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compare connectivty between two celltypes', log_dir=f_name + '/logs/')
-    if connected_ct:
+    if connected_ct is not None:
         log.info("parameters: celltype1 = %s,celltype2 = %s , connected ct = %s, min_comp_length = %.i" % (
             ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len))
     else:
@@ -484,7 +484,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len))
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    if connected_ct:
+    if connected_ct is not None:
         ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct_dict[connected_ct], ct_dict[comp_ct2]))
         ct1_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct_dict[connected_ct], ct_dict[comp_ct1]))
     else:
@@ -498,7 +498,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
 
     #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
-    if percentile:
+    if percentile is not None:
         results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
                                                          celltype2=ct_dict[comp_ct2], filename=f_name,
                                                          dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
@@ -511,7 +511,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
     result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
 
-    if connected_ct:
+    if connected_ct is not None:
         result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
     else:
         result_df_multi_params.to_csv("%s/%s_%s_syn_compartments.csv" % (
@@ -520,7 +520,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     for key in result_df_multi_params.keys():
         if "celltype" in key or "compartment" in key:
             continue
-        if connected_ct:
+        if connected_ct is not None:
             results_comparison.plot_violin_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=True)
             results_comparison.plot_box_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=False)
         else:
@@ -539,14 +539,14 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         # plot parameter as violinplot
         if "-" not in key:
             results_for_plotting = results_comparison.result_df_per_param(key)
-            if connected_ct:
+            if connected_ct is not None:
                 results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, conn_celltype=ct_dict[connected_ct], outgoing=False)
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot= False,
                                         conn_celltype=ct_dict[connected_ct], outgoing = False)
             else:
                 results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True)
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False)
-        if connected_ct:
+        if connected_ct is not None:
             results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=ct_dict[connected_ct], outgoing=False)
             results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
                                                     conn_celltype=ct_dict[connected_ct], outgoing=False)
@@ -554,14 +554,14 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False)
             results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True)
 
-    if connected_ct:
+    if connected_ct is not None:
         ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
     else:
         ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
 
     #compare multisynapses in boxplot
     # only if connected_ct as otherwise already in synapses_between2cts
-    if connected_ct:
+    if connected_ct is not None:
         ct1_max_multisyn = len(ct1_syn_dict["multisynapse amount"].keys())
         ct2_max_multisyn = len(ct2_syn_dict["multisynapse amount"].keys())
         sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
@@ -585,7 +585,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
     #calculate summed synapse size per celltype
     summed_synapse_sizes = {}
-    if connected_ct:
+    if connected_ct is not None:
         summed_synapse_sizes[(ct_dict[connected_ct], ct_dict[comp_ct1])] = np.sum(ct1_syn_dict["sum size synapses"])
         summed_synapse_sizes[(ct_dict[connected_ct], ct_dict[comp_ct2])] = np.sum(ct2_syn_dict["sum size synapses"])
     else:
@@ -594,12 +594,12 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
 
     #also compare outgoing connections from celltype
-    if connected_ct:
+    if connected_ct is not None:
         ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct_dict[comp_ct2], ct_dict[connected_ct]))
         ct1_syn_dict = load_pkl2obj(
             "%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct_dict[comp_ct1], ct_dict[connected_ct]))
 
-        if percentile:
+        if percentile is not None:
             results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
                                                              celltype2=ct_dict[comp_ct2], filename=f_name,
                                                              dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
@@ -681,7 +681,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                         outgoing=True)
 
     sum_synapses_pd = pd.DataFrame(summed_synapse_sizes, index = [0])
-    if connected_ct:
+    if connected_ct is not None:
         sum_synapses_pd.to_csv("%s/%s_%s_%s_sum_synapses_per_ct.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
     else:
         sum_synapses_pd.to_csv("%s/%s_%s_sum_synapses_per_ct.csv" % (
@@ -703,10 +703,10 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     plt.axis("off")
     plt.tight_layout()
     plt.title("sum of synapse sizes")
-    if connected_ct:
+    if connected_ct is not None:
         plt.savefig("%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
     else:
-        plt.savefig("%s/sum_synapse_size_ct_%s_%_nxgraph.png" % (
+        plt.savefig("%s/sum_synapse_size_ct_%s_%s_nxgraph.png" % (
         f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
 
     plottime = time.time() - start

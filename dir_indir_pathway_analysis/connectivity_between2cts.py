@@ -59,17 +59,33 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     step_idents = ['t-0']
     if full_cells:
         if handpicked1:
-            cellids1 = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype1])
+            try:
+                cellids1 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr_c%i.pkl" % (ct_dict[celltype1], min_comp_len))
+            except FileNotFoundError:
+                cellids1 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype1])
         else:
-            cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype1])
+            try:
+                cellids1 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_c%i.pkl" % (ct_dict[celltype1], min_comp_len))
+            except FileNotFoundError:
+                cellids1 = load_pkl2obj(
+                        "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype1])
         if handpicked2:
-            cellids2 = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype2])
+            try:
+                cellids2 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr_c%i.pkl" % (ct_dict[celltype2], min_comp_len))
+            except FileNotFoundError:
+                cellids2 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype2])
         else:
-            cellids2 = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype2])
+            try:
+                cellids2 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_c%i.pkl" % (ct_dict[celltype2], min_comp_len))
+            except FileNotFoundError:
+                cellids2 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype2])
     else:
         if percentile_ct1:
             raise ValueError("percentiles can only be used on preprocessed cellids")
@@ -315,8 +331,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
 
     # group average amount one cell by amount of synapses
     # make barplot
-    ct1_2_ct2_max_multisyn = np.nanmax(ct1_2_ct2_percell_syn_amount)
-    ct2_2_ct1_max_multisyn = np.nanmax(ct1_2_ct2_percell_syn_amount)
+    ct1_2_ct2_max_multisyn = int(np.nanmax(ct1_2_ct2_percell_syn_amount))
+    ct2_2_ct1_max_multisyn = int(np.nanmax(ct1_2_ct2_percell_syn_amount))
     max_multisyn = int(np.nanmax(np.array([ct1_2_ct2_max_multisyn, ct2_2_ct1_max_multisyn])))
     multisyn_amount = range(1, max_multisyn + 1)
     ct1_2_ct2_multi_syn_amount = {}
@@ -351,9 +367,9 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                                                                 dictionary1=ct2_2_ct1_multi_syn_sumsize,
                                                                 dictionary2=ct1_2_ct2_multi_syn_sumsize)
 
-    sum_max_multisyn = ct2_2_ct1_max_multisyn + ct1_2_ct2_max_multisyn
+    sum_max_multisyn = int(ct2_2_ct1_max_multisyn + ct1_2_ct2_max_multisyn)
     multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum synapse size", "amount of cells", "celltype"],
-                               index=sum_max_multisyn)
+                               index=range(sum_max_multisyn))
     multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "celltype"] = ct_dict[celltype1]
     multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[celltype2]
     multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_2_ct1_max_multisyn + 1)
@@ -366,9 +382,9 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "sum synapse size"] = ct1_2_ct2_multi_syn_sumsize[key]
 
     multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
-    multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", result_df = multisyn_df, hue = "celltype", subcell = "synapse")
-    multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum synapse size", result_df=multisyn_df,
-                                          hue="celltype", subcell="synapse")
+    multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df, hue = "celltype")
+    multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum synapse size", results_df=multisyn_df,
+                                          hue="celltype")
 
     # put all synsizes array into dictionary (but not into dataframe)
     ct1_2_ct2_syn_dict["all synapse sizes"] = ct1_2_ct2_all_syn_sizes
@@ -550,7 +566,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ct2_max_multisyn = len(ct2_syn_dict["multisynapse amount"].keys())
         sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
         multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum synapse size", "amount of cells", "celltype"],
-                                   index=sum_max_multisyn)
+                                   index=range(sum_max_multisyn))
         multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct_dict[comp_ct1]
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[comp_ct2]
         multisyn_df.loc[0: ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct1_max_multisyn + 1)
@@ -562,10 +578,10 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             multisyn_df.loc[ct2_syn_dict + i, "sum synapse size"] = ct2_syn_dict["sum synapse size"][key]
 
         multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
-        results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", result_df=multisyn_df,
-                                              hue="celltype", subcell="synapse", conn_celltype = ct_dict[connected_ct], outgoing = False)
-        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum synapse size", result_df=multisyn_df,
-                                               hue="celltype", subcell="synapse", conn_celltype = ct_dict[connected_ct], outgoing = False)
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
+                                              hue="celltype", conn_celltype = ct_dict[connected_ct], outgoing = False)
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum synapse size", result_sdf=multisyn_df,
+                                               hue="celltype", conn_celltype = ct_dict[connected_ct], outgoing = False)
 
     #calculate summed synapse size per celltype
     summed_synapse_sizes = {}
@@ -644,7 +660,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ct2_max_multisyn = len(ct2_syn_dict["multisynapse amount"].keys())
         sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
         multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum synapse size", "amount of cells", "celltype"],
-                                   index=sum_max_multisyn)
+                                   index=range(sum_max_multisyn))
         multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct_dict[comp_ct1]
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[comp_ct2]
         multisyn_df.loc[0: ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct1_max_multisyn + 1)
@@ -657,11 +673,11 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
         multisyn_df.to_csv(
             "%s/multi_synapses_%s_%s_2_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
-        results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", result_df=multisyn_df,
-                                        hue="celltype", subcell="synapse", conn_celltype=ct_dict[connected_ct],
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
+                                        hue="celltype", conn_celltype=ct_dict[connected_ct],
                                         outgoing=True)
-        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum synapse size", result_df=multisyn_df,
-                                        hue="celltype", subcell="synapse", conn_celltype=ct_dict[connected_ct],
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum synapse size", results_df=multisyn_df,
+                                        hue="celltype", conn_celltype=ct_dict[connected_ct],
                                         outgoing=True)
 
     sum_synapses_pd = pd.DataFrame(summed_synapse_sizes)

@@ -79,6 +79,9 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
+    if full_cells:
+        soma_centre_dict = load_pkl2obj(
+                "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dict.pkl" % ct_dict[celltype])
     if percentile:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
@@ -92,14 +95,18 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     time_stamps = [time.time()]
     step_idents = ['t-0']
     if full_cells:
-        soma_centre_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dict.pkl" % ct_dict[celltype])
-
         if handpicked:
-            cellids = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype])
+            try:
+                cellids = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr_c%i.pkl" % (ct_dict[celltype], min_comp_len))
+            except FileNotFoundError:
+                cellids = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype])
         else:
-            cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
+            try:
+                cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_c%i.pkl" % (ct_dict[celltype], min_comp_len))
+            except FileNotFoundError:
+                cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
     else:
         if percentile:
             raise ValueError("percentiles can only be used on preprocessed cellids")

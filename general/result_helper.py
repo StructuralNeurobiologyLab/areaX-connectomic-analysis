@@ -331,8 +331,8 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         for ki, key in enumerate(self.dictionary1.keys()):
             if "-" in key:
                 key_split = key.split(" - ")
-                column_labels[ki] = key_split[0]
-                labels[ki] = key_split[1]
+                column_labels.append(key_split[0])
+                labels.append(key_split[1])
         if len(column_labels) == 0:
             raise ValueError("keys in dictionary not labelled correctly")
         column_labels = np.hstack([np.unique(column_labels), ["celltype", label_category]])

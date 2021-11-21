@@ -31,8 +31,8 @@ comp_lengths = [100, 200, 500, 1000]
 log.info("Step 1/8: MSN percentile compartment comparison")
 #create MSN spiness percentiles with different comp_lengths
 filename_spiness_saving = "/wholebrain/scratch/arother/j0251v3_prep/"
-filename_spiness_results = "%s/spiness_percentiles" % f_name
 for cl in comp_lengths:
+    filename_spiness_results = "%s/spiness_percentiles_mcl%i" % (f_name, cl)
     saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, filename_plotting = filename_spiness_results, percentiles = percentile, min_comp_len = cl)
 
 time_stamps = [time.time()]

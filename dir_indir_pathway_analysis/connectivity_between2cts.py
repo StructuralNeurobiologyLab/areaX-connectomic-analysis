@@ -298,7 +298,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                                                              ct2_2_ct1_syn_dict["sum size synapses"] * 100
         ct1_2_ct2_syn_dict["percentage synapse amount - " + ci] = ct1_2_ct2_syn_dict["amount synapses - " + ci] / \
                                                                 ct1_2_ct2_syn_dict["amount synapses"] * 100
-        ct2_2_ct1_syn_dict["percentage synapse size - " + ci] = ct2_2_ct1_syn_dict["amount synapses - " + ci] / \
+        ct2_2_ct1_syn_dict["percentage synapse amount - " + ci] = ct2_2_ct1_syn_dict["amount synapses - " + ci] / \
                                                                 ct2_2_ct1_syn_dict["amount synapses"] * 100
         ct1_2_ct2_syn_dict.pop("sum size synapses - " + ci)
         ct2_2_ct1_syn_dict.pop("sum size synapses - " + ci)
@@ -411,7 +411,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct2_2_ct1_resultsdict.multiple_param_labels(comp_labels, ticks)
 
     for key in ct1_2_ct2_syn_dict.keys():
-        if "ids" in key or "sum" in key:
+        if "ids" in key or "sum" in key or "multi" in key:
             continue
         if "all" in key:
             ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct_dict[celltype1])

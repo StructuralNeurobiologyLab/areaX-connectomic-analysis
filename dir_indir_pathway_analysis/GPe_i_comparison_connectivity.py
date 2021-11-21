@@ -29,7 +29,7 @@ log.info("Step 1/5: GPe/i compartment comparison")
 # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
 result_GPe_filename = axon_den_arborization_ct(ssd, celltype=6, filename=f_name, full_cells=True, handpicked=True)
 result_GPi_filename = axon_den_arborization_ct(ssd, celltype=7, filename=f_name, full_cells=True, handpicked=True)
-compare_compartment_volume_ct(celltype1=6, celltype2=7, filename=f_name, filename1=result_GPe_filename, filename2=result_GPe_filename, percentile=None)
+compare_compartment_volume_ct(celltype1=6, celltype2=7, filename=f_name, filename1=result_GPe_filename, filename2=result_GPi_filename, percentile=None)
 
 time_stamps = [time.time()]
 step_idents = ["compartment comparison finished"]

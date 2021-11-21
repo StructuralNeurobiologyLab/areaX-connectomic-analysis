@@ -108,14 +108,14 @@ def get_compartment_tortuosity_complete(comp_len, comp_nodes):
     tortuosity = (comp_len/diagonal)**2
     return tortuosity
 
-def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000, n_radius = 25):
+def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000, n_radius = 1000):
     """
     calculates tortuosity as average of tortuosity in different samples of the compartment. Torutosity is the quadrat of the
     pathlength vs the bounding box diagonal
     :param comp_graph: compartment graph
     :param comp_nodes: compartment nodes in physical scale
     :param n_samples: amount of samples drawn
-    :param n_length: length of sample in µm
+    :param n_radius: radius to be sampled in nm
     :return: averaged tortuosity
     """
     kdtree = scipy.spatial.cKDTree(comp_nodes)
@@ -138,7 +138,7 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
         sample_diagonal = np.linalg.norm(max - min) / 1000  # in µm
         sample_tortuosity = (sample_length/ sample_diagonal) ** 2
         tortuosities[i] = sample_tortuosity
-    avg_tortuosity = np.mean(tortuosities)
+    avg_tortuosity = np.nanmean(tortuosities)
     return avg_tortuosity
 
 

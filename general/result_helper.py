@@ -250,6 +250,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
                     sns.distplot(self.dictionary2[add_key],
                                  hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
                                  kde=False, bins=bins, label=add_key)
+            plt.legend()
             if cells:
                 plt.ylabel("count of cells")
             elif "pair" in key:
@@ -499,7 +500,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         :param outgoing: if true, connected_ct is post_synapse
         :return: None
         """
-        sns.barplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue)
+        sns.barplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue, orient="h")
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))

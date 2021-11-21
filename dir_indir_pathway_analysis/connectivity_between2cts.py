@@ -368,7 +368,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                                                                 dictionary2=ct1_2_ct2_multi_syn_sumsize)
 
     sum_max_multisyn = int(ct2_2_ct1_max_multisyn + ct1_2_ct2_max_multisyn)
-    multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum synapse size", "amount of cells", "celltype"],
+    multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
                                index=range(sum_max_multisyn))
     multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "celltype"] = ct_dict[celltype1]
     multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[celltype2]
@@ -377,13 +377,13 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                                                                                                  ct1_2_ct2_max_multisyn + 1)
     for i, key in enumerate(ct2_2_ct1_multi_syn_amount.keys()):
         multisyn_df.loc[i, "amount of cells"] = ct2_2_ct1_multi_syn_amount[key]
-        multisyn_df.loc[i, "sum synapse size"] = ct2_2_ct1_multi_syn_sumsize[key]
+        multisyn_df.loc[i, "sum size synapses"] = ct2_2_ct1_multi_syn_sumsize[key]
         multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "amount of cells"] = ct1_2_ct2_multi_syn_amount[key]
-        multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "sum synapse size"] = ct1_2_ct2_multi_syn_sumsize[key]
+        multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "sum size synapses"] = ct1_2_ct2_multi_syn_sumsize[key]
 
     multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
     multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df, hue = "celltype")
-    multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum synapse size", results_df=multisyn_df,
+    multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
                                           hue="celltype")
 
     # put all synsizes array into dictionary (but not into dataframe)
@@ -565,7 +565,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ct1_max_multisyn = len(ct1_syn_dict["multisynapse amount"].keys())
         ct2_max_multisyn = len(ct2_syn_dict["multisynapse amount"].keys())
         sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
-        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum synapse size", "amount of cells", "celltype"],
+        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
                                    index=range(sum_max_multisyn))
         multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct_dict[comp_ct1]
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[comp_ct2]
@@ -573,14 +573,14 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_max_multisyn + 1)
         for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
             multisyn_df.loc[i, "amount of cells"] = ct1_syn_dict["multisynapse amount"][key]
-            multisyn_df.loc[i, "sum synapse size"] = ct1_syn_dict["sum synapse size"][key]
+            multisyn_df.loc[i, "sum size synapses"] = ct1_syn_dict["multisynapse sum size"][key]
             multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
-            multisyn_df.loc[ct2_syn_dict + i, "sum synapse size"] = ct2_syn_dict["sum synapse size"][key]
+            multisyn_df.loc[ct2_max_multisyn+ i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
 
         multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
         results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
                                               hue="celltype", conn_celltype = ct_dict[connected_ct], outgoing = False)
-        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum synapse size", result_sdf=multisyn_df,
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", result_sdf=multisyn_df,
                                                hue="celltype", conn_celltype = ct_dict[connected_ct], outgoing = False)
 
     #calculate summed synapse size per celltype
@@ -659,7 +659,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ct1_max_multisyn = len(ct1_syn_dict["multisynapse amount"].keys())
         ct2_max_multisyn = len(ct2_syn_dict["multisynapse amount"].keys())
         sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
-        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum synapse size", "amount of cells", "celltype"],
+        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
                                    index=range(sum_max_multisyn))
         multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct_dict[comp_ct1]
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[comp_ct2]
@@ -667,16 +667,16 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_max_multisyn + 1)
         for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
             multisyn_df.loc[i, "amount of cells"] = ct1_syn_dict["multisynapse amount"][key]
-            multisyn_df.loc[i, "sum synapse size"] = ct1_syn_dict["sum synapse size"][key]
+            multisyn_df.loc[i, "sum size synapses"] = ct1_syn_dict["multisynapse sum size"][key]
             multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
-            multisyn_df.loc[ct2_syn_dict + i, "sum synapse size"] = ct2_syn_dict["sum synapse size"][key]
+            multisyn_df.loc[ct2_max_multisyn + i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
 
         multisyn_df.to_csv(
             "%s/multi_synapses_%s_%s_2_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
         results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
                                         hue="celltype", conn_celltype=ct_dict[connected_ct],
                                         outgoing=True)
-        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum synapse size", results_df=multisyn_df,
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
                                         hue="celltype", conn_celltype=ct_dict[connected_ct],
                                         outgoing=True)
 
@@ -692,7 +692,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     edges = [[u, v, summed_synapse_sizes[(u, v)]] for (u, v) in summed_synapse_sizes.keys()]
     G.add_weighted_edges_from(edges)
     weights = [G[u][v]["weight"]/10 for (u, v) in summed_synapse_sizes.keys()]
-    labels = nx.get_edge_attributes(G, "weight")
+    labels = nx.get_edge_attributes(G, "weight").astype(np.uint8)
     pos = nx.spring_layout(G, seed=7)
     nx.draw_networkx_nodes(G, pos, node_size=1000)
     nx.draw_networkx_labels(G, pos, font_size=18)

@@ -266,7 +266,7 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
         ct2_distances2ct1 = scipy.spatial.distance.cdist(ct2_soma_coords, ct1_soma_coords,
                                                          metric="euclidean") / 1000
         ct2avg_soma_distance2ct1_per_cell = np.mean(ct2_distances2ct1, axis=1)
-        ct_soma_coords = np.array([ct1_soma_coords, ct2_soma_coords]).reshape(len(ct1_soma_coords) + len(ct2_soma_coords), 3)
+        ct_soma_coords = np.concatenate((ct1_soma_coords, ct2_soma_coords))
         pairwise_distances_cts = scipy.spatial.distance.pdist(ct_soma_coords, metric = "euclidean") / 1000
         ct1_comp_dict["avg soma distance to other celltype"] = ct1avg_soma_distance2ct2_per_cell
         ct2_comp_dict["avg soma distance to other celltype"] = ct2avg_soma_distance2ct1_per_cell

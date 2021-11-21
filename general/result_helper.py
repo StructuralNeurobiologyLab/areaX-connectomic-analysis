@@ -250,13 +250,13 @@ class ComparingResultsForPLotting(ResultsForPlotting):
                     sns.distplot(self.dictionary2[add_key],
                                  hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
                                  kde=False, bins=bins, label=add_key)
-            plt.legend()
             if cells:
                 plt.ylabel("count of cells")
             elif "pair" in key:
                 plt.ylabel("count of %s pairs" % subcell)
             else:
                 plt.ylabel("count of %s" % subcell)
+        plt.legend()
         if xlabel:
             plt.xlabel(xlabel)
         else:

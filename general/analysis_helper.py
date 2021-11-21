@@ -124,6 +124,8 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
         random_node_ind = np.random.choice(range(len(comp_nodes)))
         random_node = comp_nodes[random_node_ind]
         sample_ids = kdtree.query_ball_point(random_node, n_radius)
+        if len(sample_ids) == 1:
+            continue
         sample_graph = comp_graph.subgraph(sample_ids)
         sample_nodes = comp_nodes[sample_ids]
         sample_length = sample_graph.size(weight="weight") / 1000  # in µm

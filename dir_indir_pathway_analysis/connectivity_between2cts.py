@@ -692,7 +692,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     edges = [[u, v, summed_synapse_sizes[(u, v)]] for (u, v) in summed_synapse_sizes.keys()]
     G.add_weighted_edges_from(edges)
     weights = [G[u][v]["weight"]/10 for (u, v) in summed_synapse_sizes.keys()]
-    labels = nx.get_edge_attributes(G, "weight").astype(np.uint8)
+    labels = nx.get_edge_attributes(G, "weight")
+    labels = {key: int(labels[key]) for key in labels}
     pos = nx.spring_layout(G, seed=7)
     nx.draw_networkx_nodes(G, pos, node_size=1000)
     nx.draw_networkx_labels(G, pos, font_size=18)

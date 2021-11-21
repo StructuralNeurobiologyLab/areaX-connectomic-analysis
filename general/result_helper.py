@@ -300,7 +300,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if key2 is None:
             results_for_plotting = pd.DataFrame(columns=[self.celltype1, self.celltype2], index=range(max_length))
             results_for_plotting.loc[0:len(self.dictionary1[key]) - 1, self.celltype1] = self.dictionary1[key]
-            results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, self.celltype2] = self.dictionary1[key]
+            results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, self.celltype2] = self.dictionary2[key]
         else:
             try:
                 key2_array = self.dictionary1[key2]
@@ -313,7 +313,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
                 column_labels = [self.celltype1, self.celltype2, key2]
             results_for_plotting = pd.DataFrame(columns=column_labels, index=range(max_length))
             results_for_plotting.loc[0:len(self.dictionary1[key]) - 1, column_labels[0]] = self.dictionary1[key]
-            results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, column_labels[1]] = self.dictionary1[key]
+            results_for_plotting.loc[0:len(self.dictionary2[key]) - 1, column_labels[1]] = self.dictionary2[key]
             results_for_plotting.loc[0:key2_length - 1, column_labels[2]] = key2_array
         return results_for_plotting
 
@@ -343,16 +343,15 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         sum_length =  len_ct1 + len_ct2
         result_df = pd.DataFrame(
             columns=column_labels, index=range(sum_length * len(labels)))
-
         result_df[label_category] = type(labels[0])
-        for i in range(labels):
-            result_df.loc[sum_length * i: sum_length * (i + 1) - 1, label_category] = labels[i]
+        for i, label in enumerate(labels):
+            result_df.loc[sum_length * i: sum_length * (i + 1) - 1, label_category] = label
             result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, "celltype"] = self.celltype1
             result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, "celltype"] = self.celltype2
-            for ci in range(column_labels - 2):
-                result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, column_labels[ci]] = self.dictionary1[column_labels[ci] + " - " + labels[i]]
-                result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, column_labels[ci]] = self.dictionary2[column_labels[ci] + " - " + labels[i]]
-        for ci in range(column_labels - 2):
+            for ci in range(len(column_labels) - 2):
+                result_df.loc[sum_length * i: sum_length * i + len_ct1 - 1, column_labels[ci]] = self.dictionary1[column_labels[ci] + " - " + label]
+                result_df.loc[sum_length * i + len_ct1: sum_length * (i + 1) - 1, column_labels[ci]] = self.dictionary2[column_labels[ci] + " - " + label]
+        for ci in range(len(column_labels) - 2):
             result_df[column_labels[ci]] = result_df[column_labels[ci]].astype("float64")
         return result_df
 
@@ -469,7 +468,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             plt.legend(handles[0:2], labels[0:2])
             plt.ylabel(self.param_label(key, subcell))
         else:
-            sns.boxplot(x=x, y=key, data=results_df, inner="box", palette=self.color_palette, hue=hue)
+            sns.boxplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue)
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))

@@ -521,12 +521,12 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         if "celltype" in key or "compartment" in key:
             continue
         if connected_ct:
-            results_comparison.plot_violin_hue(x = "compartment", y = key, data = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=True)
-            results_comparison.plot_box_hue(x = "compartment", y = key, data = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=False)
+            results_comparison.plot_violin_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=True)
+            results_comparison.plot_box_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=False)
         else:
-            results_comparison.plot_violin_hue(x="compartment", y=key, data=result_df_multi_params, hue="celltype",
+            results_comparison.plot_violin_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
                                                stripplot=True)
-            results_comparison.plot_box_hue(x="compartment", y=key, data=result_df_multi_params, hue="celltype",
+            results_comparison.plot_box_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
                                             stripplot=False)
 
     for key in ct1_syn_dict.keys():
@@ -538,7 +538,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ranksum_results.loc["p value", key] = p_value
         # plot parameter as violinplot
         if "-" not in key:
-            results_for_plotting = results_comparison.result_df_perparam(key)
+            results_for_plotting = results_comparison.result_df_per_param(key)
             if connected_ct:
                 results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, conn_celltype=ct_dict[connected_ct], outgoing=False)
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot= False,
@@ -618,10 +618,10 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         for key in result_df_multi_params.keys():
             if "celltype" in key or "compartment" in key:
                 continue
-            results_comparison.plot_violin_hue(x="compartment", y=key, data=result_df_multi_params,
+            results_comparison.plot_violin_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params,
                                                hue="celltype", conn_celltype=ct_dict[connected_ct],
                                                outgoing=True, stripplot=True)
-            results_comparison.plot_box_hue(x="compartment", y=key, data=result_df_multi_params, hue="celltype",
+            results_comparison.plot_box_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
                                             conn_celltype=ct_dict[connected_ct], outgoing=True,
                                             stripplot=False)
 
@@ -634,7 +634,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             ranksum_results.loc["p value", key] = p_value
             # plot parameter as violinplot
             if not "spine" in key and not "soma" in key and not "shaft" in key:
-                results_for_plotting = results_comparison.result_df_perparam(key)
+                results_for_plotting = results_comparison.result_df_per_param(key)
                 results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True,
                                                conn_celltype=ct_dict[connected_ct], outgoing=True)
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False,

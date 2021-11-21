@@ -24,7 +24,7 @@ time_stamps = [time.time()]
 step_idents = ['t-0']
 #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                #10: "NGF"}
-
+"""
 log.info("Step 1/5: GPe/i compartment comparison")
 # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
 result_GPe_filename = axon_den_arborization_ct(ssd, celltype=6, filename=f_name, full_cells=True, handpicked=True)
@@ -33,6 +33,7 @@ compare_compartment_volume_ct(celltype1=6, celltype2=7, filename=f_name, filenam
 
 time_stamps = [time.time()]
 step_idents = ["compartment comparison finished"]
+"""
 
 log.info("Step 2/5: GPe and GPi connectivity")
 # see how GPe and GPi are connected

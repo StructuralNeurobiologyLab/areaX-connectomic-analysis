@@ -296,7 +296,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                                                              ct1_2_ct2_syn_dict["sum size synapses"] * 100
         ct2_2_ct1_syn_dict["percentage synapse size - " + ci] = ct2_2_ct1_syn_dict["sum size synapses - " + ci] / \
                                                              ct2_2_ct1_syn_dict["sum size synapses"] * 100
-        ct1_2_ct2_syn_dict["percentage synapse amount- " + ci] = ct1_2_ct2_syn_dict["amount synapses - " + ci] / \
+        ct1_2_ct2_syn_dict["percentage synapse amount - " + ci] = ct1_2_ct2_syn_dict["amount synapses - " + ci] / \
                                                                 ct1_2_ct2_syn_dict["amount synapses"] * 100
         ct2_2_ct1_syn_dict["percentage synapse size - " + ci] = ct2_2_ct1_syn_dict["amount synapses - " + ci] / \
                                                                 ct2_2_ct1_syn_dict["amount synapses"] * 100
@@ -421,9 +421,9 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct_dict[celltype2])
         if comp_labels[0] in key:
             key_split = key.split("-")
-            key2 = key_split[0] + "-" + comp_labels[1]
-            key3 = key_split[0] + "-" + comp_labels[2]
-            key4 = key_split[0] + "-" + comp_labels[3]
+            key2 = key_split[0] + "- " + comp_labels[1]
+            key3 = key_split[0] + "- " + comp_labels[2]
+            key4 = key_split[0] + "- " + comp_labels[3]
             param_list_ct2= [ct1_2_ct2_pd[key], ct1_2_ct2_pd[key2], ct1_2_ct2_pd[key3], ct1_2_ct2_pd[key4]]
             ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = celltype1, outgoing = False)
             ct1_2_ct2_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct2, subcell="synapse",

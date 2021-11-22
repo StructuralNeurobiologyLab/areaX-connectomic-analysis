@@ -16,7 +16,7 @@ global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
 start = time.time()
-f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211121_j0251v3_MSN_percentile_comparison"
+f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211122_j0251v3_MSN_percentile_comparison"
 if not os.path.exists(f_name):
     os.mkdir(f_name)
 log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -33,6 +33,8 @@ log.info("Step 1/8: MSN percentile compartment comparison")
 filename_spiness_saving = "/wholebrain/scratch/arother/j0251v3_prep/"
 for cl in comp_lengths:
     filename_spiness_results = "%s/spiness_percentiles_mcl%i" % (f_name, cl)
+    if not os.path.exists(filename_spiness_results):
+        os.mkdir(filename_spiness_results)
     saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, filename_plotting = filename_spiness_results, percentiles = percentile, min_comp_len = cl)
 
 time_stamps = [time.time()]

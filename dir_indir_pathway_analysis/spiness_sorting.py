@@ -1,8 +1,6 @@
 
-from syconn import global_params
-from syconn.reps.super_segmentation import SuperSegmentationDataset
 import numpy as np
-import networkx as nx
+import pandas as pd
 import os as os
 import time
 from syconn.handler.config import initialize_logging
@@ -79,10 +77,8 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
         write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (filename_saving, ct_dict[celltype], percentile, min_comp_len), spine_amount_dict_low)
         write_obj2pkl("%s/full_%3s_spine_dict_%i_%i.pkl" % (filename_saving, ct_dict[celltype], 100 - percentile, min_comp_len),
                       spine_amount_dict_high)
-        if percentile < 50:
-            ct1_str = ct_dict[celltype] + " p%.2i" % percentile
-        else:
-            ct2_str = ct_dict[celltype] + " p%.2i" % (100 - percentile)
+        ct1_str = ct_dict[celltype] + " p%.2i" % percentile
+        ct2_str = ct_dict[celltype] + " p%.2i" % (100 - percentile)
         if filename_plotting:
             spine_amount_results_low = {"spine amount": spine_densities[perc_low_inds], "cellids": cellids_low}
             spine_amount_results_high = {"spine amount": spine_densities[perc_high_inds], "cellids": cellids_high}
@@ -91,11 +87,16 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
             spine_amount_results.plot_hist_comparison(key = "spine amount", subcell = "spine", bins = 10, norm_hist=True)
             spine_results_df = spine_amount_results.result_df_per_param(key = "spine amount")
             spine_amount_results.plot_violin(key = "spine amount", result_df=spine_results_df, subcell = "spine")
-            spine_results_df.loc[0: len(cellids_low) - 1, "cellids"] = cellids_low
-            spine_results_df.loc[0: len(cellids_low) - 1, "percentile"] = percentile
-            spine_results_df.loc[len(cellids_low): len(cellids_high) - 1, "cellids"] = cellids_high
-            spine_results_df.loc[len(cellids_low): len(cellids_high) - 1, "percentile"] = 100 - percentile
-            spine_results_df.to_csv("%s/spine_amounts_%s_%i_%i.csv" % (filename_plotting, ct_dict[celltype], percentile, min_comp_len))
+            sum_cellids = len(cellids_low) + len(cellids_high)
+            spine_results_df_full = pd.DataFrame(columns = ["cellids", "spine amount" ,"percentile"], index = range(sum_cellids))
+            spine_results_df_full.loc[0: len(cellids_low) - 1, "cellids"] = cellids_low
+            spine_results_df_full.loc[0: len(cellids_low) - 1, "percentile"] = percentile
+            spine_results_df_full.loc[0: len(cellids_low) - 1, "spine amount"] = spine_amount_results_low["spine amount"]
+            spine_results_df_full.loc[len(cellids_low): sum_cellids - 1, "cellids"] = cellids_high
+            spine_results_df_full.loc[len(cellids_low): sum_cellids- 1, "percentile"] = 100 - percentile
+            spine_results_df_full.loc[len(cellids_low): sum_cellids - 1, "spine amount"] = spine_amount_results_high[
+                "spine amount"]
+            spine_results_df_full.to_csv("%s/spine_amounts_%s_%i_%i.csv" % (filename_plotting, ct_dict[celltype], percentile, min_comp_len))
 
 
     perctime = time.time() - spinetime

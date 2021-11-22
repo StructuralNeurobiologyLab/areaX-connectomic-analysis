@@ -340,10 +340,13 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct1_2_ct2_multi_syn_sumsize = {}
     ct2_2_ct1_multi_syn_sumsize = {}
     for i in multisyn_amount:
-        ct1_2_ct2_multi_syn_amount[i] = len(np.where(ct1_2_ct2_percell_syn_amount == i)[0])
-        ct2_2_ct1_multi_syn_amount[i] = len(np.where(ct2_2_ct1_percell_syn_amount == i)[0])
-        ct1_2_ct2_multi_syn_sumsize[i] = np.sum(ct1_2_ct2_percell_syn_size[np.where(ct1_2_ct2_percell_syn_amount == i)])
-        ct2_2_ct1_multi_syn_sumsize[i] = np.sum(ct2_2_ct1_percell_syn_size[np.where(ct2_2_ct1_percell_syn_amount == i)])
+        if i <= ct1_2_ct2_max_multisyn:
+            ct1_2_ct2_multi_syn_amount[i] = len(np.where(ct1_2_ct2_percell_syn_amount == i)[0])
+            ct1_2_ct2_multi_syn_sumsize[i] = np.sum(
+                ct1_2_ct2_percell_syn_size[np.where(ct1_2_ct2_percell_syn_amount == i)])
+        if i <= ct2_2_ct1_max_multisyn:
+            ct2_2_ct1_multi_syn_amount[i] = len(np.where(ct2_2_ct1_percell_syn_amount == i)[0])
+            ct2_2_ct1_multi_syn_sumsize[i] = np.sum(ct2_2_ct1_percell_syn_size[np.where(ct2_2_ct1_percell_syn_amount == i)])
 
     if percentile_ct1 is not None:
         multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
@@ -586,8 +589,11 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
             multisyn_df.loc[i, "amount of cells"] = ct1_syn_dict["multisynapse amount"][key]
             multisyn_df.loc[i, "sum size synapses"] = ct1_syn_dict["multisynapse sum size"][key]
-            multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
-            multisyn_df.loc[ct2_max_multisyn+ i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
+            try:
+                multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
+                multisyn_df.loc[ct1_max_multisyn + i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
+            except KeyError:
+                continue
 
         multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
         results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
@@ -680,8 +686,11 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
             multisyn_df.loc[i, "amount of cells"] = ct1_syn_dict["multisynapse amount"][key]
             multisyn_df.loc[i, "sum size synapses"] = ct1_syn_dict["multisynapse sum size"][key]
-            multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
-            multisyn_df.loc[ct2_max_multisyn + i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
+            try:
+                multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
+                multisyn_df.loc[ct1_max_multisyn + i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
+            except KeyError:
+                continue
 
         multisyn_df.to_csv(
             "%s/multi_synapses_%s_%s_2_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
@@ -703,7 +712,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     G = nx.DiGraph()
     edges = [[u, v, summed_synapse_sizes[(u, v)]] for (u, v) in summed_synapse_sizes.keys()]
     G.add_weighted_edges_from(edges)
-    weights = [G[u][v]["weight"]/10 for (u, v) in summed_synapse_sizes.keys()]
+    weights = [G[u][v]["weight"]/100 for (u, v) in summed_synapse_sizes.keys()]
     labels = nx.get_edge_attributes(G, "weight")
     labels = {key: int(labels[key]) for key in labels}
     pos = nx.spring_layout(G, seed=7)
@@ -721,6 +730,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     else:
         plt.savefig("%s/sum_synapse_size_ct_%s_%s_nxgraph.png" % (
         f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+    plt.close()
 
     plottime = time.time() - start
     print("%.2f sec for statistics and plotting" % plottime)

@@ -638,7 +638,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                             stripplot=False)
 
         for key in ct1_syn_dict.keys():
-            if "ids" in key or "sum" in key:
+            if "ids" in key or "sum" in key or "multi" in key:
                 continue
             # calculate p_value for parameter
             stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])

@@ -96,6 +96,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct1_axon_length = np.zeros(len(cellids1))
     ct2_axon_length = np.zeros(len(cellids2))
     log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct_dict[celltype1])
+    # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids1))):
         cell.load_skeleton()
         g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))

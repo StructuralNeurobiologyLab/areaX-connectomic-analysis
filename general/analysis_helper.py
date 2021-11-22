@@ -41,6 +41,7 @@ def get_spine_density(cell, min_comp_len = 100):
     """
     cell.load_skeleton()
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
+    # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     axon_length = get_compartment_length(cell, compartment = 1, cell_graph = g)
     if axon_length < min_comp_len:
         return 0

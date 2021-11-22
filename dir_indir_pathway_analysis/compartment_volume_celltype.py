@@ -29,6 +29,7 @@ def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100):
     :param min_comp_len: minimum compartment length, if not return 0
     :return: comp_len, comp_volume in µm³
     """
+    # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     comp_length = get_compartment_length(sso, compartment, cell_graph)
     if comp_length < min_comp_len:
         return 0, 0, 0, 0, 0

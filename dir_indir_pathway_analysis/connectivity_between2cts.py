@@ -547,12 +547,24 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                 results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True)
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False)
         if connected_ct is not None:
-            results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=ct_dict[connected_ct], outgoing=False)
-            results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
-                                                    conn_celltype=ct_dict[connected_ct], outgoing=False)
+            if "all" in key:
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
+                                                        conn_celltype=ct_dict[connected_ct], outgoing=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
+                                                        conn_celltype=ct_dict[connected_ct], outgoing=False)
+            else:
+                results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=ct_dict[connected_ct], outgoing=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
+                                                        conn_celltype=ct_dict[connected_ct], outgoing=False)
         else:
-            results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False)
-            results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True)
+            if "all" in key:
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
+                                                        outgoing=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
+                                                        outgoing=False)
+            else:
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True)
 
     if connected_ct is not None:
         ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
@@ -580,7 +592,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
         results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
                                               hue="celltype", conn_celltype = ct_dict[connected_ct], outgoing = False)
-        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", result_sdf=multisyn_df,
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
                                                hue="celltype", conn_celltype = ct_dict[connected_ct], outgoing = False)
 
     #calculate summed synapse size per celltype
@@ -640,9 +652,9 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False,
                                             conn_celltype=ct_dict[connected_ct], outgoing=True)
             if "all" in key:
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells = False, norm_hist=False,
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
                                                         conn_celltype=ct_dict[connected_ct], outgoing=True)
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells= False, norm_hist=True,
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
                                                         conn_celltype=ct_dict[connected_ct], outgoing=True)
             else:
                 results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False,

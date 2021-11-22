@@ -504,13 +504,13 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
-                plt.savefig("%s/%s_%s_%s_2_%s_multi_bar.png" % (
-                    self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+                plt.savefig("%s/%s_%s_%s_%s_2_%s_multi_bar.png" % (
+                    self.filename, key, x, self.celltype1, self.celltype2, conn_celltype))
             else:
                 plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltype1, self.celltype2))
-                plt.savefig("%s/%s_%s_2_%s_%s_multi_bar.png" % (
-                    self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_%s_2_%s_%s_multi_bar.png" % (
+                    self.filename, key, x, conn_celltype, self.celltype1, self.celltype2))
         else:
             plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
-            plt.savefig("%s/%s_%s_%s_multi_bar.png" % (self.filename, key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_%s_multi_bar.png" % (self.filename, key,x, self.celltype1, self.celltype2))
         plt.close()

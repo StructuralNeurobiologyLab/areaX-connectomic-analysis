@@ -1,5 +1,6 @@
 from collections import defaultdict
 import numpy as np
+from u.arother.bio_analysis.general.analysis_helper import get_compartment_length
 
 def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortestpaths = True):
     """
@@ -16,6 +17,8 @@ def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortest
     if soma_centre:
         soma_arr = np.zeros((len(celltype_ids), 3))
     full_cells = np.zeros((len(celltype_ids)))
+    axon_length = np.zeros((len(celltype_ids)))
+    dendrite_length = np.zeros((len(celltype_ids)))
 
     for i, cell in enumerate(ssd.get_super_segmentation_object(celltype_ids)):
         cell.load_skeleton()
@@ -26,13 +29,18 @@ def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortest
         if not (0 in unique_preds and 1 in unique_preds and 2 in unique_preds):
             continue
         full_cells[i] = int(cell.id)
+        # add compartment calculation for axon/ dendrite
+        g = cell.weighted_graph()
+        axon_length_cell = get_compartment_length(cell, compartment = 1, cell_graph = g, min_comp_len = 0)
+        dendrite_length_cell = get_compartment_length(cell, compartment = 0, cell_graph = g, min_comp_len = 0)
+        axon_length[i] = axon_length_cell
+        dendrite_length[i] = dendrite_length_cell
         if soma_centre:
             soma_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 2)[0]
             positions = cell.skeleton["nodes"][soma_inds] * ssd.scaling #transform to nm
             soma_centre_coord = np.mean(positions, axis=0)
             soma_arr[i] = soma_centre_coord
         if shortestpaths:
-            g = cell.weighted_graph()
             path_array = np.zeros(len(cell.skeleton["nodes"]))
             nonsoma_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 2)[0]
             coords = cell.skeleton["nodes"][nonsoma_inds]
@@ -40,19 +48,23 @@ def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortest
             shortespaths =  cell.shortestpath2soma(coords)
             cell.skeleton["shortestpaths"] = np.zeros(len(cell.skeleton["nodes"]))
             cell.skeleton["shortestpaths"][nonsoma_inds] = shortespaths
+
         percentage = 100 * i / len(celltype_ids)
         print(percentage)
 
     inds = np.array(full_cells != 0)
     full_cells = full_cells[inds].astype(int)
-
+    axon_length = axon_length[inds]
+    dendrite_length = dendrite_length[inds]
+    axon_dict = {int(full_cells[i]): axon_length[i] for i in range(0, len(full_cells))}
+    dendrite_dict = {int(full_cells[i]): dendrite_length[i] for i in range(0, len(full_cells))}
 
     if soma_centre==True:
         soma_arr = soma_arr[inds]
         full_cells_dict = {int(full_cells[i]): soma_arr[i] for i in range(0, len(full_cells))}
-        return full_cells, full_cells_dict
+        return full_cells, full_cells_dict, axon_dict, dendrite_dict
     else:
-        return full_cells
+        return full_cells, axon_dict, dendrite_dict
 
 
 #def create_syn_dict(sd_synssv, syn_prob = 0.6):

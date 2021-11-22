@@ -9,6 +9,7 @@ if __name__ == '__main__':
     from analysis_prep_func import find_full_cells, synapse_amount_percell
     from syconn.handler.config import initialize_logging
 
+
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
     #global_params.wd = "/ssdscratch/pschuber/songbird/j0126/assembled_core_relabeled_base_merges_relabeled_to_v4b_base_20180214_full_agglo_cbsplit_with_reconnects_no_soma_merger_manual_edges_removed"
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -31,13 +32,17 @@ if __name__ == '__main__':
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
-        cell_array, cell_dict= find_full_cells(ssd, celltype=ct, shortestpaths=False)
+        cell_array, cell_dict, axon_dict, dendrite_dict = find_full_cells(ssd, celltype=ct, shortestpaths=False)
         dict_path = ("%s/full_%.3s_dict.pkl" % (f_name,ct_dict[ct]))
         arr_path = ("%s/full_%.3s_arr.pkl" % (f_name,ct_dict[ct]))
+        axon_length_path = ("%s/full_%.3s_axondict.pkl" % (f_name,axon_dict[ct]))
+        dendrite_length_path = ("%s/full_%.3s_dendritedict.pkl" % (f_name, dendrite_dict[ct]))
         #syn_dict = synapse_amount_percell(ct, sd_synssv, syn_proba=0.6, cellids=cell_array)
         #syn_path = ("%s/full_%.3s_synam.pkl" % (f_name,ct_dict[ct]))
         write_obj2pkl(dict_path, cell_dict)
         write_obj2pkl(arr_path, cell_array)
+        write_obj2pkl(axon_length_path, axon_dict)
+        write_obj2pkl(dendrite_length_path, dendrite_dict)
         #write_obj2pkl(syn_path, syn_dict)
         curr_time -= time.time()
         print("%.2f min, %.2f sec for finding  %s cells" % (curr_time // 60, curr_time % 60, ct_dict[ct]))

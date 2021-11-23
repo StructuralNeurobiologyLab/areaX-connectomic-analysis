@@ -61,31 +61,31 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         if handpicked1:
             try:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr_c%i.pkl" % (ct_dict[celltype1], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct_dict[celltype1], min_comp_len))
             except FileNotFoundError:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype1])
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct_dict[celltype1])
         else:
             try:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_c%i.pkl" % (ct_dict[celltype1], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct_dict[celltype1], min_comp_len))
             except FileNotFoundError:
                 cellids1 = load_pkl2obj(
-                        "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype1])
+                        "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct_dict[celltype1])
         if handpicked2:
             try:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr_c%i.pkl" % (ct_dict[celltype2], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct_dict[celltype2], min_comp_len))
             except FileNotFoundError:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype2])
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct_dict[celltype2])
         else:
             try:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_c%i.pkl" % (ct_dict[celltype2], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct_dict[celltype2], min_comp_len))
             except FileNotFoundError:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype2])
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct_dict[celltype2])
     else:
         if percentile_ct1 is not None:
             raise ValueError("percentiles can only be used on preprocessed cellids")

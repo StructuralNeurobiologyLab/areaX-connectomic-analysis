@@ -99,15 +99,15 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
         if handpicked:
             try:
                 cellids = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr_c%i.pkl" % (ct_dict[celltype], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct_dict[celltype], min_comp_len))
             except FileNotFoundError:
                 cellids = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%.3s_arr.pkl" % ct_dict[celltype])
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct_dict[celltype])
         else:
             try:
-                cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr_c%i.pkl" % (ct_dict[celltype], min_comp_len))
+                cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct_dict[celltype], min_comp_len))
             except FileNotFoundError:
-                cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
+                cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct_dict[celltype])
     else:
         if percentile is not None:
             raise ValueError("percentiles can only be used on preprocessed cellids")

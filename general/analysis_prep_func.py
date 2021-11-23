@@ -31,8 +31,8 @@ def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortest
         full_cells[i] = int(cell.id)
         # add compartment calculation for axon/ dendrite
         g = cell.weighted_graph()
-        axon_length_cell = get_compartment_length(cell, compartment = 1, cell_graph = g, min_comp_len = 0)
-        dendrite_length_cell = get_compartment_length(cell, compartment = 0, cell_graph = g, min_comp_len = 0)
+        axon_length_cell = get_compartment_length(cell, compartment = 1, cell_graph = g)
+        dendrite_length_cell = get_compartment_length(cell, compartment = 0, cell_graph = g)
         axon_length[i] = axon_length_cell
         dendrite_length[i] = dendrite_length_cell
         if soma_centre:

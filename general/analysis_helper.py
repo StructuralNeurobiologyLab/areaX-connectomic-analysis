@@ -20,8 +20,7 @@ def get_compartment_length(sso, compartment, cell_graph):
             calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
             :param compartment: 0 = dendrite, 1 = axon, 2 = soma
             :param cell_graph: sso.weighted graph
-            :param min_comp_len: minimum compartment length, if not return 0 [µm]
-            :return: comp_len
+            :return: comp_len in µm
             """
     non_comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] != compartment)[0]
     comp_graph = cell_graph.copy()

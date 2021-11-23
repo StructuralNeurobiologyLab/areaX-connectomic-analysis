@@ -11,7 +11,6 @@ if __name__ == '__main__':
 
 
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
-    #global_params.wd = "/ssdscratch/pschuber/songbird/j0126/assembled_core_relabeled_base_merges_relabeled_to_v4b_base_20180214_full_agglo_cbsplit_with_reconnects_no_soma_merger_manual_edges_removed"
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 
     # celltypes: j0256: STN = 0, DA = 1, MSN = 2, LMAN = 3, HVC = 4, TAN = 5, GPe = 6, GPi = 7,
@@ -23,9 +22,9 @@ if __name__ == '__main__':
         os.mkdir(f_name)
     log = initialize_logging('analysis prep', log_dir=f_name + '/logs/')
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
-    ct_list = [0]
+    #ct_list = [0]
     #ax_list = [3, 4]
-    #ct_list = [2,5, 6, 7, 8, 9, 10]
+    ct_list = [2,5, 6, 7, 0, 8, 9, 10]
     #ax_list = [3, 4, 0, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
     curr_time = time.time() - start

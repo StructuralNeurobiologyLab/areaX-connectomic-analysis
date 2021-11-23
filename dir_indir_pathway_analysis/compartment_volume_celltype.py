@@ -240,26 +240,28 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
                10: "NGF"}
     if percentile is None and celltype2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
+    ct1_str = ct_dict[celltype1]
+    ct2_str = ct_dict[celltype2]
     if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         if percentile < 50:
-            ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % percentile
+            ct1_str = ct_dict[celltype1] + " p%.2i" % percentile
         else:
-            ct_dict[celltype2] = ct_dict[celltype1] + " p%.2i" % (100 - percentile)
+            ct2_str = ct_dict[celltype1] + " p%.2i" % (100 - percentile)
     f_name = "%s/comp_compartment_%s_%s_comp_volume_mcl%i" % (
-        filename, ct_dict[celltype1],ct_dict[celltype2], min_comp_len)
+        filename, ct1_str,ct2_str, min_comp_len)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compare compartment volumes between two celltypes', log_dir=f_name + '/logs/')
-    log.info("parameters: celltype1 = %s,celltype2 = %s min_comp_length = %.i" % (ct_dict[celltype1], ct_dict[celltype2], min_comp_len))
+    log.info("parameters: celltype1 = %s,celltype2 = %s min_comp_length = %.i" % (ct1_str, ct2_str, min_comp_len))
     time_stamps = [time.time()]
     step_idents = ['t-0']
     ct1_comp_dict = load_pkl2obj("%s/ct_vol_comp.pkl"% filename1)
     ct2_comp_dict = load_pkl2obj("%s/ct_vol_comp.pkl"% filename2)
     comp_dict_keys = list(ct1_comp_dict.keys())
     if "soma centre coords" in comp_dict_keys:
-        log.info("compute mean soma distance between %s and %s" % (ct_dict[celltype1], ct_dict[celltype2]))
+        log.info("compute mean soma distance between %s and %s" % (ct1_str, ct2_str))
         ct1_soma_coords = ct1_comp_dict["soma centre coords"]
         ct2_soma_coords = ct2_comp_dict["soma centre coords"]
         ct1_distances2ct2 = scipy.spatial.distance.cdist(ct1_soma_coords, ct2_soma_coords, metric="euclidean") / 1000
@@ -279,12 +281,12 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
     log.info("compute statistics for comparison, create violinplot and histogram")
     ranksum_results = pd.DataFrame(columns=comp_dict_keys[1:], index=["stats", "p value"])
     if percentile is not None:
-        results_comparision = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
-                                                          celltype2=ct_dict[celltype2], filename=f_name,
+        results_comparision = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                          celltype2=ct2_str, filename=f_name,
                                                           dictionary1=ct1_comp_dict, dictionary2=ct2_comp_dict,
                                                           color1="gray", color2="darkturquoise")
     else:
-        results_comparision = ComparingResultsForPLotting(celltype1 = ct_dict[celltype1], celltype2 = ct_dict[celltype2], filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "mediumorchid", color2 = "springgreen")
+        results_comparision = ComparingResultsForPLotting(celltype1 = ct1_str, celltype2 = ct2_str, filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "mediumorchid", color2 = "springgreen")
     for key in ct1_comp_dict.keys():
         if "ids" in key or ("pairwise" in key and "other" in key):
             continue
@@ -300,15 +302,15 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
         else:
             subcell = "soma"
         if "pairwise" in key:
-            column_labels = ["distances within %s" % ct_dict[celltype1], "distances within %s" % ct_dict[celltype2], "distances between %s and %s" % (ct_dict[celltype1], ct_dict[celltype2])]
+            column_labels = ["distances within %s" % ct1_str, "distances within %s" % ct2_str, "distances between %s and %s" % (ct1_str, ct2_str)]
             results_for_plotting = results_comparision.result_df_per_param(key, key2 = "pairwise soma distance to other celltype", column_labels= column_labels)
             s1, p1 = ranksums(ct1_comp_dict[key], ct1_comp_dict["pairwise soma distance to other celltype"])
             s2, p2 = ranksums(ct2_comp_dict[key], ct1_comp_dict["pairwise soma distance to other celltype"])
-            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct_dict[celltype1]] = s1
-            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct_dict[celltype1]] = p1
-            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct_dict[celltype2]] = s2
-            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct_dict[celltype2]] = p2
-            ptitle = "pairwise soma distances within and between %s and %s" % (ct_dict[celltype1], ct_dict[celltype2])
+            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct1_str] = s1
+            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct1_str] = p1
+            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct2_str] = s2
+            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct2_str] = p2
+            ptitle = "pairwise soma distances within and between %s and %s" % (ct1_str, ct2_str)
             results_comparision.plot_hist_comparison(key, subcell, add_key = "pairwise soma distance to other celltype", cells=False, title=ptitle, norm_hist=False)
             results_comparision.plot_hist_comparison(key, subcell, add_key="pairwise soma distance to other celltype",
                                                      cells=False, title=ptitle, norm_hist=True)
@@ -320,7 +322,7 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
             results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
 
 
-    ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+    ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name,ct1_str,ct2_str))
 
     plottime = time.time() - start
     print("%.2f sec for statistics and plotting" % plottime)

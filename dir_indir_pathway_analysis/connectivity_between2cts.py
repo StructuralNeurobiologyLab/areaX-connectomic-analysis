@@ -40,52 +40,54 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                10: "NGF"}
     if percentile_ct1 is None and celltype2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
+    ct1_str = ct_dict[celltype1]
+    ct2_str = ct_dict[celltype2]
     if percentile_ct1 is not None:
         if percentile_ct1 == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         if percentile_ct1 < 50:
-            ct_dict[celltype1] = ct_dict[celltype1] + " p%.2i" % percentile_ct1
+            ct1_str = ct_dict[celltype1] + " p%.2i" % percentile_ct1
         else:
-            ct_dict[celltype2] = ct_dict[celltype1] + " p%.2i" % (100 - percentile_ct1)
+            ct2_str = ct_dict[celltype1] + " p%.2i" % (100 - percentile_ct1)
 
     f_name = "%s/syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
-            filename, ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh)
+            filename, ct1_str, ct2_str, min_comp_len, min_syn_size, syn_prob_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
     log.info("parameters: celltype1 = %s, celltype2 = %s, min_comp_length = %.i, min_syn_size = %.2f, syn_prob_thresh = %.2f" %
-             (ct_dict[celltype1], ct_dict[celltype2], min_comp_len, min_syn_size, syn_prob_thresh))
+             (ct1_str, ct2_str, min_comp_len, min_syn_size, syn_prob_thresh))
     time_stamps = [time.time()]
     step_idents = ['t-0']
     if full_cells:
         if handpicked1:
             try:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct_dict[celltype1], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct1_str, min_comp_len))
             except FileNotFoundError:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct_dict[celltype1])
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct1_str)
         else:
             try:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct_dict[celltype1], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct1_str, min_comp_len))
             except FileNotFoundError:
                 cellids1 = load_pkl2obj(
-                        "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct_dict[celltype1])
+                        "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct1_str)
         if handpicked2:
             try:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct_dict[celltype2], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct2_str, min_comp_len))
             except FileNotFoundError:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct_dict[celltype2])
+                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct2_str)
         else:
             try:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct_dict[celltype2], min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct2_str, min_comp_len))
             except FileNotFoundError:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct_dict[celltype2])
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct2_str)
     else:
         if percentile_ct1 is not None:
             raise ValueError("percentiles can only be used on preprocessed cellids")
@@ -95,7 +97,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
 
     ct1_axon_length = np.zeros(len(cellids1))
     ct2_axon_length = np.zeros(len(cellids2))
-    log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct_dict[celltype1])
+    log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids1))):
         cell.load_skeleton()
@@ -113,11 +115,11 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     cellids1 = cellids1[ct1_inds]
 
     ct1time = time.time() - start
-    print("%.2f sec for iterating through %s cells" % (ct1time, ct_dict[celltype1]))
+    print("%.2f sec for iterating through %s cells" % (ct1time, ct1_str))
     time_stamps.append(time.time())
-    step_idents.append('iterating over %s cells' % ct_dict[celltype1])
+    step_idents.append('iterating over %s cells' % ct1_str)
 
-    log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct_dict[celltype2])
+    log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids2))):
         cell.load_skeleton()
         g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
@@ -134,9 +136,9 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     cellids2 = cellids2[ct2_inds]
 
     ct2time = time.time() - ct1time
-    print("%.2f sec for iterating through %s cells" % (ct2time, ct_dict[celltype2]))
+    print("%.2f sec for iterating through %s cells" % (ct2time, ct2_str))
     time_stamps.append(time.time())
-    step_idents.append('iterating over %s cells' % ct_dict[celltype2])
+    step_idents.append('iterating over %s cells' % ct2_str)
 
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")
@@ -324,11 +326,11 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
 
 
     ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
-    ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+    ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct1_str, ct2_str))
 
 
     ct2_2_ct1_pd = pd.DataFrame(ct2_2_ct1_syn_dict)
-    ct2_2_ct1_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct_dict[celltype2], ct_dict[celltype1]))
+    ct2_2_ct1_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct2_str, ct1_str))
 
     # group average amount one cell by amount of synapses
     # make barplot
@@ -350,32 +352,32 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             ct2_2_ct1_multi_syn_sumsize[i] = np.sum(ct2_2_ct1_percell_syn_size[np.where(ct2_2_ct1_percell_syn_amount == i)])
 
     if percentile_ct1 is not None:
-        multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
-                                                               celltype2=ct_dict[celltype2], filename=f_name,
+        multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                               celltype2=ct2_str, filename=f_name,
                                                                dictionary1=ct2_2_ct1_multi_syn_amount,
                                                                dictionary2=ct1_2_ct2_multi_syn_amount, color1="gray",
                                                                color2="darkturquoise")
-        multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
-                                                                celltype2=ct_dict[celltype2], filename=f_name,
+        multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                                celltype2=ct2_str, filename=f_name,
                                                                 dictionary1=ct2_2_ct1_multi_syn_sumsize,
                                                                 dictionary2=ct1_2_ct2_multi_syn_sumsize, color1="gray",
                                                                 color2="darkturquoise")
     else:
-        multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
-                                                               celltype2=ct_dict[celltype2],
+        multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                               celltype2=ct2_str,
                                                                filename=f_name,
                                                                dictionary1=ct2_2_ct1_multi_syn_amount,
                                                                dictionary2=ct1_2_ct2_multi_syn_amount)
-        multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct_dict[celltype1],
-                                                                celltype2=ct_dict[celltype2], filename=f_name,
+        multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                                celltype2=ct2_str, filename=f_name,
                                                                 dictionary1=ct2_2_ct1_multi_syn_sumsize,
                                                                 dictionary2=ct1_2_ct2_multi_syn_sumsize)
 
     sum_max_multisyn = int(ct2_2_ct1_max_multisyn + ct1_2_ct2_max_multisyn)
     multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
                                index=range(sum_max_multisyn))
-    multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "celltype"] = ct_dict[celltype1]
-    multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[celltype2]
+    multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "celltype"] = ct1_str
+    multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct2_str
     multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_2_ct1_max_multisyn + 1)
     multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1,
                                                                                                  ct1_2_ct2_max_multisyn + 1)
@@ -385,7 +387,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "amount of cells"] = ct1_2_ct2_multi_syn_amount[key]
         multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "sum size synapses"] = ct1_2_ct2_multi_syn_sumsize[key]
 
-    multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct_dict[celltype1], ct_dict[celltype2]))
+    multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct1_str, ct2_str))
     multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df, hue = "celltype")
     multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
                                           hue="celltype")
@@ -400,12 +402,12 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct2_2_ct1_syn_dict["multisynapse amount"] = ct2_2_ct1_multi_syn_amount
     ct2_2_ct1_syn_dict["multisynapse sum size"] = ct2_2_ct1_multi_syn_sumsize
 
-    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype1], ct_dict[celltype2]), ct1_2_ct2_syn_dict)
-    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[celltype2], ct_dict[celltype1]), ct2_2_ct1_syn_dict)
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct1_str, ct2_str), ct1_2_ct2_syn_dict)
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct2_str, ct1_str), ct2_2_ct1_syn_dict)
 
-    ct1_2_ct2_resultsdict = ResultsForPlotting(celltype=ct_dict[celltype2], filename=f_name,
+    ct1_2_ct2_resultsdict = ResultsForPlotting(celltype=ct2_str, filename=f_name,
                                                dictionary=ct1_2_ct2_syn_dict)
-    ct2_2_ct1_resultsdict = ResultsForPlotting(celltype=ct_dict[celltype1], filename=f_name,
+    ct2_2_ct1_resultsdict = ResultsForPlotting(celltype=ct1_str, filename=f_name,
                                                dictionary=ct1_2_ct2_syn_dict)
 
     #plot parameters as distplot
@@ -418,11 +420,11 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         if "ids" in key or "sum" in key or "multi" in key:
             continue
         if "all" in key:
-            ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct_dict[celltype1])
-            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct_dict[celltype2])
+            ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct1_str)
+            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct2_str)
         else:
-            ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct_dict[celltype1])
-            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct_dict[celltype2])
+            ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct1_str)
+            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct2_str)
         if comp_labels[0] in key:
             key_split = key.split("-")
             key2 = key_split[0] + "- " + comp_labels[1]
@@ -443,7 +445,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     time_stamps.append(time.time())
     step_idents.append('calculating last parameters, plotting')
 
-    log.info("Connectivity analysis between 2 celltypes (%s, %s) finished" % (ct_dict[celltype1], ct_dict[celltype2]))
+    log.info("Connectivity analysis between 2 celltypes (%s, %s) finished" % (ct1_str, ct2_str))
 
     return f_name
 
@@ -464,38 +466,40 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                10: "NGF"}
     if percentile is None and comp_ct2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
+    ct1_str = ct_dict[comp_ct1]
+    ct2_str = ct_dict[comp_ct2]
     if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         if percentile < 50:
-            ct_dict[comp_ct1] = ct_dict[comp_ct1] + " p%.2i" % percentile
+            ct1_str= ct_dict[comp_ct1] + " p%.2i" % percentile
         else:
-            ct_dict[comp_ct2] = ct_dict[comp_ct1] + " p%.2i" % (100 - percentile)
+            ct2_str = ct_dict[comp_ct1] + " p%.2i" % (100 - percentile)
     if connected_ct is not None:
         f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i" % (
-            filename, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len)
+            filename, ct1_str, ct2_str, ct_dict[connected_ct], min_comp_len)
     else:
         f_name = "%s/comp_conn_%s_%s_syn_con_comp_mcl%i" % (
-            filename, ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len)
+            filename, ct1_str, ct2_str, min_comp_len)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compare connectivty between two celltypes', log_dir=f_name + '/logs/')
     if connected_ct is not None:
         log.info("parameters: celltype1 = %s,celltype2 = %s , connected ct = %s, min_comp_length = %.i" % (
-            ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct], min_comp_len))
+            ct1_str, ct2_str, ct_dict[connected_ct], min_comp_len))
     else:
         log.info("parameters: celltype1 = %s,celltype2 = %s, min_comp_length = %.i" % (
-            ct_dict[comp_ct1], ct_dict[comp_ct2], min_comp_len))
+           ct1_str, ct2_str, min_comp_len))
     time_stamps = [time.time()]
     step_idents = ['t-0']
     if connected_ct is not None:
-        ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct_dict[connected_ct], ct_dict[comp_ct2]))
-        ct1_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct_dict[connected_ct], ct_dict[comp_ct1]))
+        ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct_dict[connected_ct], ct2_str))
+        ct1_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct_dict[connected_ct], ct1_str))
     else:
         ct2_syn_dict = load_pkl2obj(
-            "%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+            "%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct1_str, ct2_str))
         ct1_syn_dict = load_pkl2obj(
-            "%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct_dict[comp_ct2], ct_dict[comp_ct1]))
+            "%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct2_str, ct1_str))
     syn_dict_keys = list(ct1_syn_dict.keys())
     log.info("compute statistics for comparison, create violinplot and histogram")
     ranksum_results = pd.DataFrame(columns=syn_dict_keys[1:], index=["stats", "p value"])
@@ -503,12 +507,12 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
     #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
     if percentile is not None:
-        results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
-                                                         celltype2=ct_dict[comp_ct2], filename=f_name,
+        results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                         celltype2=ct2_str, filename=f_name,
                                                          dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
                                                          color1="gray", color2="darkturquoise")
     else:
-        results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1], celltype2=ct_dict[comp_ct2],
+        results_comparison = ComparingResultsForPLotting(celltype1=ct1_str, celltype2=ct2_str,
                                                          filename=f_name, dictionary1=ct1_syn_dict,
                                                          dictionary2=ct2_syn_dict, color1="mediumorchid",
                                                          color2="springgreen")
@@ -516,10 +520,10 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
 
     if connected_ct is not None:
-        result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
+        result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct1_str, ct2_str))
     else:
         result_df_multi_params.to_csv("%s/%s_%s_syn_compartments.csv" % (
-            f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+            f_name, ct1_str, ct2_str))
 
     for key in result_df_multi_params.keys():
         if "celltype" in key or "compartment" in key:
@@ -571,9 +575,9 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                 results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True)
 
     if connected_ct is not None:
-        ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
+        ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct1_str, ct2_str))
     else:
-        ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+        ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct1_str, ct2_str))
 
     #compare multisynapses in boxplot
     # only if connected_ct as otherwise already in synapses_between2cts
@@ -583,8 +587,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
         multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
                                    index=range(sum_max_multisyn))
-        multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct_dict[comp_ct1]
-        multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[comp_ct2]
+        multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct1_str
+        multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct2_str
         multisyn_df.loc[0: ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct1_max_multisyn + 1)
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_max_multisyn + 1)
         for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
@@ -596,7 +600,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             except KeyError:
                 continue
 
-        multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct_dict[comp_ct1], ct_dict[comp_ct2]))
+        multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, ct_dict[connected_ct], ct1_str, ct2_str))
         results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
                                               hue="celltype", conn_celltype = ct_dict[connected_ct], outgoing = False)
         results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
@@ -605,34 +609,34 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     #calculate summed synapse size per celltype
     summed_synapse_sizes = {}
     if connected_ct is not None:
-        summed_synapse_sizes[(ct_dict[connected_ct], ct_dict[comp_ct1])] = np.sum(ct1_syn_dict["sum size synapses"])
-        summed_synapse_sizes[(ct_dict[connected_ct], ct_dict[comp_ct2])] = np.sum(ct2_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct_dict[connected_ct], ct1_str)] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct_dict[connected_ct], ct2_str)] = np.sum(ct2_syn_dict["sum size synapses"])
     else:
-        summed_synapse_sizes[(ct_dict[comp_ct2], ct_dict[comp_ct1])] = np.sum(ct1_syn_dict["sum size synapses"])
-        summed_synapse_sizes[(ct_dict[comp_ct1], ct_dict[comp_ct2])] = np.sum(ct2_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct_dict[comp_ct2], ct1_str)] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct_dict[comp_ct1], ct2_str)] = np.sum(ct2_syn_dict["sum size synapses"])
 
 
     #also compare outgoing connections from celltype
     if connected_ct is not None:
-        ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct_dict[comp_ct2], ct_dict[connected_ct]))
+        ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct2_str, ct_dict[connected_ct]))
         ct1_syn_dict = load_pkl2obj(
-            "%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct_dict[comp_ct1], ct_dict[connected_ct]))
+            "%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct1_str, ct_dict[connected_ct]))
 
         if percentile is not None:
-            results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
-                                                             celltype2=ct_dict[comp_ct2], filename=f_name,
+            results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                             celltype2=ct2_str, filename=f_name,
                                                              dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
                                                              color1="gray", color2="darkturquoise")
         else:
-            results_comparison = ComparingResultsForPLotting(celltype1=ct_dict[comp_ct1],
-                                                             celltype2=ct_dict[comp_ct2],
+            results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                             celltype2=ct2_str,
                                                              filename=f_name, dictionary1=ct1_syn_dict,
                                                              dictionary2=ct2_syn_dict, color1="mediumorchid",
                                                              color2="springgreen")
 
         result_df_multi_params = results_comparison.result_df_categories(label_category="compartment")
         result_df_multi_params.to_csv("%s/%s_%s_2_%s_syn_compartments_outgoing.csv" % (
-            f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+            f_name, ct1_str, ct2_str, ct_dict[connected_ct]))
 
         for key in result_df_multi_params.keys():
             if "celltype" in key or "compartment" in key:
@@ -669,10 +673,10 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                 results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
                                                         conn_celltype=ct_dict[connected_ct], outgoing=True)
 
-        ranksum_results.to_csv("%s/ranksum_%s_%s_2_%s_outgoing.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+        ranksum_results.to_csv("%s/ranksum_%s_%s_2_%s_outgoing.csv" % (f_name, ct1_str, ct2_str, ct_dict[connected_ct]))
 
-        summed_synapse_sizes[(ct_dict[comp_ct1], ct_dict[connected_ct])] = np.sum(ct1_syn_dict["sum size synapses"])
-        summed_synapse_sizes[(ct_dict[comp_ct2], ct_dict[connected_ct])] = np.sum(ct2_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct1_str, ct_dict[connected_ct])] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct2_str, ct_dict[connected_ct])] = np.sum(ct2_syn_dict["sum size synapses"])
 
         #multisynapse barplot for outgoing synapses
         ct1_max_multisyn = len(ct1_syn_dict["multisynapse amount"].keys())
@@ -680,8 +684,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
         multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
                                    index=range(sum_max_multisyn))
-        multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct_dict[comp_ct1]
-        multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct_dict[comp_ct2]
+        multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct1_str
+        multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct2_str
         multisyn_df.loc[0: ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct1_max_multisyn + 1)
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_max_multisyn + 1)
         for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
@@ -694,7 +698,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                 continue
 
         multisyn_df.to_csv(
-            "%s/multi_synapses_%s_%s_2_%s.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+            "%s/multi_synapses_%s_%s_2_%s.csv" % (f_name, ct1_str, ct2_str, ct_dict[connected_ct]))
         results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
                                         hue="celltype", conn_celltype=ct_dict[connected_ct],
                                         outgoing=True)
@@ -704,10 +708,10 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
     sum_synapses_pd = pd.DataFrame(summed_synapse_sizes, index = [0])
     if connected_ct is not None:
-        sum_synapses_pd.to_csv("%s/%s_%s_%s_sum_synapses_per_ct.csv" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+        sum_synapses_pd.to_csv("%s/%s_%s_%s_sum_synapses_per_ct.csv" % (f_name, ct1_str,ct2_str, ct_dict[connected_ct]))
     else:
         sum_synapses_pd.to_csv("%s/%s_%s_sum_synapses_per_ct.csv" % (
-        f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+        f_name, ct1_str, ct2_str))
 
     #make networkx graph for sum of synapses per celltype
     G = nx.DiGraph()
@@ -727,10 +731,10 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     plt.tight_layout()
     plt.title("sum of synapse sizes")
     if connected_ct is not None:
-        plt.savefig("%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, ct_dict[comp_ct1], ct_dict[comp_ct2], ct_dict[connected_ct]))
+        plt.savefig("%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, ct1_str, ct2_str, ct_dict[connected_ct]))
     else:
         plt.savefig("%s/sum_synapse_size_ct_%s_%s_nxgraph.png" % (
-        f_name, ct_dict[comp_ct1], ct_dict[comp_ct2]))
+        f_name, ct1_str, ct2_str))
     plt.close()
 
     plottime = time.time() - start

@@ -37,7 +37,7 @@ for cl in comp_lengths:
     if not os.path.exists(filename_spiness_results):
         os.mkdir(filename_spiness_results)
     saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, filename_plotting = filename_spiness_results, percentiles = percentile, min_comp_len = cl)
-"""
+
 
 time_stamps = [time.time()]
 step_idents = ["spiness percentiles calculated"]
@@ -56,9 +56,10 @@ for cl in comp_lengths:
 
 time_stamps = [time.time()]
 step_idents = ["compartment comparison finished"]
+"""
 
-raise ValueError
-
+percentile = [10, 25, 49]
+'''
 log.info("Step 3/8: MSN connectivity between percentiles")
 # see how MSN percentiles are connected
 for cl in comp_lengths:
@@ -107,13 +108,15 @@ for cl in comp_lengths:
 time_stamps = [time.time()]
 step_idents = ["connctivity MSN - FS finished"]
 
+'''
+
 log.info("Step 8/8: MSN - TAN connectivity")
 # see how MSN percentiles are connected to TAN
 for cl in comp_lengths:
     for p in percentile:
-        MSN_TAN_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = p, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True, min_comp_len = cl)
-        MSN_TAN_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True, min_comp_len = cl)
-        compare_connectivity(comp_ct1=2, percentile= p, connected_ct=5, filename=f_name, foldername_ct1=MSN_TAN_p1_connectivity_resultsfolder, foldername_ct2=MSN_FS_p2_connectivity_resultsfolder, min_comp_len = cl)
+        MSN_TAN_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = p, filename=f_name, full_cells=True, handpicked1=False, handpicked2=True, min_comp_len = cl)
+        MSN_TAN_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, handpicked1=False, handpicked2=True, min_comp_len = cl)
+        compare_connectivity(comp_ct1=2, percentile= p, connected_ct=5, filename=f_name, foldername_ct1=MSN_TAN_p1_connectivity_resultsfolder, foldername_ct2=MSN_TAN_p2_connectivity_resultsfolder, min_comp_len = cl)
 
 time_stamps = [time.time()]
 step_idents = ["connctivity MSN - TAN finished"]

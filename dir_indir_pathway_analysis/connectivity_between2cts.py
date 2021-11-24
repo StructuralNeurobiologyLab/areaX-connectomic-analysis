@@ -43,7 +43,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct1_str = ct_dict[celltype1]
     if celltype2 is not None:
         ct2_str = ct_dict[celltype2]
-    elif percentile_ct1 is not None:
+    if percentile_ct1 is not None:
         if percentile_ct1 == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         ct1_str = ct_dict[celltype1] + " p%.2i" % percentile_ct1
@@ -134,6 +134,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct2_axon_length = ct2_axon_length[ct2_inds]
     cellids2 = cellids2[ct2_inds]
 
+
     ct2time = time.time() - ct1time
     print("%.2f sec for iterating through %s cells" % (ct2time, ct2_str))
     time_stamps.append(time.time())
@@ -218,6 +219,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct1_2_ct2_percell_syn_size = np.zeros((len(cellids2), len(cellids1))).astype(float)
     ct1_2_ct2_all_syn_sizes = np.zeros(len(m_ids))
     ct2_2_ct1_all_syn_sizes = np.zeros(len(m_ids))
+
     for i, syn_id in enumerate(tqdm(m_ids)):
         syn_ax = m_axs[i]
         #remove cells that are not in cellids:
@@ -235,7 +237,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             ssv_deso, ssv_ax = m_ssv_partners[i]
             spin_deso, spin_ax = m_spiness[i]
             deso, ax = syn_ax
-        if ct_ax == ct_deso:
+        if ct_ax == ct_deso and celltype2 is not None:
             continue
         syn_size = m_sizes[i]
         if ssv_ax in cellids1:
@@ -244,7 +246,6 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             ct1_2_ct2_syn_dict[param_labels[0]][cell2_ind] += 1
             ct1_2_ct2_syn_dict[param_labels[1]][cell2_ind] += syn_size
             ct1_2_ct2_all_syn_sizes[i] = syn_size
-
             ct1_2_ct2_percell_syn_amount[cell2_ind, cell1_ind] += 1
             ct1_2_ct2_percell_syn_size[cell2_ind, cell1_ind] += syn_size
             if deso == 0:
@@ -334,7 +335,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
 
     # group average amount one cell by amount of synapses
     # make barplot
-    if len(ct1_2_ct2_percell_syn_amount) != 0 and len(ct2_2_ct1_percell_syn_amount):
+    if len(ct1_2_ct2_percell_syn_amount) != 0 and len(ct2_2_ct1_percell_syn_amount) != 0:
         ct1_2_ct2_max_multisyn = int(np.nanmax(ct1_2_ct2_percell_syn_amount))
         ct2_2_ct1_max_multisyn = int(np.nanmax(ct1_2_ct2_percell_syn_amount))
         max_multisyn = int(np.nanmax(np.array([ct1_2_ct2_max_multisyn, ct2_2_ct1_max_multisyn])))

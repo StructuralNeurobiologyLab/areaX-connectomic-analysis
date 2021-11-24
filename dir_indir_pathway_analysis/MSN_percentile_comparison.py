@@ -28,7 +28,7 @@ step_idents = ['t-0']
 percentile = [10, 25, 50]
 comp_lengths = [100, 200, 500, 1000]
 
-'''
+"""
 log.info("Step 1/8: MSN percentile compartment comparison")
 #create MSN spiness percentiles with different comp_lengths
 filename_spiness_saving = "/wholebrain/scratch/arother/j0251v3_prep/"
@@ -37,18 +37,19 @@ for cl in comp_lengths:
     if not os.path.exists(filename_spiness_results):
         os.mkdir(filename_spiness_results)
     saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, filename_plotting = filename_spiness_results, percentiles = percentile, min_comp_len = cl)
-
+"""
 
 time_stamps = [time.time()]
 step_idents = ["spiness percentiles calculated"]
 
-
-
+percentile = [10, 25, 49]
 
 log.info("Step 2/8: MSN percentile compartment comparison")
 # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
 for cl in comp_lengths:
     for p in percentile:
+        if cl == 100:
+            p = 49
         result_MSN_filename_p1 = axon_den_arborization_ct(ssd, celltype=2, percentile = p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
         result_MSN_filename_p2 = axon_den_arborization_ct(ssd, celltype=2, percentile = 100 - p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
         compare_compartment_volume_ct(celltype1=2, percentile = p, filename=f_name, filename1=result_MSN_filename_p1, filename2=result_MSN_filename_p2, min_comp_len = cl)
@@ -56,7 +57,7 @@ for cl in comp_lengths:
 time_stamps = [time.time()]
 step_idents = ["compartment comparison finished"]
 
-'''
+raise ValueError
 
 log.info("Step 3/8: MSN connectivity between percentiles")
 # see how MSN percentiles are connected

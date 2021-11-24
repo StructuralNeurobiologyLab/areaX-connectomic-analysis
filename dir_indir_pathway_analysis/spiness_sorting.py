@@ -85,8 +85,8 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
             spine_amount_results = ComparingResultsForPLotting(celltype1 = ct1_str, celltype2 = ct2_str, filename = filename_plotting, dictionary1 = spine_amount_results_low, dictionary2 = spine_amount_results_high, color1 = "gray", color2 = "darkturquoise")
             spine_amount_results.plot_hist_comparison(key = "spine density", subcell = "spine", bins = 10, norm_hist=False)
             spine_amount_results.plot_hist_comparison(key = "spine density", subcell = "spine", bins = 10, norm_hist=True)
-            spine_results_df = spine_amount_results.result_df_per_param(key = "spine amount")
-            spine_amount_results.plot_violin(key = "spine amount", result_df=spine_results_df, subcell = "spine")
+            spine_results_df = spine_amount_results.result_df_per_param(key = "spine density")
+            spine_amount_results.plot_violin(key = "spine density", result_df=spine_results_df, subcell = "spine")
             sum_cellids = len(cellids_low) + len(cellids_high)
             spine_results_df_full = pd.DataFrame(columns = ["cellids", "spine density" ,"percentile"], index = range(sum_cellids))
             spine_results_df_full.loc[0: len(cellids_low) - 1, "cellids"] = cellids_low

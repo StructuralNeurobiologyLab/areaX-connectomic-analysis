@@ -238,7 +238,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         if ct_ax == ct_deso:
             continue
         syn_size = m_sizes[i]
-        if ct_ax == celltype1:
+        if ssv_ax in cellids1:
             cell2_ind = np.where(ct1_2_ct2_syn_dict["cellids"] == ssv_deso)[0]
             cell1_ind = np.where(ct2_2_ct1_syn_dict["cellids"] == ssv_ax)[0]
             ct1_2_ct2_syn_dict[param_labels[0]][cell2_ind] += 1
@@ -433,14 +433,14 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             key3 = key_split[0] + "- " + comp_labels[2]
             key4 = key_split[0] + "- " + comp_labels[3]
             param_list_ct2= [ct1_2_ct2_pd[key], ct1_2_ct2_pd[key2], ct1_2_ct2_pd[key3], ct1_2_ct2_pd[key4]]
-            ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = celltype1, outgoing = False)
+            ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = ct1_str, outgoing = False)
             ct1_2_ct2_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct2, subcell="synapse",
-                                                     stripplot=False, celltype2= celltype1, outgoing = False)
+                                                     stripplot=False, celltype2= ct1_str, outgoing = False)
             param_list_ct1 = [ct2_2_ct1_pd[key], ct2_2_ct1_pd[key2], ct2_2_ct1_pd[key3], ct2_2_ct1_pd[key4]]
             ct2_2_ct1_resultsdict.plot_violin_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
-                                                     stripplot=True, celltype2=celltype2, outgoing=False)
+                                                     stripplot=True, celltype2=ct2_str, outgoing=False)
             ct2_2_ct1_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
-                                                  stripplot=False, celltype2=celltype2, outgoing=False)
+                                                  stripplot=False, celltype2=ct2_str, outgoing=False)
 
     plottime = time.time() - syntime
     print("%.2f sec for calculating parameters, plotting" % plottime)
@@ -518,27 +518,26 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                                          filename=f_name, dictionary1=ct1_syn_dict,
                                                          dictionary2=ct2_syn_dict, color1="mediumorchid",
                                                          color2="springgreen")
+    if "multisynapse amount" in ct1_syn_dict.keys():
+        result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
 
-    result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
-
-    if connected_ct is not None:
-        result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct1_str, ct2_str))
-    else:
-        result_df_multi_params.to_csv("%s/%s_%s_syn_compartments.csv" % (
-            f_name, ct1_str, ct2_str))
-
-    for key in result_df_multi_params.keys():
-        if "celltype" in key or "compartment" in key:
-            continue
         if connected_ct is not None:
-            results_comparison.plot_violin_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=True)
-            results_comparison.plot_box_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=False)
+            result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, ct_dict[connected_ct], ct1_str, ct2_str))
         else:
-            raise ValueError
-            results_comparison.plot_violin_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
-                                               stripplot=True)
-            results_comparison.plot_box_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
-                                            stripplot=False)
+            result_df_multi_params.to_csv("%s/%s_%s_syn_compartments.csv" % (
+                f_name, ct1_str, ct2_str))
+
+        for key in result_df_multi_params.keys():
+            if "celltype" in key or "compartment" in key:
+                continue
+            if connected_ct is not None:
+                results_comparison.plot_violin_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=True)
+                results_comparison.plot_box_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= ct_dict[connected_ct], outgoing=False, stripplot=False)
+            else:
+                results_comparison.plot_violin_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
+                                                   stripplot=True)
+                results_comparison.plot_box_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
+                                                stripplot=False)
 
     for key in ct1_syn_dict.keys():
         if "ids" in key or "sum" in key or "multi" in key:
@@ -616,8 +615,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         summed_synapse_sizes[(ct_dict[connected_ct], ct1_str)] = np.sum(ct1_syn_dict["sum size synapses"])
         summed_synapse_sizes[(ct_dict[connected_ct], ct2_str)] = np.sum(ct2_syn_dict["sum size synapses"])
     else:
-        summed_synapse_sizes[(ct_dict[comp_ct2], ct1_str)] = np.sum(ct1_syn_dict["sum size synapses"])
-        summed_synapse_sizes[(ct_dict[comp_ct1], ct2_str)] = np.sum(ct2_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct2_str, ct1_str)] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct1_str, ct2_str)] = np.sum(ct2_syn_dict["sum size synapses"])
 
 
     #also compare outgoing connections from celltype

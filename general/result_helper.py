@@ -241,11 +241,11 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             if add_key:
                 try:
                     sns.distplot(self.dictionary1[add_key],
-                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "black"},
                                  kde=False, bins=bins, label=add_key)
                 except KeyError:
                     sns.distplot(self.dictionary2[add_key],
-                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "black"},
                                  kde=False, bins=bins, label=add_key)
             if cells:
                 plt.ylabel("count of cells")

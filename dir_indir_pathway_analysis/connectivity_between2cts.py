@@ -41,7 +41,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     if percentile_ct1 is None and celltype2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
     ct1_str = ct_dict[celltype1]
-    ct2_str = ct_dict[celltype2]
+    if celltype2 is not None:
+        ct2_str = ct_dict[celltype2]
     if percentile_ct1 is not None:
         if percentile_ct1 == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
@@ -467,7 +468,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     if percentile is None and comp_ct2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
     ct1_str = ct_dict[comp_ct1]
-    ct2_str = ct_dict[comp_ct2]
+    if comp_ct2 is not None:
+        ct2_str = ct_dict[comp_ct2]
     if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")

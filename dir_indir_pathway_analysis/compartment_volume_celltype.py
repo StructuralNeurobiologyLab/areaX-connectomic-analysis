@@ -241,7 +241,8 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
     if percentile is None and celltype2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
     ct1_str = ct_dict[celltype1]
-    ct2_str = ct_dict[celltype2]
+    if celltype2 is not None:
+        ct2_str = ct_dict[celltype2]
     if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")

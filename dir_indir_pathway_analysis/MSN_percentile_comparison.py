@@ -16,7 +16,7 @@ global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
 start = time.time()
-f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211123_j0251v3_MSN_percentile_comparison"
+f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211124_j0251v3_MSN_percentile_comparison"
 if not os.path.exists(f_name):
     os.mkdir(f_name)
 log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -28,7 +28,7 @@ step_idents = ['t-0']
 percentile = [10, 25, 50]
 comp_lengths = [100, 200, 500, 1000]
 
-"""
+'''
 log.info("Step 1/8: MSN percentile compartment comparison")
 #create MSN spiness percentiles with different comp_lengths
 filename_spiness_saving = "/wholebrain/scratch/arother/j0251v3_prep/"
@@ -41,7 +41,9 @@ for cl in comp_lengths:
 
 time_stamps = [time.time()]
 step_idents = ["spiness percentiles calculated"]
-"""
+
+
+
 
 log.info("Step 2/8: MSN percentile compartment comparison")
 # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
@@ -53,6 +55,8 @@ for cl in comp_lengths:
 
 time_stamps = [time.time()]
 step_idents = ["compartment comparison finished"]
+
+'''
 
 log.info("Step 3/8: MSN connectivity between percentiles")
 # see how MSN percentiles are connected

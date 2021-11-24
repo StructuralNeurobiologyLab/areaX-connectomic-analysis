@@ -30,17 +30,14 @@ class ResultsForPlotting():
         :return: param_label
         """
         if "density" in key:
-            if "amount" in key:
-                param_label = "%s density per µm" % subcell
-            elif "volume" in key:
+            if "volume" in key:
                 param_label = "%s volume density [µm³/µm]" % subcell
             elif "size" in key and subcell == "synapse":
                 param_label = "%s size density [µm²/µm]" % subcell
             elif "length" in key:
                 param_label = "%s length density [µm/µm]" % subcell
             else:
-                raise ValueError("unknown key description")
-                param_label = 0
+                param_label = "%s density per µm" % subcell
         else:
             if "amount" in key:
                 if "percentage" in key:

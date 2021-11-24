@@ -246,9 +246,8 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
     if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
-        if percentile < 50:
-            ct1_str = ct_dict[celltype1] + " p%.2i" % percentile
         else:
+            ct1_str = ct_dict[celltype1] + " p%.2i" % percentile
             ct2_str = ct_dict[celltype1] + " p%.2i" % (100 - percentile)
     f_name = "%s/comp_compartment_%s_%s_comp_volume_mcl%i" % (
         filename, ct1_str,ct2_str, min_comp_len)

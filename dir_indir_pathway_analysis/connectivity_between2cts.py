@@ -50,10 +50,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
         ct2_str = ct_dict[celltype2]
         if percentile_ct1 == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
-        if percentile_ct1 < 50:
-            ct1_str = ct_dict[celltype1] + " p%.2i" % percentile_ct1
-        else:
-            ct1_str = ct_dict[celltype1] + " p%.2i" % (100 - percentile_ct1)
+        ct1_str = ct_dict[celltype1] + " p%.2i" % percentile_ct1
     else:
         raise ValueError("either celltypes or percentiles must be compared")
 

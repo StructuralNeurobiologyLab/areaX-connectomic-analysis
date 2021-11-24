@@ -38,16 +38,24 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
-    if percentile_ct1 is None and celltype2 is None:
-        raise ValueError("either celltypes or percentiles must be compared")
     ct1_str = ct_dict[celltype1]
-    if celltype2 is not None:
+    if celltype2 is not None and percentile_ct1 is None:
         ct2_str = ct_dict[celltype2]
-    if percentile_ct1 is not None:
+    elif percentile_ct1 is not None and celltype2 is None:
         if percentile_ct1 == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         ct1_str = ct_dict[celltype1] + " p%.2i" % percentile_ct1
         ct2_str = ct_dict[celltype1] + " p%.2i" % (100 - percentile_ct1)
+    elif percentile_ct1 is not None and celltype2 is not None:
+        ct2_str = ct_dict[celltype2]
+        if percentile_ct1 == 50:
+            raise ValueError("Due to ambiguity, value has to be either 49 or 51")
+        if percentile_ct1 < 50:
+            ct1_str = ct_dict[celltype1] + " p%.2i" % percentile_ct1
+        else:
+            ct1_str = ct_dict[celltype1] + " p%.2i" % (100 - percentile_ct1)
+    else:
+        raise ValueError("either celltypes or percentiles must be compared")
 
     f_name = "%s/syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
             filename, ct1_str, ct2_str, min_comp_len, min_syn_size, syn_prob_thresh)

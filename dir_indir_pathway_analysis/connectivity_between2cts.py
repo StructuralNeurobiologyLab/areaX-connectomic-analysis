@@ -12,7 +12,7 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from u.arother.bio_analysis.general.analysis_helper import get_compartment_length
-from u.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
+from u.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph
 
 
 
@@ -467,7 +467,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     :param percentile: if given not two celltypes but different population swithin a celltype will be compared
     :param foldername_ct1, foldername_ct2: foldernames where parameters of connectivity are stored
     :param min_comp_len: minimum compartment length
-    :return:
+    :return: summed synapse sizes
     '''
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
@@ -723,34 +723,20 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         f_name, ct1_str, ct2_str))
 
     #make networkx graph for sum of synapses per celltype
-    G = nx.DiGraph()
-    edges = [[u, v, summed_synapse_sizes[(u, v)]] for (u, v) in summed_synapse_sizes.keys()]
-    G.add_weighted_edges_from(edges)
-    weights = [G[u][v]["weight"]/100 for (u, v) in summed_synapse_sizes.keys()]
-    labels = nx.get_edge_attributes(G, "weight")
-    labels = {key: int(labels[key]) for key in labels}
-    pos = nx.spring_layout(G, seed=7)
-    nx.draw_networkx_nodes(G, pos, node_size=1000)
-    nx.draw_networkx_labels(G, pos, font_size=18)
-    nx.draw_networkx_edges(G, pos, width=weights, arrows=True, connectionstyle="arc3, rad=0.3", arrowstyle="->")
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, label_pos=0.2)
-    ax = plt.gca()
-    ax.margins(0.08)
-    plt.axis("off")
-    plt.tight_layout()
-    plt.title("sum of synapse sizes")
     if connected_ct is not None:
-        plt.savefig("%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, ct1_str, ct2_str, ct_dict[connected_ct]))
+        filename = "%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, ct1_str, ct2_str, ct_dict[connected_ct])
     else:
-        plt.savefig("%s/sum_synapse_size_ct_%s_%s_nxgraph.png" % (
-        f_name, ct1_str, ct2_str))
-    plt.close()
+        filename = "%s/sum_synapse_size_ct_%s_%s_nxgraph.png" % (
+        f_name, ct1_str, ct2_str)
+    plot_nx_graph(results_dictionary = summed_synapse_sizes, filename = filename, title = "sum of synapse size")
 
     plottime = time.time() - start
     print("%.2f sec for statistics and plotting" % plottime)
     time_stamps.append(time.time())
     step_idents.append('comparing celltypes')
     log.info("comparing celltypes via connectivity finished")
+
+    return summed_synapse_sizes
 
 
 

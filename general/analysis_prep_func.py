@@ -1,6 +1,7 @@
 from collections import defaultdict
 import numpy as np
 from u.arother.bio_analysis.general.analysis_helper import get_compartment_length
+import tqdm
 
 def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortestpaths = True):
     """
@@ -20,7 +21,7 @@ def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortest
     axon_length = np.zeros((len(celltype_ids)))
     dendrite_length = np.zeros((len(celltype_ids)))
 
-    for i, cell in enumerate(ssd.get_super_segmentation_object(celltype_ids)):
+    for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(celltype_ids))):
         cell.load_skeleton()
         axoness = cell.skeleton["axoness_avg10000"]
         axoness[axoness == 3] = 1
@@ -48,9 +49,6 @@ def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortest
             shortespaths =  cell.shortestpath2soma(coords)
             cell.skeleton["shortestpaths"] = np.zeros(len(cell.skeleton["nodes"]))
             cell.skeleton["shortestpaths"][nonsoma_inds] = shortespaths
-
-        percentage = 100 * i / len(celltype_ids)
-        print(percentage)
 
     inds = np.array(full_cells != 0)
     full_cells = full_cells[inds].astype(int)

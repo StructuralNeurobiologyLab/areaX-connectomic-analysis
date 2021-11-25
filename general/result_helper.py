@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import networkx as nx
+import matplotlib.patches
 
 class ResultsForPlotting():
     """
@@ -518,14 +519,14 @@ def plot_nx_graph(results_dictionary, filename, title):
     G = nx.DiGraph()
     edges = [[u, v, results_dictionary[(u, v)]] for (u, v) in results_dictionary.keys()]
     G.add_weighted_edges_from(edges)
-    weights = [G[u][v]["weight"] / 100 for (u, v) in results_dictionary.keys()]
+    weights = [G[u][v]["weight"] / 200 for (u, v) in results_dictionary.keys()]
     labels = nx.get_edge_attributes(G, "weight")
     labels = {key: int(labels[key]) for key in labels}
     pos = nx.spring_layout(G, seed=7)
     nx.draw_networkx_nodes(G, pos, node_size=1000)
     nx.draw_networkx_labels(G, pos, font_size=18)
-    nx.draw_networkx_edges(G, pos, width=weights, arrows=True, connectionstyle="arc3, rad=0.3", arrowstyle="->")
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, label_pos=0.2)
+    nx.draw_networkx_edges(G, pos, width=weights, arrows=True, connectionstyle="arc3, rad=0.3", arrowstyle= matplotlib.patches.ArrowStyle.Fancy(head_length=2.6, head_width=1.2))
+    #nx.draw_networkx_edge_labels(G, pos, edge_labels=labels, label_pos=0.2)
     ax = plt.gca()
     ax.margins(0.08)
     plt.axis("off")

@@ -11,6 +11,7 @@ if __name__ == '__main__':
     from syconn.reps.segmentation import SegmentationDataset
     from u.arother.bio_analysis.general.result_helper import plot_nx_graph
     import os as os
+    import pandas as pd
 
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
@@ -28,8 +29,8 @@ if __name__ == '__main__':
                    #10: "NGF"}
     #percentile = [10, 25, 50]
     #comp_lengths = [100, 200, 500, 1000]
-    percentile = 25
-    comp_length = 200
+    p = 25
+    cl = 200
 
     '''
     log.info("Step 1/8: MSN percentile compartment comparison")
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]
     '''
-    '''
+
     log.info("Step 3/8: MSN connectivity between percentiles")
     # see how MSN percentiles are connected
     MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, percentile_ct1 = p, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False, min_comp_len = cl)
@@ -107,22 +108,16 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["connctivity MSN - TAN finished"]
-    '''
-
-    #test
-    msn_summed_synapses = {("A", "B"): 20, ("B", "A"): 300}
-    msn_fs_summed_synapses = {("A", "C"): 3, ("C", "D"): 2000, ("D", "A"): 326}
-    msn_gpe_summed_synapses = {("B", "D"): 809, ("D", "B"): 450, ("C", "A"): 39}
-    msn_gpi_summed_synapses = {("E", "D"): 42, ("D", "E"): 57, ("E", "A"): 390}
-    msn_stn_summed_synapses =  {("E", "B"): 420, ("B", "E"): 80}
-    msn_tan_summed_synapses =  {("E", "C"): 11, ("C", "E"): 1200}
 
     log.info("Step 9/9 Overview Graph")
     # make connectivity overview graph with networkx
     #first put all dictionaries together
     sum_synapse_dict = {**msn_summed_synapses, **msn_gpe_summed_synapses, **msn_gpi_summed_synapses, **msn_stn_summed_synapses, **msn_tan_summed_synapses, **msn_fs_summed_synapses}
     #plot
-    plot_nx_graph(sum_synapse_dict, filename = ("%s/summed_synapses_nx_overview_mcl%i.pdg" % (f_name, comp_length)), title = "sum of synapses between celltypes")
+    plot_nx_graph(sum_synapse_dict, filename = ("%s/summed_synapses_nx_overview_mcl%i.png" % (f_name, cl)), title = "sum of synapses between celltypes")
+
+    msn_summed_synapse_pd = pd.DataFrame(sum_synapse_dict, index=[0])
+    msn_summed_synapse_pd.to_csv("%s/ct_summed_synapses.csv" % f_name)
 
     log.info("MSN percentile compartment and connectivity analysis finished")
     step_idents = ["MSN percentile compartment and connectivity analysis finished"]

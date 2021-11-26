@@ -12,13 +12,14 @@ if __name__ == '__main__':
     from u.arother.bio_analysis.general.result_helper import plot_nx_graph
     import os as os
     import pandas as pd
+    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
-    f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211125_j0251v3_MSN_percentile_comparison"
+    f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211126_j0251v3_MSN_percentile_comparison"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -31,7 +32,6 @@ if __name__ == '__main__':
     #comp_lengths = [100, 200, 500, 1000]
     p = 25
     cl = 200
-
     '''
     log.info("Step 1/8: MSN percentile compartment comparison")
     #create MSN spiness percentiles with different comp_lengths
@@ -47,20 +47,15 @@ if __name__ == '__main__':
     step_idents = ["spiness percentiles calculated"]
     
     percentile = [10, 25, 49]
-    
+    '''
     log.info("Step 2/8: MSN percentile compartment comparison")
     # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
-    for cl in comp_lengths:
-        for p in percentile:
-            if cl == 100:
-                p = 49
-            result_MSN_filename_p1 = axon_den_arborization_ct(ssd, celltype=2, percentile = p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
-            result_MSN_filename_p2 = axon_den_arborization_ct(ssd, celltype=2, percentile = 100 - p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
-            compare_compartment_volume_ct(celltype1=2, percentile = p, filename=f_name, filename1=result_MSN_filename_p1, filename2=result_MSN_filename_p2, min_comp_len = cl)
+    result_MSN_filename_p1 = axon_den_arborization_ct(ssd, celltype=2, percentile = p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
+    result_MSN_filename_p2 = axon_den_arborization_ct(ssd, celltype=2, percentile = 100 - p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
+    compare_compartment_volume_ct(celltype1=2, percentile = p, filename=f_name, filename1=result_MSN_filename_p1, filename2=result_MSN_filename_p2, min_comp_len = cl)
     
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]
-    '''
 
     log.info("Step 3/8: MSN connectivity between percentiles")
     # see how MSN percentiles are connected
@@ -109,15 +104,19 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["connctivity MSN - TAN finished"]
 
+
     log.info("Step 9/9 Overview Graph")
     # make connectivity overview graph with networkx
     #first put all dictionaries together
     sum_synapse_dict = {**msn_summed_synapses, **msn_gpe_summed_synapses, **msn_gpi_summed_synapses, **msn_stn_summed_synapses, **msn_tan_summed_synapses, **msn_fs_summed_synapses}
+    write_obj2pkl("%s/ct_sum_synapses.pkl" % f_name, sum_synapse_dict)
     #plot
+    sum_synapse_dict = load_pkl2obj("%s/ct_sum_synapses.pkl" % f_name)
     plot_nx_graph(sum_synapse_dict, filename = ("%s/summed_synapses_nx_overview_mcl%i.png" % (f_name, cl)), title = "sum of synapses between celltypes")
 
     msn_summed_synapse_pd = pd.DataFrame(sum_synapse_dict, index=[0])
     msn_summed_synapse_pd.to_csv("%s/ct_summed_synapses.csv" % f_name)
+
 
     log.info("MSN percentile compartment and connectivity analysis finished")
     step_idents = ["MSN percentile compartment and connectivity analysis finished"]

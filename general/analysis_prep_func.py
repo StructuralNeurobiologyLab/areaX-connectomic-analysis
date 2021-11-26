@@ -1,7 +1,7 @@
 from collections import defaultdict
 import numpy as np
 from u.arother.bio_analysis.general.analysis_helper import get_compartment_length
-import tqdm
+from tqdm import tqdm
 
 def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortestpaths = True):
     """

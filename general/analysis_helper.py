@@ -29,22 +29,29 @@ def get_compartment_length(sso, compartment, cell_graph):
     return comp_length
 
 
-def get_spine_density(cell, min_comp_len = 100):
+def get_spine_density(cell, min_comp_len = 100, saved_axcomp_len = None, saved_dencomp_len = None):
     """
     calculates the spine density of the dendrite.Therefore, the amount of spines per µm dendrite is calculated.
      Amount of spines is the number of connected_components with spiness = spines.
      # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
     :param cell: super-segmentation object
     :param min_comp_len: minimum compartment length in µm
+    :param saved_axcomp_len, saved_dencomplen: can give dict with saved axon values for the corresponding celltype
     :return: amount of spines on dendrite, 0 if not having min_comp_len
     """
     cell.load_skeleton()
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
-    axon_length = get_compartment_length(cell, compartment = 1, cell_graph = g)
+    if saved_axcomp_len is not None:
+        axon_length = saved_axcomp_len[cell.id]
+    else:
+        axon_length = get_compartment_length(cell, compartment = 1, cell_graph = g)
     if axon_length < min_comp_len:
         return 0
-    dendrite_length = get_compartment_length(cell, compartment = 0, cell_graph = g)
+    if saved_dencomp_len is not None:
+        dendrite_length = saved_dencomp_len[cell.id]
+    else:
+        dendrite_length = get_compartment_length(cell, compartment = 0, cell_graph = g)
     if dendrite_length < min_comp_len:
         return 0
     spine_shaftinds = np.nonzero(cell.skeleton["spiness"] == 2)[0]

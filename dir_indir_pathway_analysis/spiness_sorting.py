@@ -9,6 +9,7 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_spine_density
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
+from scipy.stats import ranksums
 
 def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting = None, full_cells = True, percentiles = [], min_comp_len = 100):
     """
@@ -38,13 +39,22 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
     if full_cells:
         cellids = load_pkl2obj(
             "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
+        try:
+            axon_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype])
+            dendrite_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype])
+            length_dicts = True
+        except FileNotFoundError:
+            length_dicts = False
     else:
         cellids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype]
 
     log.info("Step 1/2: iterate over cells and get amount of spines")
     spine_densities = np.zeros(len(cellids))
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
-        spine_density  = get_spine_density(cell, min_comp_len=min_comp_len)
+        if length_dicts:
+            spine_density = get_spine_density(cell, min_comp_len = min_comp_len, saved_axcomp_len = axon_length_dict, saved_dencomp_len = dendrite_length_dict)
+        else:
+            spine_density  = get_spine_density(cell, min_comp_len=min_comp_len)
         if spine_density == 0:
             continue
         spine_densities[i] = spine_density
@@ -59,6 +69,8 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
     step_idents.append('iterating over %s cells' % ct_dict[celltype])
 
     log.info("Step 2/2 sort into percentiles")
+    if filename_plotting is not None:
+        ranksum_results = pd.DataFrame(columns=percentiles, index=["stats", "p value"])
 
     for percentile in percentiles:
         perc_low = np.percentile(spine_densities, percentile, interpolation="higher")
@@ -79,7 +91,7 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
                       spine_amount_dict_high)
         ct1_str = ct_dict[celltype] + " p%.2i" % percentile
         ct2_str = ct_dict[celltype] + " p%.2i" % (100 - percentile)
-        if filename_plotting:
+        if filename_plotting is not None:
             spine_amount_results_low = {"spine density": spine_densities[perc_low_inds], "cellids": cellids_low}
             spine_amount_results_high = {"spine density": spine_densities[perc_high_inds], "cellids": cellids_high}
             spine_amount_results = ComparingResultsForPLotting(celltype1 = ct1_str, celltype2 = ct2_str, filename = filename_plotting, dictionary1 = spine_amount_results_low, dictionary2 = spine_amount_results_high, color1 = "gray", color2 = "darkturquoise")
@@ -97,6 +109,13 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
             spine_results_df_full.loc[len(cellids_low): sum_cellids - 1, "spine density"] = spine_amount_results_high[
                 "spine density"]
             spine_results_df_full.to_csv("%s/spine_densities_%s_%i_%i.csv" % (filename_plotting, ct_dict[celltype], percentile, min_comp_len))
+            stats, p_value = ranksums(spine_amount_results_low["spine density"], spine_amount_results_high["spine density"])
+            ranksum_results.loc["stats", percentile] = stats
+            ranksum_results.loc["p value", percentile] = p_value
+
+    if filename_plotting is not None:
+        ranksum_results.to_csv("%s/ranksum_results_%s_%i.csv" % (filename_plotting, ct_dict[celltype], min_comp_len))
+
 
 
     perctime = time.time() - spinetime

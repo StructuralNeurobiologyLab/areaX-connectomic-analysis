@@ -40,8 +40,7 @@ if __name__ == '__main__':
     filename_spiness_results = "%s/spiness_percentiles_mcl%i" % (f_name, cl)
     if not os.path.exists(filename_spiness_results):
         os.mkdir(filename_spiness_results)
-    for percentile in percentiles:
-        saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, filename_plotting = filename_spiness_results, percentiles = percentile, min_comp_len = cl)
+    saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, filename_plotting = filename_spiness_results, percentiles = percentiles, min_comp_len = cl)
     
     
     time_stamps = [time.time()]

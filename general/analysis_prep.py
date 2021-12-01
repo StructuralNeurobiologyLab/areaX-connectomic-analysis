@@ -28,6 +28,7 @@ if __name__ == '__main__':
     #ax_list = [3, 4, 0, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
     curr_time = time.time() - start
+    ct_length = [100, 200, 500, 1000]
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))

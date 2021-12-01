@@ -20,17 +20,21 @@ global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 
-def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100):
+def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100, comp_length_dict = None):
     """
     calculates bounding box from min and max dendrite values in each direction to get a volume estimation per compartment.
     :param sso: cell
     :param compartment: 0 = dendrite, 1 = axon, 2 = soma
     :param cell_graph: sso.weighted graph
     :param min_comp_len: minimum compartment length, if not return 0
+    :param comp_length_dict: dictionary holding the length of the compartment to lookup
     :return: comp_len, comp_volume in µm³
     """
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
-    comp_length = get_compartment_length(sso, compartment, cell_graph)
+    if comp_length_dict is not None:
+        comp_length = comp_length_dict[sso.id]
+    else:
+        comp_length = get_compartment_length(sso, compartment, cell_graph)
     if comp_length < min_comp_len:
         return 0, 0, 0, 0, 0
     comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] == compartment)[0]
@@ -42,21 +46,31 @@ def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100):
     tortosity_sampled = get_compartment_tortuosity_sampled(cell_graph, comp_nodes)
     return comp_length, comp_volume, median_comp_radius, tortuosity_complete, tortosity_sampled
 
-def axon_dendritic_arborization_cell(sso, min_comp_len = 100):
+def axon_dendritic_arborization_cell(sso, min_comp_len = 100, axon_length_dict = None, dendrite_length_dict = None):
     '''
     analysis the spatial distribution of the axonal/dendritic arborization per cell if they fulfill the minimum compartment length.
     To estimate the volume a dendritic arborization spans, the bounding box around the axon or dendrite is estimated by its min and max values in each direction.
     Uses comp_arborization.
     :param min_comp_len: minimum compartment length of axon and dendrite
+    :param axon_length_dict, dendrite_length_dict: axon or dendrite dict to lookup lengths
     :return: overall axonal/dendritic length [µm], axonal/dendritic volume [µm³]
     '''
     sso.load_skeleton()
     g = sso.weighted_graph(add_node_attr=('axoness_avg10000',))
-    axon_length, axon_volume, ax_median_radius, ax_tortuosity_complete, ax_tortuosity_sampled = comp_aroborization(sso, compartment=1, cell_graph=g, min_comp_len = min_comp_len)
+    if axon_length_dict is not None:
+        axon_length, axon_volume, ax_median_radius, ax_tortuosity_complete, ax_tortuosity_sampled = comp_aroborization(
+            sso, compartment=1, cell_graph=g, min_comp_len=min_comp_len, comp_length_dict=axon_length_dict)
+    else:
+        axon_length, axon_volume, ax_median_radius, ax_tortuosity_complete, ax_tortuosity_sampled = comp_aroborization(sso, compartment=1, cell_graph=g, min_comp_len = min_comp_len)
     if axon_length == 0:
         return 0, 0
-    dendrite_length, dendrite_volume, dendrite_median_radius, dendrite_tortuosity_complete, dendrite_tortuosity_sampled = comp_aroborization(sso, compartment=0, cell_graph=g,
-                                                                          min_comp_len=min_comp_len)
+    if dendrite_length_dict is not None:
+        dendrite_length, dendrite_volume, dendrite_median_radius, dendrite_tortuosity_complete, dendrite_tortuosity_sampled = comp_aroborization(sso, compartment=0, cell_graph=g,
+                                                                              min_comp_len=min_comp_len, comp_length_dict= dendrite_length_dict)
+    else:
+        dendrite_length, dendrite_volume, dendrite_median_radius, dendrite_tortuosity_complete, dendrite_tortuosity_sampled = comp_aroborization(
+            sso, compartment=0, cell_graph=g,
+            min_comp_len=min_comp_len)
     if dendrite_length == 0:
         return 0, 0
     ax_dict = {"length": axon_length, "volume": axon_volume, "median radius": ax_median_radius, "tortuosity complete": ax_tortuosity_complete, "tortuosity sampled": ax_tortuosity_sampled}
@@ -96,6 +110,12 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     time_stamps = [time.time()]
     step_idents = ['t-0']
     if full_cells:
+        try:
+            axon_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype])
+            dendrite_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype])
+            length_dicts = True
+        except FileNotFoundError:
+            length_dicts = False
         if handpicked:
             try:
                 cellids = load_pkl2obj(

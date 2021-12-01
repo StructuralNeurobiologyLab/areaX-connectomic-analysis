@@ -1,15 +1,15 @@
 #script for looking at MSN percentile connectivity with GPe/i, FS, STN, TAN
 
 if __name__ == '__main__':
-    from u.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
-    from u.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
-    from u.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
     from syconn.reps.segmentation import SegmentationDataset
-    from u.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from wholebrain.scratch.arother.bio_analysis.general.result_helper import plot_nx_graph
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
-    f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211126_j0251v3_MSN_percentile_comparison"
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/211201_j0251v3_MSN_percentile_comparison"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -30,16 +30,17 @@ if __name__ == '__main__':
                    #10: "NGF"}
     #percentile = [10, 25, 50]
     #comp_lengths = [100, 200, 500, 1000]
-    p = 25
+    percentiles = [10, 25, 50]
     cl = 200
-    '''
+
     log.info("Step 1/8: MSN percentile compartment comparison")
     #create MSN spiness percentiles with different comp_lengths
+
     filename_spiness_saving = "/wholebrain/scratch/arother/j0251v3_prep/"
-    for cl in comp_lengths:
-        filename_spiness_results = "%s/spiness_percentiles_mcl%i" % (f_name, cl)
-        if not os.path.exists(filename_spiness_results):
-            os.mkdir(filename_spiness_results)
+    filename_spiness_results = "%s/spiness_percentiles_mcl%i" % (f_name, cl)
+    if not os.path.exists(filename_spiness_results):
+        os.mkdir(filename_spiness_results)
+    for percentile in percentiles:
         saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, filename_plotting = filename_spiness_results, percentiles = percentile, min_comp_len = cl)
     
     
@@ -47,15 +48,18 @@ if __name__ == '__main__':
     step_idents = ["spiness percentiles calculated"]
     
     percentile = [10, 25, 49]
-    '''
+
     log.info("Step 2/8: MSN percentile compartment comparison")
     # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
-    result_MSN_filename_p1 = axon_den_arborization_ct(ssd, celltype=2, percentile = p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
-    result_MSN_filename_p2 = axon_den_arborization_ct(ssd, celltype=2, percentile = 100 - p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
-    compare_compartment_volume_ct(celltype1=2, percentile = p, filename=f_name, filename1=result_MSN_filename_p1, filename2=result_MSN_filename_p2, min_comp_len = cl)
+    for p in percentiles:
+        result_MSN_filename_p1 = axon_den_arborization_ct(ssd, celltype=2, percentile = p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
+        result_MSN_filename_p2 = axon_den_arborization_ct(ssd, celltype=2, percentile = 100 - p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
+        compare_compartment_volume_ct(celltype1=2, percentile = p, filename=f_name, filename1=result_MSN_filename_p1, filename2=result_MSN_filename_p2, min_comp_len = cl)
     
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]
+
+    raise ValueError
 
     log.info("Step 3/8: MSN connectivity between percentiles")
     # see how MSN percentiles are connected

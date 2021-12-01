@@ -11,8 +11,8 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from u.arother.bio_analysis.general.analysis_helper import get_compartment_length
-from u.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph
+from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length
+from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph
 
 
 

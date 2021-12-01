@@ -7,8 +7,8 @@ from syconn.handler.config import initialize_logging
 from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
-from u.arother.bio_analysis.general.analysis_helper import get_spine_density
-from u.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
+from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_spine_density
+from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
 
 def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting = None, full_cells = True, percentiles = [], min_comp_len = 100):
     """

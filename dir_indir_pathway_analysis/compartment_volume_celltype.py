@@ -13,8 +13,8 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from u.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
-from u.arother.bio_analysis.general.analysis_helper import get_compartment_length, get_compartment_bbvolume, \
+from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
+from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, get_compartment_bbvolume, \
     get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled
 global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 

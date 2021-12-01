@@ -65,11 +65,27 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     step_idents = ['t-0']
     if full_cells:
         try:
-            axon_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype])
-            dendrite_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype])
-            length_dicts = True
+            axon_length_dict_ct1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype1])
+            dendrite_length_dict_ct1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dendritedict.pkl" % ct_dict[celltype1])
+            length_dicts_ct1 = True
         except FileNotFoundError:
-            length_dicts = False
+            length_dicts_ct1 = False
+        if celltype2 is not None:
+            try:
+                axon_length_dict_ct2 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype2])
+                dendrite_length_dict_ct2 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dendritedict.pkl" % ct_dict[celltype2])
+                length_dicts_ct2 = True
+            except FileNotFoundError:
+                length_dicts_ct2= False
+        else:
+            if length_dicts_ct1:
+                axon_length_dict_ct2 = axon_length_dict_ct1
+                dendrite_length_dict_ct2 = dendrite_length_dict_ct1
+                length_dicts_ct2 = True
+            else:
+                length_dicts_ct2 = False
         if handpicked1:
             try:
                 cellids1 = load_pkl2obj(
@@ -110,11 +126,11 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids1))):
-        if length_dicts:
-            cell_axon_length = axon_length_dict[cell.id]
+        if length_dicts_ct1:
+            cell_axon_length = axon_length_dict_ct1[cell.id]
             if cell_axon_length < min_comp_len:
                 continue
-            cell_den_length = dendrite_length_dict[cell.id]
+            cell_den_length = dendrite_length_dict_ct1[cell.id]
             if cell_den_length < min_comp_len:
                 continue
         else:
@@ -139,14 +155,22 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
 
     log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids2))):
-        cell.load_skeleton()
-        g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-        cell_axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
-        if cell_axon_length < min_comp_len:
-            continue
-        cell_den_length = get_compartment_length(cell, compartment=0, cell_graph=g)
-        if cell_den_length < min_comp_len:
-            continue
+        if length_dicts_ct2:
+            cell_axon_length = axon_length_dict_ct2[cell.id]
+            if cell_axon_length < min_comp_len:
+                continue
+            cell_den_length = dendrite_length_dict_ct2[cell.id]
+            if cell_den_length < min_comp_len:
+                continue
+        else:
+            cell.load_skeleton()
+            g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
+            cell_axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
+            if cell_axon_length < min_comp_len:
+                continue
+            cell_den_length = get_compartment_length(cell, compartment=0, cell_graph=g)
+            if cell_den_length < min_comp_len:
+                continue
         ct2_axon_length[i] = cell_axon_length
 
     ct2_inds = ct2_axon_length > 0

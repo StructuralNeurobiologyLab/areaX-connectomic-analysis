@@ -150,11 +150,12 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
     avg_tortuosity = np.nanmean(tortuosities)
     return avg_tortuosity
 
-def get_myelin_fraction(cell, min_comp_len = 100, axon_length_dict = None):
+def get_myelin_fraction(cell, min_comp_len = 100):
     """
     calculate length and fraction of myelin for axon.
-    :param comp_graph:
-    :return:
+    :param cell:super-segmentation object graph should be calculated on
+    :param min_comp_len: compartment lengfh threshold
+    :return: absolute length of mylein, relative length of myelin
     """
     cell.load_skeleton()
     non_axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 1)[0]
@@ -163,20 +164,67 @@ def get_myelin_fraction(cell, min_comp_len = 100, axon_length_dict = None):
     axon_graph = g.copy()
     axon_graph.remove_nodes_from(non_axon_inds)
     axon_length = axon_graph.size(weight="weight") / 1000  # in µm
-    if axon_length < min_ax_length:
-        return np.zeros(6), -1, -1
+    if axon_length < min_comp_len:
+        return 0,0
     myelin_graph = axon_graph.copy()
     myelin_graph.remove_nodes_from(non_myelin_inds)
     absolute_myelin_length = myelin_graph.size(weight="weight") / 1000  # in µm
     relative_myelin_length = absolute_myelin_length / axon_length
-    if compartment == 1:
-        compartment_length = axon_length
+    return absolute_myelin_length, relative_myelin_length
+
+def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cached_so_rep_coord, cached_so_volume, axon_len_dict = None, dendrite_length_dict = None, k = 3, min_comp_len = 100):
+    '''
+    get amount, volume, density and volume density of segmentation objects in a cell.
+    :param skeleton_nodes: skeleton nodes of super segemntation object, scaled
+    :param segmentation_object_ids: list of organell ids to be analysed
+    :param comp_len_dict: length dict of compartment
+    :return: 
+    '''
+    
+    cell.load_skeelton()
+    kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"]*cell.scaling)
+    sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
+    organell_volumes = cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling)  # convert to cubic µm
+    so_rep_coord = cached_so_rep_coord[segmentation_object_ids] * cell.scaling # in nm
+    close_node_ids = kdtree.query(so_rep_coord, k=k)[1].astype(int)
+    axo = np.array(cell.skeleton["axoness_avg10000"][close_node_ids])
+    axo[axo == 3] = 1
+    axo[axo == 4] = 1
+    axon_unique = np.unique(np.where(axo == 1)[0], return_counts=True)
+    axon_inds = axon_unique[0][axon_unique[1] > k / 2]
+    axo_so_ids = segmentation_object_ids[axon_inds]
+    den_unique = np.unique(np.where(axo == 0)[0], return_counts=True)
+    den_inds = den_unique[0][den_unique[1] > k / 2]
+    den_so_ids = segmentation_object_ids[den_inds]
+    non_soma_inds = np.hstack([axon_inds, den_inds])
+    segmentation_object_ids = segmentation_object_ids[non_soma_inds]
+    if len(segmentation_object_ids) == 0:
+        return 0, 0, 0, 0
+    organell_volumes= organell_volumes[non_soma_inds]
+    axo_so_amount = len(axo_so_ids)
+    den_so_amount = len(den_so_ids)
+    if axon_len_dict is not None:
+        axon_length = axon_len_dict[cell.id]
     else:
-        non_compartment_inds = np.nonzero(sso.skeleton["axoness_avg10000"] != compartment)[0]
-        g = sso.weighted_graph(add_node_attr=('axoness_avg10000', "spiness"))
-        compartment_graph = g.copy()
-        compartment_graph.remove_nodes_from(non_compartment_inds)
-        compartment_length = compartment_graph.size(weight="weight") / 1000  # in µm
+        g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
+       axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
+    if axon_length < min_comp_len:
+        return 0,0, 0, 0
+    if dendrite_length_dict is not None:
+        dendrite_length = dendrite_length_dict[cell.id]
+    else:
+        dendrite_length = get_compartment_length(cell, compartment=0, cell_graph=g)
+    if dendrite_length < min_comp_len:
+        return 0,0, 0, 0
+    axo_so_density = axo_so_amount/ axon_length
+    den_so_density = den_so_amount/dendrite_length
+    axo_so_volume = np.sum(organell_volumes[axon_inds])
+    den_so_volume = np.sum(organell_volumes[den_inds])
+    axo_so_volume_density = axo_so_volume/ axon_length
+    den_so_volume_density = den_so_volume/ dendrite_length
+    return axo_so_density, den_so_density, axo_so_volume_density, den_so_volume_density
+
+    
 
 
 

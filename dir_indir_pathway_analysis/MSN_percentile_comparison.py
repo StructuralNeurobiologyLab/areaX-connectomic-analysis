@@ -19,7 +19,7 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/211201_j0251v3_MSN_percentile_comparison"
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/211202_j0251v3_MSN_percentile_comparison"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     #comp_lengths = [100, 200, 500, 1000]
     percentiles = [10, 25, 50]
     cl = 200
-
+    '''
     log.info("Step 1/8: MSN percentile compartment comparison")
     #create MSN spiness percentiles with different comp_lengths
 
@@ -45,15 +45,15 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["spiness percentiles calculated"]
+    '''
     
-    percentile = [10, 25, 49]
+    p = 49
 
     log.info("Step 2/8: MSN percentile compartment comparison")
     # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
-    for p in percentiles:
-        result_MSN_filename_p1 = axon_den_arborization_ct(ssd, celltype=2, percentile = p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
-        result_MSN_filename_p2 = axon_den_arborization_ct(ssd, celltype=2, percentile = 100 - p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
-        compare_compartment_volume_ct(celltype1=2, percentile = p, filename=f_name, filename1=result_MSN_filename_p1, filename2=result_MSN_filename_p2, min_comp_len = cl)
+    result_MSN_filename_p1 = axon_den_arborization_ct(ssd, celltype=2, percentile = p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
+    result_MSN_filename_p2 = axon_den_arborization_ct(ssd, celltype=2, percentile = 100 - p, filename=f_name, full_cells=True, handpicked=False, min_comp_len = cl)
+    compare_compartment_volume_ct(celltype1=2, percentile = p, filename=f_name, filename1=result_MSN_filename_p1, filename2=result_MSN_filename_p2, min_comp_len = cl)
     
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]

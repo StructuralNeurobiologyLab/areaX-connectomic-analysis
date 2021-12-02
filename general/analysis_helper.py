@@ -150,6 +150,33 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
     avg_tortuosity = np.nanmean(tortuosities)
     return avg_tortuosity
 
+def get_myelin_fraction(cell, min_comp_len = 100, axon_length_dict = None):
+    """
+    calculate length and fraction of myelin for axon.
+    :param comp_graph:
+    :return:
+    """
+    cell.load_skeleton()
+    non_axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 1)[0]
+    non_myelin_inds = np.nonzero(cell.skeleton["myelin"] == 0)[0]
+    g = cell.weighted_graph(add_node_attr=('axoness_avg10000', "myelin"))
+    axon_graph = g.copy()
+    axon_graph.remove_nodes_from(non_axon_inds)
+    axon_length = axon_graph.size(weight="weight") / 1000  # in µm
+    if axon_length < min_ax_length:
+        return np.zeros(6), -1, -1
+    myelin_graph = axon_graph.copy()
+    myelin_graph.remove_nodes_from(non_myelin_inds)
+    absolute_myelin_length = myelin_graph.size(weight="weight") / 1000  # in µm
+    relative_myelin_length = absolute_myelin_length / axon_length
+    if compartment == 1:
+        compartment_length = axon_length
+    else:
+        non_compartment_inds = np.nonzero(sso.skeleton["axoness_avg10000"] != compartment)[0]
+        g = sso.weighted_graph(add_node_attr=('axoness_avg10000', "spiness"))
+        compartment_graph = g.copy()
+        compartment_graph.remove_nodes_from(non_compartment_inds)
+        compartment_length = compartment_graph.size(weight="weight") / 1000  # in µm
 
 
 

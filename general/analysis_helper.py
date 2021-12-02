@@ -174,11 +174,17 @@ def get_myelin_fraction(cell, min_comp_len = 100):
 
 def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cached_so_rep_coord, cached_so_volume, axon_len_dict = None, dendrite_length_dict = None, k = 3, min_comp_len = 100):
     '''
-    get amount, volume, density and volume density of segmentation objects in a cell.
-    :param skeleton_nodes: skeleton nodes of super segemntation object, scaled
-    :param segmentation_object_ids: list of organell ids to be analysed
-    :param comp_len_dict: length dict of compartment
-    :return: 
+    calculate density and volume density of a supersegmentation object per cell for axon and dendrite.
+    :param cell: super segmentation object
+    :param segmentation_object_ids: organell ids per cell
+    :param cached_so_ids: cached ids for organell of all cells
+    :param cached_so_rep_coord: cached coordinates for organells of all cells
+    :param cached_so_volume: cached organell volume for all cells
+    :param axon_len_dict: lookup dictionary for axon length, if None will be calculated
+    :param dendrite_length_dict: lookup dictionary for dendrite length, if None will be calculated
+    :param k: number of nodes surrounding the organells compartment will be determined from
+    :param min_comp_len: minimum compartment length
+    :return: densities and volume densities for aoxn and dendrite
     '''
     
     cell.load_skeelton()

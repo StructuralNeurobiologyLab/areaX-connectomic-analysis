@@ -112,7 +112,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     if full_cells:
         try:
             axon_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype])
-            dendrite_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype])
+            dendrite_length_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dendritedict.pkl" % ct_dict[celltype])
             length_dicts = True
         except FileNotFoundError:
             length_dicts = False

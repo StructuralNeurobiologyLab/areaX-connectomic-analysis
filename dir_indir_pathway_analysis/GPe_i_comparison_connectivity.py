@@ -10,7 +10,7 @@ if __name__ == '__main__':
     from syconn.reps.segmentation import SegmentationDataset
     import os as os
     import pandas as pd
-    from u.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from wholebrain.scratch.arother.bio_analysis.general.result_helper import plot_nx_graph
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"

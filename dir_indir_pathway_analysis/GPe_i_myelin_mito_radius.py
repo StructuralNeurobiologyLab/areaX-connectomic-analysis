@@ -1,8 +1,8 @@
 # get mitos, axon median radius, myelinasation of GPe/i and plot against each other
 
 if __name__ == '__main__':
-    from u.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
-    from u.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -11,7 +11,8 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
     import numpy as np
-    from u.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from wholebrain.scratch.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_myelin_fraction, get_compartment_radii, get_organell_volume_density
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     from tqdm import tqdm
 
@@ -53,5 +54,15 @@ if __name__ == '__main__':
     axon_myelin_gpi = np.zeros(len(GPi_ids))
 
     log.info("Step 1/X: Get information from GPe")
-    for i, cell in enumerate(tqdm(ssd.get_super_segmentation_objectGPe_ids))):
+    for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(GPe_ids))):
+        cell.load_skeleton()
+        abs_myelin_cell, rel_myelin_cell = get_myelin_fraction(cell, min_comp_len = comp_length)
+        if abs_myelin_cell == 0:
+            continue
+        axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
+        axon_radii_cell = get_compartment_radii(cell, comp_inds = axon_inds)
+        ax_median_radius_cell = np.median(axon_radii_cell)
+        dendrite_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 0)[0]
+        den_radii_cell = get_compartment_radii(cell, comp_inds=dendrite_inds)
+        den_median_radius_cell = np.median(den_radii_cell)
 

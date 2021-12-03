@@ -70,7 +70,7 @@ class ResultsForPlotting():
                 param_label = 0
         return param_label
 
-    def plot_hist(self, key, subcell, cells = True, color = "steelblue", norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False):
+    def plot_hist(self, key, subcell, cells = True, color = "black", norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False):
         """
         plots array given with key in histogram plot
         :param key: key of dictionary that should be plotted

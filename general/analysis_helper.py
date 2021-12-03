@@ -152,12 +152,11 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
 
 def get_myelin_fraction(cell, min_comp_len = 100):
     """
-    calculate length and fraction of myelin for axon.
+    calculate length and fraction of myelin for axon. Skeleton has to be loaded
     :param cell:super-segmentation object graph should be calculated on
     :param min_comp_len: compartment lengfh threshold
     :return: absolute length of mylein, relative length of myelin
     """
-    cell.load_skeleton()
     non_axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 1)[0]
     non_myelin_inds = np.nonzero(cell.skeleton["myelin"] == 0)[0]
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000', "myelin"))
@@ -174,7 +173,7 @@ def get_myelin_fraction(cell, min_comp_len = 100):
 
 def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cached_so_rep_coord, cached_so_volume, axon_len_dict = None, dendrite_length_dict = None, k = 3, min_comp_len = 100):
     '''
-    calculate density and volume density of a supersegmentation object per cell for axon and dendrite.
+    calculate density and volume density of a supersegmentation object per cell for axon and dendrite. Skeleton has to be loaded
     :param cell: super segmentation object
     :param segmentation_object_ids: organell ids per cell
     :param cached_so_ids: cached ids for organell of all cells
@@ -186,8 +185,7 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
     :param min_comp_len: minimum compartment length
     :return: densities and volume densities for aoxn and dendrite
     '''
-    
-    cell.load_skeelton()
+
     kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"]*cell.scaling)
     sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
     organell_volumes = cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling)  # convert to cubic µm

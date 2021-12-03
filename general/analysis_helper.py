@@ -213,7 +213,7 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
         axon_length = axon_len_dict[cell.id]
     else:
         g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-       axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
+        axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
     if axon_length < min_comp_len:
         return 0,0, 0, 0
     if dendrite_length_dict is not None:

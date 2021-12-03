@@ -39,13 +39,13 @@ if __name__ == '__main__':
 
 
     GPe_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/handpicked_GPe_c%i.pkl" % comp_length)
+        "/wholebrain/scratch/arother/j0251v3_prep/handpicked_GPe_arr.pkl")
     GPe_axon_length_dict = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v3_prep/full_GPe_axondict.pkl")
     GPe_dendrite_length_dict = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v3_prep/full_GPe_dendritedict.pkl")
     GPi_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/handpicked_GPi_c%i.pkl" % comp_length)
+        "/wholebrain/scratch/arother/j0251v3_prep/handpicked_GPi_arr.pkl")
     GPi_axon_length_dict = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v3_prep/full_GPi_axondict.pkl")
     GPi_dendrite_length_dict = load_pkl2obj(

@@ -189,7 +189,7 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
     kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"]*cell.scaling)
     sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
     organell_volumes = cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling)  # convert to cubic µm
-    so_rep_coord = cached_so_rep_coord[segmentation_object_ids] * cell.scaling # in nm
+    so_rep_coord = cached_so_rep_coord[sso_organell_inds] * cell.scaling # in nm
     close_node_ids = kdtree.query(so_rep_coord, k=k)[1].astype(int)
     axo = np.array(cell.skeleton["axoness_avg10000"][close_node_ids])
     axo[axo == 3] = 1

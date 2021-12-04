@@ -122,7 +122,7 @@ if __name__ == '__main__':
     gpi_nonzero = axon_median_radius_gpi > 0
     GPi_params = {"axon median radius": axon_median_radius_gpi[gpi_nonzero],
                   "axon mitochondria volume density": axon_mito_volume_density_gpi[gpi_nonzero],
-                  "axon myelin fraction": axon_myelin_gpi[gpe_nonzero], "cellids": GPe_ids[gpe_nonzero]}
+                  "axon myelin fraction": axon_myelin_gpi[gpi_nonzero], "cellids": GPi_ids[gpi_nonzero]}
     GPi_param_df = pd.DataFrame(GPi_params)
     GPi_param_df.to_csv("%s/GPi_params.csv" % f_name)
     write_obj2pkl("%s/GPi_dict.pkl" % f_name, GPi_params)
@@ -131,13 +131,15 @@ if __name__ == '__main__':
     step_idents = ["GPi axon parameters collected"]
 
     log.info("Step 3/3 compare GPe and GPi")
-    key_list = GPe_params.keys()[:-1]
+    key_list = list(GPe_params.keys())[:-1]
     results_comparison = ComparingResultsForPLotting(celltype1 = "GPe", celltype2 = "GPi", filename = f_name, dictionary1 = GPe_params, dictionary2 = GPi_params, color1 = "mediumorchid", color2 = "springgreen")
     ranksum_results = pd.DataFrame(columns=key_list, index=["stats", "p value"])
     sum_length = len(GPe_ids) + len(GPi_ids)
     all_param_df = pd.DataFrame(columns=np.hstack([key_list, "celltype"]), index=range(sum_length))
-    all_param_df.loc[0: len(GPe_ids) - 1, "celltype"] = "GPe"
-    all_param_df.loc[len(GPe_ids): sum_length - 1, "celltype"] = "GPi"
+    raise ValueError
+    GPe_len = len(GPe_params["cellids"])
+    all_param_df.loc[0: GPe_len- 1, "celltype"] = "GPe"
+    all_param_df.loc[GPe_len: sum_length - 1, "celltype"] = "GPi"
     for key in key_list:
         if "cellids" in key:
             continue
@@ -153,8 +155,8 @@ if __name__ == '__main__':
         results_comparison.plot_box(key, results_for_plotting, subcell=subcell, stripplot=False)
         results_comparison.plot_hist_comparison(key, subcell=subcell, bins=10, norm_hist=False)
         results_comparison.plot_hist_comparison(key, subcell=subcell, bins=10, norm_hist=True)
-        all_param_df.loc[0: len(GPe_ids) - 1, key] = GPe_params[key]
-        all_param_df.loc[len(GPe_ids): sum_length - 1, key] = GPi_params[key]
+        all_param_df.loc[0: GPe_len - 1, key] = GPe_params[key]
+        all_param_df.loc[GPe_len: sum_length - 1, key] = GPi_params[key]
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
     all_param_df.to_csv("%s/GPe_GPi_params.csv" % f_name)

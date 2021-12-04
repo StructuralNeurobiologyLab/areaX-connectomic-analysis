@@ -204,7 +204,6 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
     segmentation_object_ids = segmentation_object_ids[non_soma_inds]
     if len(segmentation_object_ids) == 0:
         return 0, 0, 0, 0
-    organell_volumes= organell_volumes[non_soma_inds]
     axo_so_amount = len(axo_so_ids)
     den_so_amount = len(den_so_ids)
     if axon_len_dict is not None:

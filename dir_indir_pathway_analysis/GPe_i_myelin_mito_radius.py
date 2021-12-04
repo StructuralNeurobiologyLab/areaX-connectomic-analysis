@@ -134,10 +134,10 @@ if __name__ == '__main__':
     key_list = list(GPe_params.keys())[:-1]
     results_comparison = ComparingResultsForPLotting(celltype1 = "GPe", celltype2 = "GPi", filename = f_name, dictionary1 = GPe_params, dictionary2 = GPi_params, color1 = "mediumorchid", color2 = "springgreen")
     ranksum_results = pd.DataFrame(columns=key_list, index=["stats", "p value"])
-    sum_length = len(GPe_ids) + len(GPi_ids)
-    all_param_df = pd.DataFrame(columns=np.hstack([key_list, "celltype"]), index=range(sum_length))
-    raise ValueError
     GPe_len = len(GPe_params["cellids"])
+    GPi_len = len(GPi_params["cellids"])
+    sum_length = GPe_len + GPi_len
+    all_param_df = pd.DataFrame(columns=np.hstack([key_list, "celltype"]), index=range(sum_length))
     all_param_df.loc[0: GPe_len- 1, "celltype"] = "GPe"
     all_param_df.loc[GPe_len: sum_length - 1, "celltype"] = "GPi"
     for key in key_list:
@@ -149,6 +149,8 @@ if __name__ == '__main__':
         ranksum_results.loc["p value", key] = p_value
         if "mito" in key:
             subcell = "mitochondria"
+        elif "myelin" in key:
+            subcell = "myelin"
         else:
             subcell = "axon"
         results_comparison.plot_violin(key, results_for_plotting, subcell=subcell, stripplot=True)

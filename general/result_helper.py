@@ -65,6 +65,8 @@ class ResultsForPlotting():
                 param_label = "median radius in µm"
             elif "tortuosity" in key:
                 param_label = "%s tortuosity" % subcell
+            elif "fraction" in key:
+                param_label = "fraction of %s" % subcell
             else:
                 raise ValueError("unknown key description")
                 param_label = 0

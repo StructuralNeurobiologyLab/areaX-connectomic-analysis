@@ -27,7 +27,7 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
     comp_length = 200
-    f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/211203_j0251v3_GPe_i_myelin_mito_radius_%i" % comp_length
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/211205_j0251v3_GPe_i_myelin_mito_radius_%i" % comp_length
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -167,7 +167,10 @@ if __name__ == '__main__':
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
-        sns.jointplot(data= all_param_df, x = x, y = y, hue = "celltype", marginal_kws=dict(bins = 10, fill = False), palette = ComparingResultsForPLotting.color_palette())
+        g = sns.JointGrid(data= all_param_df, x = x, y = y, hue = "celltype", palette = results_comparison.color_palette)
+        g.plot_joint(sns.scatterplot)
+        g.plot_marginals(sns.histplot,  fill = False,
+                         kde=False, bins=10)
         plt.legend()
         if "radius" in x:
             plt.xlabel("%s in µm" % x)

@@ -113,9 +113,9 @@ def synapse_amount_percell(celltype, cellids, syn_cts, syn_ssv_partners, syn_siz
     ct_sizes = syn_sizes[inds]
     #get indices from celltype, axon, dendrite, soma for sorting later
     ct_inds = np.where(ct_cts == celltype)
-    axon_inds = np.where(syn_axs == 1)
-    den_inds = np.where(syn_axs == 0)
-    som_inds = np.where(syn_axs == 2)
+    axon_inds = np.where(ct_axs == 1)
+    den_inds = np.where(ct_axs == 0)
+    som_inds = np.where(ct_axs == 2)
     axo_ct_inds = np.where(ct_cts[axon_inds] == celltype)
     den_ct_inds = np.where(ct_cts[den_inds] == celltype)
     som_ct_inds = np.where(ct_cts[som_inds] == celltype)

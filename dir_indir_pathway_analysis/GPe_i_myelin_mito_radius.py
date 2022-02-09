@@ -27,7 +27,7 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
     comp_length = 200
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/211205_j0251v3_GPe_i_myelin_mito_radius_%i" % comp_length
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220209_j0251v3_GPe_i_myelin_mito_radius_%i" % comp_length
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         if abs_myelin_cell == 0:
             continue
         cell_mito_ids = cell.mi_ids
-        axo_mito_density_cell, axo_mito_volume_density_cell, den_mito_density_cell, den_mito_volume_density_cell = get_organell_volume_density(cell, segmentation_object_ids = cell_mito_ids, cached_so_ids = cached_mito_ids,
+        axo_mito_density_cell, den_mito_density_cell, axo_mito_volume_density_cell, den_mito_volume_density_cell = get_organell_volume_density(cell, segmentation_object_ids = cell_mito_ids, cached_so_ids = cached_mito_ids,
                                     cached_so_rep_coord = cached_mito_rep_coords, cached_so_volume = cached_mito_volumes,
                                     axon_len_dict=None, dendrite_length_dict=None, k=3, min_comp_len=100)
         if den_mito_density_cell == 0:
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         if abs_myelin_cell == 0:
             continue
         cell_mito_ids = cell.mi_ids
-        axo_mito_density_cell, axo_mito_volume_density_cell, den_mito_density_cell, den_mito_volume_density_cell = get_organell_volume_density(
+        axo_mito_density_cell, den_mito_density_cell, axo_mito_volume_density_cell, den_mito_volume_density_cell = get_organell_volume_density(
             cell, segmentation_object_ids=cell_mito_ids, cached_so_ids=cached_mito_ids,
             cached_so_rep_coord=cached_mito_rep_coords, cached_so_volume=cached_mito_volumes,
             axon_len_dict=None, dendrite_length_dict=None, k=3, min_comp_len=100)
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     log.info("Step 3/3 compare GPe and GPi")
     key_list = list(GPe_params.keys())[:-1]
-    results_comparison = ComparingResultsForPLotting(celltype1 = "GPe", celltype2 = "GPi", filename = f_name, dictionary1 = GPe_params, dictionary2 = GPi_params, color1 = "mediumorchid", color2 = "springgreen")
+    results_comparison = ComparingResultsForPLotting(celltype1 = "GPe", celltype2 = "GPi", filename = f_name, dictionary1 = GPe_params, dictionary2 = GPi_params, color1 = "mediumorchid", color2 = "mediumseagreen")
     ranksum_results = pd.DataFrame(columns=key_list, index=["stats", "p value"])
     GPe_len = len(GPe_params["cellids"])
     GPi_len = len(GPi_params["cellids"])
@@ -169,8 +169,8 @@ if __name__ == '__main__':
         y = key_list[comb[1]]
         g = sns.JointGrid(data= all_param_df, x = x, y = y, hue = "celltype", palette = results_comparison.color_palette)
         g.plot_joint(sns.scatterplot)
-        g.plot_marginals(sns.histplot,  fill = False,
-                         kde=False, bins=10)
+        g.plot_marginals(sns.histplot,  fill = True, alpha = 0.3,
+                         kde=False, bins=10, palette = results_comparison.color_palette)
         plt.legend()
         if "radius" in x:
             plt.xlabel("%s in µm" % x)
@@ -182,7 +182,7 @@ if __name__ == '__main__':
         elif "volume density" in y:
             plt.ylabel("%s in µm³/µm" % y)
 
-        plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))
+        plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
         plt.close()
 
 

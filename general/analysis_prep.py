@@ -29,6 +29,19 @@ if __name__ == '__main__':
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
     curr_time = time.time() - start
     ct_length = [100, 200, 500, 1000]
+    syn_proba = 0.6
+    min_syn_size = 0.1
+    syn_prob = sd_synssv.load_cached_data("syn_prob")
+    m = syn_prob > syn_proba
+    m_cts = sd_synssv.load_cached_data("partner_celltypes")[m]
+    m_ssv_partners = sd_synssv.load_cached_data("neuron_partners")[m]
+    m_axs = sd_synssv.load_cached_data("partner_axoness")[m]
+    m_sizes = sd_synssv.load_cached_data("mesh_area")[m] / 2
+    size_inds = m_sizes > min_syn_size
+    m_cts = m_cts[size_inds]
+    m_axs = m_axs[size_inds]
+    m_ssv_partners = m_ssv_partners[size_inds]
+    m_sizes = m_sizes[size_inds]
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))

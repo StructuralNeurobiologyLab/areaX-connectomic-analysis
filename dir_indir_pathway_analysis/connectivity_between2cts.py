@@ -23,6 +23,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic
     synapses. Uses cached synapse properties. Uses compartment_length per cell to ignore cells with not enough axon/dendrite
     # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+    axoness values: 0 = dendrite, 1 = axon, 2 = soma
     :param ssd: super-segmentation dataset
     :param sd_synssv: segmentation dataset for synapses.
     :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,

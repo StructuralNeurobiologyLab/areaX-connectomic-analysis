@@ -2,6 +2,7 @@ from collections import defaultdict
 import numpy as np
 from u.arother.bio_analysis.general.analysis_helper import get_compartment_length
 from tqdm import tqdm
+import pandas as pd
 
 def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortestpaths = True):
     """
@@ -79,26 +80,70 @@ def indentify_branches(graph, min = 5, max = 20):
         while graph.degree(visiting_node <= 2):
             neighbours = [n for n in graph.neighbors(visiting_node)]
 
-def synapse_amount_percell(celltype, sd_synssv,cellids, syn_proba):
+def synapse_amount_percell(celltype, cellids, syn_cts, syn_ssv_partners, syn_sizes, syn_axs, axo_denso = True):
     '''
-    gives amount of synapses for each cell with defined synapse probability and writes it in a dictionary
+    gives amount and summed synapse size for each cell and writes it in dictionary. Calculates outgoing  synapses and incoming synapses
+    (dendrite, soma) seperately.
     :param celltype: celltype analysis is wanted for
-    :param sd_synssv: synapse daatset
-    :param syn_proba: synapse probability
-    :param cellids: cellids of cells wanted amount of synapses for
+    :param syn_cts: celltypes of synaptic partners
+    :param syn_ssv_partners: cellids of synaptic partners
+    :param syn_sizes: synapse sizes
+    :param syn_axs: axoness values of synaptic partners
+    :param axo_denso: if True, only axo-dendritic or axo-somatic connections
     :return: dictionary with cell_ids as keys and amount of synapses
     '''
-    syn_prob = sd_synssv.load_cached_data("syn_prob")
-    m = syn_prob > syn_proba
-    m_cts = sd_synssv.load_cached_data("partner_celltypes")[m]
-    m_ssv_partners = sd_synssv.load_cached_data("neuron_partners")[m]
-    inds = np.any(m_cts == celltype, axis=1)
-    m_ssv_cts = m_ssv_partners[inds]
-    uniques = np.unique(m_ssv_cts, return_counts=True)
-    unique_syn_ids = uniques[0]
-    unique_counts = uniques[1]
-    syn_amount_dict = {ui: unique_counts[i] for i, ui in enumerate(unique_syn_ids) if ui in cellids}
-    return syn_amount_dict
+    if axo_denso:
+        #remove all synapses that are not axo-dendritic or axo_somatic
+        axs_inds = np.any(syn_axs == 1, axis=1)
+        syn_cts = syn_cts[axs_inds]
+        syn_axs = syn_axs[axs_inds]
+        syn_ssv_partners = syn_ssv_partners[axs_inds]
+        syn_sizes = syn_sizes[axs_inds]
+        den_so = np.array([0, 2])
+        den_so_inds = np.any(np.in1d(syn_axs, den_so).reshape(len(syn_axs), 2), axis=1)
+        syn_cts = syn_cts[den_so_inds]
+        syn_axs = syn_axs[den_so_inds]
+        syn_ssv_partners = syn_ssv_partners[den_so_inds]
+        syn_sizes = syn_sizes[den_so_inds]
+    #get synapses where celltype is involved
+    inds = np.any(syn_cts == celltype, axis=1)
+    ct_ssv_partners = syn_ssv_partners[inds]
+    ct_cts = syn_cts[inds]
+    ct_axs = syn_axs[inds]
+    ct_sizes = syn_sizes[inds]
+    #get indices from celltype, axon, dendrite, soma for sorting later
+    ct_inds = np.where(ct_cts == celltype)
+    axon_inds = np.where(syn_axs == 1)
+    den_inds = np.where(syn_axs == 0)
+    som_inds = np.where(syn_axs == 2)
+    axo_ct_inds = np.where(ct_cts[axon_inds] == celltype)
+    den_ct_inds = np.where(ct_cts[den_inds] == celltype)
+    som_ct_inds = np.where(ct_cts[som_inds] == celltype)
+    # get unique cellids from cells whose axons make connections, count them and sum up sizes
+    axo_ssvs = ct_ssv_partners[axo_ct_inds, axon_inds[1][axo_ct_inds]]
+    axo_sizes = ct_sizes[axo_ct_inds]
+    axo_ssv_inds, unique_axo_ssvs = pd.factorize(axo_ssvs)
+    axo_syn_sizes = np.bincount(axo_ssv_inds, axo_sizes)
+    axo_amounts = np.bincount(axo_ssv_inds)
+    # get unique cellids from cells whose dendrite receive synapses, count them and sum up sizes
+    den_ssvs = ct_ssv_partners[den_ct_inds, den_inds[1][den_ct_inds]]
+    den_sizes = ct_sizes[den_ct_inds]
+    den_ssv_inds, unique_den_ssvs = pd.factorize(den_ssvs)
+    den_syn_sizes = np.bincount(den_ssv_inds, den_sizes)
+    den_amounts = np.bincount(den_ssv_inds)
+    # get unique cellids from cells whose soma receive synapses, count them and sum up sizes
+    som_ssvs = ct_ssv_partners[som_ct_inds, som_inds[1][som_ct_inds]]
+    som_sizes = ct_sizes[som_ct_inds]
+    som_ssv_inds, unique_som_ssvs = pd.factorize(som_ssvs)
+    som_syn_sizes = np.bincount(som_ssv_inds, som_sizes)
+    som_amounts = np.bincount(som_ssv_inds)
+    # create dictionaries for axon, soma, dendrite synapses
+    axon_dict = {cellid: {"amount": axo_amounts[i], "summed size": axo_syn_sizes[i]} for i, cellid in enumerate(unique_axo_ssvs)}
+    den_dict = {cellid: {"amount": den_amounts[i], "summed size": den_syn_sizes[i]} for i, cellid in
+                 enumerate(unique_den_ssvs)}
+    soma_dict = {cellid: {"amount": som_amounts[i], "summed size": som_syn_sizes[i]} for i, cellid in
+                 enumerate(unique_som_ssvs)}
+    return axon_dict, den_dict, soma_dict
 
 def pernode__shortestpath(cell):
     """

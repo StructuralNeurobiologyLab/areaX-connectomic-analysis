@@ -1,6 +1,6 @@
 from collections import defaultdict
 import numpy as np
-from u.arother.bio_analysis.general.analysis_helper import get_compartment_length
+from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length
 from tqdm import tqdm
 import pandas as pd
 
@@ -80,7 +80,7 @@ def indentify_branches(graph, min = 5, max = 20):
         while graph.degree(visiting_node <= 2):
             neighbours = [n for n in graph.neighbors(visiting_node)]
 
-def synapse_amount_percell(celltype, cellids, syn_cts, syn_ssv_partners, syn_sizes, syn_axs, axo_denso = True):
+def synapse_amount_percell(celltype, syn_cts, syn_ssv_partners, syn_sizes, syn_axs, axo_denso = True):
     '''
     gives amount and summed synapse size for each cell and writes it in dictionary. Calculates outgoing  synapses and incoming synapses
     (dendrite, soma) seperately.
@@ -120,19 +120,19 @@ def synapse_amount_percell(celltype, cellids, syn_cts, syn_ssv_partners, syn_siz
     den_ct_inds = np.where(ct_cts[den_inds] == celltype)
     som_ct_inds = np.where(ct_cts[som_inds] == celltype)
     # get unique cellids from cells whose axons make connections, count them and sum up sizes
-    axo_ssvs = ct_ssv_partners[axo_ct_inds, axon_inds[1][axo_ct_inds]]
+    axo_ssvs = ct_ssv_partners[axo_ct_inds, axon_inds[1][axo_ct_inds]][0]
     axo_sizes = ct_sizes[axo_ct_inds]
     axo_ssv_inds, unique_axo_ssvs = pd.factorize(axo_ssvs)
     axo_syn_sizes = np.bincount(axo_ssv_inds, axo_sizes)
     axo_amounts = np.bincount(axo_ssv_inds)
     # get unique cellids from cells whose dendrite receive synapses, count them and sum up sizes
-    den_ssvs = ct_ssv_partners[den_ct_inds, den_inds[1][den_ct_inds]]
+    den_ssvs = ct_ssv_partners[den_ct_inds, den_inds[1][den_ct_inds]][0]
     den_sizes = ct_sizes[den_ct_inds]
     den_ssv_inds, unique_den_ssvs = pd.factorize(den_ssvs)
     den_syn_sizes = np.bincount(den_ssv_inds, den_sizes)
     den_amounts = np.bincount(den_ssv_inds)
     # get unique cellids from cells whose soma receive synapses, count them and sum up sizes
-    som_ssvs = ct_ssv_partners[som_ct_inds, som_inds[1][som_ct_inds]]
+    som_ssvs = ct_ssv_partners[som_ct_inds, som_inds[1][som_ct_inds]][0]
     som_sizes = ct_sizes[som_ct_inds]
     som_ssv_inds, unique_som_ssvs = pd.factorize(som_ssvs)
     som_syn_sizes = np.bincount(som_ssv_inds, som_sizes)
@@ -143,6 +143,7 @@ def synapse_amount_percell(celltype, cellids, syn_cts, syn_ssv_partners, syn_siz
                  enumerate(unique_den_ssvs)}
     soma_dict = {cellid: {"amount": som_amounts[i], "summed size": som_syn_sizes[i]} for i, cellid in
                  enumerate(unique_som_ssvs)}
+    raise ValueError
     return axon_dict, den_dict, soma_dict
 
 def pernode__shortestpath(cell):

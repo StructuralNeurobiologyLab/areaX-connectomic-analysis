@@ -24,9 +24,10 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     #ct_list = [0]
     #ax_list = [3, 4]
-    ct_list = [2,5, 6, 7, 0, 8, 9, 10]
+    #ct_list = [2,5, 6, 7, 0, 8, 9, 10]
     #ax_list = [3, 4, 0, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
+    ct_list = [6, 7]
     curr_time = time.time() - start
     ct_length = [100, 200, 500, 1000]
     syn_proba = 0.6
@@ -45,6 +46,7 @@ if __name__ == '__main__':
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
+        axon_syns, den_syns, soma_syns = synapse_amount_percell(celltype = ct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners, syn_axs = m_axs, axo_denso = True)
         cell_array, cell_dict, axon_dict, dendrite_dict = find_full_cells(ssd, celltype=ct, shortestpaths=False)
         dict_path = ("%s/full_%.3s_dict.pkl" % (f_name,ct_dict[ct]))
         arr_path = ("%s/full_%.3s_arr.pkl" % (f_name,ct_dict[ct]))

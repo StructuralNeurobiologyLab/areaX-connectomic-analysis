@@ -3,6 +3,7 @@ import numpy as np
 from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length
 from tqdm import tqdm
 import pandas as pd
+from syconn.proc.meshes import mesh_area_calc, compartmentalize_mesh
 
 def find_full_cells(ssd, celltype, soma_centre = True, syn_proba = 0.6, shortestpaths = True):
     """
@@ -158,3 +159,19 @@ def pernode__shortestpath(cell):
     coords = cell.skeleton["nodes"][nonsoma_inds]
     #shortespaths =  shortestpath2soma(coords)
     #add to skeleton as dictionary!
+
+
+def get_compartment_mesh_area(cell):
+    """
+    get compartment mesh areas using compartmentalize_mesh and mesh_area_calc.
+    :param cell: sso
+    :return: dictionary with mesh_areas of axon, dendrite and soma
+    """
+    comp_meshes = compartmentalize_mesh(cell)
+    compartments = ["axon", "dendrite", "soma"]
+    mesh_areas = {}
+    for comp in compartments:
+        mesh_areas[comp] = mesh_area_calc(comp_meshes[comp][2])
+
+    return mesh_areas
+

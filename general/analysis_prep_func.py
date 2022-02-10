@@ -143,7 +143,6 @@ def synapse_amount_percell(celltype, syn_cts, syn_ssv_partners, syn_sizes, syn_a
                  enumerate(unique_den_ssvs)}
     soma_dict = {cellid: {"amount": som_amounts[i], "summed size": som_syn_sizes[i]} for i, cellid in
                  enumerate(unique_som_ssvs)}
-    raise ValueError
     return axon_dict, den_dict, soma_dict
 
 def pernode__shortestpath(cell):

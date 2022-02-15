@@ -6,8 +6,10 @@ if __name__ == '__main__':
     import time
     import os
     from syconn.handler.basics import load_pkl2obj, write_obj2pkl
-    from analysis_prep_func import find_full_cells, synapse_amount_percell
+    from analysis_prep_func import find_full_cells, synapse_amount_percell, get_axon_length_area_perct
     from syconn.handler.config import initialize_logging
+    from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, \
+        get_compartment_mesh_area
 
 
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
@@ -25,12 +27,12 @@ if __name__ == '__main__':
     #ct_list = [0]
     #ax_list = [3, 4]
     #ct_list = [2,5, 6, 7, 0, 8, 9, 10]
-    #ax_list = [3, 4, 0, 1]
+    ax_list = [3, 4, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
     ct_list = [6, 7]
     curr_time = time.time() - start
     ct_length = [100, 200, 500, 1000]
-    syn_proba = 0.6
+    syn_proba = 0.8
     min_syn_size = 0.1
     syn_prob = sd_synssv.load_cached_data("syn_prob")
     m = syn_prob > syn_proba
@@ -46,30 +48,54 @@ if __name__ == '__main__':
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
-        axon_syns, den_syns, soma_syns = synapse_amount_percell(celltype = ct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners, syn_axs = m_axs, axo_denso = True)
-        cell_array, cell_dict, axon_dict, dendrite_dict = find_full_cells(ssd, celltype=ct, shortestpaths=False)
-        dict_path = ("%s/full_%.3s_dict.pkl" % (f_name,ct_dict[ct]))
-        arr_path = ("%s/full_%.3s_arr.pkl" % (f_name,ct_dict[ct]))
-        axon_length_path = ("%s/full_%.3s_axondict.pkl" % (f_name,ct_dict[ct]))
-        dendrite_length_path = ("%s/full_%.3s_dendritedict.pkl" % (f_name, ct_dict[ct]))
+        axon_syns, den_syns, soma_syns = synapse_amount_percell(celltype = ct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
+                                                                syn_axs = m_axs, axo_denso = True, all_comps = True)
+        cell_array, cell_dict = find_full_cells(ssd, celltype=ct, shortestpaths=False)
+        for cellid in list(find_full_cells.keys()):
+            try:
+                cell_dict[cellid]["axon synapse amount"] = axon_syns[cellid]["amount"]
+                cell_dict[cellid]["axon summed synapse size"] = axon_syns[cellid]["summed size"]
+            except KeyError:
+                cell_dict[cellid]["axon synapse amount"] = 0
+                cell_dict["axon summed synapse size"] = 0
+            try:
+                cell_dict["dendrite synapse amount"] = den_syns[cellid]["amount"]
+                cell_dict["dendrite summed synapse size"] = den_syns[cellid]["summed size"]
+            except KeyError:
+                cell_dict[cellid]["dendrite synapse amount"] = 0
+                cell_dict[cellid]["dendrite summed synapse size"] = 0
+            try:
+                cell_dict[cellid]["soma synapse amount"] = soma_syns[cellid]["amount"]
+                cell_dict[cellid]["soma summed synapse size"] = soma_syns[cellid]["summed size"]
+            except KeyError:
+                cell_dict[cellid]["soma synapse amount"] = 0
+                cell_dict[cellid]["soma summed synapse size"] = 0
+        dict_path = ("%s/full_%.3s_dict.pkl" % (f_name, ct_dict[ct]))
+        arr_path = ("%s/full_%.3s_arr.pkl" % (f_name, ct_dict[ct]))
         #syn_dict = synapse_amount_percell(ct, sd_synssv, syn_proba=0.6, cellids=cell_array)
         #syn_path = ("%s/full_%.3s_synam.pkl" % (f_name,ct_dict[ct]))
         write_obj2pkl(dict_path, cell_dict)
         write_obj2pkl(arr_path, cell_array)
-        write_obj2pkl(axon_length_path, axon_dict)
-        write_obj2pkl(dendrite_length_path, dendrite_dict)
         #write_obj2pkl(syn_path, syn_dict)
         curr_time -= time.time()
         print("%.2f min, %.2f sec for finding  %s cells" % (curr_time // 60, curr_time % 60, ct_dict[ct]))
 
-    raise ValueError
 
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
         cell_ids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == axct]
-        syn_dict = synapse_amount_percell(axct, sd_synssv, syn_proba=0.6, cellids=cell_ids)
-        syn_path = ("%s/ax_%.3s_synam.pkl" % (f_name, ct_dict[axct]))
-        write_obj2pkl(syn_path, syn_dict)
+        axon_syns = synapse_amount_percell(celltype = axct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
+                                                                syn_axs = m_axs, axo_denso = True, all_comps = False)
+        axon_dict = get_axon_length_area_perct(ssd, celltype = axct)
+        for axonid in list(axon_dict.keys()):
+            try:
+                axon_dict[cellid]["axon synapse amount"] = axon_syns[cellid]["amount"]
+                axon_dict[cellid]["axon summed synapse size"] = axon_syns[cellid]["summed size"]
+            except KeyError:
+                axon_dict[cellid]["axon synapse amount"] = 0
+                axon_dict[cellid]["axon summed synapse size"] = 0
+        syn_path = ("%s/ax_%.3s_dict.pkl" % (f_name, ct_dict[axct]))
+        write_obj2pkl(syn_path, axon_dict)
         curr_time -= time.time()
         print("%.2f min, %.2f sec for finding  %s cells" % (curr_time // 60, curr_time % 60, ct_dict[axct]))
 

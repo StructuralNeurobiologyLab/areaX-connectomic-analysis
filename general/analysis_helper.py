@@ -13,6 +13,7 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
+from syconn.proc.meshes import mesh_area_calc, compartmentalize_mesh_fromskel
 
 
 def get_compartment_length(sso, compartment, cell_graph):
@@ -226,6 +227,20 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
     axo_so_volume_density = axo_so_volume/ axon_length
     den_so_volume_density = den_so_volume/ dendrite_length
     return axo_so_density, den_so_density, axo_so_volume_density, den_so_volume_density
+
+def get_compartment_mesh_area(cell):
+    """
+    get compartment mesh areas using compartmentalize_mesh and mesh_area_calc.
+    :param cell: sso
+    :return: dictionary with mesh_areas of axon, dendrite and soma
+    """
+    comp_meshes = compartmentalize_mesh_fromskel(cell)
+    compartments = ["axon", "dendrite", "soma"]
+    mesh_areas = {}
+    for comp in compartments:
+        mesh_areas[comp] = mesh_area_calc(comp_meshes[comp][2])
+
+    return mesh_areas
 
     
 

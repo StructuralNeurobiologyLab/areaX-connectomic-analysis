@@ -28,7 +28,7 @@ def find_full_cells(ssd, celltype, soma_centre = True, shortestpaths = True):
     full_cells = np.zeros((len(celltype_ids)))
 
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(celltype_ids))):
-        if i > 30:
+        if i > 150:
             break
         cell.load_skeleton()
         axoness = cell.skeleton["axoness_avg10000"]
@@ -62,9 +62,7 @@ def find_full_cells(ssd, celltype, soma_centre = True, shortestpaths = True):
             cell.skeleton["shortestpaths"] = np.zeros(len(cell.skeleton["nodes"]))
             cell.skeleton["shortestpaths"][nonsoma_inds] = shortespaths
 
-    raise ValueError
-    inds = np.array(full_cells != 0)
-    full_cells = full_cells[inds].astype(int)
+    full_cells = full_cells[full_cells > 0]
 
     return full_cells, full_cell_dict
 

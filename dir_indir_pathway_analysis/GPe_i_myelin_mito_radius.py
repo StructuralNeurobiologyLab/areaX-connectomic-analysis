@@ -21,13 +21,13 @@ if __name__ == '__main__':
 
     from tqdm import tqdm
 
-    global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
+    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
     comp_length = 200
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220209_j0251v3_GPe_i_myelin_mito_radius_%i" % comp_length
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220227_j0251v4_GPe_i_myelin_mito_radius_%i" % comp_length
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    #10: "NGF"}
 
-
+    '''
     GPe_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v3_prep/handpicked_GPe_arr.pkl")
     GPe_axon_length_dict = load_pkl2obj(
@@ -50,7 +50,15 @@ if __name__ == '__main__':
         "/wholebrain/scratch/arother/j0251v3_prep/full_GPi_axondict.pkl")
     GPi_dendrite_length_dict = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v3_prep/full_GPi_dendritedict.pkl")
-
+    '''
+    GPe_ids = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
+    GPe_full_cell_dict = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_dict.pkl")
+    GPi_ids = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
+    GPi_full_cell_dict = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v3_prep/full_GPi_dict.pkl")
 
     axon_median_radius_gpe = np.zeros(len(GPe_ids))
     axon_mito_volume_density_gpe = np.zeros(len(GPe_ids))
@@ -60,9 +68,9 @@ if __name__ == '__main__':
     axon_myelin_gpi = np.zeros(len(GPi_ids))
     sd_mitossv = SegmentationDataset("mi", working_dir=global_params.config.working_dir)
     cached_mito_ids = sd_mitossv.ids
-    cached_mito_mesh_bb = sd_mitossv.load_cached_data("mesh_bb")
-    cached_mito_rep_coords = sd_mitossv.load_cached_data("rep_coord")
-    cached_mito_volumes = sd_mitossv.load_cached_data("size")
+    cached_mito_mesh_bb = sd_mitossv.load_numpy_data("mesh_bb")
+    cached_mito_rep_coords = sd_mitossv.load_numpy_data("rep_coord")
+    cached_mito_volumes = sd_mitossv.load_numpy_data("size")
 
     log.info("Step 1/3: Get information from GPe")
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(GPe_ids))):
@@ -73,7 +81,7 @@ if __name__ == '__main__':
         cell_mito_ids = cell.mi_ids
         axo_mito_density_cell, den_mito_density_cell, axo_mito_volume_density_cell, den_mito_volume_density_cell = get_organell_volume_density(cell, segmentation_object_ids = cell_mito_ids, cached_so_ids = cached_mito_ids,
                                     cached_so_rep_coord = cached_mito_rep_coords, cached_so_volume = cached_mito_volumes,
-                                    axon_len_dict=None, dendrite_length_dict=None, k=3, min_comp_len=100)
+                                    full_cell_dict = GPe_full_cell_dict, k=3, min_comp_len=100)
         if den_mito_density_cell == 0:
             continue
         axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
@@ -106,7 +114,7 @@ if __name__ == '__main__':
         axo_mito_density_cell, den_mito_density_cell, axo_mito_volume_density_cell, den_mito_volume_density_cell = get_organell_volume_density(
             cell, segmentation_object_ids=cell_mito_ids, cached_so_ids=cached_mito_ids,
             cached_so_rep_coord=cached_mito_rep_coords, cached_so_volume=cached_mito_volumes,
-            axon_len_dict=None, dendrite_length_dict=None, k=3, min_comp_len=100)
+            full_cell_dict = GPi_full_cell_dict, k=3, min_comp_len=100)
         if den_mito_density_cell == 0:
             continue
         axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]

@@ -172,7 +172,7 @@ def get_myelin_fraction(cell, min_comp_len = 100):
     relative_myelin_length = absolute_myelin_length / axon_length
     return absolute_myelin_length, relative_myelin_length
 
-def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cached_so_rep_coord, cached_so_volume, axon_len_dict = None, dendrite_length_dict = None, k = 3, min_comp_len = 100):
+def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cached_so_rep_coord, cached_so_volume, full_cell_dict = None, k = 3, min_comp_len = 100):
     '''
     calculate density and volume density of a supersegmentation object per cell for axon and dendrite. Skeleton has to be loaded
     :param cell: super segmentation object
@@ -180,8 +180,7 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
     :param cached_so_ids: cached ids for organell of all cells
     :param cached_so_rep_coord: cached coordinates for organells of all cells
     :param cached_so_volume: cached organell volume for all cells
-    :param axon_len_dict: lookup dictionary for axon length, if None will be calculated
-    :param dendrite_length_dict: lookup dictionary for dendrite length, if None will be calculated
+    :param full_cell_dict: lookup dictionary for per cell parameters, cell.id is key, if None given will be calculated
     :param k: number of nodes surrounding the organells compartment will be determined from
     :param min_comp_len: minimum compartment length
     :return: densities and volume densities for aoxn and dendrite
@@ -207,15 +206,15 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
         return 0, 0, 0, 0
     axo_so_amount = len(axo_so_ids)
     den_so_amount = len(den_so_ids)
-    if axon_len_dict is not None:
-        axon_length = axon_len_dict[cell.id]
+    if full_cell_dict is not None:
+        axon_length = full_cell_dict[cell.id]["axon length"]
     else:
         g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
         axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
     if axon_length < min_comp_len:
         return 0,0, 0, 0
-    if dendrite_length_dict is not None:
-        dendrite_length = dendrite_length_dict[cell.id]
+    if full_cell_dict is not None:
+        dendrite_length = full_cell_dict[cell.id]["dendrite length"]
     else:
         dendrite_length = get_compartment_length(cell, compartment=0, cell_graph=g)
     if dendrite_length < min_comp_len:

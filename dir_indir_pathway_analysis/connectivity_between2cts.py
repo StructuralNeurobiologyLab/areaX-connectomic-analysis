@@ -127,7 +127,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             cell_axon_length = full_cell_dict_ct1[cell.id]["axon length"]
             if cell_axon_length < min_comp_len:
                 continue
-            cell_den_length = dendrite_length_dict_ct1[cell.id]
+            cell_den_length = full_cell_dict_ct1[cell.id]["dendrite length"]
             if cell_den_length < min_comp_len:
                 continue
         else:
@@ -153,10 +153,10 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids2))):
         if length_dicts_ct2:
-            cell_axon_length = axon_length_dict_ct2[cell.id]
+            cell_axon_length = full_cell_dict_ct2[cell.id]["axon length"]
             if cell_axon_length < min_comp_len:
                 continue
-            cell_den_length = dendrite_length_dict_ct2[cell.id]
+            cell_den_length = full_cell_dict_ct2[cell.id]["dendrite length"]
             if cell_den_length < min_comp_len:
                 continue
         else:
@@ -183,16 +183,16 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")
     # prepare synapse caches with synapse threshold
-    syn_prob = sd_synssv.load_cached_data("syn_prob")
+    syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m = syn_prob > syn_prob_thresh
     m_ids = sd_synssv.ids[m]
-    m_axs = sd_synssv.load_cached_data("partner_axoness")[m]
+    m_axs = sd_synssv.load_numpy_data("partner_axoness")[m]
     m_axs[m_axs == 3] = 1
     m_axs[m_axs == 4] = 1
-    m_cts = sd_synssv.load_cached_data("partner_celltypes")[m]
-    m_ssv_partners = sd_synssv.load_cached_data("neuron_partners")[m]
-    m_sizes = sd_synssv.load_cached_data("mesh_area")[m] / 2
-    m_spiness = sd_synssv.load_cached_data("partner_spiness")[m]
+    m_cts = sd_synssv.load_numpy_data("partner_celltypes")[m]
+    m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")[m]
+    m_sizes = sd_synssv.load_numpy_data("mesh_area")[m] / 2
+    m_spiness = sd_synssv.load_numpy_data("partner_spiness")[m]
     #select only those of celltype1 and celltype2
     ct1_inds = np.any(m_cts == celltype1, axis=1)
     m_cts = m_cts[ct1_inds]

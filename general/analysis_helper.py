@@ -237,7 +237,7 @@ def get_compartment_mesh_area(cell):
     compartments = ["axon", "dendrite", "soma"]
     mesh_areas = {}
     for comp in compartments:
-        mesh_areas[comp] = mesh_area_calc(comp_meshes[comp][2])
+        mesh_areas[comp] = mesh_area_calc(comp_meshes[comp])
 
     return mesh_areas
 

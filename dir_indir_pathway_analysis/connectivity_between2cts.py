@@ -66,60 +66,56 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     step_idents = ['t-0']
     if full_cells:
         try:
-            axon_length_dict_ct1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype1])
-            dendrite_length_dict_ct1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dendritedict.pkl" % ct_dict[celltype1])
+            full_cell_dict_ct1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype1])
             length_dicts_ct1 = True
         except FileNotFoundError:
             length_dicts_ct1 = False
         if celltype2 is not None:
             try:
-                axon_length_dict_ct2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_axondict.pkl" % ct_dict[celltype2])
-                dendrite_length_dict_ct2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%.3s_dendritedict.pkl" % ct_dict[celltype2])
+                full_cell_dict_ct2 = load_pkl2obj(
+                    "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype2])
                 length_dicts_ct2 = True
             except FileNotFoundError:
                 length_dicts_ct2= False
         else:
             if length_dicts_ct1:
-                axon_length_dict_ct2 = axon_length_dict_ct1
-                dendrite_length_dict_ct2 = dendrite_length_dict_ct1
+                full_cell_dict_ct2 = full_cell_dict_ct1
                 length_dicts_ct2 = True
             else:
                 length_dicts_ct2 = False
         if handpicked1:
             try:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct1_str, min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr_c%i.pkl" % (ct1_str, min_comp_len))
             except FileNotFoundError:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct1_str)
+                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr.pkl" % ct1_str)
         else:
             try:
                 cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct1_str, min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr_c%i.pkl" % (ct1_str, min_comp_len))
             except FileNotFoundError:
                 cellids1 = load_pkl2obj(
-                        "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct1_str)
+                        "/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr.pkl" % ct1_str)
         if handpicked2:
             try:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr_c%i.pkl" % (ct2_str, min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr_c%i.pkl" % (ct2_str, min_comp_len))
             except FileNotFoundError:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/handpicked_%s_arr.pkl" % ct2_str)
+                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr.pkl" % ct2_str)
         else:
             try:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr_c%i.pkl" % (ct2_str, min_comp_len))
+                    "/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr_c%i.pkl" % (ct2_str, min_comp_len))
             except FileNotFoundError:
                 cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v3_prep/full_%s_arr.pkl" % ct2_str)
+                    "/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr.pkl" % ct2_str)
     else:
         if percentile_ct1 is not None:
             raise ValueError("percentiles can only be used on preprocessed cellids")
-        cellids1 = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype1]
-        cellids2 = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype2]
+        cellids1 = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype1]
+        cellids2 = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype2]
 
 
     ct1_axon_length = np.zeros(len(cellids1))
@@ -128,7 +124,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids1))):
         if length_dicts_ct1:
-            cell_axon_length = axon_length_dict_ct1[cell.id]
+            cell_axon_length = full_cell_dict_ct1[cell.id]["axon length"]
             if cell_axon_length < min_comp_len:
                 continue
             cell_den_length = dendrite_length_dict_ct1[cell.id]

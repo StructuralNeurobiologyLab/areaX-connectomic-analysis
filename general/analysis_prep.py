@@ -63,7 +63,7 @@ if __name__ == '__main__':
         time_stamps = [time.time()]
         step_idents = ["full cells for celltype %s found" % ct_dict[ct]]
         log.info("Make per cell dictionary")
-        for cellid in list(find_full_cells.keys()):
+        for cellid in list(cell_dict.keys()):
             try:
                 cell_dict[cellid]["axon synapse amount"] = axon_syns[cellid]["amount"]
                 cell_dict[cellid]["axon summed synapse size"] = axon_syns[cellid]["summed size"]
@@ -86,10 +86,10 @@ if __name__ == '__main__':
         arr_path = ("%s/full_%.3s_arr.pkl" % (f_name, ct_dict[ct]))
         #syn_dict = synapse_amount_percell(ct, sd_synssv, syn_proba=0.6, cellids=cell_array)
         #syn_path = ("%s/full_%.3s_synam.pkl" % (f_name,ct_dict[ct]))
+        cell_dict = dict(cell_dict)
         write_obj2pkl(dict_path, cell_dict)
         write_obj2pkl(arr_path, cell_array)
         #write_obj2pkl(syn_path, syn_dict)
-        raise ValueError
         curr_time -= time.time()
         time_stamps = [time.time()]
         step_idents = ["full cell dictionaries for celltype %s prepared" % ct_dict[ct]]

@@ -11,13 +11,13 @@ def find_full_cells(ssd, celltype, soma_centre = True, shortestpaths = True):
     function finds full cells of a specific celltype if the cells have a dendrite, soma and axon in axoness_avg10000.
     :param ssd: segmentation dataset
     :param celltype: number of the celltype that is searched for; celltypes: j0126: STN=0, modulatory=1, MSN=2, LMAN=3, HVC=4, GP=5, INT=6
-    # j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7, FS=8, LTS=9, NGF=10
+    # j0251: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7, FS=8, LTS=9, NGF=10
     :param soma_centre: if True calculates average of soma skeleton notes as approximation to the soma centre
     :param shortestpath: returns shortest paths for all nodes that are not soma
     :param syn_proba: synapse probability
     :return: an array with cell_ids of the full_cells and if soma centre was calculated also a dictionary for each cell with its soma_centre
     """
-    celltype_ids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype]
+    celltype_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
     if soma_centre:
         full_cell_dict = defaultdict(lambda: {"axon length": 0, "dendrite length": 0, "axon mesh surface area": 0,
                                               "dendrite mesh surface area": 0, "soma centre": np.zeros(3)})
@@ -62,6 +62,7 @@ def find_full_cells(ssd, celltype, soma_centre = True, shortestpaths = True):
             cell.skeleton["shortestpaths"] = np.zeros(len(cell.skeleton["nodes"]))
             cell.skeleton["shortestpaths"][nonsoma_inds] = shortespaths
 
+    raise ValueError
     inds = np.array(full_cells != 0)
     full_cells = full_cells[inds].astype(int)
 
@@ -75,7 +76,7 @@ def get_axon_length_area_perct(ssd, celltype):
     # j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7, FS=8, LTS=9, NGF=10
     :return: dictionary with axon length and surface mesh area
     """
-    celltype_ids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == celltype]
+    celltype_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
     axon_dict = defaultdict(lambda: {"axon length": 0, "axon mesh surface area": 0})
     for i, axon in enumerate(tqdm(ssd.get_super_segmentation_object(celltype_ids))):
         axon.load_skeleton()

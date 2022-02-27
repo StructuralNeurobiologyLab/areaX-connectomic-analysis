@@ -11,18 +11,23 @@ if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, \
         get_compartment_mesh_area
 
-
-    global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
+    #V3
+    #global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
+    #V4
+    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 
     # celltypes: j0256: STN = 0, DA = 1, MSN = 2, LMAN = 3, HVC = 4, TAN = 5, GPe = 6, GPi = 7,
     #                      FS=8, LTS=9, NGF=10
 
     start = time.time()
+    time_stamps = [time.time()]
+    step_idents = ['t-0']
     f_name = "/wholebrain/scratch/arother/j0251v4_prep"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('analysis prep', log_dir=f_name + '/logs/')
+    log.info("Step 0: Loading synapse data on all cells")
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     #ct_list = [0]
     #ax_list = [3, 4]
@@ -30,26 +35,34 @@ if __name__ == '__main__':
     ax_list = [3, 4, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
     ct_list = [6, 7, 2, 0, 5, 8, 9, 10]
-    curr_time = time.time() - start
     syn_proba = 0.8
     min_syn_size = 0.1
-    syn_prob = sd_synssv.load_cached_data("syn_prob")
+    syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m = syn_prob > syn_proba
-    m_cts = sd_synssv.load_cached_data("partner_celltypes")[m]
-    m_ssv_partners = sd_synssv.load_cached_data("neuron_partners")[m]
-    m_axs = sd_synssv.load_cached_data("partner_axoness")[m]
-    m_sizes = sd_synssv.load_cached_data("mesh_area")[m] / 2
+    m_cts = sd_synssv.load_numpy_data("partner_celltypes")[m]
+    m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")[m]
+    m_axs = sd_synssv.load_numpy_data("partner_axoness")[m]
+    m_sizes = sd_synssv.load_numpy_data("mesh_area")[m] / 2
     size_inds = m_sizes > min_syn_size
     m_cts = m_cts[size_inds]
     m_axs = m_axs[size_inds]
     m_ssv_partners = m_ssv_partners[size_inds]
     m_sizes = m_sizes[size_inds]
+    time_stamps = [time.time()]
+    step_idents = ["finished preparations"]
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
+        log.info("Get amount and sum of synapses")
         axon_syns, den_syns, soma_syns = synapse_amount_percell(celltype = ct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
                                                                 syn_axs = m_axs, axo_denso = True, all_comps = True)
+        time_stamps = [time.time()]
+        step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[ct]]
+        log.info("Find full cells")
         cell_array, cell_dict = find_full_cells(ssd, celltype=ct, shortestpaths=False)
+        time_stamps = [time.time()]
+        step_idents = ["full cells for celltype %s found" % ct_dict[ct]]
+        log.info("Make per cell dictionary")
         for cellid in list(find_full_cells.keys()):
             try:
                 cell_dict[cellid]["axon synapse amount"] = axon_syns[cellid]["amount"]
@@ -76,7 +89,10 @@ if __name__ == '__main__':
         write_obj2pkl(dict_path, cell_dict)
         write_obj2pkl(arr_path, cell_array)
         #write_obj2pkl(syn_path, syn_dict)
+        raise ValueError
         curr_time -= time.time()
+        time_stamps = [time.time()]
+        step_idents = ["full cell dictionaries for celltype %s prepared" % ct_dict[ct]]
         print("%.2f min, %.2f sec for finding  %s cells" % (curr_time // 60, curr_time % 60, ct_dict[ct]))
 
 

@@ -90,10 +90,9 @@ if __name__ == '__main__':
         write_obj2pkl(dict_path, cell_dict)
         write_obj2pkl(arr_path, cell_array)
         #write_obj2pkl(syn_path, syn_dict)
-        curr_time -= time.time()
         time_stamps = [time.time()]
         step_idents = ["full cell dictionaries for celltype %s prepared" % ct_dict[ct]]
-        print("%.2f min, %.2f sec for finding  %s cells" % (curr_time // 60, curr_time % 60, ct_dict[ct]))
+        log.info("full cell dictionaries for celltype %s prepared" % ct_dict[ct])
 
 
     for ia, axct in enumerate(ax_list):
@@ -110,8 +109,10 @@ if __name__ == '__main__':
                 axon_dict[cellid]["axon synapse amount"] = 0
                 axon_dict[cellid]["axon summed synapse size"] = 0
         syn_path = ("%s/ax_%.3s_dict.pkl" % (f_name, ct_dict[axct]))
+        axon_dict = dict(axon_dict)
         write_obj2pkl(syn_path, axon_dict)
-        curr_time -= time.time()
-        print("%.2f min, %.2f sec for finding  %s cells" % (curr_time // 60, curr_time % 60, ct_dict[axct]))
+        time_stamps = [time.time()]
+        step_idents = ["axon dictionaries for celltype %s prepared" % ct_dict[ct]]
+        log.info("axon dictionaries for celltype %s prepared" % ct_dict[ct])
 
     raise ValueError

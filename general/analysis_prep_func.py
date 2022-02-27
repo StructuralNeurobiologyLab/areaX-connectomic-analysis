@@ -27,9 +27,9 @@ def find_full_cells(ssd, celltype, soma_centre = True, shortestpaths = True):
                                               "soma mesh surface area": 0})
     full_cells = np.zeros((len(celltype_ids)))
 
-
-
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(celltype_ids))):
+        if i > 30:
+            break
         cell.load_skeleton()
         axoness = cell.skeleton["axoness_avg10000"]
         axoness[axoness == 3] = 1

@@ -142,7 +142,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     if full_cells:
         soma_centres = np.zeros((len(cellids), 3))
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
-        axon_dict, dendrite_dict = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len, full_cell_dict= full_cell_dictkay,)
+        axon_dict, dendrite_dict = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len, full_cell_dict= full_cell_dict,)
         if type(axon_dict) == int:
             continue
         axon_length_ct[i] = axon_dict["length"]
@@ -156,7 +156,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
         axon_tortuosity_sampled_ct[i] = axon_dict["tortuosity sampled"]
         dendrite_tortuosity_sampled_ct[i] = dendrite_dict["tortuosity sampled"]
         if full_cells:
-            soma_centres[i] = full_cell_dict[cell.id]["soma cente"]
+            soma_centres[i] = full_cell_dict[cell.id]["soma centre"]
 
     celltime = time.time() - start
     print("%.2f sec for iterating through cells" % celltime)

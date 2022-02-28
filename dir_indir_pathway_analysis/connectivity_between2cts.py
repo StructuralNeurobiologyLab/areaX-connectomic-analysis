@@ -17,7 +17,7 @@ from wholebrain.scratch.arother.bio_analysis.general.result_helper import Result
 
 
 def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, full_cells = True, handpicked1 = True, handpicked2 = True, percentile_ct1 = None,
-                         min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.6):
+                         min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8):
     '''
     looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
     the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic

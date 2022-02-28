@@ -32,7 +32,7 @@ if __name__ == '__main__':
     #comp_lengths = [100, 200, 500, 1000]
     percentiles = [10, 25, 50]
     cl = 200
-    '''
+
     log.info("Step 1/8: MSN percentile compartment comparison")
     #create MSN spiness percentiles with different comp_lengths
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["spiness percentiles calculated"]
-    '''
+
     
     p = 49
 

@@ -18,7 +18,7 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
-    f_name = "u/arother/bio_analysis_results/dir_indir_pathway_analysis/220228_j0251v4_GPe_i_comparison"
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220228_j0251v4_GPe_i_comparison"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -31,8 +31,8 @@ if __name__ == '__main__':
 
     log.info("Step 1/5: GPe/i compartment comparison")
     # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
-    result_GPe_filename = axon_den_arborization_ct(ssd, celltype=6, filename=f_name, full_cells=True, handpicked=True, min_comp_len = comp_length)
-    result_GPi_filename = axon_den_arborization_ct(ssd, celltype=7, filename=f_name, full_cells=True, handpicked=True, min_comp_len = comp_length)
+    result_GPe_filename = axon_den_arborization_ct(ssd, celltype=6, filename=f_name, full_cells=True, handpicked=False, min_comp_len = comp_length)
+    result_GPi_filename = axon_den_arborization_ct(ssd, celltype=7, filename=f_name, full_cells=True, handpicked=False, min_comp_len = comp_length)
     compare_compartment_volume_ct(celltype1=6, celltype2=7, filename=f_name, filename1=result_GPe_filename, filename2=result_GPi_filename, percentile=None, min_comp_len = comp_length)
 
     time_stamps = [time.time()]
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     log.info("Step 2/5: GPe and GPi connectivity")
     # see how GPe and GPi are connected
-    GPe_GPi_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=7, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True, min_comp_len = comp_length)
+    GPe_GPi_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=7, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False, min_comp_len = comp_length, syn_prob_thresh = 0.8)
     GPe_i_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, filename=f_name, foldername_ct1=GPe_GPi_connectivity_resultsfolder, foldername_ct2=GPe_GPi_connectivity_resultsfolder, min_comp_len = comp_length)
 
     time_stamps = [time.time()]
@@ -53,14 +53,14 @@ if __name__ == '__main__':
     # see how GPe and GPi are connected to STN
     GPe_MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=2, filename=f_name,
                                                               full_cells=True, handpicked1=True, handpicked2=False,
-                                                              min_comp_len=comp_length)
+                                                              min_comp_len=comp_length,syn_prob_thresh = 0.8)
     GPi_MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=2, filename=f_name,
                                                               full_cells=True, handpicked1=True, handpicked2=False,
                                                               min_comp_len=comp_length)
     GPe_i_MSN_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=2, filename=f_name,
                                                   foldername_ct1=GPe_MSN_connectivity_resultsfolder,
                                                   foldername_ct2=GPi_MSN_connectivity_resultsfolder,
-                                                  min_comp_len=comp_length)
+                                                  min_comp_len=comp_length, syn_prob_thresh = 0.8)
 
     time_stamps = [time.time()]
     step_idents = ["connctivity GPe/i - MSN finished"]
@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
     log.info("Step 3/5: GPe/i - STN connectivity")
     # see how GPe and GPi are connected to STN
-    GPe_STN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=0, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False, min_comp_len = comp_length)
-    GPi_STN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=0, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False, min_comp_len = comp_length)
+    GPe_STN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=0, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False, min_comp_len = comp_length, syn_prob_thresh = 0.8)
+    GPi_STN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=0, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False, min_comp_len = comp_length, syn_prob_thresh = 0.8)
     GPe_i_STN_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=0, filename=f_name, foldername_ct1=GPe_STN_connectivity_resultsfolder, foldername_ct2=GPi_STN_connectivity_resultsfolder, min_comp_len = comp_length)
 
     time_stamps = [time.time()]
@@ -78,8 +78,8 @@ if __name__ == '__main__':
 
     log.info("Step 4/5: GPe/i - FS connectivity")
     # see how GPe and GPi are connected to FS
-    GPe_FS_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=8, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False)
-    GPi_FS_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=8, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False)
+    GPe_FS_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=8, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False, syn_prob_thresh = 0.8)
+    GPi_FS_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=8, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False, syn_prob_thresh = 0.8)
     GPe_i_FS_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=8, filename=f_name, foldername_ct1=GPe_FS_connectivity_resultsfolder, foldername_ct2=GPi_FS_connectivity_resultsfolder)
 
     time_stamps = [time.time()]
@@ -87,8 +87,8 @@ if __name__ == '__main__':
 
     log.info("Step 5/5: GPe/i - TAN connectivity")
     # see how GPe and GPi are connected to TAN
-    GPe_TAN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=5, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True)
-    GPi_TAN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=5, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True)
+    GPe_TAN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=5, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True, syn_prob_thresh = 0.8)
+    GPi_TAN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=5, filename=f_name, full_cells=True, handpicked1=True, handpicked2=True, syn_prob_thresh = 0.8)
     GPe_i_TAN_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=5, filename=f_name, foldername_ct1=GPe_TAN_connectivity_resultsfolder, foldername_ct2=GPi_TAN_connectivity_resultsfolder)
 
     time_stamps = [time.time()]

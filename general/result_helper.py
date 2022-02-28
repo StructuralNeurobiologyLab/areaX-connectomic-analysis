@@ -110,21 +110,21 @@ class ResultsForPlotting():
             if outgoing:
                 plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
                 if norm_hist:
-                    plt.savefig("%s/%s_%s2%s_hist_norm.png" % (self.filename, key, self.celltype, celltype2))
+                    plt.savefig("%s/%s_%s2%s_hist_norm.svg" % (self.filename, key, self.celltype, celltype2))
                 else:
-                    plt.savefig("%s/%s_%s2%s_hist.png" % (self.filename, key, self.celltype, celltype2))
+                    plt.savefig("%s/%s_%s2%s_hist.svg" % (self.filename, key, self.celltype, celltype2))
             else:
                plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
                if norm_hist:
-                   plt.savefig("%s/%s_%s2%s_hist_norm.png" % (self.filename, key, celltype2, self.celltype))
+                   plt.savefig("%s/%s_%s2%s_hist_norm.svg" % (self.filename, key, celltype2, self.celltype))
                else:
-                   plt.savefig("%s/%s_%s2%s_hist.png" % (self.filename, key, celltype2, self.celltype))
+                   plt.savefig("%s/%s_%s2%s_hist.svg" % (self.filename, key, celltype2, self.celltype))
         else:
            plt.title("%s in %s %s" % (key, self.celltype, subcell))
            if norm_hist:
-               plt.savefig("%s/%s%_s_%s_hist_norm.png" % (self.filename, subcell, key, self.celltype))
+               plt.savefig("%s/%s%_s_%s_hist_norm.svg" % (self.filename, subcell, key, self.celltype))
            else:
-               plt.savefig("%s/%s_%s_%s_hist.png" % (self.filename, subcell, key, self.celltype))
+               plt.savefig("%s/%s_%s_%s_hist.svg" % (self.filename, subcell, key, self.celltype))
         plt.close()
 
     def multiple_param_labels(self, labels, ticks):
@@ -145,13 +145,13 @@ class ResultsForPlotting():
         if celltype2:
             if outgoing:
                 plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
-                plt.savefig("%s/%s_%s_2_%s_violin.png" % (self.filename, key, self.celltype, celltype2))
+                plt.savefig("%s/%s_%s_2_%s_violin.svg" % (self.filename, key, self.celltype, celltype2))
             else:
                 plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
-                plt.savefig("%s/%s_%s_2_%s_violin.png" % (self.filename, key, celltype2, self.celltype))
+                plt.savefig("%s/%s_%s_2_%s_violin.svg" % (self.filename, key, celltype2, self.celltype))
         else:
             plt.title("%s in %s %s" % (key, self.celltype, subcell))
-            plt.savefig("%s/%s_%s_%s_violin.png" % (self.filename, key, subcell, self.celltype))
+            plt.savefig("%s/%s_%s_%s_violin.svg" % (self.filename, key, subcell, self.celltype))
         plt.close()
 
     def plot_box_params(self, key, param_list,subcell, xlabel = None, ticks = None, stripplot = True, celltype2 = None, outgoing = False):
@@ -168,13 +168,13 @@ class ResultsForPlotting():
         if celltype2:
             if outgoing:
                 plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
-                plt.savefig("%s/%s_%s_2_%s_box.png" % (self.filename, key, self.celltype, celltype2))
+                plt.savefig("%s/%s_%s_2_%s_box.svg" % (self.filename, key, self.celltype, celltype2))
             else:
                 plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
-                plt.savefig("%s/%s_%s_2_%s_box.png" % (self.filename, key, celltype2, self.celltype))
+                plt.savefig("%s/%s_%s_2_%s_box.svg" % (self.filename, key, celltype2, self.celltype))
         else:
             plt.title("%s in %s %s" % (key, self.celltype, subcell))
-            plt.savefig("%s/%s_%s_%s_box.png" % (self.filename, key, subcell, self.celltype))
+            plt.savefig("%s/%s_%s_%s_box.svg" % (self.filename, key, subcell, self.celltype))
         plt.close()
 
 
@@ -269,24 +269,24 @@ class ComparingResultsForPLotting(ResultsForPlotting):
                 else:
                     plt.title("%s from %s, %s to %s" % (key, self.celltype1, self.celltype2, conn_celltype))
                 if norm_hist:
-                    plt.savefig("%s/%s_%s_%s2%s_hist_norm.png" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+                    plt.savefig("%s/%s_%s_%s2%s_hist_norm.svg" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
                 else:
-                    plt.savefig("%s/%s_%s_%s2%s_hist.png" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+                    plt.savefig("%s/%s_%s_%s2%s_hist.svg" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
             else:
                 if title:
                     plt.title(title)
                 else:
                     plt.title("%s from %s to %s, %s" % (key, conn_celltype, self.celltype1, self.celltype2))
                 if norm_hist:
-                    plt.savefig("%s/%s_%s2%s_%s_hist_norm.png" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+                    plt.savefig("%s/%s_%s2%s_%s_hist_norm.svg" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
                 else:
-                    plt.savefig("%s/%s_%s2%s_%s_hist.png" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+                    plt.savefig("%s/%s_%s2%s_%s_hist.svg" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
         else:
             plt.title("%s in %s, %s" % (key, self.celltype1, self.celltype2))
             if norm_hist:
-                plt.savefig("%s/%s_%s_%s_hist_norm.png" % (self.filename, key, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_%s_hist_norm.svg" % (self.filename, key, self.celltype1, self.celltype2))
             else:
-                plt.savefig("%s/%s_%s_%s_hist.png" % (self.filename, key, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_%s_hist.svg" % (self.filename, key, self.celltype1, self.celltype2))
         plt.close()
 
 
@@ -380,13 +380,13 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             if outgoing:
                 plt.title("%s in %s, %s to%s" % (key, self.celltype1, self.celltype2, conn_celltype))
                 plt.savefig(
-                    "%s/%s_%s_%s_2_%s_violin.png" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+                    "%s/%s_%s_%s_2_%s_violin.svg" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
             else:
                 plt.title("%s in %s to %s, %s" % (key, conn_celltype, self.celltype1, self.celltype2))
-                plt.savefig("%s/%s_%s_2_%s_%s_violin.png" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_2_%s_%s_violin.svg" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
         else:
             plt.title("%s in %s, %s" % (key, self.celltype1, self.celltype2))
-            plt.savefig("%s/%s_%s_%s_violin.png" % (self.filename, key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_violin.svg" % (self.filename, key, self.celltype1, self.celltype2))
         plt.close()
 
     def plot_box(self, key, result_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
@@ -408,13 +408,13 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             if outgoing:
                 plt.title("%s in %s, %s to%s" % (key, self.celltype1, self.celltype2, conn_celltype))
                 plt.savefig(
-                    "%s/%s_%s_%s_2_%s_box.png" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
+                    "%s/%s_%s_%s_2_%s_box.svg" % (self.filename, key, self.celltype1, self.celltype2, conn_celltype))
             else:
                 plt.title("%s in %s to %s, %s" % (key, conn_celltype, self.celltype1, self.celltype2))
-                plt.savefig("%s/%s_%s_2_%s_%s_box.png" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
+                plt.savefig("%s/%s_%s_2_%s_%s_box.svg" % (self.filename, key, conn_celltype, self.celltype1, self.celltype2))
         else:
             plt.title("%s in %s, %s" % (key, self.celltype1, self.celltype2))
-            plt.savefig("%s/%s_%s_%s_box.png" % (self.filename, key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_box.svg" % (self.filename, key, self.celltype1, self.celltype2))
         plt.close()
 
     def plot_violin_hue(self, key, x, hue, results_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
@@ -442,15 +442,15 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
-                plt.savefig("%s/%s_%s_%s_2_%s_multi_violin.png" % (
+                plt.savefig("%s/%s_%s_%s_2_%s_multi_violin.svg" % (
                     self.filename, key, self.celltype1, self.celltype2, conn_celltype))
             else:
                 plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltype1, self.celltype2))
-                plt.savefig("%s/%s_%s_2_%s_%s_multi_violin.png" % (
+                plt.savefig("%s/%s_%s_2_%s_%s_multi_violin.svg" % (
                     self.filename, key, conn_celltype, self.celltype1, self.celltype2))
         else:
             plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
-            plt.savefig("%s/%s_%s_%s_multi_violin.png" % (self.filename, key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_multi_violin.svg" % (self.filename, key, self.celltype1, self.celltype2))
         plt.close()
 
     def plot_box_hue(self, key, x, hue, results_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
@@ -478,15 +478,15 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
-                plt.savefig("%s/%s_%s_%s_2_%s_multi_box.png" % (
+                plt.savefig("%s/%s_%s_%s_2_%s_multi_box.svg" % (
                     self.filename, key, self.celltype1, self.celltype2, conn_celltype))
             else:
                 plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltype1, self.celltype2))
-                plt.savefig("%s/%s_%s_2_%s_%s_multi_box.png" % (
+                plt.savefig("%s/%s_%s_2_%s_%s_multi_box.svg" % (
                     self.filename, key, conn_celltype, self.celltype1, self.celltype2))
         else:
             plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
-            plt.savefig("%s/%s_%s_%s_multi_box.png" % (self.filename, key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_multi_box.svg" % (self.filename, key, self.celltype1, self.celltype2))
         plt.close()
 
     def plot_bar_hue(self, key, x, hue, results_df, conn_celltype=None, outgoing=False):
@@ -505,15 +505,15 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
-                plt.savefig("%s/%s_%s_%s_%s_2_%s_multi_bar.png" % (
+                plt.savefig("%s/%s_%s_%s_%s_2_%s_multi_bar.svg" % (
                     self.filename, key, x, self.celltype1, self.celltype2, conn_celltype))
             else:
                 plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltype1, self.celltype2))
-                plt.savefig("%s/%s_%s_%s_2_%s_%s_multi_bar.png" % (
+                plt.savefig("%s/%s_%s_%s_2_%s_%s_multi_bar.svg" % (
                     self.filename, key, x, conn_celltype, self.celltype1, self.celltype2))
         else:
             plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
-            plt.savefig("%s/%s_%s_%s_%s_multi_bar.png" % (self.filename, key,x, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_%s_multi_bar.svg" % (self.filename, key,x, self.celltype1, self.celltype2))
         plt.close()
 
 

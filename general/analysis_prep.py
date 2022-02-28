@@ -34,7 +34,7 @@ if __name__ == '__main__':
     #ct_list = [2,5, 6, 7, 0, 8, 9, 10]
     ax_list = [3, 4, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
-    ct_list = [6, 7, 2, 0, 5, 8, 9, 10]
+    ct_list = [6, 7, 0, 5, 8, 9, 10, 2]
     syn_proba = 0.8
     min_syn_size = 0.1
     syn_prob = sd_synssv.load_numpy_data("syn_prob")

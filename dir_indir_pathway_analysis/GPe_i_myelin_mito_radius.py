@@ -58,7 +58,7 @@ if __name__ == '__main__':
     GPi_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
     GPi_full_cell_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/full_GPi_dict.pkl")
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_dict.pkl")
 
     axon_median_radius_gpe = np.zeros(len(GPe_ids))
     axon_mito_volume_density_gpe = np.zeros(len(GPe_ids))

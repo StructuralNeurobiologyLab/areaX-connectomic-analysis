@@ -182,7 +182,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
     """
     makes plots from two dictionaries with the same keys to compare their results.
     """
-    def __init__(self, celltype1, celltype2, filename, dictionary1, dictionary2, color1 = "#743290", color2 = "#2AC644"):
+    def __init__(self, celltype1, celltype2, filename, dictionary1, dictionary2, color1 = "#592A87", color2 = "#2AC644"):
         super().__init__(celltype1, filename, dictionary1)
         self.celltype1 = celltype1
         self.celltype2 = celltype2

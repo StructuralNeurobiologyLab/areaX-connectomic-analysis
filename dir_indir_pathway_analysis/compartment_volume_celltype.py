@@ -301,7 +301,7 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
                                                           dictionary1=ct1_comp_dict, dictionary2=ct2_comp_dict,
                                                           color1="gray", color2="darkturquoise")
     else:
-        results_comparision = ComparingResultsForPLotting(celltype1 = ct1_str, celltype2 = ct2_str, filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "mediumorchid", color2 = "springgreen")
+        results_comparision = ComparingResultsForPLotting(celltype1 = ct1_str, celltype2 = ct2_str, filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "#592A87", color2 = "#2AC644")
     for key in ct1_comp_dict.keys():
         if "ids" in key or ("pairwise" in key and "other" in key):
             continue

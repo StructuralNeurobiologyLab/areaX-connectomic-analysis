@@ -557,8 +557,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     else:
         results_comparison = ComparingResultsForPLotting(celltype1=ct1_str, celltype2=ct2_str,
                                                          filename=f_name, dictionary1=ct1_syn_dict,
-                                                         dictionary2=ct2_syn_dict, color1="mediumorchid",
-                                                         color2="springgreen")
+                                                         dictionary2=ct2_syn_dict, color1 = "#592A87", color2 = "#2AC644")
     if "multisynapse amount" in ct1_syn_dict.keys():
         result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
 
@@ -675,8 +674,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
                                                              celltype2=ct2_str,
                                                              filename=f_name, dictionary1=ct1_syn_dict,
-                                                             dictionary2=ct2_syn_dict, color1="mediumorchid",
-                                                             color2="springgreen")
+                                                             dictionary2=ct2_syn_dict, color1 = "#592A87", color2 = "#2AC644")
 
         result_df_multi_params = results_comparison.result_df_categories(label_category="compartment")
         result_df_multi_params.to_csv("%s/%s_%s_2_%s_syn_compartments_outgoing.csv" % (

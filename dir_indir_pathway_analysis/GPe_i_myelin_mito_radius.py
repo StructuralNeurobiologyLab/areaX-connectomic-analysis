@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
     log.info("Step 3/3 compare GPe and GPi")
     key_list = list(GPe_params.keys())[:-1]
-    results_comparison = ComparingResultsForPLotting(celltype1 = "GPe", celltype2 = "GPi", filename = f_name, dictionary1 = GPe_params, dictionary2 = GPi_params, color1 = "mediumorchid", color2 = "mediumseagreen")
+    results_comparison = ComparingResultsForPLotting(celltype1 = "GPe", celltype2 = "GPi", filename = f_name, dictionary1 = GPe_params, dictionary2 = GPi_params, color1 = "#743290", color2 = "#2AC644")
     ranksum_results = pd.DataFrame(columns=key_list, index=["stats", "p value"])
     GPe_len = len(GPe_params["cellids"])
     GPi_len = len(GPi_params["cellids"])

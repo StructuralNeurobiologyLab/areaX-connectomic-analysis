@@ -36,7 +36,7 @@ if __name__ == '__main__':
     log.info("Step 1/8: MSN percentile compartment comparison")
     #create MSN spiness percentiles with different comp_lengths
 
-    filename_spiness_saving = "/wholebrain/scratch/arother/j0251v3_prep/"
+    filename_spiness_saving = "/wholebrain/scratch/arother/j0251v4_prep/"
     filename_spiness_results = "%s/spiness_percentiles_mcl%i" % (f_name, cl)
     if not os.path.exists(filename_spiness_results):
         os.mkdir(filename_spiness_results)

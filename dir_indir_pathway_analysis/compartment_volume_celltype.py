@@ -142,7 +142,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     if full_cells:
         soma_centres = np.zeros((len(cellids), 3))
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
-        axon_dict, dendrite_dict = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len, full_cell_dict= full_cell_dict)
+        axon_dict, dendrite_dict = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len, full_cell_dict= full_cell_dictkay,)
         if type(axon_dict) == int:
             continue
         axon_length_ct[i] = axon_dict["length"]

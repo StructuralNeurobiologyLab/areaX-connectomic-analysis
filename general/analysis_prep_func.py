@@ -44,7 +44,7 @@ def find_full_cells(ssd, celltype, soma_centre = True, shortestpaths = True):
         full_cell_dict[cell.id]["dendrite length"] = dendrite_length_cell
         mesh_surface_areas_cell = get_compartment_mesh_area(cell)
         full_cell_dict[cell.id]["axon mesh surface area"] = mesh_surface_areas_cell["axon"]
-        full_cell_dict[cell.id]["denrite mesh surface area"] = mesh_surface_areas_cell["dendrite"]
+        full_cell_dict[cell.id]["dendrite mesh surface area"] = mesh_surface_areas_cell["dendrite"]
         full_cell_dict[cell.id]["soma mesh surface area"] = mesh_surface_areas_cell["soma"]
         if soma_centre:
             soma_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 2)[0]

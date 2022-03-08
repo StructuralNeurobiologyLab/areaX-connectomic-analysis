@@ -34,7 +34,8 @@ if __name__ == '__main__':
     #ct_list = [2,5, 6, 7, 0, 8, 9, 10]
     ax_list = [3, 4, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
-    ct_list = [6, 7, 0, 5, 8, 9, 10, 2]
+    #ct_list = [6, 7, 0, 5, 8, 9, 10, 2]
+    ct_list = [2]
     syn_proba = 0.8
     min_syn_size = 0.1
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
@@ -50,6 +51,8 @@ if __name__ == '__main__':
     m_sizes = m_sizes[size_inds]
     time_stamps = [time.time()]
     step_idents = ["finished preparations"]
+
+    '''
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
@@ -94,25 +97,25 @@ if __name__ == '__main__':
         step_idents = ["full cell dictionaries for celltype %s prepared" % ct_dict[ct]]
         log.info("full cell dictionaries for celltype %s prepared" % ct_dict[ct])
 
-
+    '''
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
-        cell_ids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == axct]
+        cell_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == axct]
         axon_syns = synapse_amount_percell(celltype = axct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
                                                                 syn_axs = m_axs, axo_denso = True, all_comps = False)
         axon_dict = get_axon_length_area_perct(ssd, celltype = axct)
         for axonid in list(axon_dict.keys()):
             try:
-                axon_dict[cellid]["axon synapse amount"] = axon_syns[cellid]["amount"]
-                axon_dict[cellid]["axon summed synapse size"] = axon_syns[cellid]["summed size"]
+                axon_dict[axonid]["axon synapse amount"] = axon_syns[axonid]["amount"]
+                axon_dict[axonid]["axon summed synapse size"] = axon_syns[axonid]["summed size"]
             except KeyError:
-                axon_dict[cellid]["axon synapse amount"] = 0
-                axon_dict[cellid]["axon summed synapse size"] = 0
+                axon_dict[axonid]["axon synapse amount"] = 0
+                axon_dict[axonid]["axon summed synapse size"] = 0
         syn_path = ("%s/ax_%.3s_dict.pkl" % (f_name, ct_dict[axct]))
         axon_dict = dict(axon_dict)
         write_obj2pkl(syn_path, axon_dict)
         time_stamps = [time.time()]
-        step_idents = ["axon dictionaries for celltype %s prepared" % ct_dict[ct]]
-        log.info("axon dictionaries for celltype %s prepared" % ct_dict[ct])
+        step_idents = ["axon dictionaries for celltype %s prepared" % ct_dict[axct]]
+        log.info("axon dictionaries for celltype %s prepared" % ct_dict[axct])
 
     raise ValueError

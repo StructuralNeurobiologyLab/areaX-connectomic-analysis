@@ -58,7 +58,9 @@ def find_full_cells(ssd, celltype):
 
     cellids, params_dicts = Pool.imap_unordered(get_per_cell_morphology_params, cells)
 
-    full_cells = full_cells[full_cells > 0].astype(int)
+    full_cells = cellids[cellids > 0].astype(int)
+    params_dicts = params_dicts[cellids > 0]
+    full_cell_dict = {cellid: param_dict for cellid, param_dict in [full_cells, params_dicts]}
 
     return full_cells, full_cell_dict
 

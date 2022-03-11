@@ -5,60 +5,58 @@ from tqdm import tqdm
 import pandas as pd
 from collections import defaultdict
 from syconn.proc.meshes import mesh_area_calc
+from multiprocessing import Pool
 
-def find_full_cells(ssd, celltype, soma_centre = True, shortestpaths = True):
+
+def get_per_cell_morphology_params(cell):
+    """
+    Calculates comaprtment length of axon and dendrite, soma_centre (if True) and mesh_surface_area per compartment.
+    Only calculates parameters if cell has soma, axon and dendrite.
+    :param cell: super-segmentation object
+    :return: cellid, dictionary including params
+
+    """
+    cellid = cell.id
+    cell.load_skeleton()
+    axoness = cell.skeleton["axoness_avg10000"]
+    axoness[axoness == 3] = 1
+    axoness[axoness == 4] = 1
+    unique_preds = np.unique(axoness)
+    if not (0 in unique_preds and 1 in unique_preds and 2 in unique_preds):
+        return 0, 0
+    # add compartment calculation for axon/ dendrite
+    g = cell.weighted_graph()
+    axon_length_cell = get_compartment_length(cell, compartment=1, cell_graph=g)
+    dendrite_length_cell = get_compartment_length(cell, compartment=0, cell_graph=g)
+    # calculate mesh surface areas per compartment
+    mesh_surface_areas_cell = get_compartment_mesh_area(cell)
+    axon_mesh_surface_area= mesh_surface_areas_cell["axon"]
+    dendrite_mesh_surface_area = mesh_surface_areas_cell["dendrite"]
+    soma_mesh_surface_area = mesh_surface_areas_cell["soma"]
+    # calculate soma centre
+    soma_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 2)[0]
+    positions = cell.skeleton["nodes"][soma_inds] * cell.scaling  # transform to nm
+    soma_centre_coord = np.mean(positions, axis=0)
+    params_dict = {"axon length": axon_length_cell, "dendrite length": dendrite_length_cell, "soma centre": soma_centre_coord,
+                   "axon mesh surface area": axon_mesh_surface_area, "dendrite mesh surface area": dendrite_mesh_surface_area, "soma mesh surface area": soma_mesh_surface_area}
+    return cellid,params_dict
+    
+
+def find_full_cells(ssd, celltype):
     """
     function finds full cells of a specific celltype if the cells have a dendrite, soma and axon in axoness_avg10000.
     :param ssd: segmentation dataset
     :param celltype: number of the celltype that is searched for; celltypes: j0126: STN=0, modulatory=1, MSN=2, LMAN=3, HVC=4, GP=5, INT=6
     # j0251: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7, FS=8, LTS=9, NGF=10
-    :param soma_centre: if True calculates average of soma skeleton notes as approximation to the soma centre
-    :param shortestpath: returns shortest paths for all nodes that are not soma
-    :param syn_proba: synapse probability
     :return: an array with cell_ids of the full_cells and if soma centre was calculated also a dictionary for each cell with its soma_centre
     """
     celltype_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
-    if soma_centre:
-        full_cell_dict = defaultdict(lambda: {"axon length": 0, "dendrite length": 0, "axon mesh surface area": 0,
-                                              "dendrite mesh surface area": 0, "soma centre": np.zeros(3)})
-    else:
-        full_cell_dict = defaultdict(lambda: {"axon length": 0, "dendrite length": 0, "axon mesh surface area": 0,
-                                              "dendrite mesh surface area": 0,
-                                              "soma mesh surface area": 0})
+    full_cell_dict = defaultdict(lambda: {"axon length": 0, "dendrite length": 0, "axon mesh surface area": 0,
+                                          "dendrite mesh surface area": 0, "soma centre": np.zeros(3)})
     full_cells = np.zeros((len(celltype_ids)))
+    cells = ssd.get_super_segmentation_object(celltype_ids)
 
-    for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(celltype_ids))):
-        cell.load_skeleton()
-        axoness = cell.skeleton["axoness_avg10000"]
-        axoness[axoness == 3] = 1
-        axoness[axoness == 4] = 1
-        unique_preds = np.unique(axoness)
-        if not (0 in unique_preds and 1 in unique_preds and 2 in unique_preds):
-            continue
-        full_cells[i] = int(cell.id)
-        # add compartment calculation for axon/ dendrite
-        g = cell.weighted_graph()
-        axon_length_cell = get_compartment_length(cell, compartment = 1, cell_graph = g)
-        dendrite_length_cell = get_compartment_length(cell, compartment = 0, cell_graph = g)
-        full_cell_dict[cell.id]["axon length"] = axon_length_cell
-        full_cell_dict[cell.id]["dendrite length"] = dendrite_length_cell
-        mesh_surface_areas_cell = get_compartment_mesh_area(cell)
-        full_cell_dict[cell.id]["axon mesh surface area"] = mesh_surface_areas_cell["axon"]
-        full_cell_dict[cell.id]["dendrite mesh surface area"] = mesh_surface_areas_cell["dendrite"]
-        full_cell_dict[cell.id]["soma mesh surface area"] = mesh_surface_areas_cell["soma"]
-        if soma_centre:
-            soma_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 2)[0]
-            positions = cell.skeleton["nodes"][soma_inds] * ssd.scaling #transform to nm
-            soma_centre_coord = np.mean(positions, axis=0)
-            full_cell_dict[cell.id]["soma centre"] = soma_centre_coord
-        if shortestpaths:
-            path_array = np.zeros(len(cell.skeleton["nodes"]))
-            nonsoma_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 2)[0]
-            coords = cell.skeleton["nodes"][nonsoma_inds]
-            cell.skeleton["shortestpaths"] = np.zeros(len(cell.skeleton["nodes"]))
-            shortespaths =  cell.shortestpath2soma(coords)
-            cell.skeleton["shortestpaths"] = np.zeros(len(cell.skeleton["nodes"]))
-            cell.skeleton["shortestpaths"][nonsoma_inds] = shortespaths
+    cellids, params_dicts = Pool.imap_unordered(get_per_cell_morphology_params, cells)
 
     full_cells = full_cells[full_cells > 0].astype(int)
 

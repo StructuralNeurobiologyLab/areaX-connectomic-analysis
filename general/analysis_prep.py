@@ -8,6 +8,7 @@ if __name__ == '__main__':
     from syconn.handler.basics import load_pkl2obj, write_obj2pkl
     from analysis_prep_func import find_full_cells, synapse_amount_percell, get_axon_length_area_perct
     from syconn.handler.config import initialize_logging
+    from multiprocessing import Process
     from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, \
         get_compartment_mesh_area
 
@@ -52,7 +53,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["finished preparations"]
 
-    '''
+
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
@@ -62,6 +63,9 @@ if __name__ == '__main__':
         time_stamps = [time.time()]
         step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[ct]]
         log.info("Find full cells")
+        p = Process(target=find_full_cells(ssd, celltype = ct, shortestpaths = False), args=('bob',))
+        p.start()
+        p.join()
         cell_array, cell_dict = find_full_cells(ssd, celltype=ct, shortestpaths=False)
         time_stamps = [time.time()]
         step_idents = ["full cells for celltype %s found" % ct_dict[ct]]
@@ -97,7 +101,6 @@ if __name__ == '__main__':
         step_idents = ["full cell dictionaries for celltype %s prepared" % ct_dict[ct]]
         log.info("full cell dictionaries for celltype %s prepared" % ct_dict[ct])
 
-    '''
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
         cell_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == axct]

@@ -36,7 +36,7 @@ if __name__ == '__main__':
     ax_list = [3, 4, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
     #ct_list = [6, 7, 0, 5, 8, 9, 10, 2]
-    ct_list = [6]
+    ct_list = [2]
     syn_proba = 0.8
     min_syn_size = 0.1
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["finished preparations"]
 
-
+    """
 
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
@@ -99,6 +99,7 @@ if __name__ == '__main__':
         log.info("full cell dictionaries for celltype %s prepared" % ct_dict[ct])
 
     raise ValueError
+    """
 
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
@@ -106,7 +107,7 @@ if __name__ == '__main__':
         axon_syns = synapse_amount_percell(celltype = axct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
                                                                 syn_axs = m_axs, axo_denso = True, all_comps = False)
         time_stamps = [time.time()]
-        step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[ct]]
+        step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[axct]]
         log.info("Get axon length and surface area")
         axon_dict = get_axon_length_area_perct(ssd, celltype = axct)
         for axonid in list(axon_dict.keys()):

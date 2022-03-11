@@ -60,7 +60,6 @@ def find_full_cells(ssd, celltype):
     full_cells = cellids[cellids > 0].astype(int)
     param_dicts = param_dicts[cellids > 0]
     full_cell_dict = {cellid: param_dicts[i] for i, cellid in enumerate(full_cells)}
-    raise ValueError
     return full_cells, full_cell_dict
 
 def get_per_cellfrag_morph_params(cellfragmentid):

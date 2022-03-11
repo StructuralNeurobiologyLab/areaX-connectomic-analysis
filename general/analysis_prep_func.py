@@ -5,7 +5,7 @@ from tqdm import tqdm
 import pandas as pd
 from collections import defaultdict
 from syconn.proc.meshes import mesh_area_calc
-from multiprocessing import Pool
+from multiprocessing import pool
 from syconn.reps.super_segmentation import SuperSegmentationObject
 
 
@@ -40,7 +40,7 @@ def get_per_cell_morphology_params(cellid):
     soma_centre_coord = np.mean(positions, axis=0)
     params_dict = {"axon length": axon_length_cell, "dendrite length": dendrite_length_cell, "soma centre": soma_centre_coord,
                    "axon mesh surface area": axon_mesh_surface_area, "dendrite mesh surface area": dendrite_mesh_surface_area, "soma mesh surface area": soma_mesh_surface_area}
-    return cellid,params_dict
+    return [cellid,params_dict]
     
 
 def find_full_cells(ssd, celltype):
@@ -52,10 +52,14 @@ def find_full_cells(ssd, celltype):
     :return: an array with cell_ids of the full_cells and if soma centre was calculated also a dictionary for each cell with its soma_centre
     """
     celltype_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
-    cellids, params_dicts = Pool.map(get_per_cell_morphology_params, tqdm(celltype_ids))
+    p = pool.Pool()
+    output = p.map(get_per_cell_morphology_params, tqdm(celltype_ids))
+    output = np.array(output)
+    cellids = output[:, 0]
+    param_dicts = output[:, 1]
     full_cells = cellids[cellids > 0].astype(int)
-    params_dicts = params_dicts[cellids > 0]
-    full_cell_dict = {cellid: param_dict for cellid, param_dict in [full_cells, params_dicts]}
+    param_dicts = param_dicts[cellids > 0]
+    full_cell_dict = {cellid: param_dicts[i] for i, cellid in enumerate(full_cells)}
     raise ValueError
     return full_cells, full_cell_dict
 
@@ -71,7 +75,7 @@ def get_per_cellfrag_morph_params(cellfragmentid):
     g = cellfragment.weighted_graph()
     length = g.size(weight="weight") / 1000  # in µm
     mesh_surface_area = mesh_area_calc(cellfragment.mesh)
-    return length, mesh_surface_area
+    return [length, mesh_surface_area]
 
 def get_axon_length_area_perct(ssd, celltype):
     """
@@ -82,7 +86,11 @@ def get_axon_length_area_perct(ssd, celltype):
     :return: dictionary with axon length and surface mesh area
     """
     axon_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
-    axon_lengths, axon_mesh_surface_areas = Pool.map(get_per_cellfrag_morph_params, tqdm(axon_ids))
+    p = pool.Pool()
+    output = p.map(get_per_cellfrag_morph_params, tqdm(axon_ids))
+    output = np.array(output)
+    axon_lengths = output[:, 0]
+    axon_mesh_surface_areas = output[:, 1]
     axon_dict = {axon_id: {"axon length": axon_lengths[i], "axon mesh surface area":axon_mesh_surface_areas[i]} for i, axon_id in enumerate(axon_ids)}
     return axon_dict
 

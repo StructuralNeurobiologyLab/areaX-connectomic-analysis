@@ -98,6 +98,8 @@ if __name__ == '__main__':
         step_idents = ["full cell dictionaries for celltype %s prepared" % ct_dict[ct]]
         log.info("full cell dictionaries for celltype %s prepared" % ct_dict[ct])
 
+    raise ValueError
+
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
         cell_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == axct]

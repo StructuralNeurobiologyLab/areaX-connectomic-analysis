@@ -54,7 +54,6 @@ def find_full_cells(ssd, celltype):
     cells = ssd.get_super_segmentation_object(celltype_ids)
 
     cellids, params_dicts = Pool.map(get_per_cell_morphology_params, cells)
-
     full_cells = cellids[cellids > 0].astype(int)
     params_dicts = params_dicts[cellids > 0]
     full_cell_dict = {cellid: param_dict for cellid, param_dict in [full_cells, params_dicts]}
@@ -66,9 +65,13 @@ def get_per_cellfrag_morph_params(cellfragment):
     Get morphology related parameters such as length and mesh surface area  for each cellfragment that consists only of one
     one compartment.
     :param cellfragment: part of cell consisting of only one compartment
-    :return: cellid, dictionary with length, mesh surface area
+    :return: cellid, length, mesh surface area
     """
-
+    cellfragment.load_skeleton()
+    g = cellfragment.weighted_graph()
+    length = g.size(weight="weight") / 1000  # in µm
+    mesh_surface_area = mesh_area_calc(cellfragment.mesh)
+    return length, mesh_surface_area
 
 def get_axon_length_area_perct(ssd, celltype):
     """
@@ -79,14 +82,9 @@ def get_axon_length_area_perct(ssd, celltype):
     :return: dictionary with axon length and surface mesh area
     """
     celltype_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
-    axon_dict = defaultdict(lambda: {"axon length": 0, "axon mesh surface area": 0})
-    for i, axon in enumerate(tqdm(ssd.get_super_segmentation_object(celltype_ids))):
-        axon.load_skeleton()
-        g = axon.weighted_graph()
-        axon_length = get_compartment_length(axon, compartment = 1, cell_graph = g)
-        axon_dict[axon.id]["axon length"] = axon_length
-        axon_dict[axon.id]["axon mesh surface area"] = mesh_area_calc(axon.mesh)
-
+    axons = ssd.get_super_segmentation_object(celltype_ids)
+    axon_lengths, axon_mesh_surface_areas = Pool.map(get_per_cellfrag_morph_params, axons)
+    axon_dict = {axon_id: {"axon length": axon_lengths[i], "axon mesh surface area":axon_mesh_surface_areas[i]} for i, axon_id in enumerate(celltype_ids)}
     return axon_dict
 
 

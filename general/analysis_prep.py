@@ -106,6 +106,9 @@ if __name__ == '__main__':
         cell_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == axct]
         axon_syns = synapse_amount_percell(celltype = axct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
                                                                 syn_axs = m_axs, axo_denso = True, all_comps = False)
+        time_stamps = [time.time()]
+        step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[ct]]
+        log.info("Get axon length and surface area")
         axon_dict = get_axon_length_area_perct(ssd, celltype = axct)
         for axonid in list(axon_dict.keys()):
             try:

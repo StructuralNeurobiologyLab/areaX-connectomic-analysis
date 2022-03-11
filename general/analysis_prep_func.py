@@ -51,18 +51,24 @@ def find_full_cells(ssd, celltype):
     :return: an array with cell_ids of the full_cells and if soma centre was calculated also a dictionary for each cell with its soma_centre
     """
     celltype_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
-    full_cell_dict = defaultdict(lambda: {"axon length": 0, "dendrite length": 0, "axon mesh surface area": 0,
-                                          "dendrite mesh surface area": 0, "soma centre": np.zeros(3)})
-    full_cells = np.zeros((len(celltype_ids)))
     cells = ssd.get_super_segmentation_object(celltype_ids)
 
-    cellids, params_dicts = Pool.imap_unordered(get_per_cell_morphology_params, cells)
+    cellids, params_dicts = Pool.map(get_per_cell_morphology_params, cells)
 
     full_cells = cellids[cellids > 0].astype(int)
     params_dicts = params_dicts[cellids > 0]
     full_cell_dict = {cellid: param_dict for cellid, param_dict in [full_cells, params_dicts]}
-
+    raise ValueError
     return full_cells, full_cell_dict
+
+def get_per_cellfrag_morph_params(cellfragment):
+    """
+    Get morphology related parameters such as length and mesh surface area  for each cellfragment that consists only of one
+    one compartment.
+    :param cellfragment: part of cell consisting of only one compartment
+    :return: cellid, dictionary with length, mesh surface area
+    """
+
 
 def get_axon_length_area_perct(ssd, celltype):
     """

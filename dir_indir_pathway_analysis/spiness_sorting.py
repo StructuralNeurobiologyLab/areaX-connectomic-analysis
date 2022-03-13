@@ -9,7 +9,9 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_spine_density
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
+from multiprocessing import pool
 from scipy.stats import ranksums
+from functools import partial
 
 def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting = None, full_cells = True, percentiles = [], min_comp_len = 100):
     """
@@ -48,20 +50,16 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
         cellids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
 
     log.info("Step 1/2: iterate over cells and get amount of spines")
-    spine_densities = np.zeros(len(cellids))
-    for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
-        if length_dicts:
-            spine_density = get_spine_density(cell, min_comp_len = min_comp_len, full_cell_dict = full_cell_dict)
-        else:
-            spine_density  = get_spine_density(cell, min_comp_len=min_comp_len)
-        if spine_density == 0:
-            continue
-        spine_densities[i] = spine_density
-
+    p = pool.Pool()
+    if length_dicts:
+        spine_densities = p.map(partial(get_spine_density, min_comp_len = min_comp_len, full_cell_dict = full_cell_dict), tqdm(cellids))
+    else:
+        spine_densities = p.map(partial(get_spine_density, min_comp_len=min_comp_len),
+                                tqdm(cellids))
+    spine_densities = np.array(spine_densities)
     spine_inds = spine_densities > 0
     spine_densities = spine_densities[spine_inds]
     cellids = cellids[spine_inds]
-
     spinetime = time.time() - start
     print("%.2f sec for iterating through %s cells" % (spinetime, ct_dict[celltype]))
     time_stamps.append(time.time())

@@ -19,7 +19,7 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
     comp_length = 200
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220228_j0251v4_GPe_i_comparison_mcl_%i_newcolors" % comp_length
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220313_j0251v4_GPe_i_comparison_mcl_%i_newcolors" % comp_length
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -47,15 +47,14 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["connctivity among GPe/i finished"]
 
-    '''
 
     log.info("Step 3/5: GPe/i - MSN connectivity")
     # see how GPe and GPi are connected to STN
     GPe_MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=2, filename=f_name,
-                                                              full_cells=True, handpicked1=True, handpicked2=False,
+                                                              full_cells=True, handpicked1=False, handpicked2=False,
                                                               min_comp_len=comp_length,syn_prob_thresh = 0.8)
     GPi_MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=2, filename=f_name,
-                                                              full_cells=True, handpicked1=True, handpicked2=False,
+                                                              full_cells=True, handpicked1=False, handpicked2=False,
                                                               min_comp_len=comp_length)
     GPe_i_MSN_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=2, filename=f_name,
                                                   foldername_ct1=GPe_MSN_connectivity_resultsfolder,
@@ -64,10 +63,7 @@ if __name__ == '__main__':
 
     time_stamps = [time.time()]
     step_idents = ["connctivity GPe/i - MSN finished"]
-
-    raise ValueError
     
-    '''
 
     log.info("Step 3/5: GPe/i - STN connectivity")
     # see how GPe and GPi are connected to STN
@@ -77,16 +73,16 @@ if __name__ == '__main__':
 
     time_stamps = [time.time()]
     step_idents = ["connctivity GPe/i - STN finished"]
-    '''
+
     log.info("Step 4/5: GPe/i - FS connectivity")
     # see how GPe and GPi are connected to FS
-    GPe_FS_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=8, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False, syn_prob_thresh = 0.8)
-    GPi_FS_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=8, filename=f_name, full_cells=True, handpicked1=True, handpicked2=False, syn_prob_thresh = 0.8)
+    GPe_FS_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=8, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False, syn_prob_thresh = 0.8)
+    GPi_FS_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=8, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False, syn_prob_thresh = 0.8)
     GPe_i_FS_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=8, filename=f_name, foldername_ct1=GPe_FS_connectivity_resultsfolder, foldername_ct2=GPi_FS_connectivity_resultsfolder)
 
     time_stamps = [time.time()]
     step_idents = ["connctivity GPe/i - FS finished"]
-    '''
+
     log.info("Step 5/5: GPe/i - TAN connectivity")
     # see how GPe and GPi are connected to TAN
     GPe_TAN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=5, filename=f_name, full_cells=True, handpicked1=False, handpicked2=False, syn_prob_thresh = 0.8)
@@ -96,8 +92,6 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["connctivity GPe/i - TAN finished"]
 
-
-    raise ValueError
 
     log.info("Step 9/9 Overview Graph")
     # make connectivity overview graph with networkx

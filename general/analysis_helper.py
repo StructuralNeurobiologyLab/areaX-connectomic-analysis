@@ -14,6 +14,7 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from syconn.proc.meshes import mesh_area_calc, compartmentalize_mesh_fromskel
+from syconn.reps.super_segmentation import SuperSegmentationObject
 
 
 def get_compartment_length(sso, compartment, cell_graph):
@@ -30,7 +31,7 @@ def get_compartment_length(sso, compartment, cell_graph):
     return comp_length
 
 
-def get_spine_density(cell, min_comp_len = 100, full_cell_dict = None):
+def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
     """
     calculates the spine density of the dendrite.Therefore, the amount of spines per µm dendrite is calculated.
      Amount of spines is the number of connected_components with spiness = spines.
@@ -40,6 +41,7 @@ def get_spine_density(cell, min_comp_len = 100, full_cell_dict = None):
     :param full_cell_dict: dictionary with per cell parameter values, cell.id is key
     :return: amount of spines on dendrite, 0 if not having min_comp_len
     """
+    cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions

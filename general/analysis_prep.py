@@ -6,6 +6,7 @@ if __name__ == '__main__':
     import time
     import os
     from syconn.handler.basics import load_pkl2obj, write_obj2pkl
+
     from analysis_prep_func import find_full_cells, synapse_amount_percell, get_axon_length_area_perct
     from syconn.handler.config import initialize_logging
     from multiprocessing import Process
@@ -27,7 +28,9 @@ if __name__ == '__main__':
     f_name = "/wholebrain/scratch/arother/j0251v4_prep"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('analysis prep', log_dir=f_name + '/logs/')
+    syn_proba = 0.8
+    min_syn_size = 0.1
+    log = initialize_logging('analysis prep, syn_prob = %.2f, min syn size = %.2f' % (syn_proba, min_syn_size), log_dir=f_name + '/logs/')
     log.info("Step 0: Loading synapse data on all cells")
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     #ct_list = [0]
@@ -37,8 +40,6 @@ if __name__ == '__main__':
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
     ct_list = [6, 7, 0, 5, 8, 9, 10, 2]
     #ct_list = [2]
-    syn_proba = 0.8
-    min_syn_size = 0.1
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m = syn_prob > syn_proba
     m_cts = sd_synssv.load_numpy_data("partner_celltypes")[m]

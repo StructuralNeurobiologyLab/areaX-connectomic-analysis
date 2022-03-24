@@ -319,7 +319,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_sizes = m_sizes[ct_inds]
         m_spiness = m_spiness[ct_inds]
         #filter those where prects are not where axon is, only if axo_den_so
-        if axo_den_so = True:
+        if axo_den_so ==  True:
             testct = np.in1d(m_cts, pre_cts).reshape(len(m_cts), 2)
             testax = np.in1d(m_axs, 1).reshape(len(m_cts), 2)
             pre_ct_inds = np.any(testct == testax, axis = 1)
@@ -338,7 +338,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_sizes = m_sizes[ct_inds]
         m_spiness = m_spiness[ct_inds]
         #filter those where postcts are where axon is, only if axo_den_so
-        if axo_den_so = True:
+        if axo_den_so ==  True:
             testct = np.in1d(m_cts, post_cts).reshape(len(m_cts), 2)
             testax = np.in1d(m_axs, [2,0]).reshape(len(m_cts), 2)
             post_ct_inds = np.any(testct == testax, axis=1)

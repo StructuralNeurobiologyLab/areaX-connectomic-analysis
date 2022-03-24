@@ -243,6 +243,38 @@ def get_compartment_mesh_area(cell):
 
     return mesh_areas
 
+def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200):
+    """
+    iterates of cellids and checks if their compartment length (axon, dendrite) are
+    over a certain threshold.
+    :param cellids: array or list with cellids to be checked
+    :param fullcelldict: if given, will use this as a lookup dictionary
+    :param min_comp_len: minimum compartment length in µm
+    :return: cellids that fulfil requirement
+    """
+    checked_cells = np.zeros(len(cellids))
+    for i, cellid in enumerate(tqdm(cellids)):
+        if fullcelldict is not None:
+            cell_axon_length = fullcelldict[cellid]["axon length"]
+            if cell_axon_length < min_comp_len:
+                continue
+            cell_den_length = fullcelldict[cellid]["dendrite length"]
+            if cell_den_length < min_comp_len:
+                continue
+        else:
+            cell = SuperSegmentationObject(cellid)
+            cell.load_skeleton()
+            g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
+            cell_axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
+            if cell_axon_length < min_comp_len:
+                continue
+            cell_den_length = get_compartment_length(cell, compartment=0, cell_graph=g)
+            if cell_den_length < min_comp_len:
+                continue
+        checked_cells[i] = cellid
+
+    checked_cells = checked_cells[checked_cells > 0]
+    return checked_cells
     
 
 

@@ -21,7 +21,7 @@ if __name__ == '__main__':
     start = time.time()
     cl = 200
     syn_prob = 0.8
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220313_j0251v4_MSN_percentile_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220315_j0251v4_MSN_percentile_comparison_mcl_%i_synprob_%.2f_ncconn" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -34,9 +34,11 @@ if __name__ == '__main__':
     #comp_lengths = [100, 200, 500, 1000]
     percentiles = [10, 25, 50]
 
-    log.info("Step 1/8: MSN percentile compartment comparison")
-    #create MSN spiness percentiles with different comp_lengths
 
+
+    log.info("Step 1/8: sort MSN into different percentiles depending on spiness")
+    #create MSN spiness percentiles with different comp_lengths
+    """
     filename_spiness_saving = "/wholebrain/scratch/arother/j0251v4_prep/"
     filename_spiness_results = "%s/spiness_percentiles_mcl%i" % (f_name, cl)
     if not os.path.exists(filename_spiness_results):
@@ -46,8 +48,12 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["spiness percentiles calculated"]
+    
+    """
 
     percentiles = [10, 25, 49]
+
+    '''
 
     log.info("Step 2/8: MSN percentile compartment comparison")
     # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
@@ -59,7 +65,8 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]
 
-
+    raise ValueError
+    '''
 
     log.info("Step 3/8: MSN connectivity between percentiles")
     # see how MSN percentiles are connected

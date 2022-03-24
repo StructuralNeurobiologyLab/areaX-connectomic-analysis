@@ -299,7 +299,8 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
         results_comparision = ComparingResultsForPLotting(celltype1=ct1_str,
                                                           celltype2=ct2_str, filename=f_name,
                                                           dictionary1=ct1_comp_dict, dictionary2=ct2_comp_dict,
-                                                          color1="gray", color2="darkturquoise")
+                                                          color1="#EAAE34",
+                                                          color2="#2F86A8")
     else:
         results_comparision = ComparingResultsForPLotting(celltype1 = ct1_str, celltype2 = ct2_str, filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "#592A87", color2 = "#2AC644")
     for key in ct1_comp_dict.keys():

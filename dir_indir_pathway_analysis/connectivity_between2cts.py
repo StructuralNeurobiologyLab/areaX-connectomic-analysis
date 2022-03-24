@@ -11,7 +11,7 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length
+from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, check_comp_lengths_ct
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph
 
 
@@ -122,28 +122,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     ct2_axon_length = np.zeros(len(cellids2))
     log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
-    for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids1))):
-        if length_dicts_ct1:
-            cell_axon_length = full_cell_dict_ct1[cell.id]["axon length"]
-            if cell_axon_length < min_comp_len:
-                continue
-            cell_den_length = full_cell_dict_ct1[cell.id]["dendrite length"]
-            if cell_den_length < min_comp_len:
-                continue
-        else:
-            cell.load_skeleton()
-            g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-            cell_axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
-            if cell_axon_length < min_comp_len:
-                continue
-            cell_den_length = get_compartment_length(cell, compartment=0, cell_graph=g)
-            if cell_den_length < min_comp_len:
-                continue
-        ct1_axon_length[i] = cell_axon_length
-
-    ct1_inds = ct1_axon_length > 0
-    ct1_axon_length = ct1_axon_length[ct1_inds]
-    cellids1 = cellids1[ct1_inds]
+    cellids1 = check_comp_lengths_ct(cellids1, fullcelldict = full_cell_dict_ct1, min_comp_len = min_comp_len)
 
     ct1time = time.time() - start
     print("%.2f sec for iterating through %s cells" % (ct1time, ct1_str))
@@ -151,28 +130,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     step_idents.append('iterating over %s cells' % ct1_str)
 
     log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
-    for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids2))):
-        if length_dicts_ct2:
-            cell_axon_length = full_cell_dict_ct2[cell.id]["axon length"]
-            if cell_axon_length < min_comp_len:
-                continue
-            cell_den_length = full_cell_dict_ct2[cell.id]["dendrite length"]
-            if cell_den_length < min_comp_len:
-                continue
-        else:
-            cell.load_skeleton()
-            g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-            cell_axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
-            if cell_axon_length < min_comp_len:
-                continue
-            cell_den_length = get_compartment_length(cell, compartment=0, cell_graph=g)
-            if cell_den_length < min_comp_len:
-                continue
-        ct2_axon_length[i] = cell_axon_length
-
-    ct2_inds = ct2_axon_length > 0
-    ct2_axon_length = ct2_axon_length[ct2_inds]
-    cellids2 = cellids2[ct2_inds]
+    cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct1, min_comp_len = min_comp_len)
 
 
     ct2time = time.time() - ct1time
@@ -397,13 +355,13 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
             multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct1_str,
                                                                    celltype2=ct2_str, filename=f_name,
                                                                    dictionary1=ct2_2_ct1_multi_syn_amount,
-                                                                   dictionary2=ct1_2_ct2_multi_syn_amount, color1="gray",
-                                                                   color2="darkturquoise")
+                                                                   dictionary2=ct1_2_ct2_multi_syn_amount, color1="#EAAE34",
+                                                                   color2="#2F86A8")
             multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct1_str,
                                                                     celltype2=ct2_str, filename=f_name,
                                                                     dictionary1=ct2_2_ct1_multi_syn_sumsize,
-                                                                    dictionary2=ct1_2_ct2_multi_syn_sumsize, color1="gray",
-                                                                    color2="darkturquoise")
+                                                                    dictionary2=ct1_2_ct2_multi_syn_sumsize, color1="#EAAE34",
+                                                                   color2="#2F86A8")
         else:
             multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct1_str,
                                                                    celltype2=ct2_str,
@@ -553,7 +511,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
                                                          celltype2=ct2_str, filename=f_name,
                                                          dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
-                                                         color1="gray", color2="darkturquoise")
+                                                         color1="#EAAE34",
+                                                         color2="#2F86A8")
     else:
         results_comparison = ComparingResultsForPLotting(celltype1=ct1_str, celltype2=ct2_str,
                                                          filename=f_name, dictionary1=ct1_syn_dict,
@@ -669,7 +628,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
                                                              celltype2=ct2_str, filename=f_name,
                                                              dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
-                                                             color1="gray", color2="darkturquoise")
+                                                             color1="#EAAE34",
+                                                             color2="#2F86A8")
         else:
             results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
                                                              celltype2=ct2_str,

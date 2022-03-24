@@ -11,7 +11,7 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, check_comp_lengths_ct
+from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, check_comp_lengths_ct, filter_synapse_caches_for_ct
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph
 
 
@@ -141,56 +141,15 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")
     # prepare synapse caches with synapse threshold
-    syn_prob = sd_synssv.load_numpy_data("syn_prob")
-    m = syn_prob > syn_prob_thresh
-    m_ids = sd_synssv.ids[m]
-    m_axs = sd_synssv.load_numpy_data("partner_axoness")[m]
-    m_axs[m_axs == 3] = 1
-    m_axs[m_axs == 4] = 1
-    m_cts = sd_synssv.load_numpy_data("partner_celltypes")[m]
-    m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")[m]
-    m_sizes = sd_synssv.load_numpy_data("mesh_area")[m] / 2
-    m_spiness = sd_synssv.load_numpy_data("partner_spiness")[m]
-    #select only those of celltype1 and celltype2
-    ct1_inds = np.any(m_cts == celltype1, axis=1)
-    m_cts = m_cts[ct1_inds]
-    m_ids = m_ids[ct1_inds]
-    m_axs = m_axs[ct1_inds]
-    m_ssv_partners = m_ssv_partners[ct1_inds]
-    m_sizes = m_sizes[ct1_inds]
-    m_spiness = m_spiness[ct1_inds]
     if celltype2 is not None:
-        ct2_inds = np.any(m_cts == celltype2, axis=1)
-        m_cts = m_cts[ct2_inds]
-        m_ids = m_ids[ct2_inds]
-        m_axs = m_axs[ct2_inds]
-        m_ssv_partners = m_ssv_partners[ct2_inds]
-        m_sizes = m_sizes[ct2_inds]
-        m_spiness = m_spiness[ct2_inds]
-    # filter those with size below min_syn_size
-    size_inds = m_sizes > min_syn_size
-    m_cts = m_cts[size_inds]
-    m_ids = m_ids[size_inds]
-    m_axs = m_axs[size_inds]
-    m_ssv_partners = m_ssv_partners[size_inds]
-    m_sizes = m_sizes[size_inds]
-    m_spiness = m_spiness[size_inds]
-    # only axo-dendritic or axo-somatic synapses allowed
-    axs_inds = np.any(m_axs == 1, axis=1)
-    m_cts = m_cts[axs_inds]
-    m_ids = m_ids[axs_inds]
-    m_axs = m_axs[axs_inds]
-    m_ssv_partners = m_ssv_partners[axs_inds]
-    m_sizes = m_sizes[axs_inds]
-    m_spiness = m_spiness[axs_inds]
-    den_so = np.array([0, 2])
-    den_so_inds = np.any(np.in1d(m_axs, den_so).reshape(len(m_axs), 2),axis = 1)
-    m_cts = m_cts[den_so_inds]
-    m_ids = m_ids[den_so_inds]
-    m_axs = m_axs[den_so_inds]
-    m_ssv_partners = m_ssv_partners[den_so_inds]
-    m_sizes = m_sizes[den_so_inds]
-    m_spiness = m_spiness[den_so_inds]
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1, celltype2],
+                                                                                               syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
+    else:
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv,
+                                                                                               pre_cts=[celltype1],
+                                                                                               syn_prob_thresh=syn_prob_thresh,
+                                                                                               min_syn_size=min_syn_size,
+                                                                                               axo_den_so=True)
 
     prepsyntime = time.time() - ct2time
     print("%.2f sec for preprocessing synapses" % prepsyntime)

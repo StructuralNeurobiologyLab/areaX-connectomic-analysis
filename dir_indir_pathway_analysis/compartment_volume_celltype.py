@@ -78,13 +78,15 @@ def axon_dendritic_arborization_cell(sso, min_comp_len = 100, full_cell_dict = N
     den_dict = {"length": dendrite_length, "volume": dendrite_volume, "median radius": dendrite_median_radius, "tortuosity complete": dendrite_tortuosity_complete, "tortuosity sampled": dendrite_tortuosity_sampled}
     return ax_dict, den_dict
 
-def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_cells = True, handpicked = True, percentile = None):
+def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 100, full_cells = True, percentile = None):
     '''
     estimate the axonal and dendritic aroborization by celltype. Uses axon_dendritic_arborization to get the aoxnal/dendritic bounding box volume per cell
     via comp_arborization. Plots the volume per compartment and the overall length as histograms.
     :param ssd: super segmentation dataset
     :param celltype: j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
 #                      FS=8, LTS=9, NGF=10
+    :param filename: filename to save plots in
+    :param cellids: cellids for analysis
     :param min_comp_len: minimum compartment length in µm
     :param full_cells: loads preprocessed cells that have axon, soma and dendrite
     :param handpicked: loads cells that were manually checked
@@ -110,24 +112,6 @@ def axon_den_arborization_ct(ssd, celltype, filename, min_comp_len = 100, full_c
     log.info("parameters: celltype = %s, min_comp_length = %.i" % (ct_dict[celltype], min_comp_len))
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    if full_cells:
-        if handpicked:
-            try:
-                cellids = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr_c%i.pkl" % (ct_dict[celltype], min_comp_len))
-            except FileNotFoundError:
-                cellids = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr.pkl" % ct_dict[celltype])
-        else:
-            try:
-                cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr_c%i.pkl" % (ct_dict[celltype], min_comp_len))
-            except FileNotFoundError:
-                cellids = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr.pkl" % ct_dict[celltype])
-    else:
-        if percentile is not None:
-            raise ValueError("percentiles can only be used on preprocessed cellids")
-        else:
-            cellids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
     log.info('Step 1/2 calculating volume estimate for axon/dendrite per cell')
     axon_length_ct = np.zeros(len(cellids))
     dendrite_length_ct = np.zeros(len(cellids))

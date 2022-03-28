@@ -16,7 +16,7 @@ from wholebrain.scratch.arother.bio_analysis.general.result_helper import Result
 
 
 
-def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, full_cells = True, handpicked1 = True, handpicked2 = True, percentile_ct1 = None,
+def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None,  cellids1, cellids2 = None, full_cells = True, percentile_ct1 = None,
                          min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8):
     '''
     looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
@@ -28,8 +28,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
     :param sd_synssv: segmentation dataset for synapses.
     :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
 #                      FS=8, LTS=9, NGF=10
-    :param full_cells: if True, load preprocessed full cells
-    :param handpicked1, handpicked2: if True, load manually selected full cells. Can select for each celltype
+    :param cellids1, cellids2: cellids for celltypes 1 and 2
+    :param full_cells: if True: full_cell_dict will be tried to load for celltypes
     :param percentile_ct1: if given, different subpopulations within a celltype will be compared
     :param min_comp_len: minimum length for axon/dendrite to have to include cell in analysis
     :param min_syn_size: minimum size for synapses
@@ -83,43 +83,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, celltype2 = None, 
                 length_dicts_ct2 = True
             else:
                 length_dicts_ct2 = False
-        if handpicked1:
-            try:
-                cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr_c%i.pkl" % (ct1_str, min_comp_len))
-            except FileNotFoundError:
-                cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr.pkl" % ct1_str)
-        else:
-            try:
-                cellids1 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr_c%i.pkl" % (ct1_str, min_comp_len))
-            except FileNotFoundError:
-                cellids1 = load_pkl2obj(
-                        "/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr.pkl" % ct1_str)
-        if handpicked2:
-            try:
-                cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr_c%i.pkl" % (ct2_str, min_comp_len))
-            except FileNotFoundError:
-                cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/handpicked_%s_arr.pkl" % ct2_str)
-        else:
-            try:
-                cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr_c%i.pkl" % (ct2_str, min_comp_len))
-            except FileNotFoundError:
-                cellids2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/full_%s_arr.pkl" % ct2_str)
-    else:
-        if percentile_ct1 is not None:
-            raise ValueError("percentiles can only be used on preprocessed cellids")
-        cellids1 = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype1]
-        cellids2 = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype2]
 
-
-    ct1_axon_length = np.zeros(len(cellids1))
-    ct2_axon_length = np.zeros(len(cellids2))
     log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     cellids1 = check_comp_lengths_ct(cellids1, fullcelldict = full_cell_dict_ct1, min_comp_len = min_comp_len)

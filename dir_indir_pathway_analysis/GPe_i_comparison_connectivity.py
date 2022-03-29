@@ -66,7 +66,7 @@ if __name__ == '__main__':
     log.info("Step 3/5: GPe/i - MSN connectivity")
     # see how GPe and GPi are connected to STN
     GPe_MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=6, celltype2=2, filename=f_name,
-                                                              full_cells=True, cellids1 = GPi_ids, cellids2 = MSN_ids,
+                                                              full_cells=True, cellids1 = GPe_ids, cellids2 = MSN_ids,
                                                               min_comp_len=comp_length, syn_prob_thresh = syn_prob)
     GPi_MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=7, celltype2=2, filename=f_name,
                                                               full_cells=True, cellids1 = GPi_ids, cellids2 = MSN_ids,

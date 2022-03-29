@@ -18,6 +18,8 @@ if __name__ == '__main__':
     import itertools
     import seaborn as sns
     import matplotlib.pyplot as plt
+    from multiprocessing import pool
+    from functools import partial
 
     from tqdm import tqdm
 
@@ -26,7 +28,7 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
-    comp_length = 1000
+    comp_length = 200
     f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220329_j0251v4_GPe_i_hpv3_myelin_mito_radius_%i_newcolors" % comp_length
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -80,6 +82,7 @@ if __name__ == '__main__':
     cached_mito_mesh_bb = sd_mitossv.load_numpy_data("mesh_bb")
     cached_mito_rep_coords = sd_mitossv.load_numpy_data("rep_coord")
     cached_mito_volumes = sd_mitossv.load_numpy_data("size")
+
 
     log.info("Step 1/3: Get information from GPe")
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(GPe_ids))):

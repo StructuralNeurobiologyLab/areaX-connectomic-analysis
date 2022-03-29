@@ -21,7 +21,7 @@ if __name__ == '__main__':
     start = time.time()
     cl = 200
     syn_prob = 0.8
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220329_j0251v4_MSN_percentile_comparison_GPv3hp_mcl_%i_synprob_%.2f_ncconn" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220329_j0251v4_MSN_percentile_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]
-
+    """
 
 
     log.info("Step 3/8: MSN connectivity between percentiles")
@@ -84,16 +84,15 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["connctivity between MSN percentiles finished"]
-    
-    """
+
 
     log.info("Step 4/8: MSN - GPe connectivity different percentiles")
     # see how MSN percentiles are connected to GPe
-    #GPe_ids = load_pkl2obj(
-    #    "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
-
     GPe_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr_hp_v3.pkl")
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
+
+    #GPe_ids = load_pkl2obj(
+        #"/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr_hp_v3.pkl")
 
     for p in percentiles:
         MSN_GPe_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = GPe_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
@@ -102,8 +101,8 @@ if __name__ == '__main__':
 
     log.info("Step 5/8: MSN - GPi connectivity different percentiles")
     # see how MSN percentiles are connected to GPi
-    #GPi_ids = load_pkl2obj(
-     #   "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
+    GPi_ids = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
 
     GPi_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr_hp_v3.pkl")

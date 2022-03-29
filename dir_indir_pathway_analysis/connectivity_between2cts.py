@@ -67,22 +67,16 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     if full_cells:
         try:
             full_cell_dict_ct1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype1])
-            length_dicts_ct1 = True
         except FileNotFoundError:
-            length_dicts_ct1 = False
+            print("preprocessed parameters not available for ct1")
         if celltype2 is not None:
             try:
                 full_cell_dict_ct2 = load_pkl2obj(
                     "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype2])
-                length_dicts_ct2 = True
             except FileNotFoundError:
-                length_dicts_ct2= False
+                print("preprocessed parameters not available for ct2")
         else:
-            if length_dicts_ct1:
-                full_cell_dict_ct2 = full_cell_dict_ct1
-                length_dicts_ct2 = True
-            else:
-                length_dicts_ct2 = False
+            full_cell_dict_ct2 = full_cell_dict_ct1
 
     log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
@@ -94,10 +88,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     step_idents.append('iterating over %s cells' % ct1_str)
 
     log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
-    if celltype2 is not None:
-        cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct2, min_comp_len = min_comp_len)
-    else:
-        cellids2 = check_comp_lengths_ct(cellids2, fullcelldict=full_cell_dict_ct1, min_comp_len=min_comp_len)
+    cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct2, min_comp_len = min_comp_len)
+
 
 
     ct2time = time.time() - ct1time
@@ -249,6 +241,39 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     ct2_2_ct1_syn_dict["avg syn size one cell"] = np.nanmean(ct2_2_ct1_percell_syn_size, axis=1) / \
                                                   ct2_2_ct1_syn_dict["avg amount one cell"]
 
+    #calculate amount of synapses, sum of synapse size in relation to dendritic pathlength, dendritic surface area
+    dendritic_pathlengths_ct1 = np.zeros(len(ct2_2_ct1_syn_dict["cellids"]))
+    dendritic_surface_area_ct1 = np.zeros(len(ct2_2_ct1_syn_dict["cellids"]))
+    for i, cellid in enumerate(ct2_2_ct1_syn_dict["cellids"]):
+        dendritic_pathlengths_ct1[i] = full_cell_dict_ct1[cellid]["dendrite length"]
+        dendritic_surface_area_ct1[i] = full_cell_dict_ct1[cellid]["dendrite mesh surface area"]
+
+    ct2_2_ct1_syn_dict["amount synapses per dendritic pathlength"] = ct2_2_ct1_syn_dict["amount synapses"]/dendritic_pathlengths_ct1
+    ct2_2_ct1_syn_dict["amount synapses per dendritic surface area"] = ct2_2_ct1_syn_dict[
+                                                               "amount synapses"] / dendritic_surface_area_ct1
+
+    ct2_2_ct1_syn_dict["sum size synapses per dendritic pathlength"] = ct2_2_ct1_syn_dict[
+                                                                         "sum size synapses"] / dendritic_pathlengths_ct1
+    ct2_2_ct1_syn_dict["sum size synapses per dendritic surface area"] = ct2_2_ct1_syn_dict[
+                                                                           "sum size synapses"] / dendritic_surface_area_ct1
+
+
+    dendritic_pathlengths_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
+    dendritic_surface_area_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
+    for i, cellid in enumerate(ct1_2_ct2_syn_dict["cellids"]):
+        dendritic_pathlengths_ct2[i] = full_cell_dict_ct2[cellid]["dendrite length"]
+        dendritic_surface_area_ct2[i] = full_cell_dict_ct2[cellid]["dendrite mesh surface area"]
+
+    ct1_2_ct2_syn_dict["amount synapses per dendritic pathlength"] = ct1_2_ct2_syn_dict[
+                                                                         "amount synapses"] / dendritic_pathlengths_ct2
+    ct1_2_ct2_syn_dict["amount synapses per dendritic surface area"] = ct1_2_ct2_syn_dict[
+                                                                           "amount synapses"] / dendritic_surface_area_ct2
+
+    ct1_2_ct2_syn_dict["sum size synapses per dendritic pathlength"] = ct1_2_ct2_syn_dict[
+                                                                           "sum size synapses"] / dendritic_pathlengths_ct2
+    ct1_2_ct2_syn_dict["sum size synapses per dendritic surface area"] = ct1_2_ct2_syn_dict[
+                                                                             "sum size synapses"] / dendritic_surface_area_ct2
+
 
     ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
     ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct1_str, ct2_str))
@@ -344,7 +369,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     ct2_2_ct1_resultsdict.multiple_param_labels(comp_labels, ticks)
 
     for key in ct1_2_ct2_syn_dict.keys():
-        if "ids" in key or "sum" in key or "multi" in key:
+        if "ids" in key or ("sum" in key and not "dendrite" in key) or "multi" in key:
             continue
         if "all" in key:
             ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct1_str)
@@ -465,7 +490,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                                 stripplot=False)
 
     for key in ct1_syn_dict.keys():
-        if "ids" in key or "sum" in key or "multi" in key:
+        if "ids" in key or ("sum" in key and not "dendrite" in key) or "multi" in key:
             continue
         # calculate p_value for parameter
         stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])

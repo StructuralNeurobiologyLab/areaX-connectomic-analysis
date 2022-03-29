@@ -27,7 +27,7 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
     comp_length = 1000
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220228_j0251v4_GPe_i_myelin_mito_radius_%i_newcolors" % comp_length
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220329_j0251v4_GPe_i_hpv3_myelin_mito_radius_%i_newcolors" % comp_length
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -51,14 +51,23 @@ if __name__ == '__main__':
     GPi_dendrite_length_dict = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v3_prep/full_GPi_dendritedict.pkl")
     '''
-    GPe_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
-    GPe_full_cell_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_dict.pkl")
-    GPi_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
+
     GPi_full_cell_dict = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_dict.pkl")
+    GPe_full_cell_dict = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_dict.pkl")
+
+    #GPe_ids = load_pkl2obj(
+     #   "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
+    #GPi_ids = load_pkl2obj(
+     #   "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
+
+    # cellids handpicked from v3, via mapping dict and included in V4_full_cells of celltype
+    GPe_ids = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr_hp_v3.pkl")
+    GPi_ids = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr_hp_v3.pkl")
+
 
     axon_median_radius_gpe = np.zeros(len(GPe_ids))
     axon_mito_volume_density_gpe = np.zeros(len(GPe_ids))

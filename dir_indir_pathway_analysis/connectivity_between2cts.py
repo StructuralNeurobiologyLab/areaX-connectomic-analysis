@@ -94,7 +94,10 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     step_idents.append('iterating over %s cells' % ct1_str)
 
     log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
-    cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct1, min_comp_len = min_comp_len)
+    if celltype2 is not None:
+        cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct2, min_comp_len = min_comp_len)
+    else:
+        cellids2 = check_comp_lengths_ct(cellids2, fullcelldict=full_cell_dict_ct1, min_comp_len=min_comp_len)
 
 
     ct2time = time.time() - ct1time

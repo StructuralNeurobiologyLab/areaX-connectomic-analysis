@@ -20,7 +20,7 @@ if __name__ == '__main__':
     start = time.time()
     comp_length = 200
     syn_prob = 0.8
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220313_j0251v4_GPe_i_comparison_mcl_%i_synprob_%.2f" % (comp_length, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220329_j0251v4_GPe_i_comparison_hpv3_mcl_%i_synprob_%.2f" % (comp_length, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -30,10 +30,16 @@ if __name__ == '__main__':
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    #10: "NGF"}
 
+    #GPe_ids = load_pkl2obj(
+     #   "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
+    #GPi_ids = load_pkl2obj(
+      #  "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
+
+    #cellids handpicked from v3, via mapping dict and included in V4_full_cells of celltype
     GPe_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr_hp_v3.pkl")
     GPi_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
+        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr_hp_v3.pkl")
 
     log.info("Step 1/5: GPe/i compartment comparison")
     # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes

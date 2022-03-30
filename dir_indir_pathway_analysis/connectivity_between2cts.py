@@ -97,6 +97,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     time_stamps.append(time.time())
     step_idents.append('iterating over %s cells' % ct2_str)
 
+    raise ValueError()
+
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")
     # prepare synapse caches with synapse threshold
@@ -114,6 +116,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     print("%.2f sec for preprocessing synapses" % prepsyntime)
     time_stamps.append(time.time())
     step_idents.append('preprocessing synapses')
+
+
 
     log.info("Step 3b: iterate over synapses to get synaptic connectivity parameters")
     param_labels = ["amount synapses", "sum size synapses"]
@@ -287,8 +291,6 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     ct1_2_ct2_syn_dict["percentage sum size synapses"] = (ct1_2_ct2_syn_dict[
                                                               "sum size synapses"] / overall_sum_synapses_ct2) * 100
 
-    raise ValueError
-    raise KeyError
 
     ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
     ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct1_str, ct2_str))

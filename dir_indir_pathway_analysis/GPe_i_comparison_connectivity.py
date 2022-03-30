@@ -41,6 +41,7 @@ if __name__ == '__main__':
     #GPi_ids = load_pkl2obj(
        # "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr_hp_v3.pkl")
 
+
     """
     log.info("Step 1/5: GPe/i compartment comparison")
     # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes

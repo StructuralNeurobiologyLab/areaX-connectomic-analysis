@@ -263,8 +263,6 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     ct2_2_ct1_syn_dict["percentage amount synapses"] = (ct2_2_ct1_syn_dict["amount synapses"] / overall_amount_synapses_ct1) * 100
     ct2_2_ct1_syn_dict["percentage sum size synapses"] = (ct2_2_ct1_syn_dict["sum size synapses"]/ overall_sum_synapses_ct1)* 100
 
-
-    raise ValueError
     dendritic_pathlengths_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
     dendritic_surface_area_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
     overall_amount_synapses_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
@@ -290,6 +288,8 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
                                                               "sum size synapses"] / overall_sum_synapses_ct2) * 100
 
     raise ValueError
+    raise KeyError
+
     ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
     ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct1_str, ct2_str))
 

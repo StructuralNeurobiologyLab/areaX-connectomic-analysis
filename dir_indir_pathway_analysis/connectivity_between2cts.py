@@ -384,7 +384,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     ct2_2_ct1_resultsdict.multiple_param_labels(comp_labels, ticks)
 
     for key in ct1_2_ct2_syn_dict.keys():
-        if "ids" in key or ("sum" in key and not "dendritic" in key) or "multi" in key:
+        if "ids" in key or "multi" in key:
             continue
         if "all" in key:
             ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct1_str)
@@ -505,7 +505,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                                 stripplot=False)
 
     for key in ct1_syn_dict.keys():
-        if "ids" in key or ("sum" in key and not "dendritic" in key) or "multi" in key:
+        if "ids" in key or "multi" in key:
             continue
         # calculate p_value for parameter
         stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])
@@ -617,7 +617,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                                             stripplot=False)
 
         for key in ct1_syn_dict.keys():
-            if "ids" in key or ("sum" in key and not "dendritic" in key) or "multi" in key:
+            if "ids" in key or "multi" in key:
                 continue
             # calculate p_value for parameter
             stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])

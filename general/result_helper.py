@@ -44,6 +44,10 @@ class ResultsForPlotting():
             if "amount" in key:
                 if "percentage" in key:
                     param_label = "percentage of %ss" % subcell
+                elif "pathlength" in key:
+                    param_label = "amount %s per µm" % subcell
+                elif "surface" in key:
+                    param_label = "amount %s per surface area [1/µm²]" % subcell
                 else:
                     param_label = "amount of %ss" % subcell
             elif "size" in key:
@@ -51,7 +55,14 @@ class ResultsForPlotting():
                     param_label = "percentage of %s size" % subcell
                 else:
                     if subcell == "synapse":
-                        param_label = "average %s size [µm²]" % subcell
+                        if "average" in key:
+                            param_label = "average %s size [µm²]" % subcell
+                        elif "pathlength" in key:
+                            param_label = "sum size synapses per pathlength [µm²/µm]"
+                        elif "surface" in key:
+                            param_label = "sum size synapses per surface area [µm²/µm²]"
+                        else:
+                            param_label = "%s size [µm²]" % subcell
             elif "length" in key:
                 param_label = "pathlength in µm"
             elif "vol" in key:

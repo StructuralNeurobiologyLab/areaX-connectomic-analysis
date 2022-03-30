@@ -1,5 +1,4 @@
 
-
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -16,7 +15,7 @@ from wholebrain.scratch.arother.bio_analysis.general.result_helper import Result
 
 
 
-def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype2 = None, cellids2 = None, full_cells = True, percentile_ct1 = None,
+def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = None, cellids2 = None, full_cells = True, percentile_ct1 = None,
                          min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8):
     '''
     looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
@@ -24,7 +23,6 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     synapses. Uses cached synapse properties. Uses compartment_length per cell to ignore cells with not enough axon/dendrite
     # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
     axoness values: 0 = dendrite, 1 = axon, 2 = soma
-    :param ssd: super-segmentation dataset
     :param sd_synssv: segmentation dataset for synapses.
     :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
 #                      FS=8, LTS=9, NGF=10
@@ -36,6 +34,7 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     :param syn_prob_thresh: threshold for synapse probability
     :return: f_name: foldername in which results are stored
     '''
+
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
@@ -97,7 +96,6 @@ def synapses_between2cts(ssd, sd_synssv, celltype1, filename, cellids1, celltype
     time_stamps.append(time.time())
     step_idents.append('iterating over %s cells' % ct2_str)
 
-    raise ValueError()
 
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")

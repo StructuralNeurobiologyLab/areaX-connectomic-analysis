@@ -97,6 +97,7 @@ class ResultsForPlotting():
         :param outgoing: if connectivity is analysed, if True then self.celltype is presynaptic
         :return:
         """
+
         if norm_hist:
             sns.distplot(self.dictionary[key],
                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": color},

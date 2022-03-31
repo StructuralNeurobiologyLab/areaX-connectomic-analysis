@@ -249,20 +249,21 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     for i, cellid in enumerate(ct2_2_ct1_syn_dict["cellids"]):
         dendritic_pathlengths_ct1[i] = full_cell_dict_ct1[cellid]["dendrite length"]
         dendritic_surface_area_ct1[i] = full_cell_dict_ct1[cellid]["dendrite mesh surface area"]
-        overall_amount_synapses_ct1[i] = full_cell_dict_ct1[cellid]["dendrite synapse amount"]
-        overall_sum_synapses_ct1[i] = full_cell_dict_ct1[cellid]["dendrite summed synapse size"]
+        overall_amount_synapses_ct1[i] = full_cell_dict_ct1[cellid]["dendrite synapse amount"] + full_cell_dict_ct1[cellid]["soma synapse amount"]
+        overall_sum_synapses_ct1[i] = full_cell_dict_ct1[cellid]["dendrite summed synapse size"] + full_cell_dict_ct1[cellid]["soma summed synapse size"]
 
-    ct2_2_ct1_syn_dict["amount synapses per dendritic pathlength"] = ct2_2_ct1_syn_dict["amount synapses"]/dendritic_pathlengths_ct1
-    ct2_2_ct1_syn_dict["amount synapses per dendritic surface area"] = ct2_2_ct1_syn_dict[
-                                                               "amount synapses"] / dendritic_surface_area_ct1
+    ct2_2_ct1_syn_dict["amount synapses per dendritic pathlength"] = (ct2_2_ct1_syn_dict["amount synapses"] - ct2_2_ct1_syn_dict["amount synapses - soma"]) /dendritic_pathlengths_ct1
+    ct2_2_ct1_syn_dict["amount synapses per dendritic surface area"] = (ct2_2_ct1_syn_dict[
+                                                               "amount synapses"] - ct2_2_ct1_syn_dict["amount synapses - soma"])/ dendritic_surface_area_ct1
 
-    ct2_2_ct1_syn_dict["sum size synapses per dendritic pathlength"] = ct2_2_ct1_syn_dict[
-                                                                         "sum size synapses"] / dendritic_pathlengths_ct1
-    ct2_2_ct1_syn_dict["sum size synapses per dendritic surface area"] = ct2_2_ct1_syn_dict[
-                                                                           "sum size synapses"] / dendritic_surface_area_ct1
+    ct2_2_ct1_syn_dict["sum size synapses per dendritic pathlength"] = (ct2_2_ct1_syn_dict[
+                                                                         "sum size synapses"] - ct2_2_ct1_syn_dict["sum size synapses - soma"]) / dendritic_pathlengths_ct1
+    ct2_2_ct1_syn_dict["sum size synapses per dendritic surface area"] = (ct2_2_ct1_syn_dict[
+                                                                           "sum size synapses"] - ct2_2_ct1_syn_dict["sum size synapses - soma"])/ dendritic_surface_area_ct1
     ct2_2_ct1_syn_dict["percentage amount synapses"] = (ct2_2_ct1_syn_dict["amount synapses"] / overall_amount_synapses_ct1) * 100
     ct2_2_ct1_syn_dict["percentage sum size synapses"] = (ct2_2_ct1_syn_dict["sum size synapses"]/ overall_sum_synapses_ct1)* 100
 
+    raise ValueError
 
     dendritic_pathlengths_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
     dendritic_surface_area_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
@@ -271,18 +272,18 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     for i, cellid in enumerate(ct1_2_ct2_syn_dict["cellids"]):
         dendritic_pathlengths_ct2[i] = full_cell_dict_ct2[cellid]["dendrite length"]
         dendritic_surface_area_ct2[i] = full_cell_dict_ct2[cellid]["dendrite mesh surface area"]
-        overall_amount_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite synapse amount"]
-        overall_sum_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite summed synapse size"]
+        overall_amount_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite synapse amount"] + full_cell_dict_ct2[cellid]["soma synapse amount"]
+        overall_sum_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite summed synapse size"] + full_cell_dict_ct2[cellid]["soma summed synpase size"]
 
-    ct1_2_ct2_syn_dict["amount synapses per dendritic pathlength"] = ct1_2_ct2_syn_dict[
-                                                                         "amount synapses"] / dendritic_pathlengths_ct2
-    ct1_2_ct2_syn_dict["amount synapses per dendritic surface area"] = ct1_2_ct2_syn_dict[
-                                                                           "amount synapses"] / dendritic_surface_area_ct2
+    ct1_2_ct2_syn_dict["amount synapses per dendritic pathlength"] = (ct1_2_ct2_syn_dict[
+                                                                         "amount synapses"] - ct1_2_ct2_syn_dict["amount synapses - soma"])/ dendritic_pathlengths_ct2
+    ct1_2_ct2_syn_dict["amount synapses per dendritic surface area"] = (ct1_2_ct2_syn_dict[
+                                                                           "amount synapses"] - ct1_2_ct2_syn_dict["amount synapses - soma"])/ dendritic_surface_area_ct2
 
-    ct1_2_ct2_syn_dict["sum size synapses per dendritic pathlength"] = ct1_2_ct2_syn_dict[
-                                                                           "sum size synapses"] / dendritic_pathlengths_ct2
-    ct1_2_ct2_syn_dict["sum size synapses per dendritic surface area"] = ct1_2_ct2_syn_dict[
-                                                                             "sum size synapses"] / dendritic_surface_area_ct2
+    ct1_2_ct2_syn_dict["sum size synapses per dendritic pathlength"] = (ct1_2_ct2_syn_dict[
+                                                                           "sum size synapses"] - ct1_2_ct2_syn_dict["sum size synapses - soma"])/ dendritic_pathlengths_ct2
+    ct1_2_ct2_syn_dict["sum size synapses per dendritic surface area"] = (ct1_2_ct2_syn_dict[
+                                                                             "sum size synapses"] - ct1_2_ct2_syn_dict["sum size synapses - soma"])/ dendritic_surface_area_ct2
     ct1_2_ct2_syn_dict["percentage amount synapses"] = (ct1_2_ct2_syn_dict[
                                                             "amount synapses"] / overall_amount_synapses_ct2) * 100
     ct1_2_ct2_syn_dict["percentage sum size synapses"] = (ct1_2_ct2_syn_dict[

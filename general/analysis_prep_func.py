@@ -138,7 +138,6 @@ def synapse_amount_percell(celltype, syn_cts, syn_ssv_partners, syn_sizes, syn_a
     ct_axs = syn_axs[inds]
     ct_sizes = syn_sizes[inds]
     #get indices from celltype, axon, dendrite, soma for sorting later
-    ct_inds = np.where(ct_cts == celltype)
     axon_inds = np.where(ct_axs == 1)
     axo_ct_inds = np.where(ct_cts[axon_inds] == celltype)
     # get unique cellids from cells whose axons make connections, count them and sum up sizes

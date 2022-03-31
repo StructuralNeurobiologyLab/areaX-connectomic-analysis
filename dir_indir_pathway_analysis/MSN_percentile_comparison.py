@@ -21,7 +21,7 @@ if __name__ == '__main__':
     start = time.time()
     cl = 200
     syn_prob = 0.8
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220330_j0251v4_MSN_percentile_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220331_j0251v4_MSN_percentile_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     log.info("Step 3/8: MSN connectivity between percentiles")
     # see how MSN percentiles are connected
     for p in percentiles:
-        MSN_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = MSN_id_dict[100 - p], min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = MSN_id_dict[100 - p], min_comp_len = cl, syn_prob_thresh = syn_prob)
         msn_summed_synapses = compare_connectivity(comp_ct1=2, percentile = p, filename=f_name, foldername_ct1=MSN_connectivity_resultsfolder, foldername_ct2=MSN_connectivity_resultsfolder, min_comp_len = cl)
     
     time_stamps = [time.time()]
@@ -95,8 +95,8 @@ if __name__ == '__main__':
         #"/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr_hp_v3.pkl")
 
     for p in percentiles:
-        MSN_GPe_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = GPe_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
-        MSN_GPe_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=6, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100 - p], cellids2 = GPe_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_GPe_p1_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=6, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = GPe_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_GPe_p2_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=6, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100 - p], cellids2 = GPe_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
         msn_gpe_summed_synapses = compare_connectivity(comp_ct1=2, percentile = p, connected_ct=6, filename=f_name, foldername_ct1=MSN_GPe_p1_connectivity_resultsfolder, foldername_ct2=MSN_GPe_p2_connectivity_resultsfolder, min_comp_len = cl)
 
     log.info("Step 5/8: MSN - GPi connectivity different percentiles")
@@ -107,8 +107,8 @@ if __name__ == '__main__':
     GPi_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr_hp_v3.pkl")
     for p in percentiles:
-        MSN_GPi_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = GPi_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
-        MSN_GPi_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=7, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100- p], cellids2 = GPi_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_GPi_p1_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=7, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = GPi_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_GPi_p2_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=7, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100- p], cellids2 = GPi_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
         msn_gpi_summed_synapses = compare_connectivity(comp_ct1=2, percentile = p, connected_ct=7, filename=f_name, foldername_ct1=MSN_GPi_p1_connectivity_resultsfolder, foldername_ct2=MSN_GPi_p2_connectivity_resultsfolder, min_comp_len = cl)
 
     log.info("Step 6/8: MSN - STN connectivity different percentiles")
@@ -116,8 +116,8 @@ if __name__ == '__main__':
     STN_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_STN_arr.pkl")
     for p in percentiles:
-        MSN_STN_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=0, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = STN_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
-        MSN_STN_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=0, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100 - p], cellids2 = STN_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_STN_p1_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=0, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = STN_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_STN_p2_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=0, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100 - p], cellids2 = STN_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
         msn_stn_summed_synapses = compare_connectivity(comp_ct1=2, percentile = p, connected_ct=0, filename=f_name, foldername_ct1=MSN_STN_p1_connectivity_resultsfolder, foldername_ct2=MSN_STN_p2_connectivity_resultsfolder, min_comp_len = cl)
 
     time_stamps = [time.time()]
@@ -128,8 +128,8 @@ if __name__ == '__main__':
     FS_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_FS_arr.pkl")
     for p in percentiles:
-        MSN_FS_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=8, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = FS_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
-        MSN_FS_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=8, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100 - p], cellids2 = FS_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_FS_p1_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=8, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = FS_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_FS_p2_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=8, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100 - p], cellids2 = FS_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
         msn_fs_summed_synapses = compare_connectivity(comp_ct1=2, percentile = p, connected_ct=8, filename=f_name, foldername_ct1=MSN_FS_p1_connectivity_resultsfolder, foldername_ct2=MSN_FS_p2_connectivity_resultsfolder, min_comp_len = cl)
 
     time_stamps = [time.time()]
@@ -140,8 +140,8 @@ if __name__ == '__main__':
     TAN_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_TAN_arr.pkl")
     for p in percentiles:
-        MSN_TAN_p1_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = TAN_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
-        MSN_TAN_p2_connectivity_resultsfolder = synapses_between2cts(ssd, sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100 - p], cellids2 = TAN_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_TAN_p1_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[p], cellids2 = TAN_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
+        MSN_TAN_p2_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=5, percentile_ct1 = 100 - p, filename=f_name, full_cells=True, cellids1 = MSN_id_dict[100 - p], cellids2 = TAN_ids, min_comp_len = cl, syn_prob_thresh = syn_prob)
         msn_tan_summed_synapses = compare_connectivity(comp_ct1=2, percentile= p, connected_ct=5, filename=f_name, foldername_ct1=MSN_TAN_p1_connectivity_resultsfolder, foldername_ct2=MSN_TAN_p2_connectivity_resultsfolder, min_comp_len = cl)
     
     time_stamps = [time.time()]

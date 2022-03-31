@@ -229,7 +229,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if norm_hist:
             sns.histplot(self.dictionary1[key], common_norm = True, element = "step", fill = False, color = self.color1,
                          kde=False, bins=bins, label=self.celltype1)
-            sns.histplot(self.dictionary2[key], common_norm = True, element = "step", fill = False, color = self.color1,
+            sns.histplot(self.dictionary2[key], common_norm = True, element = "step", fill = False, color = self.color2,
                          kde=False, bins=bins, label=self.celltype2)
             if add_key:
                 try:

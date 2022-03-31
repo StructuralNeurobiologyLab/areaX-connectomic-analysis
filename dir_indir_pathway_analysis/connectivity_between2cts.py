@@ -220,8 +220,7 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
                                                                 ct1_2_ct2_syn_dict["amount synapses"] * 100
         ct2_2_ct1_syn_dict["percentage synapse amount - " + ci] = ct2_2_ct1_syn_dict["amount synapses - " + ci] / \
                                                                 ct2_2_ct1_syn_dict["amount synapses"] * 100
-        ct1_2_ct2_syn_dict.pop("sum size synapses - " + ci)
-        ct2_2_ct1_syn_dict.pop("sum size synapses - " + ci)
+
 
     #average synapse amount and size for one cell form ct1 to one cell of ct2
     ct1_2_ct2_percell_syn_amount = ct1_2_ct2_percell_syn_amount[ct2_syn_inds]
@@ -263,8 +262,6 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     ct2_2_ct1_syn_dict["percentage amount synapses"] = (ct2_2_ct1_syn_dict["amount synapses"] / overall_amount_synapses_ct1) * 100
     ct2_2_ct1_syn_dict["percentage sum size synapses"] = (ct2_2_ct1_syn_dict["sum size synapses"]/ overall_sum_synapses_ct1)* 100
 
-    raise ValueError
-
     dendritic_pathlengths_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
     dendritic_surface_area_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
     overall_amount_synapses_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
@@ -273,7 +270,7 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
         dendritic_pathlengths_ct2[i] = full_cell_dict_ct2[cellid]["dendrite length"]
         dendritic_surface_area_ct2[i] = full_cell_dict_ct2[cellid]["dendrite mesh surface area"]
         overall_amount_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite synapse amount"] + full_cell_dict_ct2[cellid]["soma synapse amount"]
-        overall_sum_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite summed synapse size"] + full_cell_dict_ct2[cellid]["soma summed synpase size"]
+        overall_sum_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite summed synapse size"] + full_cell_dict_ct2[cellid]["soma summed synapse size"]
 
     ct1_2_ct2_syn_dict["amount synapses per dendritic pathlength"] = (ct1_2_ct2_syn_dict[
                                                                          "amount synapses"] - ct1_2_ct2_syn_dict["amount synapses - soma"])/ dendritic_pathlengths_ct2
@@ -288,7 +285,10 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
                                                             "amount synapses"] / overall_amount_synapses_ct2) * 100
     ct1_2_ct2_syn_dict["percentage sum size synapses"] = (ct1_2_ct2_syn_dict[
                                                               "sum size synapses"] / overall_sum_synapses_ct2) * 100
-    
+
+    for ci in comp_labels:
+        ct1_2_ct2_syn_dict.pop("sum size synapses - " + ci)
+        ct2_2_ct1_syn_dict.pop("sum size synapses - " + ci)
 
     ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
     ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct1_str, ct2_str))

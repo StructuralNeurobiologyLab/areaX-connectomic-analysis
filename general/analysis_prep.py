@@ -51,6 +51,8 @@ if __name__ == '__main__':
     m_axs = m_axs[size_inds]
     m_ssv_partners = m_ssv_partners[size_inds]
     m_sizes = m_sizes[size_inds]
+    m_axs[m_axs == 3] = 1
+    m_axs[m_axs == 4] = 1
     time_stamps = [time.time()]
     step_idents = ["finished preparations"]
 

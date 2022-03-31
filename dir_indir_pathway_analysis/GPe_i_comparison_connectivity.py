@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]
-    
+    """
 
     log.info("Step 2/5: GPe and GPi connectivity")
     # see how GPe and GPi are connected
@@ -61,7 +61,6 @@ if __name__ == '__main__':
 
     time_stamps = [time.time()]
     step_idents = ["connctivity among GPe/i finished"]
-    """
 
     MSN_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_arr.pkl")

@@ -77,8 +77,6 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     m_sizes = m_sizes[ct2ids_inds]
     m_spiness = m_spiness[ct2ids_inds]
     #sort according to connectivity
-    only_2ct2_cellids = np.zeros(len(cellids1))
-    only_2_ct3_cellids = np.zeros(len(cellids1))
     #seperate synapses into connecteted to cellids2 and cellids3
     conn_ct2_inds = np.any(np.in1d(m_ssv_partners, cellids2).reshape(len(m_ssv_partners), 2), axis=1)
     conn_ct3_inds = np.any(np.in1d(m_ssv_partners, cellids3).reshape(len(m_ssv_partners), 2), axis=1)
@@ -123,6 +121,11 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     connected_cellids1 = np.hstack([only_2ct3_cellids, only_2ct2_cellids, both_cellids])
     not_conn_inds = np.in1d(cellids1, connected_cellids1) == False
     not_connected_ids = cellids1[not_conn_inds]
+
+    time_stamps = [time.time()]
+    step_idents = ['t-0']
+
+    log.info("Step 4/X: Compute statistics and plot results")
 
     #save GPe, GPiids, they are connected to, compartments they are connected to
     #save data in dataframe and table

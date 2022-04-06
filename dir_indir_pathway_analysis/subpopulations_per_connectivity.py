@@ -16,7 +16,7 @@ from scipy.stats import ranksums
 from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, check_comp_lengths_ct, filter_synapse_caches_for_ct
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph
 
-def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, full_celldict1, full_celldict2, full_celldict3, f_name, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
+def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     """
     sort one celltype into 4 groups based on connectivty to two other celltypes. Groups will be only one of them, neither or both.
     Also synapse amount, sum of synaptic area and cellids of the cells they synapsed onto will be looked at.
@@ -35,6 +35,9 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     """
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
+    full_celldict1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[ct1])
+    full_celldict2 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[ct2])
+    full_celldict3 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[ct3])
     if f_name_saving is None:
         f_name_saving = f_name
     log = initialize_logging('subpopulation goruping per connectivity', log_dir=f_name + '/logs/')
@@ -44,12 +47,12 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
-    log.info("Step 1/X: Check compartment length of cells from three celltypes")
+    log.info("Step 1/4: Check compartment length of cells from three celltypes")
     cellids1 = check_comp_lengths_ct(cellids1, fullcelldict=full_celldict1, min_comp_len=min_comp_len)
     cellids2 = check_comp_lengths_ct(cellids2, fullcelldict=full_celldict2, min_comp_len=min_comp_len)
     cellids3 = check_comp_lengths_ct(cellids3, fullcelldict=full_celldict3, min_comp_len=min_comp_len)
 
-    log.info("Step 2/X: Prefilter synapses for synapses between these celltypes")
+    log.info("Step 2/4: Prefilter synapses for synapses between these celltypes")
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv,
                                                                                            pre_cts=[ct1], post_cts = [ct2, ct3],
                                                                                            syn_prob_thresh=syn_prob_thresh,
@@ -59,7 +62,8 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
-    log.info("Step 3/X: Sort celltype into groups based on connectivity")
+    log.info("Step 3/4: Sort celltype into groups based on connectivity")
+    raise ValueError
     #filter synapses that are not from cellids 1
     ct1ids_inds = np.any(np.in1d(m_ssv_partners, cellids1).reshape(len(m_cts), 2), axis=1)
     m_cts = m_cts[ct1ids_inds]
@@ -125,7 +129,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
-    log.info("Step 4/X: Compute statistics and plot results")
+    log.info("Step 4/4: Compute statistics and plot results")
 
     #save GPe, GPiids, they are connected to, compartments they are connected to
     #save data in dataframe and table
@@ -134,3 +138,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     #maybe even incoming synapses as GPe/i
     #save dictionaries and arrays for further use
     #then rewrite other functions to compare up to 4 groups
+
+
+
+sort_by_connectivity()

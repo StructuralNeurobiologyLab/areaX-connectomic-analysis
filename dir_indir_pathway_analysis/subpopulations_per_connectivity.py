@@ -250,7 +250,9 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
         stats, p_value = ranksums(ct2_arr_dict[key], ct3_arr_dict[key], both_arr_dict[key])
         ranksum_results.loc["stats", key] = stats
         ranksum_results.loc["p value", key] = p_value
-
+        conn_synapses.plot_violin(key = key, data = conn_df, subcell="synapse", stripplot=True)
+        conn_synapses.plot_box(key=key, data=conn_df, subcell="synapse", stripplot=False)
+        conn_synapses.plot_box(key=key, data=conn_df, subcell="synapse", stripplot=False, norm_hist = True)
 
 
     raise ValueError

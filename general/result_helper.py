@@ -522,21 +522,98 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         plt.close()
 
 
-class ComparingMultipleForPLotting(ComparingResultsForPLotting):
+class ComparingMultipleForPLotting(ResultsForPlotting):
     """
     makes plots from multiple dictionaries with the same keys to compare their results.If only two dictionaries better use ComparingResultsForPlotting.
     """
     def __init__(self, ct_list, filename, dictionary_list, colour_list):
-        super().__init__(ct_list[0], ct_list[1], filename, dictionary_list[0], dictionary_list[1])
+        super().__init__(ct_list[0], filename, dictionary_list[0])
         if len(ct_list) < 2:
             raise ValueError("this class needs at least two celltypes")
-        self.cellypes = {}
-        self.dictionaries = {}
-        self.color_palette= {}
-        for i, ct in enumerate(ct_list):
-            self.celltypes[i] = ct_list[i]
-            self.dictionaries[i] = dictionary_list[i]
-            self.color_palette[ct_list[i]] = colour_list[i]
+        self.celltypes = {i: ct_list[i] for i in range(len(ct_list))}
+        self.dictionaries = {i: dictionary_list[i] for i in range(len(ct_list))}
+        self.color_palette= {ct_list[i]: colour_list[i] for i in range(len(ct_list))}
+
+    def plot_box(self, key, x, result_df, subcell, stripplot = True):
+        """
+        makes a violinplot of a specific parameter that is compared within two dictionaries.
+        :param key: parameter that is compared
+        :param result_df: dataframe containing results
+        :param subcell: subcellular compartment
+        :param stripplot: if true then stripplot will be overlayed
+        :return: None
+        """
+        sns.boxplot(x = x, y = key, data=result_df, palette=self.color_palette)
+        if stripplot:
+            sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
+        plt.ylabel(self.param_label(key, subcell))
+        plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        plt.savefig("%s/%s_%s_%s_%s_box.svg" % (self.filename, key,self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        plt.close()
+
+    def plot_violin(self, key, x, result_df, subcell, stripplot = True):
+        """
+        makes a violinplot of a specific parameter that is compared within two dictionaries.
+        :param key: parameter that is compared
+        :param result_df: dataframe containing results
+        :param subcell: subcellular compartment
+        :param stripplot: if true then stripplot will be overlayed
+        :return: None
+        """
+        sns.violinplot(x = x, y = key,data=result_df, inner="box", palette=self.color_palette)
+        if stripplot:
+            sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
+        plt.ylabel(self.param_label(key, subcell))
+        plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        plt.savefig(
+            "%s/%s_%s_%s_%s_box.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        plt.close()
+
+    def plot_hist_comparison(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None):
+        """
+                 plots two arrays and compares them in histogram and saves it.
+                 :param key: key of dictionary that should be plotted
+                 :param subcell: compartment or subcellular structure that will be plotted
+                 :param cells: True: cells are plotted, False: subcellular structures are plotted
+                 :param norm_hist: if true: histogram will be normed
+                 :param bins: amount of bins
+                 :param xlabel: label of x axis, not needed if clear from key
+                 :return: None
+                 """
+        if bins is None:
+            bins = "auto"
+        if norm_hist:
+            for i in range(len(list(self.celltypes.keys()))):
+                sns.histplot(self.dictionaries[i][key], common_norm = True, element = "step", fill = False, color = self.color_palette[self.celltypes[i]],
+                         kde=False, bins=bins, label=self.celltypes[i])
+            if cells:
+                plt.ylabel("fraction of cells")
+            elif "pair" in key:
+                plt.ylabel("fraction of %s pairs" % subcell)
+            else:
+                plt.ylabel("fraction of %s" % subcell)
+        else:
+            for i in range(len(list(self.celltypes.keys()))):
+                sns.histplot(self.dictionaries[i][key], common_norm=False, element="step", fill=False,
+                             color=self.color_palette[self.celltypes[i]],
+                             kde=False, bins=bins, label=self.celltypes[i])
+            if cells:
+                plt.ylabel("count of cells")
+            elif "pair" in key:
+                plt.ylabel("count of %s pairs" % subcell)
+            else:
+                plt.ylabel("count of %s" % subcell)
+        plt.legend()
+        if xlabel:
+            plt.xlabel(xlabel)
+        else:
+            plt.xlabel(self.param_label(key, subcell))
+        plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        if norm_hist:
+            plt.savefig("%s/%s_%s_%s_%s_hist_norm.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        else:
+            plt.savefig("%s/%s_%s_%s_%s_hist.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        plt.close()
 
 
 

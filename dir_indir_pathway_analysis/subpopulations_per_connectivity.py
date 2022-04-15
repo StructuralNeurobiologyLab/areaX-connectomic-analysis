@@ -124,7 +124,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     only_ct3_dict = {
         cellid: {"synapse amount": only_ct1ct3_syn_amounts[i], "sum size synapses": only_ct1ct3_syn_sumsizes[i], "ct partners": ct1_ct3_partners[np.where(ct1_ct3_ssvsids == cellid)]} for
         i, cellid in enumerate(only_2ct3_cellids)}
-    both_dict = {cellid: {"synapse amount": both_syn_amounts[i], "sum size synapses": both_syn_sumsizes[i], "ct partners": np.hstack([ct1_ct2_partners[np.where(ct1_ct2_ssvsids == cellid)], ct1_ct3_partners[np.where(ct1_ct3_ssvsids == cellid)]])} for i, cellid in enumerate(both_cellids)}
+    both_dict = {cellid: {"synapse amount": both_syn_amounts[i], "sum size synapses": both_syn_sumsizes[i], "ct partners": np.unique(np.hstack([ct1_ct2_partners[np.where(ct1_ct2_ssvsids == cellid)], ct1_ct3_partners[np.where(ct1_ct3_ssvsids == cellid)]]))} for i, cellid in enumerate(both_cellids)}
     #those that are in fullcells of ct1 and do not have nay connectivity here are in group four
     connected_cellids1 = np.hstack([only_2ct3_cellids, only_2ct2_cellids, both_cellids])
     not_conn_inds = np.in1d(cellids1, connected_cellids1) == False
@@ -166,24 +166,40 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     "synapse amount"] = both_syn_amounts
     conn_df.loc[len(only_2ct2_cellids) + len(only_2ct3_cellids): len(connected_cellids1) - 1,
     "sum synapse size"] = both_syn_sumsizes
-    raise ValueError
     for cellid in cellids1:
         if cellid in only_2ct2_cellids:
-            conn_df.loc[np.where(only_2ct2_cellids == cellid), "amount partners"] = len(
+            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "amount partners"] = len(
                 only_ct2_dict[cellid]["ct partners"])
-            conn_df.loc[np.where(only_2ct2_cellids == cellid), "avg syn amount per partner"] = only_ct2_dict[cellid]["synapse amount"] / len(
+            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "avg syn amount per partner"] = only_ct2_dict[cellid]["synapse amount"] / len(
                 only_ct2_dict[cellid]["ct partners"])
-            conn_df.loc[np.where(only_2ct2_cellids == cellid), "avg syn size per partner"] = only_ct2_dict[cellid]["sum size synapses"] / len(
+            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "avg syn size per partner"] = only_ct2_dict[cellid]["sum size synapses"] / len(
                 only_ct2_dict[cellid]["ct partners"])
         elif cellid in only_2ct3_cellids:
-            conn_df.loc[np.where(only_2ct3_cellids == cellid) + len(only_2ct2_cellids), "amount partners"] = len(
+            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "amount partners"] = len(
+                only_ct3_dict[cellid]["ct partners"])
+            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "avg syn amount per partner"] = only_ct3_dict[cellid][
+                                                                                                      "synapse amount"] / len(
+                only_ct3_dict[cellid]["ct partners"])
+            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "avg syn size per partner"] = only_ct3_dict[cellid][
+                                                                                                    "sum size synapses"] / len(
                 only_ct3_dict[cellid]["ct partners"])
         elif cellid in both_cellids:
-            conn_df.loc[np.where(both_cellids == cellid) + len(only_2ct2_cellids) + len(
+            conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
                 only_2ct3_cellids), "amount partners"] = len(
                 both_dict[cellid]["ct partners"])
+            conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
+                only_2ct3_cellids), "avg syn amount per partner"] = both_dict[cellid]["synapse amount"] / len(
+                both_dict[cellid]["ct partners"])
+            conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
+                only_2ct3_cellids), "avg syn size per partner"] = both_dict[cellid]["sum size synapses"] / len(both_dict[cellid]["ct partners"])
         else:
             continue
+
+    conn_df.to_csv("%sresult_params.csv" % f_name)
+
+
+
+    raise ValueError
 
     #save GPe, GPiids, they are connected to, compartments they are connected to
     #save data in dataframe and table

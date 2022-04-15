@@ -227,29 +227,29 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     for key in key_list[1:]:
         conn_df[key] = conn_df[key].astype(float)
 
-    conn_df.to_csv("%sresult_params.csv" % f_name)
+    conn_df.to_csv("%s/result_params.csv" % f_name)
 
-    write_obj2pkl("%sfull_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
+    write_obj2pkl("%s/full_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
                   only_ct2_dict)
-    write_obj2pkl("%sfull_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
+    write_obj2pkl("%s/full_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
                   only_ct3_dict)
     write_obj2pkl(
-        "%sfull_%s_2_%s%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+        "%s/full_%s_2_%s%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
         both_dict)
-    write_obj2pkl("%sfull_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
+    write_obj2pkl("%s/full_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
                   only_2ct2_cellids)
-    write_obj2pkl("%sfull_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
+    write_obj2pkl("%s/full_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
                   only_2ct3_cellids)
     write_obj2pkl(
-        "%sfull_%s_2_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+        "%s/full_%s_2_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
         both_dict)
     write_obj2pkl(
-        "%sfull_%s_no_conn_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+        "%s/full_%s_no_conn_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
         not_connected_ids)
 
-    write_obj2pkl("%s%s_2_%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct2]), ct2_arr_dict)
-    write_obj2pkl("%s%s_2_%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct3]), ct3_arr_dict)
-    write_obj2pkl("%s%s_2_both%s%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3]), both_arr_dict)
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct2]), ct2_arr_dict)
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct3]), ct3_arr_dict)
+    write_obj2pkl("%s/%s_2_both%s%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3]), both_arr_dict)
 
     conn_synapses = ComparingMultipleForPLotting(ct_list = ["only %s" % ct_dict[ct2], "only %s" % ct_dict[ct3], "both"], filename = f_name, dictionary_list = [ct2_arr_dict, ct3_arr_dict, both_arr_dict], colour_list = ["#EAAE34", '#2F86A8', "#707070"])
 
@@ -272,9 +272,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
         conn_synapses.plot_box(key=key, x = "connection to cts", result_df=conn_df, subcell="synapse", stripplot=False)
         conn_synapses.plot_hist_comparison(key=key, subcell="synapse", cells=True, norm_hist = True, bins= 10)
 
-    ranksum_results.to_csv("%sranksum_results.csv" % f_name)
-
-    raise ValueError
+    ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 
     return only_2ct2_cellids, only_2ct3_cellids, both_cellids, not_connected_ids
 

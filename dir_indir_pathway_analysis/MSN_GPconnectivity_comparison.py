@@ -29,7 +29,7 @@ if __name__ == '__main__':
     log.info("MSN percentile comparison starts")
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    f_name_saving = "/wholebrain/scratch/arother/j0251v4_prep/"
+    f_name_saving = "/wholebrain/scratch/arother/j0251v4_prep"
 
     GPe_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")

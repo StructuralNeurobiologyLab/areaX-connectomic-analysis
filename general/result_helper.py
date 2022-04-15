@@ -522,6 +522,28 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         plt.close()
 
 
+class ComparingMultipleForPLotting(ComparingResultsForPLotting):
+    """
+    makes plots from multiple dictionaries with the same keys to compare their results.If only two dictionaries better use ComparingResultsForPlotting.
+    """
+    def __init__(self, ct_list, filename, dictionary_list, colour_list):
+        super().__init__(ct_list[0], ct_list[1], filename, dictionary_list[0], dictionary_list[1])
+        if len(ct_list) < 2:
+            raise ValueError("this class needs at least two celltypes")
+        self.cellypes = {}
+        self.dictionaries = {}
+        self.color_palette= {}
+        for i, ct in enumerate(ct_list):
+            self.celltypes[i] = ct_list[i]
+            self.dictionaries[i] = dictionary_list[i]
+            self.color_palette[ct_list[i]] = colour_list[i]
+
+
+
+
+
+
+
 def plot_nx_graph(results_dictionary, filename, title):
     G = nx.DiGraph()
     edges = [[u, v, results_dictionary[(u, v)]] for (u, v) in results_dictionary.keys()]

@@ -14,7 +14,7 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, check_comp_lengths_ct, filter_synapse_caches_for_ct
-from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph
+from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting
 
 def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     """
@@ -130,19 +130,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     not_conn_inds = np.in1d(cellids1, connected_cellids1) == False
     not_connected_ids = cellids1[not_conn_inds]
 
-    write_obj2pkl("%sfull_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len), only_ct2_dict)
-    write_obj2pkl("%sfull_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
-                  only_ct3_dict)
-    write_obj2pkl("%sfull_%s_2_%s%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
-                  both_dict)
-    write_obj2pkl("%sfull_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
-                  only_2ct2_cellids)
-    write_obj2pkl("%sfull_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
-                  only_2ct3_cellids)
-    write_obj2pkl("%sfull_%s_2_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
-                  both_dict)
-    write_obj2pkl("%sfull_%s_no_conn_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
-                  not_connected_ids)
+
 
     time_stamps = [time.time()]
     step_idents = ['t-0']
@@ -166,36 +154,102 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     "synapse amount"] = both_syn_amounts
     conn_df.loc[len(only_2ct2_cellids) + len(only_2ct3_cellids): len(connected_cellids1) - 1,
     "sum synapse size"] = both_syn_sumsizes
+    key_list = list(both_dict.keys[0].keys())
+    key_list.remove("ct partners")
+    ct2_arr_dict = {key: np.zeros(len(only_2ct2_cellids)) for key in key_list}
+    ct3_arr_dict = {key: np.zeros(len(only_2ct3_cellids)) for key in key_list}
+    both_arr_dict = {key: np.zeros(len(both_cellids)) for key in key_list}
+    ct2_arr_dict["cellids"] = only_2ct2_cellids
+    ct3_arr_dict["cellids"] = only_2ct3_cellids
+    both_arr_dict["cellids"] = both_cellids
     for cellid in cellids1:
         if cellid in only_2ct2_cellids:
-            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "amount partners"] = len(
-                only_ct2_dict[cellid]["ct partners"])
-            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "avg syn amount per partner"] = only_ct2_dict[cellid]["synapse amount"] / len(
-                only_ct2_dict[cellid]["ct partners"])
-            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "avg syn size per partner"] = only_ct2_dict[cellid]["sum size synapses"] / len(
-                only_ct2_dict[cellid]["ct partners"])
+            amount_partners = len(only_ct2_dict[cellid]["ct partners"])
+            avg_syn_amount_partner = only_ct2_dict[cellid]["synapse amount"] / len(only_ct2_dict[cellid]["ct partners"])
+            avg_syn_size_partner = only_ct2_dict[cellid]["sum size synapses"] / len(only_ct2_dict[cellid]["ct partners"])
+            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "amount partners"] = amount_partners
+            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "avg synapse amount per partner"] = avg_syn_amount_partner
+            conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "avg synapse size per partner"] = avg_syn_size_partner
+            only_ct2_dict[cellid]["amount partners"] = amount_partners
+            only_ct2_dict[cellid]["avg synapse amount per partner"] = avg_syn_amount_partner
+            only_ct2_dict[cellid]["avg synapse size per partner"] = avg_syn_size_partner
+            ind = np.where(ct2_arr_dict["cellids"] == cellid)
+            for key in key_list:
+                if "cellids" in key:
+                    continue
+                ct2_arr_dict[key][ind] = only_ct2_dict[cellid][key]
         elif cellid in only_2ct3_cellids:
-            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "amount partners"] = len(
+            amount_partners = len(only_ct3_dict[cellid]["ct partners"])
+            avg_syn_amount_partner = only_ct3_dict[cellid]["synapse amount"] / len(only_ct3_dict[cellid]["ct partners"])
+            avg_syn_size_partner = only_ct3_dict[cellid]["sum size synapses"] / len(
                 only_ct3_dict[cellid]["ct partners"])
-            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "avg syn amount per partner"] = only_ct3_dict[cellid][
-                                                                                                      "synapse amount"] / len(
-                only_ct3_dict[cellid]["ct partners"])
-            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "avg syn size per partner"] = only_ct3_dict[cellid][
-                                                                                                    "sum size synapses"] / len(
-                only_ct3_dict[cellid]["ct partners"])
+            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "amount partners"] = amount_partners
+            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "avg syn amount per partner"] = avg_syn_amount_partner
+            conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(only_2ct2_cellids), "avg syn size per partner"] = avg_syn_size_partner
+            only_ct3_dict[cellid]["amount partners"] = amount_partners
+            only_ct3_dict[cellid]["avg synapse amount per partner"] = avg_syn_amount_partner
+            only_ct3_dict[cellid]["avg synapse size per partner"] = avg_syn_size_partner
+            ind = np.where(ct3_arr_dict["cellids"] == cellid)
+            for key in key_list:
+                if "cellids" in key:
+                    continue
+                ct3_arr_dict[key][ind] = only_ct3_dict[cellid][key]
         elif cellid in both_cellids:
-            conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
-                only_2ct3_cellids), "amount partners"] = len(
+            amount_partners = len(both_dict[cellid]["ct partners"])
+            avg_syn_amount_partner = both_dict[cellid]["synapse amount"] / len(both_dict[cellid]["ct partners"])
+            avg_syn_size_partner = both_dict[cellid]["sum size synapses"] / len(
                 both_dict[cellid]["ct partners"])
             conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
-                only_2ct3_cellids), "avg syn amount per partner"] = both_dict[cellid]["synapse amount"] / len(
-                both_dict[cellid]["ct partners"])
+                only_2ct3_cellids), "amount partners"] = amount_partners
             conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
-                only_2ct3_cellids), "avg syn size per partner"] = both_dict[cellid]["sum size synapses"] / len(both_dict[cellid]["ct partners"])
+                only_2ct3_cellids), "avg syn amount per partner"] = avg_syn_amount_partner
+            conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
+                only_2ct3_cellids), "avg syn size per partner"] = avg_syn_size_partner
+            both_dict[cellid]["amount partners"] = amount_partners
+            both_dict[cellid]["avg synapse amount per partner"] = avg_syn_amount_partner
+            both_dict[cellid]["avg synapse size per partner"] = avg_syn_size_partner
+            ind = np.where(both_arr_dict["cellids"] == cellid)
+            for key in key_list:
+                if "cellids" in key:
+                    continue
+                both_arr_dict[key][ind] = both_dict[cellid][key]
         else:
             continue
 
     conn_df.to_csv("%sresult_params.csv" % f_name)
+
+    write_obj2pkl("%sfull_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
+                  only_ct2_dict)
+    write_obj2pkl("%sfull_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
+                  only_ct3_dict)
+    write_obj2pkl(
+        "%sfull_%s_2_%s%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+        both_dict)
+    write_obj2pkl("%sfull_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
+                  only_2ct2_cellids)
+    write_obj2pkl("%sfull_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
+                  only_2ct3_cellids)
+    write_obj2pkl(
+        "%sfull_%s_2_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+        both_dict)
+    write_obj2pkl(
+        "%sfull_%s_no_conn_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+        not_connected_ids)
+
+    write_obj2pkl("%s%s_2_%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct2]))
+    write_obj2pkl("%s%s_2_%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct3]))
+    write_obj2pkl("%s%s_2_both%s%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3]))
+
+    conn_synapses = ComparingMultipleForPLotting(ct_list = ["only %s" % ct_dict[ct2], "only %s" % ct_dict[ct3], "both"], filename = f_name, dictionary_list = [ct2_arr_dict, ct3_arr_dict, both_arr_dict], colour_list = ["#EAAE34", '#2F86A8', "#707070"])
+
+    ranksum_results = pd.DataFrame(columns=key_list[1:], index=["stats", "p value"])
+    for key in ct2_arr_dict:
+        if "cellids" in key:
+            continue
+        # calculate p_value for parameter
+        stats, p_value = ranksums(ct2_arr_dict[key], ct3_arr_dict[key], both_arr_dict[key])
+        ranksum_results.loc["stats", key] = stats
+        ranksum_results.loc["p value", key] = p_value
 
 
 

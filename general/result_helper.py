@@ -566,7 +566,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         plt.ylabel(self.param_label(key, subcell))
         plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.savefig(
-            "%s/%s_%s_%s_%s_box.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            "%s/%s_%s_%s_%s_violin.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.close()
 
     def plot_hist_comparison(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None):

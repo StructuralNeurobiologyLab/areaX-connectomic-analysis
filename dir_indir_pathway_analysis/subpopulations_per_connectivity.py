@@ -106,8 +106,14 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     both_inds = np.in1d(unique_ct1_ct2ssvs, unique_ct1_ct3ssvs)
     both_inds2 = np.in1d(unique_ct1_ct3ssvs, unique_ct1_ct2ssvs)
     both_cellids = unique_ct1_ct2ssvs[both_inds]
-    both_syn_sumsizes = ct1ct2_syn_sumsizes[both_inds] + ct1ct3_syn_sumsizes[both_inds2]
-    both_syn_amounts = ct1ct2_syn_amounts[both_inds] + ct1ct3_syn_amounts[both_inds2]
+    arg_ct2 = np.argsort(unique_ct1_ct2ssvs[both_inds], axis = 0)
+    arg_ct3 = np.argsort(unique_ct1_ct3ssvs[both_inds2], axis = 0)
+    sorted_ct2_amounts = np.take_along_axis(ct1ct2_syn_amounts[both_inds], arg_ct2, axis= 0)
+    sorted_ct2_sumsizes = np.take_along_axis(ct1ct2_syn_sumsizes[both_inds], arg_ct2, axis=0)
+    sorted_ct3_amounts = np.take_along_axis(ct1ct3_syn_amounts[both_inds2], arg_ct3, axis=0)
+    sorted_ct3_sumsizes = np.take_along_axis(ct1ct3_syn_sumsizes[both_inds2], arg_ct3, axis=0)
+    both_syn_sumsizes = sorted_ct2_sumsizes + sorted_ct3_sumsizes
+    both_syn_amounts = sorted_ct2_amounts + sorted_ct3_amounts
     only_2ct2_cellids = unique_ct1_ct2ssvs[both_inds == False]
     only_ct1ct2_syn_sumsizes = ct1ct2_syn_sumsizes[both_inds == False]
     only_ct1ct2_syn_amounts = ct1ct2_syn_amounts[both_inds == False]

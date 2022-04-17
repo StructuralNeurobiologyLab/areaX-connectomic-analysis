@@ -57,7 +57,19 @@ if __name__ == '__main__':
     step_idents = ['compare MSN within groups connectivity finished']
 
     log.info("Step 4/11: Compare connectivity of two MSN groups (both, only GPe) to GPe")
-    # connectivity comparison for 2 groups add labelling option
+    MSN_onlyGPe_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=6,
+                                                                 filename=f_name, full_cells=True,
+                                                                 cellids1=msn2gpe_ids, cellids2=GPe_ids,
+                                                                 min_comp_len=cl, syn_prob_thresh=syn_prob, label_ct1 = "MSN only GPe")
+    MSN_bothGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=6,
+                                                                 filename=f_name,
+                                                                 full_cells=True, cellids1=msn2gpei_ids,
+                                                                 cellids2=GPe_ids, min_comp_len=cl,
+                                                                 syn_prob_thresh=syn_prob, label_ct2 = "MSN both GPs")
+    msn_gpe_summed_synapses = compare_connectivity(comp_ct1=2, connected_ct=6, filename=f_name,
+                                                   foldername_ct1=MSN_GPe_p1_connectivity_resultsfolder,
+                                                   foldername_ct2=MSN_GPe_p2_connectivity_resultsfolder,
+                                                   min_comp_len=cl)
     time_stamps = [time.time()]
     step_idents = ['compare MSN connectivity to GPe finsihed']
 

@@ -39,5 +39,60 @@ if __name__ == '__main__':
         "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_arr.pkl")
 
     log.info("Step 1/X: sort MSN based on connectivity to GPe and GPi")
-    sort_by_connectivity(sd_synssv, ct1 = 2, ct2 = 6, ct3 = 7, cellids1 = MSN_ids, cellids2 = GPe_ids, cellids3 = GPi_ids,
+    msn2gpe_ids, msn2gpi_ids, msn2gpei_ids, msn_nogp_ids = sort_by_connectivity(sd_synssv, ct1 = 2, ct2 = 6, ct3 = 7, cellids1 = MSN_ids, cellids2 = GPe_ids, cellids3 = GPi_ids,
                          f_name = f_name, f_name_saving = f_name_saving, min_comp_len = cl, syn_prob_thresh = syn_prob, min_syn_size = min_syn_size)
+
+    time_stamps = [time.time()]
+    step_idents = ['sort MSN via connectivity to GPe/i finished']
+
+    log.info("Step 2/11: Compare new MSN groups based on morphology")
+    #compartment comparision for multiple groups
+    #also compare spiness
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN groups finished']
+
+    log.info("Step 3/11: Compare connectivity between MSN groups")
+    # connectivity comparison for multiple groups
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN within groups connectivity finished']
+
+    log.info("Step 4/11: Compare connectivity of two MSN groups (both, only GPe) to GPe")
+    # connectivity comparison for 2 groups add labelling option
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN connectivity to GPe finsihed']
+
+    log.info("Step 5/11: Compare connectivity of two MSN groups (both, only GPi) to GPi")
+    # connectivity comparison for 2 groups,  add labelling option
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN connectivity to GPi finsihed']
+
+    log.info("Step 6/11: Compare connectivity of MSN groups to FS")
+    # connectivity comparison for multiple groups
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN groups connectivity to FS finished']
+
+    log.info("Step 7/11: Compare connectivity of MSN groups to TAN")
+    # connectivity comparison for multiple groups
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN groups connectivity to TAN finished']
+
+    log.info("Step 8/11: Compare connectivity of MSN groups to STN")
+    # connectivity comparison for multiple groups
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN groups connectivity to STN finished']
+
+    log.info("Step 9/11: Compare connectivity of MSN groups to HVC axons")
+    # connectivity comparison for multiple groups, comparison to axons
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN groups connectivity to HVC finished']
+
+    log.info("Step 10/11: Compare connectivity of MSN groups to LMAN")
+    # connectivity comparison for multiple groups, comparison to axons
+    time_stamps = [time.time()]
+    step_idents = ['compare MSN groups connectivity to LMAN finished']
+
+    log.info("Step 11/11: Make nc overview graph for connectivity")
+    # nx graph
+    time_stamps = [time.time()]
+    step_idents = ['NX Graph to visualise connectivity done']
+    step_idents = ['MSN analysis based on groups based on GPe/i connectivity done']

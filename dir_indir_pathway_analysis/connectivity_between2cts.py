@@ -73,14 +73,14 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
             full_cell_dict_ct1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype1])
         except FileNotFoundError:
             print("preprocessed parameters not available for ct1")
-        if celltype2 is not None:
-            try:
-                full_cell_dict_ct2 = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype2])
-            except FileNotFoundError:
-                print("preprocessed parameters not available for ct2")
-        else:
-            full_cell_dict_ct2 = full_cell_dict_ct1
+    if celltype2 is not None and celltype2 != celltype1:
+        try:
+            full_cell_dict_ct2 = load_pkl2obj(
+                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype2])
+        except FileNotFoundError:
+            print("preprocessed parameters not available for ct2")
+    else:
+        full_cell_dict_ct2 = full_cell_dict_ct1
 
     log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
@@ -105,7 +105,7 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")
     # prepare synapse caches with synapse threshold
-    if celltype2 is not None:
+    if celltype2 is not None and celltype2 != celltype1:
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1, celltype2],
                                                                                                syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
     else:
@@ -414,6 +414,311 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
             ct2_2_ct1_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
                                                   stripplot=False, celltype2=ct2_str, outgoing=False)
 
+    plottime = time.time() - syntime
+    print("%.2f sec for calculating parameters, plotting" % plottime)
+    time_stamps.append(time.time())
+    step_idents.append('calculating last parameters, plotting')
+
+    log.info("Connectivity analysis between 2 celltypes (%s, %s) finished" % (ct1_str, ct2_str))
+
+    return f_name
+
+def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2, full_cells_ct2= True,
+                         min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8, label_ct1 = None, label_ct2 = None):
+    '''
+    looks at basic connectivty parameters between two celltypes (one axon: ct1) such as amount of synapses, average of synapses between cell types but also
+    the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic
+    synapses. Uses cached synapse properties. Uses compartment_length per cell to ignore cells with not enough axon/dendrite
+    # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+    axoness values: 0 = dendrite, 1 = axon, 2 = soma
+    :param sd_synssv: segmentation dataset for synapses.
+    :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
+                      FS=8, LTS=9, NGF=10
+    :param cellids1, cellids2: cellids for celltypes 1 and 2
+    :param full_cells_ct2: if True: full_cell_dict will be tried to load for celltype 2
+    :param min_comp_len: minimum length for axon/dendrite to have to include cell in analysis
+    :param min_syn_size: minimum size for synapses
+    :param syn_prob_thresh: threshold for synapse probability
+    :param label_ct1, label_ct2: label of celltypes or subgroups not in ct_dict
+    :return: f_name: foldername in which results are stored
+    '''
+
+    start = time.time()
+    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               10: "NGF"}
+    if label_ct1 is None:
+        ct1_str = ct_dict[celltype1]
+    else:
+        ct1_str = label_ct1
+    if label_ct2 is None:
+        ct2_str = ct_dict[celltype2]
+    else:
+        ct2_str = label_ct2
+
+    f_name = "%s/syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
+            filename, ct1_str, ct2_str, min_comp_len, min_syn_size, syn_prob_thresh)
+    if not os.path.exists(f_name):
+        os.mkdir(f_name)
+    log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
+    log.info("parameters: celltype1 = %s, celltype2 = %s, min_comp_length = %.i, min_syn_size = %.2f, syn_prob_thresh = %.2f" %
+             (ct1_str, ct2_str, min_comp_len, min_syn_size, syn_prob_thresh))
+    time_stamps = [time.time()]
+    step_idents = ['t-0']
+    ax_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/ax_%.3s_dict.pkl" % ct_dict[celltype1])
+    if full_cells_ct2:
+        try:
+            full_cell_dict_ct2 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype2])
+        except FileNotFoundError:
+            print("preprocessed parameters not available for ct1")
+
+
+    log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
+    # use axon and dendrite length dictionaries to lookup axon and dendrite length in future versions
+    checked_cells = np.zeros(len(cellids1))
+    for i, cellid in enumerate(tqdm(cellids1)):
+        cell_axon_length = ax_dict[cellid]["axon length"]
+        if cell_axon_length < min_comp_len:
+            continue
+        checked_cells[i] = cellid
+    cellids1 = checked_cells[checked_cells > 0]
+
+    ct1time = time.time() - start
+    print("%.2f sec for iterating through %s cells" % (ct1time, ct1_str))
+    time_stamps.append(time.time())
+    step_idents.append('iterating over %s cells' % ct1_str)
+
+    log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
+    cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct2, min_comp_len = min_comp_len)
+
+
+
+    ct2time = time.time() - ct1time
+    print("%.2f sec for iterating through %s cells" % (ct2time, ct2_str))
+    time_stamps.append(time.time())
+    step_idents.append('iterating over %s cells' % ct2_str)
+
+
+    log.info("Step 3/4 get synaptic connectivity parameters")
+    log.info("Step 3a: prefilter synapse caches")
+    # prepare synapse caches with synapse threshold
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1], post_cts = [celltype2],
+                                                                                           syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
+    prepsyntime = time.time() - ct2time
+    print("%.2f sec for preprocessing synapses" % prepsyntime)
+    time_stamps.append(time.time())
+    step_idents.append('preprocessing synapses')
+
+
+    log.info("Step 3b: iterate over synapses to get synaptic connectivity parameters")
+    param_labels = ["amount synapses", "sum size synapses"]
+    # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+    comp_labels = ["spine neck", "spine head", "shaft", "soma"]
+
+    ct1_2_ct2_syn_dict = {"cellids": cellids2}
+    for pi in param_labels:
+        ct1_2_ct2_syn_dict[pi] = np.zeros(len(cellids2))
+        for ci in comp_labels:
+            ct1_2_ct2_syn_dict[pi + " - " + ci] = np.zeros(len(cellids2))
+
+    ct2_2_ct1_percell_syn_amount = np.zeros((len(cellids1), len(cellids2))).astype(float)
+    ct2_2_ct1_percell_syn_size = np.zeros((len(cellids1), len(cellids2))).astype(float)
+    ct1_2_ct2_percell_syn_amount = np.zeros((len(cellids2), len(cellids1))).astype(float)
+    ct1_2_ct2_percell_syn_size = np.zeros((len(cellids2), len(cellids1))).astype(float)
+    ct1_2_ct2_all_syn_sizes = np.zeros(len(m_ids))
+
+    for i, syn_id in enumerate(tqdm(m_ids)):
+        syn_ax = m_axs[i]
+        #remove cells that are not in cellids:
+        if not np.any(np.in1d(m_ssv_partners[i], cellids1)):
+            continue
+        if not np.any(np.in1d(m_ssv_partners[i], cellids2)):
+            continue
+        if syn_ax[0] == 1:
+            ct_ax, ct_deso = m_cts[i]
+            ssv_ax, ssv_deso = m_ssv_partners[i]
+            spin_ax, spin_deso = m_spiness[i]
+            ax, deso = syn_ax
+        else:
+            ct_deso, ct_ax = m_cts[i]
+            ssv_deso, ssv_ax = m_ssv_partners[i]
+            spin_deso, spin_ax = m_spiness[i]
+            deso, ax = syn_ax
+        if ct_ax == ct_deso and celltype2 is not None:
+            continue
+        syn_size = m_sizes[i]
+        if ssv_ax in cellids1:
+            cell2_ind = np.where(ct1_2_ct2_syn_dict["cellids"] == ssv_deso)[0]
+            cell1_ind = np.where(cellids1 == ssv_ax)[0]
+            ct1_2_ct2_syn_dict[param_labels[0]][cell2_ind] += 1
+            ct1_2_ct2_syn_dict[param_labels[1]][cell2_ind] += syn_size
+            ct1_2_ct2_all_syn_sizes[i] = syn_size
+            ct1_2_ct2_percell_syn_amount[cell2_ind, cell1_ind] += 1
+            ct1_2_ct2_percell_syn_size[cell2_ind, cell1_ind] += syn_size
+            if deso == 0:
+                if spin_deso <= 2:
+                    ct1_2_ct2_syn_dict[param_labels[0] + " - " + comp_labels[spin_deso]][cell2_ind] += 1
+                    ct1_2_ct2_syn_dict[param_labels[1] + " - " + comp_labels[spin_deso]][cell2_ind] += syn_size
+            else:
+                ct1_2_ct2_syn_dict[param_labels[0] + " - " + "soma"][cell2_ind] += 1
+                ct1_2_ct2_syn_dict[param_labels[1] + " - " + "soma"][cell2_ind] += syn_size
+
+    syntime = time.time() - prepsyntime
+    print("%.2f sec for processing synapses" % syntime)
+    time_stamps.append(time.time())
+    step_idents.append('processing synapses')
+
+    log.info("Step 4/4: calculate last parameters (average syn size, average syn amount and syn size between 2 cells) and plotting")
+    ct1_2_ct2_all_syn_sizes = ct1_2_ct2_all_syn_sizes[ct1_2_ct2_all_syn_sizes > 0]
+
+    ct2_syn_inds = ct1_2_ct2_syn_dict["amount synapses"] > 0
+
+    for key in ct1_2_ct2_syn_dict.keys():
+        ct1_2_ct2_syn_dict[key] = ct1_2_ct2_syn_dict[key][ct2_syn_inds]
+
+    ct1_2_ct2_syn_dict["average synapse size"] = ct1_2_ct2_syn_dict["sum size synapses"] / ct1_2_ct2_syn_dict["amount synapses"]
+
+    for ci in comp_labels:
+        ct1_2_ct2_syn_dict["average synapse size - " + ci] = ct1_2_ct2_syn_dict["sum size synapses - " + ci]/ ct1_2_ct2_syn_dict["amount synapses - " + ci]
+        ct1_2_ct2_syn_dict["percentage synapse size - " + ci] = ct1_2_ct2_syn_dict["sum size synapses - " + ci] / \
+                                                             ct1_2_ct2_syn_dict["sum size synapses"] * 100
+        ct1_2_ct2_syn_dict["percentage synapse amount - " + ci] = ct1_2_ct2_syn_dict["amount synapses - " + ci] / \
+                                                                ct1_2_ct2_syn_dict["amount synapses"] * 100
+
+
+    #average synapse amount and size for one cell form ct1 to one cell of ct2
+    ct1_2_ct2_percell_syn_amount = ct1_2_ct2_percell_syn_amount[ct2_syn_inds]
+    ct1_2_ct2_percell_syn_amount[ct1_2_ct2_percell_syn_amount == 0] = np.nan
+    ct1_2_ct2_syn_dict["avg amount one cell"] = np.nanmean(ct1_2_ct2_percell_syn_amount, axis = 1)
+
+    ct1_2_ct2_percell_syn_size = ct1_2_ct2_percell_syn_size[ct2_syn_inds]
+    ct1_2_ct2_percell_syn_size[ct1_2_ct2_percell_syn_size == 0] = np.nan
+    ct1_2_ct2_syn_dict["avg syn size one cell"] = np.nanmean(ct1_2_ct2_percell_syn_size, axis = 1) / ct1_2_ct2_syn_dict["avg amount one cell"]
+
+
+    #calculate amount of synapses, sum of synapse size in relation to dendritic pathlength, dendritic surface area
+    dendritic_pathlengths_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
+    dendritic_surface_area_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
+    overall_amount_synapses_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
+    overall_sum_synapses_ct2 = np.zeros(len(ct1_2_ct2_syn_dict["cellids"]))
+    for i, cellid in enumerate(ct1_2_ct2_syn_dict["cellids"]):
+        dendritic_pathlengths_ct2[i] = full_cell_dict_ct2[cellid]["dendrite length"]
+        dendritic_surface_area_ct2[i] = full_cell_dict_ct2[cellid]["dendrite mesh surface area"]
+        overall_amount_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite synapse amount"] + full_cell_dict_ct2[cellid]["soma synapse amount"]
+        overall_sum_synapses_ct2[i] = full_cell_dict_ct2[cellid]["dendrite summed synapse size"] + full_cell_dict_ct2[cellid]["soma summed synapse size"]
+
+    ct1_2_ct2_syn_dict["amount synapses per dendritic pathlength"] = (ct1_2_ct2_syn_dict[
+                                                                         "amount synapses"] - ct1_2_ct2_syn_dict["amount synapses - soma"])/ dendritic_pathlengths_ct2
+    ct1_2_ct2_syn_dict["amount synapses per dendritic surface area"] = (ct1_2_ct2_syn_dict[
+                                                                           "amount synapses"] - ct1_2_ct2_syn_dict["amount synapses - soma"])/ dendritic_surface_area_ct2
+
+    ct1_2_ct2_syn_dict["sum size synapses per dendritic pathlength"] = (ct1_2_ct2_syn_dict[
+                                                                           "sum size synapses"] - ct1_2_ct2_syn_dict["sum size synapses - soma"])/ dendritic_pathlengths_ct2
+    ct1_2_ct2_syn_dict["sum size synapses per dendritic surface area"] = (ct1_2_ct2_syn_dict[
+                                                                             "sum size synapses"] - ct1_2_ct2_syn_dict["sum size synapses - soma"])/ dendritic_surface_area_ct2
+    ct1_2_ct2_syn_dict["percentage amount synapses"] = (ct1_2_ct2_syn_dict[
+                                                            "amount synapses"] / overall_amount_synapses_ct2) * 100
+    ct1_2_ct2_syn_dict["percentage sum size synapses"] = (ct1_2_ct2_syn_dict[
+                                                              "sum size synapses"] / overall_sum_synapses_ct2) * 100
+
+    for ci in comp_labels:
+        ct1_2_ct2_syn_dict.pop("sum size synapses - " + ci)
+
+    ct1_2_ct2_pd = pd.DataFrame(ct1_2_ct2_syn_dict)
+    ct1_2_ct2_pd.to_csv("%s/%s_2_%s_dict.csv" % (f_name, ct1_str, ct2_str))
+
+
+    # group average amount one cell by amount of synapses
+    # make barplot
+    if len(ct1_2_ct2_percell_syn_amount) != 0 and len(ct2_2_ct1_percell_syn_amount) != 0:
+        max_multisyn = int(np.nanmax(ct1_2_ct2_percell_syn_amount))
+        multisyn_amount = range(1, max_multisyn + 1)
+        ct1_2_ct2_multi_syn_amount = {}
+        ct1_2_ct2_multi_syn_sumsize = {}
+        for i in multisyn_amount:
+            ct1_2_ct2_multi_syn_amount[i] = len(np.where(ct1_2_ct2_percell_syn_amount == i)[0])
+            ct1_2_ct2_multi_syn_sumsize[i] = np.sum(
+                ct1_2_ct2_percell_syn_size[np.where(ct1_2_ct2_percell_syn_amount == i)])
+
+
+        if celltype1 == celltype2:
+            multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                                   celltype2=ct2_str, filename=f_name,
+                                                                   dictionary1=ct2_2_ct1_multi_syn_amount,
+                                                                   dictionary2=ct1_2_ct2_multi_syn_amount, color1="#EAAE34",
+                                                                   color2="#2F86A8")
+            multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                                    celltype2=ct2_str, filename=f_name,
+                                                                    dictionary1=ct2_2_ct1_multi_syn_sumsize,
+                                                                    dictionary2=ct1_2_ct2_multi_syn_sumsize, color1="#EAAE34",
+                                                                   color2="#2F86A8")
+        else:
+            multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                                   celltype2=ct2_str,
+                                                                   filename=f_name,
+                                                                   dictionary1=ct2_2_ct1_multi_syn_amount,
+                                                                   dictionary2=ct1_2_ct2_multi_syn_amount)
+            multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                                    celltype2=ct2_str, filename=f_name,
+                                                                    dictionary1=ct2_2_ct1_multi_syn_sumsize,
+                                                                    dictionary2=ct1_2_ct2_multi_syn_sumsize)
+
+        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
+                                   index=range(max_multisyn))
+        multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "celltype"] = ct1_str
+        multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct2_str
+        multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_2_ct1_max_multisyn + 1)
+        multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1,
+                                                                                                     ct1_2_ct2_max_multisyn + 1)
+        for i, key in enumerate(ct2_2_ct1_multi_syn_amount.keys()):
+            multisyn_df.loc[i, "amount of cells"] = ct2_2_ct1_multi_syn_amount[key]
+            multisyn_df.loc[i, "sum size synapses"] = ct2_2_ct1_multi_syn_sumsize[key]
+            multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "amount of cells"] = ct1_2_ct2_multi_syn_amount[key]
+            multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "sum size synapses"] = ct1_2_ct2_multi_syn_sumsize[key]
+
+        multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct1_str, ct2_str))
+        multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df, hue = "celltype")
+        multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
+                                              hue="celltype")
+
+    # put all synsizes array into dictionary (but not into dataframe)
+    ct1_2_ct2_syn_dict["all synapse sizes"] = ct1_2_ct2_all_syn_sizes
+
+    #put multisynapse dictionary into dict but not dataframe
+    if len(ct1_2_ct2_percell_syn_amount) != 0 and len(ct2_2_ct1_percell_syn_amount):
+        ct1_2_ct2_syn_dict["multisynapse amount"] = ct1_2_ct2_multi_syn_amount
+        ct1_2_ct2_syn_dict["multisynapse sum size"] = ct1_2_ct2_multi_syn_sumsize
+
+    write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct1_str, ct2_str), ct1_2_ct2_syn_dict)
+
+    ct1_2_ct2_resultsdict = ResultsForPlotting(celltype=ct2_str, filename=f_name,
+                                               dictionary=ct1_2_ct2_syn_dict)
+    ct2_2_ct1_resultsdict = ResultsForPlotting(celltype=ct1_str, filename=f_name,
+                                               dictionary=ct1_2_ct2_syn_dict)
+
+    #plot parameters as distplot
+    # also make plots for amount and size (absolute, relative) for different compartments
+    ticks = np.arange(4)
+    ct1_2_ct2_resultsdict.multiple_param_labels(comp_labels, ticks)
+    ct2_2_ct1_resultsdict.multiple_param_labels(comp_labels, ticks)
+
+    for key in ct1_2_ct2_syn_dict.keys():
+        if "ids" in key or "multi" in key:
+            continue
+        if "all" in key:
+            ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct1_str)
+            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct2_str)
+        else:
+            ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct1_str)
+            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct2_str)
+        if comp_labels[0] in key:
+            key_split = key.split("-")
+            key2 = key_split[0] + "- " + comp_labels[1]
+            key3 = key_split[0] + "- " + comp_labels[2]
+            key4 = key_split[0] + "- " + comp_labels[3]
+            param_list_ct2= [ct1_2_ct2_pd[key], ct1_2_ct2_pd[key2], ct1_2_ct2_pd[key3], ct1_2_ct2_pd[key4]]
+            ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = ct1_str, outgoing = False)
+            ct1_2_ct2_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct2, subcell="synapse",
+                                                     stripplot=False, celltype2= ct1_str, outgoing = False)
     plottime = time.time() - syntime
     print("%.2f sec for calculating parameters, plotting" % plottime)
     time_stamps.append(time.time())

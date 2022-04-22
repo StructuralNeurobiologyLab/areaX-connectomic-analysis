@@ -991,7 +991,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
 
     return summed_synapse_sizes
 
-def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct, min_comp_len = 100, label_cts = None, label_conn_ct = None):
+def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct, min_comp_len = 100, label_cts = None, label_conn_ct = None, colours = None):
     '''
     compares connectivity parameters between several celltypes or connectivity of a celltype to the several (>2) celltypes. Connectivity parameters are calculated in
     synapses_between2cts. Parameters include synapse amount and average synapse size, as well as amount and average synapse size in shaft, soma, spine head and spine neck.
@@ -1004,6 +1004,7 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     :param min_comp_len: minimum compartment length
     :param label_cts: list of celltype labels to be compared if subpopulations, if None: celltype labels will be used
     :param label_conn_ct: celltype labels deviating from ct_dict e.g. for subpopulations
+    :param colours = list of colors that should be used for plotting, same length as comp_cts
     :return: summed synapse sizes
     '''
     start = time.time()
@@ -1031,22 +1032,19 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     step_idents = ['t-0']
     syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], conn_ct_str, label_cts[i] for i in range(len(comp_cts))))]
     syn_dicts = {[conn_ct_str, label_cts[i]]: syn_dict_list[1] for i in range(len(comp_cts))}
-    syn_dict_keys = list(syn_dicts[connected_ct, comp_cts[0]].keys())
     ct_connections = list(syn_dicts.keys())
     log.info("compute statistics for comparison, create violinplot and histogram")
     ranksum_results = pd.DataFrame(columns=ct_connections, index=range(len(ct_connections) * 2))
 
 
     #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
-    if len(np.unique(np.array(comp_cts)[1:])) == 1:
-        results_comparison = ComparingMultipleForPLotting(ct_list = label_cts, filename=f_name,
-                                                         dictionary_list = [syn_dicts[label_cts[0], label_cts[1]]],
-                                                         color1="#EAAE34",
-                                                         color2="#2F86A8")
-    else:
-        results_comparison = ComparingResultsForPLotting(celltype1=ct1_str, celltype2=ct2_str,
-                                                         filename=f_name, dictionary1=ct1_syn_dict,
-                                                         dictionary2=ct2_syn_dict, color1 = "#592A87", color2 = "#2AC644")
+    if colours is None:
+        blues = ["#0ECCEB", "#0A95AB", "#06535F", "#065E6C", "#043C45"]
+        colours = blues[:len(comp_cts)]
+    results_comparison = ComparingMultipleForPLotting(ct_list = label_cts, filename=f_name,
+                                                     dictionary_list = syn_dict_list,
+                                                     colour_list = colours)
+
     if "multisynapse amount" in ct1_syn_dict.keys():
         result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
 

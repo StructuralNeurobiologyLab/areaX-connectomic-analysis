@@ -17,12 +17,13 @@ class ResultsForPlotting():
     this class contains a dictionary with different results.
     """
 
-    def __init__(self, celltype, filename,dictionary):
+    def __init__(self, celltype, filename,dictionary, color = "black"):
         if type(dictionary) != dict:
             raise ValueError("must be dictionary")
         self.celltype = celltype
         self.filename = filename
         self.dictionary = dictionary
+        self.color = color
 
     def param_label(self, key, subcell):
         """
@@ -83,7 +84,7 @@ class ResultsForPlotting():
                 param_label = 0
         return param_label
 
-    def plot_hist(self, key, subcell, cells = True, color = "black", norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False):
+    def plot_hist(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False):
         """
         plots array given with key in histogram plot
         :param key: key of dictionary that should be plotted
@@ -100,14 +101,14 @@ class ResultsForPlotting():
         if bins is None:
             bins = "auto"
         if norm_hist:
-            sns.histplot(self.dictionary[key], common_norm = True, element = "step", fill = False, color = color,
+            sns.histplot(self.dictionary[key], common_norm = True, element = "step", fill = False, color = self.color,
                          kde=False, bins=bins)
             if cells:
                 plt.ylabel("fraction of cells")
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            sns.histplot(self.dictionary[key], common_norm = False, element = "step", fill = False, color = color,
+            sns.histplot(self.dictionary[key], common_norm = False, element = "step", fill = False, self.color,
                          kde=False, bins=bins)
             if cells:
                 plt.ylabel("count of cells")
@@ -186,6 +187,33 @@ class ResultsForPlotting():
         else:
             plt.title("%s in %s %s" % (key, self.celltype, subcell))
             plt.savefig("%s/%s_%s_%s_box.svg" % (self.filename, key, subcell, self.celltype))
+        plt.close()
+
+    def plot_bar(self, key, x, results_df, conn_celltype=None, outgoing=False):
+        """
+        creates box plot with more than one parameter. Dataframe with results oat least two parameter is required
+        :param key: parameter to be plotted on y axis
+        :param x: dataframe column on x axis
+        :param hue: dataframe column acting as hue
+        :param results_df: datafram, suitable one can be created with results_df_two_params
+        :param stripplot: if True creates stripplot overlay
+        :param conn_celltype: if third celltype connectivty is analysed
+        :param outgoing: if true, connected_ct is post_synapse
+        :return: None
+        """
+        sns.barplot(x=x, y=key, data=results_df, color=self.color)
+        if conn_celltype:
+            if outgoing:
+                plt.title('%s, %s to %s' % (key, self.celltype, conn_celltype))
+                plt.savefig("%s/%s_%s_%s_2_%s_multi_bar.svg" % (
+                    self.filename, key, x, self.celltype, conn_celltype))
+            else:
+                plt.title('%s, %s to %s' % (key, conn_celltype, self.celltype))
+                plt.savefig("%s/%s_%s_%s_2_%s_multi_bar.svg" % (
+                    self.filename, key, x, conn_celltype, self.celltype))
+        else:
+            plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
+            plt.savefig("%s/%s_%s_%s_%s_multi_bar.svg" % (self.filename, key,x, self.celltype1, self.celltype2))
         plt.close()
 
 

@@ -520,8 +520,6 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
         for ci in comp_labels:
             ct1_2_ct2_syn_dict[pi + " - " + ci] = np.zeros(len(cellids2))
 
-    ct2_2_ct1_percell_syn_amount = np.zeros((len(cellids1), len(cellids2))).astype(float)
-    ct2_2_ct1_percell_syn_size = np.zeros((len(cellids1), len(cellids2))).astype(float)
     ct1_2_ct2_percell_syn_amount = np.zeros((len(cellids2), len(cellids1))).astype(float)
     ct1_2_ct2_percell_syn_size = np.zeros((len(cellids2), len(cellids1))).astype(float)
     ct1_2_ct2_all_syn_sizes = np.zeros(len(m_ids))
@@ -629,7 +627,7 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
 
     # group average amount one cell by amount of synapses
     # make barplot
-    if len(ct1_2_ct2_percell_syn_amount) != 0 and len(ct2_2_ct1_percell_syn_amount) != 0:
+    if len(ct1_2_ct2_percell_syn_amount) != 0:
         max_multisyn = int(np.nanmax(ct1_2_ct2_percell_syn_amount))
         multisyn_amount = range(1, max_multisyn + 1)
         ct1_2_ct2_multi_syn_amount = {}
@@ -639,41 +637,19 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
             ct1_2_ct2_multi_syn_sumsize[i] = np.sum(
                 ct1_2_ct2_percell_syn_size[np.where(ct1_2_ct2_percell_syn_amount == i)])
 
+        multisyn_plotting_amount = ResultsForPlotting(celltype = ct2_str, filename = f_name, dictionary = ct1_2_ct2_multi_syn_amount)
+        multisyn_plotting_sumsize = ResultsForPlotting(celltype=ct2_str, filename=f_name,
+                                                      dictionary=ct1_2_ct2_multi_syn_sumsize)
 
-        if celltype1 == celltype2:
-            multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct1_str,
-                                                                   celltype2=ct2_str, filename=f_name,
-                                                                   dictionary1=ct2_2_ct1_multi_syn_amount,
-                                                                   dictionary2=ct1_2_ct2_multi_syn_amount, color1="#EAAE34",
-                                                                   color2="#2F86A8")
-            multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct1_str,
-                                                                    celltype2=ct2_str, filename=f_name,
-                                                                    dictionary1=ct2_2_ct1_multi_syn_sumsize,
-                                                                    dictionary2=ct1_2_ct2_multi_syn_sumsize, color1="#EAAE34",
-                                                                   color2="#2F86A8")
-        else:
-            multisyn_plotting_amount = ComparingResultsForPLotting(celltype1=ct1_str,
-                                                                   celltype2=ct2_str,
-                                                                   filename=f_name,
-                                                                   dictionary1=ct2_2_ct1_multi_syn_amount,
-                                                                   dictionary2=ct1_2_ct2_multi_syn_amount)
-            multisyn_plotting_sumsize = ComparingResultsForPLotting(celltype1=ct1_str,
-                                                                    celltype2=ct2_str, filename=f_name,
-                                                                    dictionary1=ct2_2_ct1_multi_syn_sumsize,
-                                                                    dictionary2=ct1_2_ct2_multi_syn_sumsize)
-
-        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
+        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype axon", "celltype tareted cell"],
                                    index=range(max_multisyn))
-        multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "celltype"] = ct1_str
-        multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct2_str
-        multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_2_ct1_max_multisyn + 1)
-        multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1,
-                                                                                                     ct1_2_ct2_max_multisyn + 1)
-        for i, key in enumerate(ct2_2_ct1_multi_syn_amount.keys()):
-            multisyn_df.loc[i, "amount of cells"] = ct2_2_ct1_multi_syn_amount[key]
-            multisyn_df.loc[i, "sum size synapses"] = ct2_2_ct1_multi_syn_sumsize[key]
-            multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "amount of cells"] = ct1_2_ct2_multi_syn_amount[key]
-            multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "sum size synapses"] = ct1_2_ct2_multi_syn_sumsize[key]
+        multisyn_df.loc[0: max_multisyn - 1, "celltype axon"] = ct1_str
+        multisyn_df.loc[0: max_multisyn - 1, "celltype tareted cell"] = ct2_str
+
+        multisyn_df.loc[0: max_multisyn - 1, "multisynapse amount"] = range(1, max_multisyn + 1)
+        for i, key in enumerate(ct1_2_ct2_multi_syn_amount.keys()):
+            multisyn_df.loc[i, "amount of cells"] = ct1_2_ct2_multi_syn_amount[key]
+            multisyn_df.loc[i, "sum size synapses"] = ct1_2_ct2_multi_syn_sumsize[key]
 
         multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct1_str, ct2_str))
         multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df, hue = "celltype")

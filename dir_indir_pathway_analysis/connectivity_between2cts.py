@@ -714,6 +714,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
+    axon_cts = [1, 3, 4]
     if percentile is None and comp_ct2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
     if label_ct1 is None:
@@ -877,8 +878,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         summed_synapse_sizes[(ct1_str, ct2_str)] = np.sum(ct2_syn_dict["sum size synapses"])
 
 
-    #also compare outgoing connections from celltype
-    if connected_ct is not None:
+    #also compare outgoing connections from celltype, only needed if connected ct is not axon
+    if connected_ct is not None and connected_ct not in axon_cts:
         ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct2_str, conn_ct_str))
         ct1_syn_dict = load_pkl2obj(
             "%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct1_str, conn_ct_str))

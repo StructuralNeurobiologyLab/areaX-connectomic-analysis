@@ -9,7 +9,7 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, check_comp_lengths_ct, filter_synapse_caches_for_ct
-from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph
+from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph, ComparingMultipleForPLotting
 
 
 
@@ -990,6 +990,277 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     log.info("comparing celltypes via connectivity finished")
 
     return summed_synapse_sizes
+
+def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct, min_comp_len = 100, label_cts = None, label_conn_ct = None):
+    '''
+    compares connectivity parameters between several celltypes or connectivity of a celltype to the several (>2) celltypes. Connectivity parameters are calculated in
+    synapses_between2cts. Parameters include synapse amount and average synapse size, as well as amount and average synapse size in shaft, soma, spine head and spine neck.
+    P-value will be calculated with scipy.stats.ranksum.
+    :param comp_cts: list of celltypes to compare to each other
+    :param filename: path were results should be stored
+    :param foldernames: list of foldernames where connectivity parameters are stored
+    :param connected_ct: if given, connectivity of this celltype to two others will be compared
+    :param percentile: if given not two celltypes but different population swithin a celltype will be compared
+    :param min_comp_len: minimum compartment length
+    :param label_cts: list of celltype labels to be compared if subpopulations, if None: celltype labels will be used
+    :param label_conn_ct: celltype labels deviating from ct_dict e.g. for subpopulations
+    :return: summed synapse sizes
+    '''
+    start = time.time()
+    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               10: "NGF"}
+    axon_cts = [1, 3, 4]
+    if label_cts is None:
+        label_cts = [ct_dict[i] for i in comp_cts]
+    if connected_ct is not None:
+        if label_conn_ct is None:
+            conn_ct_str = ct_dict[connected_ct]
+        else:
+            conn_ct_str = label_conn_ct
+        f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i" % (
+            filename, label_cts[0], label_cts[1], conn_ct_str, min_comp_len)
+    else:
+        f_name = "%s/comp_conn_%s_%s_syn_con_comp_mcl%i" % (
+            filename, label_cts[0], label_cts[1], min_comp_len)
+    if not os.path.exists(f_name):
+        os.mkdir(f_name)
+    log = initialize_logging('compare connectivty between two celltypes', log_dir=f_name + '/logs/')
+    log.info("parameters: amount of celltypes to be compared: %i, ct1 = %s, ct2 = %s , connected ct = %s, min_comp_length = %.i" % (
+        len(comp_cts), label_cts[0], label_cts[1], conn_ct_str, min_comp_len))
+    time_stamps = [time.time()]
+    step_idents = ['t-0']
+    syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], conn_ct_str, label_cts[i] for i in range(len(comp_cts))))]
+    syn_dicts = {[conn_ct_str, label_cts[i]]: syn_dict_list[1] for i in range(len(comp_cts))}
+    syn_dict_keys = list(syn_dicts[connected_ct, comp_cts[0]].keys())
+    ct_connections = list(syn_dicts.keys())
+    log.info("compute statistics for comparison, create violinplot and histogram")
+    ranksum_results = pd.DataFrame(columns=ct_connections, index=range(len(ct_connections) * 2))
+
+
+    #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
+    if len(np.unique(np.array(comp_cts))) == 1:
+        results_comparison = ComparingMultipleForPLotting(ct_list = label_cts, filename=f_name,
+                                                         dictionary_list = [syn_dicts[label_cts[0], label_cts[1]]],
+                                                         color1="#EAAE34",
+                                                         color2="#2F86A8")
+    else:
+        results_comparison = ComparingResultsForPLotting(celltype1=ct1_str, celltype2=ct2_str,
+                                                         filename=f_name, dictionary1=ct1_syn_dict,
+                                                         dictionary2=ct2_syn_dict, color1 = "#592A87", color2 = "#2AC644")
+    if "multisynapse amount" in ct1_syn_dict.keys():
+        result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
+
+        if connected_ct is not None:
+            result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, conn_ct_str, ct1_str, ct2_str))
+        else:
+            result_df_multi_params.to_csv("%s/%s_%s_syn_compartments.csv" % (
+                f_name, ct1_str, ct2_str))
+
+        for key in result_df_multi_params.keys():
+            if "celltype" in key or "compartment" in key:
+                continue
+            if connected_ct is not None:
+                results_comparison.plot_violin_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= conn_ct_str, outgoing=False, stripplot=True)
+                results_comparison.plot_box_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= conn_ct_str, outgoing=False, stripplot=False)
+            else:
+                results_comparison.plot_violin_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
+                                                   stripplot=True)
+                results_comparison.plot_box_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
+                                                stripplot=False)
+
+    for key in ct1_syn_dict.keys():
+        if "ids" in key or "multi" in key:
+            continue
+        # calculate p_value for parameter
+        stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])
+        ranksum_results.loc["stats", key] = stats
+        ranksum_results.loc["p value", key] = p_value
+        # plot parameter as violinplot
+        if "-" not in key:
+            results_for_plotting = results_comparison.result_df_per_param(key)
+            if connected_ct is not None:
+                results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, conn_celltype=conn_ct_str, outgoing=False)
+                results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot= False,
+                                        conn_celltype=conn_ct_str, outgoing = False)
+            else:
+                results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True)
+                results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False)
+        if connected_ct is not None:
+            if "all" in key:
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
+                                                        conn_celltype=conn_ct_str, outgoing=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
+                                                        conn_celltype=conn_ct_str, outgoing=False)
+            else:
+                results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=conn_ct_str, outgoing=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
+                                                        conn_celltype=conn_ct_str, outgoing=False)
+        else:
+            if "all" in key:
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
+                                                        outgoing=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
+                                                        outgoing=False)
+            else:
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True)
+
+    if connected_ct is not None:
+        ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, conn_ct_str, ct1_str, ct2_str))
+    else:
+        ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name, ct1_str, ct2_str))
+
+    #compare multisynapses in boxplot
+    # only if connected_ct as otherwise already in synapses_between2cts
+    if connected_ct is not None:
+        if "multisynapse amount" in ct1_syn_dict.keys():
+            ct1_max_multisyn = len(ct1_syn_dict["multisynapse amount"].keys())
+            ct2_max_multisyn = len(ct2_syn_dict["multisynapse amount"].keys())
+            sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
+            multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
+                                       index=range(sum_max_multisyn))
+            multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct1_str
+            multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct2_str
+            multisyn_df.loc[0: ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct1_max_multisyn + 1)
+            multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_max_multisyn + 1)
+            for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
+                multisyn_df.loc[i, "amount of cells"] = ct1_syn_dict["multisynapse amount"][key]
+                multisyn_df.loc[i, "sum size synapses"] = ct1_syn_dict["multisynapse sum size"][key]
+                try:
+                    multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
+                    multisyn_df.loc[ct1_max_multisyn + i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
+                except KeyError:
+                    continue
+
+            multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, conn_ct_str, ct1_str, ct2_str))
+            results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
+                                                  hue="celltype", conn_celltype = conn_ct_str, outgoing = False)
+            results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
+                                                   hue="celltype", conn_celltype = conn_ct_str, outgoing = False)
+
+    #calculate summed synapse size per celltype
+    summed_synapse_sizes = {}
+    if connected_ct is not None:
+        summed_synapse_sizes[(conn_ct_str, ct1_str)] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(conn_ct_str, ct2_str)] = np.sum(ct2_syn_dict["sum size synapses"])
+    else:
+        summed_synapse_sizes[(ct2_str, ct1_str)] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct1_str, ct2_str)] = np.sum(ct2_syn_dict["sum size synapses"])
+
+
+    #also compare outgoing connections from celltype, only needed if connected ct is not axon
+    if connected_ct is not None and connected_ct not in axon_cts:
+        ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct2_str, conn_ct_str))
+        ct1_syn_dict = load_pkl2obj(
+            "%s/%s_2_%s_dict.pkl" % (foldername_ct1, ct1_str, conn_ct_str))
+
+        if percentile is not None:
+            results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                             celltype2=ct2_str, filename=f_name,
+                                                             dictionary1=ct1_syn_dict, dictionary2=ct2_syn_dict,
+                                                             color1="#EAAE34",
+                                                             color2="#2F86A8")
+        else:
+            results_comparison = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                             celltype2=ct2_str,
+                                                             filename=f_name, dictionary1=ct1_syn_dict,
+                                                             dictionary2=ct2_syn_dict, color1 = "#592A87", color2 = "#2AC644")
+
+        result_df_multi_params = results_comparison.result_df_categories(label_category="compartment")
+        result_df_multi_params.to_csv("%s/%s_%s_2_%s_syn_compartments_outgoing.csv" % (
+            f_name, ct1_str, ct2_str, conn_ct_str))
+
+        for key in result_df_multi_params.keys():
+            if "celltype" in key or "compartment" in key:
+                continue
+            results_comparison.plot_violin_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params,
+                                               hue="celltype", conn_celltype=conn_ct_str,
+                                               outgoing=True, stripplot=True)
+            results_comparison.plot_box_hue(x="compartment", key=key, subcell="synapse", results_df=result_df_multi_params, hue="celltype",
+                                            conn_celltype=conn_ct_str, outgoing=True,
+                                            stripplot=False)
+
+        for key in ct1_syn_dict.keys():
+            if "ids" in key or "multi" in key:
+                continue
+            # calculate p_value for parameter
+            stats, p_value = ranksums(ct1_syn_dict[key], ct2_syn_dict[key])
+            ranksum_results.loc["stats", key] = stats
+            ranksum_results.loc["p value", key] = p_value
+            # plot parameter as violinplot
+            if not "spine" in key and not "soma" in key and not "shaft" in key:
+                results_for_plotting = results_comparison.result_df_per_param(key)
+                results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True,
+                                               conn_celltype=conn_ct_str, outgoing=True)
+                results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False,
+                                            conn_celltype=conn_ct_str, outgoing=True)
+            if "all" in key:
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
+                                                        conn_celltype=conn_ct_str, outgoing=True)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
+                                                        conn_celltype=conn_ct_str, outgoing=True)
+            else:
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False,
+                                                        conn_celltype=conn_ct_str, outgoing=True)
+                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
+                                                        conn_celltype=conn_ct_str, outgoing=True)
+
+        ranksum_results.to_csv("%s/ranksum_%s_%s_2_%s_outgoing.csv" % (f_name, ct1_str, ct2_str, conn_ct_str))
+
+        summed_synapse_sizes[(ct1_str, conn_ct_str)] = np.sum(ct1_syn_dict["sum size synapses"])
+        summed_synapse_sizes[(ct2_str, conn_ct_str)] = np.sum(ct2_syn_dict["sum size synapses"])
+
+        #multisynapse barplot for outgoing synapses
+        ct1_max_multisyn = len(ct1_syn_dict["multisynapse amount"].keys())
+        ct2_max_multisyn = len(ct2_syn_dict["multisynapse amount"].keys())
+        sum_max_multisyn = ct1_max_multisyn + ct2_max_multisyn
+        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
+                                   index=range(sum_max_multisyn))
+        multisyn_df.loc[0: ct1_max_multisyn - 1, "celltype"] = ct1_str
+        multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct2_str
+        multisyn_df.loc[0: ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct1_max_multisyn + 1)
+        multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_max_multisyn + 1)
+        for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
+            multisyn_df.loc[i, "amount of cells"] = ct1_syn_dict["multisynapse amount"][key]
+            multisyn_df.loc[i, "sum size synapses"] = ct1_syn_dict["multisynapse sum size"][key]
+            try:
+                multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
+                multisyn_df.loc[ct1_max_multisyn + i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
+            except KeyError:
+                continue
+
+        multisyn_df.to_csv(
+            "%s/multi_synapses_%s_%s_2_%s.csv" % (f_name, ct1_str, ct2_str, conn_ct_str))
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
+                                        hue="celltype", conn_celltype=conn_ct_str,
+                                        outgoing=True)
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
+                                        hue="celltype", conn_celltype=conn_ct_str,
+                                        outgoing=True)
+
+    sum_synapses_pd = pd.DataFrame(summed_synapse_sizes, index = [0])
+    if connected_ct is not None:
+        sum_synapses_pd.to_csv("%s/%s_%s_%s_sum_synapses_per_ct.csv" % (f_name, ct1_str,ct2_str, conn_ct_str))
+    else:
+        sum_synapses_pd.to_csv("%s/%s_%s_sum_synapses_per_ct.csv" % (
+        f_name, ct1_str, ct2_str))
+
+    #make networkx graph for sum of synapses per celltype
+    if connected_ct is not None:
+        filename = "%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, ct1_str, ct2_str, conn_ct_str)
+    else:
+        filename = "%s/sum_synapse_size_ct_%s_%s_nxgraph.png" % (
+        f_name, ct1_str, ct2_str)
+    plot_nx_graph(results_dictionary = summed_synapse_sizes, filename = filename, title = "sum of synapse size")
+
+    plottime = time.time() - start
+    print("%.2f sec for statistics and plotting" % plottime)
+    time_stamps.append(time.time())
+    step_idents.append('comparing celltypes')
+    log.info("comparing celltypes via connectivity finished")
+
+    return summed_synapse_sizes
+
 
 
 

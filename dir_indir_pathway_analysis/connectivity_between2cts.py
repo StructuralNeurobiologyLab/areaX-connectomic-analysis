@@ -1038,7 +1038,7 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
 
 
     #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
-    if len(np.unique(np.array(comp_cts))) == 1:
+    if len(np.unique(np.array(comp_cts)[1:])) == 1:
         results_comparison = ComparingMultipleForPLotting(ct_list = label_cts, filename=f_name,
                                                          dictionary_list = [syn_dicts[label_cts[0], label_cts[1]]],
                                                          color1="#EAAE34",

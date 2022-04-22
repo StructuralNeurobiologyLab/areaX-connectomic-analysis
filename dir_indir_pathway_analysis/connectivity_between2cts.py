@@ -652,15 +652,14 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
             multisyn_df.loc[i, "sum size synapses"] = ct1_2_ct2_multi_syn_sumsize[key]
 
         multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct1_str, ct2_str))
-        multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df, hue = "celltype")
-        multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
-                                              hue="celltype")
+        multisyn_plotting_amount.plot_bar(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df)
+        multisyn_plotting_sumsize.plot_bar(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df)
 
     # put all synsizes array into dictionary (but not into dataframe)
     ct1_2_ct2_syn_dict["all synapse sizes"] = ct1_2_ct2_all_syn_sizes
 
     #put multisynapse dictionary into dict but not dataframe
-    if len(ct1_2_ct2_percell_syn_amount) != 0 and len(ct2_2_ct1_percell_syn_amount):
+    if len(ct1_2_ct2_percell_syn_amount) != 0:
         ct1_2_ct2_syn_dict["multisynapse amount"] = ct1_2_ct2_multi_syn_amount
         ct1_2_ct2_syn_dict["multisynapse sum size"] = ct1_2_ct2_multi_syn_sumsize
 
@@ -668,24 +667,19 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
 
     ct1_2_ct2_resultsdict = ResultsForPlotting(celltype=ct2_str, filename=f_name,
                                                dictionary=ct1_2_ct2_syn_dict)
-    ct2_2_ct1_resultsdict = ResultsForPlotting(celltype=ct1_str, filename=f_name,
-                                               dictionary=ct1_2_ct2_syn_dict)
 
     #plot parameters as distplot
     # also make plots for amount and size (absolute, relative) for different compartments
     ticks = np.arange(4)
     ct1_2_ct2_resultsdict.multiple_param_labels(comp_labels, ticks)
-    ct2_2_ct1_resultsdict.multiple_param_labels(comp_labels, ticks)
 
     for key in ct1_2_ct2_syn_dict.keys():
         if "ids" in key or "multi" in key:
             continue
         if "all" in key:
             ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct1_str)
-            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", cells= False, celltype2=ct2_str)
         else:
             ct1_2_ct2_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct1_str)
-            ct2_2_ct1_resultsdict.plot_hist(key=key, subcell="synapse", celltype2=ct2_str)
         if comp_labels[0] in key:
             key_split = key.split("-")
             key2 = key_split[0] + "- " + comp_labels[1]

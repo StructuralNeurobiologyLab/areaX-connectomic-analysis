@@ -108,7 +108,7 @@ class ResultsForPlotting():
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            sns.histplot(self.dictionary[key], common_norm = False, element = "step", fill = False, self.color,
+            sns.histplot(self.dictionary[key], common_norm = False, element = "step", fill = False, color = self.color,
                          kde=False, bins=bins)
             if cells:
                 plt.ylabel("count of cells")
@@ -205,15 +205,15 @@ class ResultsForPlotting():
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s to %s' % (key, self.celltype, conn_celltype))
-                plt.savefig("%s/%s_%s_%s_2_%s_multi_bar.svg" % (
+                plt.savefig("%s/%s_%s_%s_2_%s_bar.svg" % (
                     self.filename, key, x, self.celltype, conn_celltype))
             else:
                 plt.title('%s, %s to %s' % (key, conn_celltype, self.celltype))
-                plt.savefig("%s/%s_%s_%s_2_%s_multi_bar.svg" % (
+                plt.savefig("%s/%s_%s_%s_2_%s_bar.svg" % (
                     self.filename, key, x, conn_celltype, self.celltype))
         else:
-            plt.title('%s, between %s and %s in different compartments' % (key, self.celltype1, self.celltype2))
-            plt.savefig("%s/%s_%s_%s_%s_multi_bar.svg" % (self.filename, key,x, self.celltype1, self.celltype2))
+            plt.title('%s, %s' % (key, self.celltype))
+            plt.savefig("%s/%s_%s_%s_bar.svg" % (self.filename, key,x, self.celltype))
         plt.close()
 
 

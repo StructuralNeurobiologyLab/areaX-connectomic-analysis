@@ -21,7 +21,7 @@ if __name__ == '__main__':
     start = time.time()
     cl = 200
     syn_prob = 0.8
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220331_j0251v4_MSN_percentile_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220422_j0251v4_MSN_percentile_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]
-    """
+    
 
 
     log.info("Step 3/11: MSN connectivity between percentiles")
@@ -146,6 +146,7 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["connctivity MSN - TAN finished"]
+    """
 
     log.info("Step 9/11: MSN - HVC connectivity")
     # see how MSN percentiles are connected to TAN
@@ -189,6 +190,8 @@ if __name__ == '__main__':
 
     time_stamps = [time.time()]
     step_idents = ["connctivity MSN - LMAN finished"]
+
+    raise ValueError
 
 
     log.info("Step 11/11 Overview Graph")

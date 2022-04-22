@@ -1,6 +1,6 @@
 if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
     import time
     from syconn.handler.config import initialize_logging
@@ -127,6 +127,26 @@ if __name__ == '__main__':
     log.info("Step 6/11: Compare connectivity of MSN groups to FS")
     FS_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_FS_arr.pkl")
+    MSN_FS_onlyGPe_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=8, filename=f_name,
+                                                                cellids1=FS_ids, celltype2=2, cellids2=msn2gpe_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN only GPe")
+    MSN_FS_onlyGPi_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=8, filename=f_name,
+                                                                cellids1=FS_ids, celltype2=2, cellids2=msn2gpi_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN only GPi")
+    MSN_FS_bothGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=8, filename=f_name,
+                                                                cellids1=FS_ids, celltype2=2, cellids2=msn2gpei_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN both GPs")
+    MSN_FS_noGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=8, filename=f_name,
+                                                              cellids1=FS_ids, celltype2=2, cellids2=msn_nogp_ids,
+                                                              full_cells_ct2=True,
+                                                              min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                              label_ct1=None, label_ct2="MSN no GPs")
     # connectivity comparison for multiple groups
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to FS finished']
@@ -134,6 +154,27 @@ if __name__ == '__main__':
     log.info("Step 7/11: Compare connectivity of MSN groups to TAN")
     TAN_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_TAN_arr.pkl")
+    MSN_TAN_onlyGPe_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=5, filename=f_name,
+                                                                     cellids1=TAN_ids, celltype2=2, cellids2=msn2gpe_ids,
+                                                                     full_cells_ct2=True,
+                                                                     min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                     label_ct1=None, label_ct2="MSN only GPe")
+    MSN_TAN_onlyGPi_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=5, filename=f_name,
+                                                                     cellids1=TAN_ids, celltype2=2, cellids2=msn2gpi_ids,
+                                                                     full_cells_ct2=True,
+                                                                     min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                     label_ct1=None, label_ct2="MSN only GPi")
+    MSN_TAN_bothGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=5, filename=f_name,
+                                                                     cellids1=TAN_ids, celltype2=2,
+                                                                     cellids2=msn2gpei_ids,
+                                                                     full_cells_ct2=True,
+                                                                     min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                     label_ct1=None, label_ct2="MSN both GPs")
+    MSN_TAN_noGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=5, filename=f_name,
+                                                                   cellids1=TAN_ids, celltype2=2, cellids2=msn_nogp_ids,
+                                                                   full_cells_ct2=True,
+                                                                   min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                   label_ct1=None, label_ct2="MSN no GPs")
     # connectivity comparison for multiple groups
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to TAN finished']
@@ -141,18 +182,81 @@ if __name__ == '__main__':
     log.info("Step 8/11: Compare connectivity of MSN groups to STN")
     STN_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_STN_arr.pkl")
+    MSN_STN_onlyGPe_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=1, filename=f_name,
+                                                                     cellids1=STN_ids, celltype2=2, cellids2=msn2gpe_ids,
+                                                                     full_cells_ct2=True,
+                                                                     min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                     label_ct1=None, label_ct2="MSN only GPe")
+    MSN_STN_onlyGPi_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=1, filename=f_name,
+                                                                     cellids1=STN_ids, celltype2=2, cellids2=msn2gpi_ids,
+                                                                     full_cells_ct2=True,
+                                                                     min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                     label_ct1=None, label_ct2="MSN only GPi")
+    MSN_STN_bothGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=1, filename=f_name,
+                                                                     cellids1=STN_ids, celltype2=2,
+                                                                     cellids2=msn2gpei_ids,
+                                                                     full_cells_ct2=True,
+                                                                     min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                     label_ct1=None, label_ct2="MSN both GPs")
+    MSN_STN_noGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=1, filename=f_name,
+                                                                   cellids1=STN_ids, celltype2=2, cellids2=msn_nogp_ids,
+                                                                   full_cells_ct2=True,
+                                                                   min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                   label_ct1=None, label_ct2="MSN no GPs")
     # connectivity comparison for multiple groups
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to STN finished']
 
     log.info("Step 9/11: Compare connectivity of MSN groups to HVC axons")
     HVC_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == 4]
+    MSN_HVC_onlyGPe_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=3, filename=f_name,
+                                                            cellids1=HVC_ids, celltype2=2, cellids2=msn2gpe_ids,
+                                                            full_cells_ct2=True,
+                                                            min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                            label_ct1=None, label_ct2="MSN only GPe")
+    MSN_HVC_onlyGPi_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=3, filename=f_name,
+                                                                cellids1=HVC_ids, celltype2=2, cellids2=msn2gpi_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN only GPi")
+    MSN_HVC_bothGPs_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=3, filename=f_name,
+                                                                cellids1=HVC_ids, celltype2=2, cellids2=msn2gpei_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN both GPs")
+    MSN_HVC_noGPs_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=3, filename=f_name,
+                                                                cellids1=HVC_ids, celltype2=2, cellids2=msn_nogp_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN no GPs")
+
+
     # connectivity comparison for multiple groups, comparison to axons
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to HVC finished']
 
     log.info("Step 10/11: Compare connectivity of MSN groups to LMAN")
     LMAN_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == 3]
+    MSN_LMAN_onlyGPe_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=4, filename=f_name,
+                                                                cellids1=LMAN_ids, celltype2=2, cellids2=msn2gpe_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN only GPe")
+    MSN_LMAN_onlyGPi_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=4, filename=f_name,
+                                                                cellids1=LMAN_ids, celltype2=2, cellids2=msn2gpi_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN only GPi")
+    MSN_LMAN_bothGPs_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=4, filename=f_name,
+                                                                cellids1=LMAN_ids, celltype2=2, cellids2=msn2gpei_ids,
+                                                                full_cells_ct2=True,
+                                                                min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                                label_ct1=None, label_ct2="MSN both GPs")
+    MSN_LMAN_noGPs_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=4, filename=f_name,
+                                                              cellids1=LMAN_ids, celltype2=2, cellids2=msn_nogp_ids,
+                                                              full_cells_ct2=True,
+                                                              min_comp_len=cl, syn_prob_thresh=syn_prob,
+                                                              label_ct1=None, label_ct2="MSN no GPs")
     # connectivity comparison for multiple groups, comparison to axons
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to LMAN finished']

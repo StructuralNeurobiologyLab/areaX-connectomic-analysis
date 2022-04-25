@@ -558,9 +558,10 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         super().__init__(ct_list[0], filename, dictionary_list[0])
         if len(ct_list) < 2:
             raise ValueError("this class needs at least two celltypes")
-        self.celltypes = {i: ct_list[i] for i in range(len(ct_list))}
-        self.dictionaries = {i: dictionary_list[i] for i in range(len(ct_list))}
-        self.color_palette= {ct_list[i]: colour_list[i] for i in range(len(ct_list))}
+        self.amount_celltypes = len(ct_list)
+        self.celltypes = {i: ct_list[i] for i in range(self.amount_celltypes)}
+        self.dictionaries = {i: dictionary_list[i] for i in range(self.amount_celltypes)}
+        self.color_palette= {ct_list[i]: colour_list[i] for i in range(self.amount_celltypes)}
 
     def plot_box(self, key, x, result_df, subcell, stripplot = True):
         """
@@ -643,6 +644,159 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             plt.savefig("%s/%s_%s_%s_%s_hist.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.close()
 
+    def result_df_categories(self, label_category):
+        """
+        creates da dataframe for comparison across keys and two parameters, one category will be a celltype comparison.
+        keys should be organized in the way: column label - label e.g. amount synapses - spine head
+        :param: keys: list that includes one label
+        :param label_category = in column_labels, category corresponding to labels
+        :param key_split: if given, where key will be split into columns and labels
+        :return: results_df
+        """
+        column_labels = []
+        labels = []
+        for ki, key in enumerate(self.dictionaries[0].keys()):
+            if "-" in key:
+                key_split = key.split(" - ")
+                column_labels.append(key_split[0])
+                labels.append(key_split[1])
+        if len(column_labels) == 0:
+            raise ValueError("keys in dictionary not labelled correctly")
+        celltypes = [self.celltypes[i] for i in range(self.amount_celltypes)]
+        column_labels = np.hstack([np.unique(column_labels), celltypes, label_category])
+        labels = np.unique(labels)
+        key_example = column_labels[0] + " - " + labels[0]
+        dict_lengths = np.array([len(self.dictionaries[i][key_example]) for i in range(self.amount_celltypes)])
+        sum_length = np.sum(dict_lengths)
+        result_df = pd.DataFrame(
+            columns=column_labels, index=range(sum_length * len(labels)))
+        result_df[label_category] = type(labels[0])
+        for i, label in enumerate(labels):
+            result_df.loc[sum_length * i: sum_length * (i + 1) - 1, label_category] = label
+            start_length_ct = 0
+            for j in range(self.amount_celltypes):
+                end_length_ct = dict_lengths[j]
+                result_df.loc[sum_length * i + start_length_ct: sum_length * i + end_length_ct -1 , "celltype"] = self.celltypes[j]
+                for ci in range(len(column_labels) - 2):
+                    result_df.loc[sum_length * i + start_length_ct: sum_length * i + end_length_ct - 1, column_labels[ci]] = self.dictionaries[j][column_labels[ci] + " - " + label]
+                start_length_ct += dict_lengths[j]
+        for ci in range(len(column_labels) - 2):
+            result_df[column_labels[ci]] = result_df[column_labels[ci]].astype("float64")
+        return result_df
+
+    def result_df_per_param(self, key, column_labels = None):
+        """
+        creates pd.Dataframe per parameter for easier plotting
+        :param key: parameter to be compared as key in dictionary
+        :param key2: if more than two groups
+        :param column_labels: different column labels than celltypes when more than two groups
+        :return: result_df
+        """
+        dict_lengths = np.array([len(self.dictionaries[i][key]) for i in range(self.amount_celltypes)])
+        max_length = np.max(dict_lengths)
+        results_for_plotting = pd.DataFrame(columns=self.celltypes, index=range(max_length))
+        for i in range(self.amount_celltypes):
+            results_for_plotting.loc[0:len(self.dictionaries[i][key]) - 1, self.celltypes[i]] = self.dictionaryies[i][key]
+        return results_for_plotting
+
+    def plot_violin_hue(self, key, x, hue, results_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
+        """
+        creates violin plot with more than one parameter. Dataframe with results oat least two parameter is required
+        :param key: parameter to be plotted on y axis
+        :param x: dataframe column on x axis
+        :param hue: dataframe column acting as hue
+        :param results_df: datafram, suitable one can be created with results_df_two_params
+        :param stripplot: if True creates stripplot overlay
+        :param conn_celltype: if third celltype connectivty is analysed
+        :param outgoing: if true, connected_ct is post_synapse
+        :return: None
+        """
+        if stripplot:
+            sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
+                          dodge=True)
+            ax = sns.violinplot(x=x, y=key, data=results_df.reset_index(), inner="box",
+                                palette=self.color_palette, hue=hue)
+            handles, labels = ax.get_legend_handles_labels()
+            plt.legend(handles[0:2], labels[0:2])
+            plt.ylabel(self.param_label(key, subcell))
+        else:
+            sns.violinplot(x = x, y= key, data = results_df, inner = "box", palette=self.color_palette, hue=hue)
+        if conn_celltype:
+            if outgoing:
+                plt.title('%s, %s/ %s to %s' % (key, self.celltypes[0], self.celltypes[1], conn_celltype))
+                plt.savefig("%s/%s_%s_%s_2_%s_multi_violin.svg" % (
+                    self.filename, key, self.celltypes[0], self.celltypes[1], conn_celltype))
+            else:
+                plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltypes[0], self.celltypes[1]))
+                plt.savefig("%s/%s_%s_2_%s_%s_multi_violin.svg" % (
+                    self.filename, key, conn_celltype, self.celltypes[0], self.celltypes[1]))
+        else:
+            plt.title('%s, between %s and %s in different compartments' % (key, self.celltypes[0], self.celltypes[1]))
+            plt.savefig("%s/%s_%s_%s_multi_violin.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1]))
+        plt.close()
+
+    def plot_box_hue(self, key, x, hue, results_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):
+        """
+        creates box plot with more than one parameter. Dataframe with results oat least two parameter is required
+        :param key: parameter to be plotted on y axis
+        :param x: dataframe column on x axis
+        :param hue: dataframe column acting as hue
+        :param results_df: datafram, suitable one can be created with results_df_two_params
+        :param stripplot: if True creates stripplot overlay
+        :param conn_celltype: if third celltype connectivty is analysed
+        :param outgoing: if true, connected_ct is post_synapse
+        :return: None
+        """
+        if stripplot:
+            sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
+                          dodge=True)
+            ax = sns.boxplot(x=x, y=key, data=results_df.reset_index(),
+                                palette=self.color_palette, hue=hue)
+            handles, labels = ax.get_legend_handles_labels()
+            plt.legend(handles[0:2], labels[0:2])
+            plt.ylabel(self.param_label(key, subcell))
+        else:
+            sns.boxplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue)
+        if conn_celltype:
+            if outgoing:
+                plt.title('%s, %s/ %s to %s' % (key, self.celltypes[0], self.celltypes[1], conn_celltype))
+                plt.savefig("%s/%s_%s_%s_2_%s_multi_box.svg" % (
+                    self.filename, key, self.celltypes[0], self.celltypes[1], conn_celltype))
+            else:
+                plt.title('%s, %s to %s/ %s' % (key, conn_celltype,self.celltypes[0], self.celltypes[1]))
+                plt.savefig("%s/%s_%s_2_%s_%s_multi_box.svg" % (
+                    self.filename, key, conn_celltype, self.celltypes[0], self.celltypes[1]))
+        else:
+            plt.title('%s, between %s and %s in different compartments' % (key, self.celltypes[0], self.celltypes[1]))
+            plt.savefig("%s/%s_%s_%s_multi_box.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1]))
+        plt.close()
+
+    def plot_bar_hue(self, key, x, hue, results_df, conn_celltype=None, outgoing=False):
+        """
+        creates box plot with more than one parameter. Dataframe with results oat least two parameter is required
+        :param key: parameter to be plotted on y axis
+        :param x: dataframe column on x axis
+        :param hue: dataframe column acting as hue
+        :param results_df: datafram, suitable one can be created with results_df_two_params
+        :param stripplot: if True creates stripplot overlay
+        :param conn_celltype: if third celltype connectivty is analysed
+        :param outgoing: if true, connected_ct is post_synapse
+        :return: None
+        """
+        sns.barplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue, orient="h")
+        if conn_celltype:
+            if outgoing:
+                plt.title('%s, %s/ %s to %s' % (key, self.celltypes[0], self.celltypes[1], conn_celltype))
+                plt.savefig("%s/%s_%s_%s_%s_2_%s_multi_bar.svg" % (
+                    self.filename, key, x, self.celltypes[0], self.celltypes[1], conn_celltype))
+            else:
+                plt.title('%s, %s to %s/ %s' % (key, conn_celltype, self.celltypes[0], self.celltypes[1]))
+                plt.savefig("%s/%s_%s_%s_2_%s_%s_multi_bar.svg" % (
+                    self.filename, key, x, conn_celltype, self.celltypes[0], self.celltypes[1]))
+        else:
+            plt.title('%s, between %s and %s in different compartments' % (key, self.celltypes[0], self.celltypes[1]))
+            plt.savefig("%s/%s_%s_%s_%s_multi_bar.svg" % (self.filename, key,x, self.celltypes[0], self.celltypes[1]))
+        plt.close()
 
 
 

@@ -1,6 +1,6 @@
 if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
     import time
     from syconn.handler.config import initialize_logging
@@ -116,13 +116,17 @@ if __name__ == '__main__':
                                                                   full_cells=True, cellids1=msn2gpei_ids,
                                                                   cellids2=GPi_ids, min_comp_len=cl,
                                                                   syn_prob_thresh=syn_prob, label_ct2="MSN both GPs")
-    msn_gpe_summed_synapses = compare_connectivity(comp_ct1=2, comp_ct2=2, connected_ct=7, filename=f_name,
+    msn_gpi_summed_synapses = compare_connectivity(comp_ct1=2, comp_ct2=2, connected_ct=7, filename=f_name,
                                                    foldername_ct1=MSN_onlyGPi_connectivity_resultsfolder,
                                                    foldername_ct2=MSN_bothGPs_GPi_connectivity_resultsfolder,
                                                    label_ct1="MSN only GPi", label_ct2="MSN both GPs",
                                                    min_comp_len=cl)
     time_stamps = [time.time()]
     step_idents = ['compare MSN connectivity to GPi finsihed']
+
+    labels_cts = ["MSN only GPe", "MSN only GPi", "MSN both GPs", "MSN no GPs"]
+    msn_cts = [2, 2, 2, 2]
+    msn_colors = ["#EAAE34", '#2F86A8', "#707070", "black"]
 
     log.info("Step 6/11: Compare connectivity of MSN groups to FS")
     FS_ids = load_pkl2obj(
@@ -148,6 +152,9 @@ if __name__ == '__main__':
                                                               min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                               label_ct1=None, label_ct2="MSN no GPs")
     # connectivity comparison for multiple groups
+    result_folders = [MSN_FS_onlyGPe_connectivity_resultsfolder, MSN_FS_onlyGPi_connectivity_resultsfolder, MSN_FS_bothGPs_connectivity_resultsfolder, MSN_FS_noGPs_connectivity_resultsfolder]
+    msn_fs_summed_synapses = compare_connectivity_multiple(comp_cts = msn_cts, filename = f_name, foldernames = result_folders,
+                                                            connected_ct = 8, min_comp_len = cl, label_cts =labels_cts, colours = msn_colors)
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to FS finished']
 
@@ -176,6 +183,12 @@ if __name__ == '__main__':
                                                                    min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                                    label_ct1=None, label_ct2="MSN no GPs")
     # connectivity comparison for multiple groups
+    result_folders = [MSN_TAN_onlyGPe_connectivity_resultsfolder, MSN_TAN_onlyGPi_connectivity_resultsfolder,
+                      MSN_TAN_bothGPs_connectivity_resultsfolder, MSN_TAN_noGPs_connectivity_resultsfolder]
+    msn_tan_summed_synapses = compare_connectivity_multiple(comp_cts=msn_cts, filename=f_name,
+                                                           foldernames=result_folders,
+                                                           connected_ct=5, min_comp_len=cl, label_cts=labels_cts,
+                                                           colours=msn_colors)
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to TAN finished']
 
@@ -204,6 +217,12 @@ if __name__ == '__main__':
                                                                    min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                                    label_ct1=None, label_ct2="MSN no GPs")
     # connectivity comparison for multiple groups
+    result_folders = [MSN_STN_onlyGPe_connectivity_resultsfolder, MSN_STN_onlyGPi_connectivity_resultsfolder,
+                      MSN_STN_bothGPs_connectivity_resultsfolder, MSN_STN_noGPs_connectivity_resultsfolder]
+    msn_stn_summed_synapses = compare_connectivity_multiple(comp_cts=msn_cts, filename=f_name,
+                                                           foldernames=result_folders,
+                                                           connected_ct=1, min_comp_len=cl, label_cts=labels_cts,
+                                                           colours=msn_colors)
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to STN finished']
 
@@ -230,8 +249,13 @@ if __name__ == '__main__':
                                                                 min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN no GPs")
 
-
     # connectivity comparison for multiple groups, comparison to axons
+    result_folders = [MSN_HVC_onlyGPe_connectivity_resultsfolder, MSN_HVC_onlyGPi_connectivity_resultsfolder,
+                      MSN_HVC_bothGPs_connectivity_resultsfolder, MSN_HVC_noGPs_connectivity_resultsfolder]
+    msn_hvc_summed_synapses = compare_connectivity_multiple(comp_cts=msn_cts, filename=f_name,
+                                                           foldernames=result_folders,
+                                                           connected_ct=3, min_comp_len=cl, label_cts=labels_cts,
+                                                           colours=msn_colors)
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to HVC finished']
 
@@ -258,11 +282,27 @@ if __name__ == '__main__':
                                                               min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                               label_ct1=None, label_ct2="MSN no GPs")
     # connectivity comparison for multiple groups, comparison to axons
+    result_folders = [MSN_LMAN_onlyGPe_connectivity_resultsfolder, MSN_LMAN_onlyGPi_connectivity_resultsfolder,
+                      MSN_LMAN_bothGPs_connectivity_resultsfolder, MSN_LMAN_noGPs_connectivity_resultsfolder]
+    msn_lman_summed_synapses = compare_connectivity_multiple(comp_cts=msn_cts, filename=f_name,
+                                                           foldernames=result_folders,
+                                                           connected_ct=4, min_comp_len=cl, label_cts=labels_cts,
+                                                           colours=msn_colors)
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups connectivity to LMAN finished']
 
     log.info("Step 11/11: Make nc overview graph for connectivity")
     # nx graph
+    sum_synapse_dict = {**msn_gpe_summed_synapses, **msn_gpi_summed_synapses, **msn_stn_summed_synapses,
+                        **msn_hvc_summed_synapses, **msn_tan_summed_synapses, **msn_fs_summed_synapses, **msn_lman_summed_synapses}
+    write_obj2pkl("%s/ct_sum_synapses.pkl" % f_name, sum_synapse_dict)
+    # plot
+    sum_synapse_dict = load_pkl2obj("%s/ct_sum_synapses.pkl" % f_name)
+    plot_nx_graph(sum_synapse_dict, filename=("%s/summed_synapses_nx_overview_mcl%i.png" % (f_name, cl)),
+                  title="sum of synapses between celltypes")
+
+    msn_summed_synapse_pd = pd.DataFrame(sum_synapse_dict, index=[0])
+    msn_summed_synapse_pd.to_csv("%s/ct_summed_synapses.csv" % f_name)
     time_stamps = [time.time()]
     step_idents = ['NX Graph to visualise connectivity done']
     step_idents = ['MSN analysis based on groups based on GPe/i connectivity done']

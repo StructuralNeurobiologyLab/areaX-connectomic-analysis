@@ -50,7 +50,15 @@ if __name__ == '__main__':
     log.info("Step 2/11: Compare new MSN groups based on morphology")
     MSN_only_GPe_results = axon_den_arborization_ct(ssd, celltype = 2, filename = f_name, cellids = msn2gpe_ids,
                                                     min_comp_len = cl, full_cells = True, percentile = None, label_cts = "MSN only GPe")
-    raise ValueError
+    MSN_only_GPi_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn2gpi_ids,
+                                                    min_comp_len=cl, full_cells=True, percentile=None,
+                                                    label_cts="MSN only GPi")
+    MSN_both_GP_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn2gpei_ids,
+                                                    min_comp_len=cl, full_cells=True, percentile=None,
+                                                    label_cts="MSN both GPs")
+    MSN_no_GP_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn_nogp_ids,
+                                                    min_comp_len=cl, full_cells=True, percentile=None,
+                                                    label_cts="MSN no GPs")
     #compartment comparision for multiple groups
     #also compare spiness
     time_stamps = [time.time()]

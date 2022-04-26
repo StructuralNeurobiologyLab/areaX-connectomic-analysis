@@ -87,18 +87,21 @@ if __name__ == '__main__':
                                                            cellids1=msn_nogp_ids, cellids2=msn2gpei_ids,
                                                            min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                            label_ct1="MSN no GPs", label_ct2="MSN both GPs")
-    MSN_onlyGPe_msn_summed_synapse = compare_connectivity_multiple(comp_cts = msn_cts[1:], filename = f_name,
+    msn_onlyGPe_msn_summed_synapse = compare_connectivity_multiple(comp_cts = msn_cts[1:], filename = f_name,
                                                                    foldernames = [MSN_onlyGPe_MSN_onlyGPi_resultsfolder, MSN_onlyGPe_MSN_both_resultsfolder, MSN_onlyGPe_MSN_none_resultsfolder],
-                                                                   connected_ct = 2, min_comp_len = cl, label_cts =["MSN both GPs", "MSN only GPi", "MSN no GPs"],
-                                                                   label_conn_ct = "MSN only GPe", colours = msn_colors[1:])
-    MSN_onlyGPe_msn_summed_synapse = compare_connectivity_multiple(comp_cts=msn_cts[1:], filename=f_name,
-                                                                   foldernames=[MSN_onlyGPe_MSN_onlyGPi_resultsfolder,
-                                                                                MSN_onlyGPe_MSN_both_resultsfolder,
-                                                                                MSN_onlyGPe_MSN_none_resultsfolder],
+                                                                   connected_ct = 2, min_comp_len = cl, label_cts =["MSN only GPi", "MSN both GPs", "MSN no GPs"],
+                                                                   label_conn_ct = "MSN only GPe", colours = msn_colors[2:])
+    msn_onlyGPi_msn_summed_synapse = compare_connectivity_multiple(comp_cts=msn_cts[2:], filename=f_name,
+                                                                   foldernames=[MSN_onlyGPi_MSN_both_resultsfolder,
+                                                                                MSN_onlyGPi_MSN_none_resultsfolder],
                                                                    connected_ct=2, min_comp_len=cl,
-                                                                   label_cts=["MSN both GPs", "MSN only GPi",
+                                                                   label_cts=["MSN both GPs",
                                                                               "MSN no GPs"],
-                                                                   label_conn_ct="MSN only GPe", colours=msn_colors[1:])
+                                                                   label_conn_ct="MSN only GPi", colours=msn_colors[1:])
+    msn_both_msn_summed_synapse = compare_connectivity(comp_ct1=2, comp_ct2 = 2, filename=f_name,
+                                                   foldername_ct1=MSN_none_MSN_both_resultsfolder,
+                                                   label_ct1 = "MSN no GPs", label_ct2 = "MSN both GPs",
+                                                   min_comp_len=cl)
     # connectivity comparison for multiple groups
     time_stamps = [time.time()]
     step_idents = ['compare MSN within groups connectivity finished']
@@ -309,7 +312,7 @@ if __name__ == '__main__':
 
     log.info("Step 11/11: Make nc overview graph for connectivity")
     # nx graph
-    sum_synapse_dict = {**msn_gpe_summed_synapses, **msn_gpi_summed_synapses, **msn_stn_summed_synapses,
+    sum_synapse_dict = {**msn_onlyGPe_msn_summed_synapse, **msn_onlyGPi_msn_summed_synapse, **msn_both_msn_summed_synapse, **msn_gpe_summed_synapses, **msn_gpi_summed_synapses, **msn_stn_summed_synapses,
                         **msn_hvc_summed_synapses, **msn_tan_summed_synapses, **msn_fs_summed_synapses, **msn_lman_summed_synapses}
     write_obj2pkl("%s/ct_sum_synapses.pkl" % f_name, sum_synapse_dict)
     # plot

@@ -159,7 +159,7 @@ if __name__ == '__main__':
                                                                      full_cells_ct2=True, cellids1=HVC_ids,
                                                                      cellids2=MSN_id_dict[100 - p], min_comp_len=cl,
                                                                      syn_prob_thresh=syn_prob, label_ct2 = "MSN p%.2i" % (100 - p))
-        msn_hvc_summed_synapses = compare_connectivity(comp_ct1=2, percentile=p, connected_ct=5, filename=f_name,
+        msn_hvc_summed_synapses = compare_connectivity(comp_ct1=2, percentile=p, connected_ct=4, filename=f_name,
                                                        foldername_ct1=MSN_HVC_p1_connectivity_resultsfolder,
                                                        foldername_ct2=MSN_HVC_p2_connectivity_resultsfolder,
                                                        min_comp_len=cl, label_ct1 = "MSN p%.2i" % p, label_ct2 = "MSN p%.2i" % (100 - p))
@@ -182,7 +182,7 @@ if __name__ == '__main__':
                                                                cellids2=MSN_id_dict[100 - p], min_comp_len=cl,
                                                                syn_prob_thresh=syn_prob,
                                                                label_ct2="MSN p%.2i" % (100 - p))
-        msn_lman_summed_synapses = compare_connectivity(comp_ct1=2, percentile=p, connected_ct=5, filename=f_name,
+        msn_lman_summed_synapses = compare_connectivity(comp_ct1=2, percentile=p, connected_ct=3,ilename=f_name,
                                                        foldername_ct1=MSN_LMAN_p1_connectivity_resultsfolder,
                                                        foldername_ct2=MSN_LMAN_p2_connectivity_resultsfolder,
                                                        min_comp_len=cl, label_ct1="MSN p%.2i" % p,

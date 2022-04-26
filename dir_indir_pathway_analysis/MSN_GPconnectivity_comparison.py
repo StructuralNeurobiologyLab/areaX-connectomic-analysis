@@ -1,6 +1,8 @@
 if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
+        axon_den_arborization_ct, compare_compartment_volume_ct
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
     import time
     from syconn.handler.config import initialize_logging
@@ -22,7 +24,7 @@ if __name__ == '__main__':
     cl = 200
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220415_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220426_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -46,7 +48,9 @@ if __name__ == '__main__':
     step_idents = ['sort MSN via connectivity to GPe/i finished']
 
     log.info("Step 2/11: Compare new MSN groups based on morphology")
-
+    MSN_only_GPe_results = axon_den_arborization_ct(ssd, celltype = 2, filename = f_name, cellids = msn2gpe_ids,
+                                                    min_comp_len = cl, full_cells = True, percentile = None, label_cts = "MSN only GPe")
+    raise ValueError
     #compartment comparision for multiple groups
     #also compare spiness
     time_stamps = [time.time()]

@@ -146,7 +146,7 @@ if __name__ == '__main__':
     
     time_stamps = [time.time()]
     step_idents = ["connctivity MSN - TAN finished"]
-    """
+    
 
     log.info("Step 9/11: MSN - HVC connectivity")
     # see how MSN percentiles are connected to TAN
@@ -166,6 +166,7 @@ if __name__ == '__main__':
 
     time_stamps = [time.time()]
     step_idents = ["connctivity MSN - HVC finished"]
+    """
 
     log.info("Step 10/11: MSN - LMAN connectivity")
     # see how MSN percentiles are connected to TAN
@@ -182,7 +183,7 @@ if __name__ == '__main__':
                                                                cellids2=MSN_id_dict[100 - p], min_comp_len=cl,
                                                                syn_prob_thresh=syn_prob,
                                                                label_ct2="MSN p%.2i" % (100 - p))
-        msn_lman_summed_synapses = compare_connectivity(comp_ct1=2, percentile=p, connected_ct=3,ilename=f_name,
+        msn_lman_summed_synapses = compare_connectivity(comp_ct1=2, percentile=p, connected_ct=3,filename=f_name,
                                                        foldername_ct1=MSN_LMAN_p1_connectivity_resultsfolder,
                                                        foldername_ct2=MSN_LMAN_p2_connectivity_resultsfolder,
                                                        min_comp_len=cl, label_ct1="MSN p%.2i" % p,

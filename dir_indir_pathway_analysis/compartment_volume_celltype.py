@@ -78,7 +78,7 @@ def axon_dendritic_arborization_cell(sso, min_comp_len = 100, full_cell_dict = N
     den_dict = {"length": dendrite_length, "volume": dendrite_volume, "median radius": dendrite_median_radius, "tortuosity complete": dendrite_tortuosity_complete, "tortuosity sampled": dendrite_tortuosity_sampled}
     return ax_dict, den_dict
 
-def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 100, full_cells = True, percentile = None):
+def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 100, full_cells = True, percentile = None, label_cts = None):
     '''
     estimate the axonal and dendritic aroborization by celltype. Uses axon_dendritic_arborization to get the aoxnal/dendritic bounding box volume per cell
     via comp_arborization. Plots the volume per compartment and the overall length as histograms.
@@ -91,6 +91,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
     :param full_cells: loads preprocessed cells that have axon, soma and dendrite
     :param handpicked: loads cells that were manually checked
     :param if percentile given, percentile of the cell population can be compared, if preprocessed, in case of 50 have to give either 49 or 51
+    :param label_cts: celltype label, if subgroup and deviating from ct_dict, if None: take ct_dict celltype label
     :return: f_name: foldername in which results are stored
     '''
 
@@ -105,11 +106,19 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")
         else:
             ct_dict[celltype] = ct_dict[celltype] + " p%.2i" % percentile
-    f_name = "%s/%s_comp_volume_mcl%i" % (filename, ct_dict[celltype], min_comp_len)
+    if label_cts is None:
+        if percentile is not None:
+            if percentile == 50:
+                raise ValueError("Due to ambiguity, value has to be either 49 or 51")
+            else:
+                label_cts = ct_dict[celltype] + " p%.2i" % percentile
+        else:
+            label_cts = ct_dict[celltype]
+    f_name = "%s/%s_comp_volume_mcl%i" % (filename, label_cts, min_comp_len)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
-    log.info("parameters: celltype = %s, min_comp_length = %.i" % (ct_dict[celltype], min_comp_len))
+    log.info("parameters: celltype = %s, min_comp_length = %.i" % (label_cts, min_comp_len))
     time_stamps = [time.time()]
     step_idents = ['t-0']
     log.info('Step 1/2 calculating volume estimate for axon/dendrite per cell')
@@ -173,13 +182,15 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         distances_between_soma = distances_between_soma[distances_between_soma > 0].reshape(len(cellids), len(cellids) - 1)
         avg_soma_distance_per_cell = np.mean(distances_between_soma, axis=1)
         pairwise_soma_distances = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean") / 1000
+        soma_centres_to_dataset_borders = np.min(np.hstack([soma_centres, ds_size-soma_centres]).reshape(len(y), 6), axis = 1)
+        raise ValueError
         ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
                             "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct,
                             "axon volume percentage": axon_vol_perc, "dendrite volume percentage": dendrite_vol_perc,
                             "mean soma distance": avg_soma_distance_per_cell, "axon median radius": axon_med_radius_ct,
                             "dendrite median radius": dendrite_med_radius_ct, "axon tortuosity complete": axon_tortuosity_complete_ct,
                             "dendrite tortuosity complete": dendrite_tortuosity_complete_ct, "axon tortuosity sampled": axon_tortuosity_sampled_ct,
-                            "dendrite tortuosity sampled": dendrite_tortuosity_sampled_ct}
+                            "dendrite tortuosity sampled": dendrite_tortuosity_sampled_ct, "distance soma to dataset border": soma_centres_to_dataset_borders}
     else:
         ct_vol_comp_dict = {"cell ids": cellids, "axon length": axon_length_ct,
                             "dendrite length": dendrite_length_ct,
@@ -197,7 +208,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         ct_vol_comp_dict["soma centre coords"] = soma_centres
         ct_vol_comp_dict["pairwise soma distance"] = pairwise_soma_distances
 
-    vol_result_dict = ResultsForPlotting(celltype = ct_dict[celltype], filename = f_name, dictionary = ct_vol_comp_dict)
+    vol_result_dict = ResultsForPlotting(celltype = label_cts, filename = f_name, dictionary = ct_vol_comp_dict)
 
     for key in ct_vol_comp_dict.keys():
         if "ids" in key:
@@ -222,7 +233,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
 
     return f_name
 
-def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percentile = None, filename1 = None, filename2 = None, min_comp_len = 100):
+def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percentile = None, filename1 = None, filename2 = None, min_comp_len = 100, label_ct1 = None, label_ct2 = None):
     '''
     compares estimated compartment volumes (by bounding box) between two celltypes that have been generated by axon_den_arborization_ct.
     Data will be compared in histogram and violinplots. P-Values are computed by ranksum test.
@@ -239,9 +250,15 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
                10: "NGF"}
     if percentile is None and celltype2 is None:
         raise ValueError("either celltypes or percentiles must be compared")
-    ct1_str = ct_dict[celltype1]
+    if label_ct1 is None:
+        ct1_str = ct_dict[celltype1]
+    else:
+        ct1_str = label_ct1
     if celltype2 is not None:
-        ct2_str = ct_dict[celltype2]
+        if label_ct2 is None:
+            ct2_str = ct_dict[celltype2]
+        else:
+            ct2_str = label_ct2
     if percentile is not None:
         if percentile == 50:
             raise ValueError("Due to ambiguity, value has to be either 49 or 51")

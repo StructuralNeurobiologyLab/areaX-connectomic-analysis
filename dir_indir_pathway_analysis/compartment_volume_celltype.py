@@ -169,7 +169,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
     axon_tortuosity_sampled_ct = axon_tortuosity_sampled_ct[nonzero_inds]
     dendrite_tortuosity_sampled_ct = dendrite_tortuosity_sampled_ct[nonzero_inds]
     cellids = cellids[nonzero_inds]
-    ds_size = [256, 256, 394] #size of whole dataset
+    ds_size = (np.array([27119, 27350, 15494]) * ssd.scaling)/ 1000 #size of whole dataset
     ds_vol = np.prod(ds_size)
     axon_vol_perc = axon_vol_ct/ds_vol * 100
     dendrite_vol_perc = dendrite_vol_ct/ds_vol * 100
@@ -182,8 +182,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         distances_between_soma = distances_between_soma[distances_between_soma > 0].reshape(len(cellids), len(cellids) - 1)
         avg_soma_distance_per_cell = np.mean(distances_between_soma, axis=1)
         pairwise_soma_distances = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean") / 1000
-        soma_centres_to_dataset_borders = np.min(np.hstack([soma_centres, ds_size-soma_centres]).reshape(len(y), 6), axis = 1)
-        raise ValueError
+        soma_centres_to_dataset_borders = np.min(np.hstack([soma_centres/1000, ds_size-soma_centres/1000]).reshape(len(soma_centres), 6), axis = 1)
         ct_vol_comp_dict = {"cell ids": cellids,"axon length": axon_length_ct, "dendrite length": dendrite_length_ct,
                             "axon volume bb": axon_vol_ct, "dendrite volume bb": dendrite_vol_ct,
                             "axon volume percentage": axon_vol_perc, "dendrite volume percentage": dendrite_vol_perc,

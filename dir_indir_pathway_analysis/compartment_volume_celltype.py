@@ -428,12 +428,21 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
         else:
             subcell = "soma"
         if "pairwise" in key and "to" in key:
-            column_labels = ["distance from %s to %s" % (ct_comparisons[i, 0], ct_comparisons[i, 1]) for i in range(amount_comparisons)]
-            column_labels = ["distances within %s" % ct1_str, "distances within %s" % ct2_str, "distances between %s and %s" % (ct1_str, ct2_str)]
-            results_for_plotting = results_comparision.result_df_per_param(key, key2 = "pairwise soma distance to other celltype", column_labels= column_labels)
-            results_comparision.plot_hist_comparison(key, subcell, add_key = "pairwise soma distance to other celltype", cells=False, title=ptitle, norm_hist=False)
-            results_comparision.plot_hist_comparison(key, subcell, add_key="pairwise soma distance to other celltype",
-                                                     cells=False, title=ptitle, norm_hist=True)
+            celltype_distancedto = key.split[-1]
+            ct_distanceto_ind = np.where(label_cts == celltype_distancedto)[0]
+            column_labels = label_cts.remove(celltype_distancedto)
+            dict_lengths = np.array([len(ct_comp_dicts[i][key]) for i in range(amount_celltypes) if i != ct_distanceto_ind])
+            max_length = np.max(dict_lengths)
+            results_for_plotting = pd.DataFrame(columns = column_labels, index = range(max_length))
+            for i in range(amount_celltypes):
+                if i == ct_distanceto_ind:
+                    continue
+                results_for_plotting.loc[0:len(ct_comp_dicts[i][key]) - 1, label_cts[i]] = \
+                ct_comp_dicts[i][key]
+            results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=False)
+            results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=True)
+            results_comparision.plot_violin(key, results_for_plotting, subcell, stripplot=True)
+            results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
         else:
             results_for_plotting = results_comparision.result_df_per_param(key)
             results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=False)
@@ -442,7 +451,7 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
             results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
 
 
-    ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name,ct1_str,ct2_str))
+    ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name,label_cts[0], label_cts[1]))
 
     plottime = time.time() - start
     print("%.2f sec for statistics and plotting" % plottime)

@@ -415,7 +415,7 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
         #calculate p_value for parameter
         for i in range(amount_celltypes):
             for j in range(1, amount_celltypes):
-                if i >= j or ("pairwise" in key and "other" in key):
+                if i >= j:
                     continue
                 stats, p_value = ranksums(ct_comp_dicts[i][key], ct_comp_dicts[j][key])
                 ranksum_results.loc["stats" + key, ct_comparisons[i + j - 1]] = stats
@@ -427,17 +427,10 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
             subcell = "dendrite"
         else:
             subcell = "soma"
-        if "pairwise" in key and "other" in key:
+        if "pairwise" in key and "to" in key:
             column_labels = ["distance from %s to %s" % (ct_comparisons[i, 0], ct_comparisons[i, 1]) for i in range(amount_comparisons)]
             column_labels = ["distances within %s" % ct1_str, "distances within %s" % ct2_str, "distances between %s and %s" % (ct1_str, ct2_str)]
             results_for_plotting = results_comparision.result_df_per_param(key, key2 = "pairwise soma distance to other celltype", column_labels= column_labels)
-            s1, p1 = ranksums(ct1_comp_dict[key], ct1_comp_dict["pairwise soma distance to other celltype"])
-            s2, p2 = ranksums(ct2_comp_dict[key], ct1_comp_dict["pairwise soma distance to other celltype"])
-            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct1_str] = s1
-            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct1_str] = p1
-            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct2_str] = s2
-            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct2_str] = p2
-            ptitle = "pairwise soma distances within and between %s and %s" % (ct1_str, ct2_str)
             results_comparision.plot_hist_comparison(key, subcell, add_key = "pairwise soma distance to other celltype", cells=False, title=ptitle, norm_hist=False)
             results_comparision.plot_hist_comparison(key, subcell, add_key="pairwise soma distance to other celltype",
                                                      cells=False, title=ptitle, norm_hist=True)

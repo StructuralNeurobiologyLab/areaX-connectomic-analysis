@@ -10,12 +10,16 @@ import scipy
 import time
 from syconn.handler.config import initialize_logging
 from syconn.handler.basics import load_pkl2obj
+from multiprocessing import pool
+from functools import partial
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
 from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, get_compartment_bbvolume, \
     get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled
+from syconn.reps.super_segmentation import SuperSegmentationObject
+
 global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
 
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -47,7 +51,7 @@ def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100, full_ce
     tortosity_sampled = get_compartment_tortuosity_sampled(cell_graph, comp_nodes)
     return comp_length, comp_volume, median_comp_radius, tortuosity_complete, tortosity_sampled
 
-def axon_dendritic_arborization_cell(sso, min_comp_len = 100, full_cell_dict = None):
+def axon_dendritic_arborization_cell(cellid, min_comp_len = 100, full_cell_dict = None):
     '''
     analysis the spatial distribution of the axonal/dendritic arborization per cell if they fulfill the minimum compartment length.
     To estimate the volume a dendritic arborization spans, the bounding box around the axon or dendrite is estimated by its min and max values in each direction.
@@ -56,6 +60,7 @@ def axon_dendritic_arborization_cell(sso, min_comp_len = 100, full_cell_dict = N
     :param full_cell_dict: dictionary with cached values. cell.id is key
     :return: overall axonal/dendritic length [µm], axonal/dendritic volume [µm³]
     '''
+    sso = SuperSegmentationObject(cellid)
     sso.load_skeleton()
     g = sso.weighted_graph(add_node_attr=('axoness_avg10000',))
     if full_cell_dict is not None:
@@ -76,7 +81,7 @@ def axon_dendritic_arborization_cell(sso, min_comp_len = 100, full_cell_dict = N
         return 0, 0
     ax_dict = {"length": axon_length, "volume": axon_volume, "median radius": ax_median_radius, "tortuosity complete": ax_tortuosity_complete, "tortuosity sampled": ax_tortuosity_sampled}
     den_dict = {"length": dendrite_length, "volume": dendrite_volume, "median radius": dendrite_median_radius, "tortuosity complete": dendrite_tortuosity_complete, "tortuosity sampled": dendrite_tortuosity_sampled}
-    return ax_dict, den_dict
+    return np.array([ax_dict, den_dict])
 
 def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 100, full_cells = True, percentile = None, label_cts = None):
     '''
@@ -134,10 +139,17 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
     dendrite_tortuosity_sampled_ct = np.zeros(len(cellids))
     if full_cells:
         soma_centres = np.zeros((len(cellids), 3))
-    for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(cellids))):
-        axon_dict, dendrite_dict = axon_dendritic_arborization_cell(cell, min_comp_len = min_comp_len, full_cell_dict= full_cell_dict,)
-        if type(axon_dict) == int:
-            continue
+    p = pool.Pool()
+    morph_dicts = p.map(partial(axon_dendritic_arborization_cell, min_comp_len = min_comp_len, full_cell_dict = full_cell_dict), tqdm(cellids))
+    axon_dicts = morph_dicts[:, 0]
+    dendrite_dicts = morph_dicts[:, 1]
+    nonzero_inds = axon_dicts != 0
+    axon_dicts = axon_dicts[nonzero_inds]
+    dendrite_dicts = dendrite_dicts[nonzero_inds]
+    cellids = cellids[nonzero_inds]
+    for i in range(len(axon_dicts)):
+        axon_dict = axon_dicts[i]
+        dendrite_dict = dendrite_dicts[i]
         axon_length_ct[i] = axon_dict["length"]
         dendrite_length_ct[i] = dendrite_dict["length"]
         axon_vol_ct[i] = axon_dict["volume"]
@@ -149,7 +161,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         axon_tortuosity_sampled_ct[i] = axon_dict["tortuosity sampled"]
         dendrite_tortuosity_sampled_ct[i] = dendrite_dict["tortuosity sampled"]
         if full_cells:
-            soma_centres[i] = full_cell_dict[cell.id]["soma centre"]
+            soma_centres[i] = full_cell_dict[cellids[i]]["soma centre"]
 
     celltime = time.time() - start
     print("%.2f sec for iterating through cells" % celltime)
@@ -157,18 +169,6 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
     step_idents.append('calculating bounding box volume per cell')
 
     log.info('Step 2/2 processing and plotting ct arrays')
-    nonzero_inds = axon_length_ct > 0
-    axon_length_ct = axon_length_ct[nonzero_inds]
-    dendrite_length_ct = dendrite_length_ct[nonzero_inds]
-    axon_vol_ct = axon_vol_ct[nonzero_inds]
-    dendrite_vol_ct = dendrite_vol_ct[nonzero_inds]
-    axon_med_radius_ct = axon_med_radius_ct[nonzero_inds]
-    dendrite_med_radius_ct = dendrite_med_radius_ct[nonzero_inds]
-    axon_tortuosity_complete_ct = axon_tortuosity_complete_ct[nonzero_inds]
-    dendrite_tortuosity_complete_ct = dendrite_tortuosity_complete_ct[nonzero_inds]
-    axon_tortuosity_sampled_ct = axon_tortuosity_sampled_ct[nonzero_inds]
-    dendrite_tortuosity_sampled_ct = dendrite_tortuosity_sampled_ct[nonzero_inds]
-    cellids = cellids[nonzero_inds]
     ds_size = (np.array([27119, 27350, 15494]) * ssd.scaling)/ 1000 #size of whole dataset
     ds_vol = np.prod(ds_size)
     axon_vol_perc = axon_vol_ct/ds_vol * 100
@@ -275,6 +275,107 @@ def compare_compartment_volume_ct(celltype1, filename, celltype2= None, percenti
     ct1_comp_dict = load_pkl2obj("%s/ct_vol_comp.pkl"% filename1)
     ct2_comp_dict = load_pkl2obj("%s/ct_vol_comp.pkl"% filename2)
     comp_dict_keys = list(ct1_comp_dict.keys())
+    if "soma centre coords" in comp_dict_keys:
+        log.info("compute mean soma distance between %s and %s" % (ct1_str, ct2_str))
+        ct1_soma_coords = ct1_comp_dict["soma centre coords"]
+        ct2_soma_coords = ct2_comp_dict["soma centre coords"]
+        ct1_distances2ct2 = scipy.spatial.distance.cdist(ct1_soma_coords, ct2_soma_coords, metric="euclidean") / 1000
+        ct1avg_soma_distance2ct2_per_cell = np.mean(ct1_distances2ct2, axis=1)
+        ct2_distances2ct1 = scipy.spatial.distance.cdist(ct2_soma_coords, ct1_soma_coords,
+                                                         metric="euclidean") / 1000
+        ct2avg_soma_distance2ct1_per_cell = np.mean(ct2_distances2ct1, axis=1)
+        ct_soma_coords = np.concatenate((ct1_soma_coords, ct2_soma_coords))
+        pairwise_distances_cts = scipy.spatial.distance.pdist(ct_soma_coords, metric = "euclidean") / 1000
+        ct1_comp_dict["avg soma distance to other celltype"] = ct1avg_soma_distance2ct2_per_cell
+        ct2_comp_dict["avg soma distance to other celltype"] = ct2avg_soma_distance2ct1_per_cell
+        ct1_comp_dict["pairwise soma distance to other celltype"] = pairwise_distances_cts
+        ct2_comp_dict["pairwise_soma distance to other celltype"] = pairwise_distances_cts
+        ct1_comp_dict.pop("soma centre coords")
+        ct2_comp_dict.pop("soma centre coords")
+        comp_dict_keys = list(ct1_comp_dict.keys())
+    log.info("compute statistics for comparison, create violinplot and histogram")
+    ranksum_results = pd.DataFrame(columns=comp_dict_keys[1:], index=["stats", "p value"])
+    if percentile is not None:
+        results_comparision = ComparingResultsForPLotting(celltype1=ct1_str,
+                                                          celltype2=ct2_str, filename=f_name,
+                                                          dictionary1=ct1_comp_dict, dictionary2=ct2_comp_dict,
+                                                          color1="#EAAE34",
+                                                          color2="#2F86A8")
+    else:
+        results_comparision = ComparingResultsForPLotting(celltype1 = ct1_str, celltype2 = ct2_str, filename = f_name, dictionary1 = ct1_comp_dict, dictionary2 = ct2_comp_dict, color1 = "#592A87", color2 = "#2AC644")
+    for key in ct1_comp_dict.keys():
+        if "ids" in key or ("pairwise" in key and "other" in key):
+            continue
+        #calculate p_value for parameter
+        stats, p_value = ranksums(ct1_comp_dict[key], ct2_comp_dict[key])
+        ranksum_results.loc["stats", key] = stats
+        ranksum_results.loc["p value", key] = p_value
+        #plot parameter as violinplot
+        if "axon" in key:
+            subcell = "axon"
+        elif "dendrite" in key:
+            subcell = "dendrite"
+        else:
+            subcell = "soma"
+        if "pairwise" in key:
+            column_labels = ["distances within %s" % ct1_str, "distances within %s" % ct2_str, "distances between %s and %s" % (ct1_str, ct2_str)]
+            results_for_plotting = results_comparision.result_df_per_param(key, key2 = "pairwise soma distance to other celltype", column_labels= column_labels)
+            s1, p1 = ranksums(ct1_comp_dict[key], ct1_comp_dict["pairwise soma distance to other celltype"])
+            s2, p2 = ranksums(ct2_comp_dict[key], ct1_comp_dict["pairwise soma distance to other celltype"])
+            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct1_str] = s1
+            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct1_str] = p1
+            ranksum_results.loc["stats", "pairwise among %s to mixed" % ct2_str] = s2
+            ranksum_results.loc["p value", "pairwise among %s to mixed" % ct2_str] = p2
+            ptitle = "pairwise soma distances within and between %s and %s" % (ct1_str, ct2_str)
+            results_comparision.plot_hist_comparison(key, subcell, add_key = "pairwise soma distance to other celltype", cells=False, title=ptitle, norm_hist=False)
+            results_comparision.plot_hist_comparison(key, subcell, add_key="pairwise soma distance to other celltype",
+                                                     cells=False, title=ptitle, norm_hist=True)
+        else:
+            results_for_plotting = results_comparision.result_df_per_param(key)
+            results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=False)
+            results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=True)
+            results_comparision.plot_violin(key, results_for_plotting, subcell, stripplot=True)
+            results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
+
+
+    ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name,ct1_str,ct2_str))
+
+    plottime = time.time() - start
+    print("%.2f sec for statistics and plotting" % plottime)
+    time_stamps.append(time.time())
+    step_idents.append('comparing celltypes')
+    log.info("compartment volume comparison finished")
+
+def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = None, min_comp_len = 100, label_cts = None):
+    '''
+    compares estimated compartment volumes (by bounding box) between multiple celltypes that have been generated by axon_den_arborization_ct.
+    If only two, use compare_compartment_volume_ct.
+    Data will be compared in histogram and violinplots. P-Values are computed by ranksum test.
+    :param celltypes: j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
+#                      FS=8, LTS=9, NGF=10, list or array of celltypes to be compared. If subpopulations from same celltype,
+                    length must match label_cts and filenames, repeat celltype then.
+    :param percentile: if percentile given not two celltypes but two different populations within a celltye will be compared, has to be either 49 or 51 not 50
+    :param filename_cts: only if data preprocessed: filenames were preprocessed data is stored, must be sam elength as celltypes
+    :param min_comp_len: minimum comparment length used by analysis
+    :param label_cts: labels for celltypes for e.g. subpopulations. If None use from ct_dict
+    :return:
+    '''
+    start = time.time()
+    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               10: "NGF"}
+    amount_celltypes = len(celltypes)
+    if label_cts is None:
+        label_cts = [ct_dict[celltypes[i]] for i in range(amount_celltypes)]
+    f_name = "%s/comp_compartment_%s_%s_comp_volume_mcl%i" % (
+        filename, label_cts[0], label_cts[1], min_comp_len)
+    if not os.path.exists(f_name):
+        os.mkdir(f_name)
+    log = initialize_logging('compare compartment volumes between two celltypes', log_dir=f_name + '/logs/')
+    log.info("parameters: celltype1 = %s,celltype2 = %s, amount celltypes = %i, min_comp_length = %.i" % (label_cts[0], label_cts[1], amount_celltypes, min_comp_len))
+    time_stamps = [time.time()]
+    step_idents = ['t-0']
+    ct_comp_dicts = [load_pkl2obj("%s/ct_vol_comp.pkl"% filenames[i]) for i in range(amount_celltypes)]
+    comp_dict_keys = list(ct_comp_dicts[0].keys())
     if "soma centre coords" in comp_dict_keys:
         log.info("compute mean soma distance between %s and %s" % (ct1_str, ct2_str))
         ct1_soma_coords = ct1_comp_dict["soma centre coords"]

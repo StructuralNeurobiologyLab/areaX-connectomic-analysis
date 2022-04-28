@@ -225,14 +225,14 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         if "ids" in key:
             continue
         if "axon" in key:
-            vol_result_dict.plot_hist(key=key, subcell="axon")
+            vol_result_dict.plot_hist(key=key, subcell="axon", bins = 10)
         elif "dendrite" in key:
-            vol_result_dict.plot_hist(key = key, subcell="dendrite")
+            vol_result_dict.plot_hist(key = key, subcell="dendrite", bins = 10)
         elif "soma distance" in key:
             if "pairwise" in key:
-                vol_result_dict.plot_hist(key=key, subcell="soma", cells=False)
+                vol_result_dict.plot_hist(key=key, subcell="soma", cells=False, bins = 30)
             else:
-                vol_result_dict.plot_hist(key= key, subcell="soma")
+                vol_result_dict.plot_hist(key= key, subcell="soma", bins = 10)
 
     write_obj2pkl("%s/ct_vol_comp.pkl" % f_name, ct_vol_comp_dict)
 

@@ -53,16 +53,16 @@ if __name__ == '__main__':
 
     log.info("Step 2/11: Compare new MSN groups based on morphology")
     MSN_only_GPe_results = axon_den_arborization_ct(ssd, celltype = 2, filename = f_name, cellids = msn2gpe_ids,
-                                                    min_comp_len = cl, full_cells = True, percentile = None, label_cts = "MSN only GPe")
+                                                    min_comp_len = cl, full_cells = True, percentile = None, label_cts = "MSN only GPe", spiness = True)
     MSN_only_GPi_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn2gpi_ids,
                                                     min_comp_len=cl, full_cells=True, percentile=None,
-                                                    label_cts="MSN only GPi")
+                                                    label_cts="MSN only GPi", spiness = True)
     MSN_both_GP_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn2gpei_ids,
                                                     min_comp_len=cl, full_cells=True, percentile=None,
-                                                    label_cts="MSN both GPs")
+                                                    label_cts="MSN both GPs", spiness = True)
     MSN_no_GP_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn_nogp_ids,
                                                     min_comp_len=cl, full_cells=True, percentile=None,
-                                                    label_cts="MSN no GPs")
+                                                    label_cts="MSN no GPs", spiness = True)
     result_files = [MSN_only_GPe_results, MSN_only_GPi_results, MSN_both_GP_results, MSN_no_GP_results]
     compare_compartment_volume_ct_multiple(celltypes= msn_cts, filename=f_name, filename_cts=result_files, min_comp_len=cl, label_cts=labels_cts,
                                            colours=None)

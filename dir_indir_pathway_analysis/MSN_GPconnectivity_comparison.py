@@ -2,7 +2,7 @@ if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
-        axon_den_arborization_ct, compare_compartment_volume_ct
+        axon_den_arborization_ct, compare_compartment_volume_ct_multiple
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
     import time
     from syconn.handler.config import initialize_logging
@@ -47,6 +47,10 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ['sort MSN via connectivity to GPe/i finished']
 
+    labels_cts = ["MSN only GPe", "MSN only GPi", "MSN both GPs", "MSN no GPs"]
+    msn_cts = [2, 2, 2, 2]
+    msn_colors = ["#EAAE34", '#2F86A8', "#707070", "black"]
+
     log.info("Step 2/11: Compare new MSN groups based on morphology")
     MSN_only_GPe_results = axon_den_arborization_ct(ssd, celltype = 2, filename = f_name, cellids = msn2gpe_ids,
                                                     min_comp_len = cl, full_cells = True, percentile = None, label_cts = "MSN only GPe")
@@ -59,14 +63,13 @@ if __name__ == '__main__':
     MSN_no_GP_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn_nogp_ids,
                                                     min_comp_len=cl, full_cells=True, percentile=None,
                                                     label_cts="MSN no GPs")
+    result_files = [MSN_only_GPe_results, MSN_only_GPi_results, MSN_both_GP_results, MSN_no_GP_results]
+    compare_compartment_volume_ct_multiple(celltypes= msn_cts, filename=f_name, filename_cts=result_files, min_comp_len=cl, label_cts=labels_cts,
+                                           colours=None)
     #compartment comparision for multiple groups
     #also compare spiness
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups finished']
-
-    labels_cts = ["MSN only GPe", "MSN only GPi", "MSN both GPs", "MSN no GPs"]
-    msn_cts = [2, 2, 2, 2]
-    msn_colors = ["#EAAE34", '#2F86A8', "#707070", "black"]
 
     log.info("Step 3/11: Compare connectivity between MSN groups")
     MSN_onlyGPe_MSN_both_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,

@@ -17,7 +17,7 @@ from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, ComparingMultipleForPLotting
 from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, get_compartment_bbvolume, \
-    get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled
+    get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled, get_spine_density
 from syconn.reps.super_segmentation import SuperSegmentationObject
 
 global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -51,13 +51,14 @@ def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100, full_ce
     tortosity_sampled = get_compartment_tortuosity_sampled(cell_graph, comp_nodes)
     return comp_length, comp_volume, median_comp_radius, tortuosity_complete, tortosity_sampled
 
-def axon_dendritic_arborization_cell(cellid, min_comp_len = 100, full_cell_dict = None):
+def axon_dendritic_arborization_cell(cellid, min_comp_len = 100, full_cell_dict = None, spiness = False):
     '''
     analysis the spatial distribution of the axonal/dendritic arborization per cell if they fulfill the minimum compartment length.
     To estimate the volume a dendritic arborization spans, the bounding box around the axon or dendrite is estimated by its min and max values in each direction.
     Uses comp_arborization.
     :param min_comp_len: minimum compartment length of axon and dendrite
     :param full_cell_dict: dictionary with cached values. cell.id is key
+    :param spiness: if True: calculate spine density per cell
     :return: overall axonal/dendritic length [µm], axonal/dendritic volume [µm³]
     '''
     sso = SuperSegmentationObject(cellid)
@@ -81,9 +82,11 @@ def axon_dendritic_arborization_cell(cellid, min_comp_len = 100, full_cell_dict 
         return 0, 0
     ax_dict = {"length": axon_length, "volume": axon_volume, "median radius": ax_median_radius, "tortuosity complete": ax_tortuosity_complete, "tortuosity sampled": ax_tortuosity_sampled}
     den_dict = {"length": dendrite_length, "volume": dendrite_volume, "median radius": dendrite_median_radius, "tortuosity complete": dendrite_tortuosity_complete, "tortuosity sampled": dendrite_tortuosity_sampled}
+    if spiness:
+        den_dict["spine density"] = get_spine_density(cellid , min_comp_len = min_comp_len, full_cell_dict = full_cell_dict)
     return np.array([ax_dict, den_dict])
 
-def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 100, full_cells = True, percentile = None, label_cts = None):
+def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 100, full_cells = True, percentile = None, label_cts = None, spiness = False):
     '''
     estimate the axonal and dendritic aroborization by celltype. Uses axon_dendritic_arborization to get the aoxnal/dendritic bounding box volume per cell
     via comp_arborization. Plots the volume per compartment and the overall length as histograms.
@@ -97,6 +100,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
     :param handpicked: loads cells that were manually checked
     :param if percentile given, percentile of the cell population can be compared, if preprocessed, in case of 50 have to give either 49 or 51
     :param label_cts: celltype label, if subgroup and deviating from ct_dict, if None: take ct_dict celltype label
+    :param spiness: if True, also calculate spine density
     :return: f_name: foldername in which results are stored
     '''
 
@@ -127,6 +131,21 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
     time_stamps = [time.time()]
     step_idents = ['t-0']
     log.info('Step 1/2 calculating volume estimate for axon/dendrite per cell')
+    if full_cells:
+        soma_centres = np.zeros((len(cellids), 3))
+    p = pool.Pool()
+    if spiness:
+        morph_dicts = p.map(partial(axon_dendritic_arborization_cell, min_comp_len = min_comp_len, full_cell_dict = full_cell_dict, spiness = True), tqdm(cellids))
+    else:
+        morph_dicts = p.map(
+            partial(axon_dendritic_arborization_cell, min_comp_len=min_comp_len, full_cell_dict=full_cell_dict, spiness = False),
+            tqdm(cellids))
+    axon_dicts = morph_dicts[:, 0]
+    dendrite_dicts = morph_dicts[:, 1]
+    nonzero_inds = axon_dicts != 0
+    axon_dicts = axon_dicts[nonzero_inds]
+    dendrite_dicts = dendrite_dicts[nonzero_inds]
+    cellids = cellids[nonzero_inds]
     axon_length_ct = np.zeros(len(cellids))
     dendrite_length_ct = np.zeros(len(cellids))
     axon_vol_ct = np.zeros(len(cellids))
@@ -137,16 +156,8 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
     dendrite_tortuosity_complete_ct = np.zeros(len(cellids))
     axon_tortuosity_sampled_ct = np.zeros(len(cellids))
     dendrite_tortuosity_sampled_ct = np.zeros(len(cellids))
-    if full_cells:
-        soma_centres = np.zeros((len(cellids), 3))
-    p = pool.Pool()
-    morph_dicts = p.map(partial(axon_dendritic_arborization_cell, min_comp_len = min_comp_len, full_cell_dict = full_cell_dict), tqdm(cellids))
-    axon_dicts = morph_dicts[:, 0]
-    dendrite_dicts = morph_dicts[:, 1]
-    nonzero_inds = axon_dicts != 0
-    axon_dicts = axon_dicts[nonzero_inds]
-    dendrite_dicts = dendrite_dicts[nonzero_inds]
-    cellids = cellids[nonzero_inds]
+    if spiness:
+        spine_densities = np.zeros(len(cellids))
     for i in range(len(axon_dicts)):
         axon_dict = axon_dicts[i]
         dendrite_dict = dendrite_dicts[i]
@@ -162,6 +173,9 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         dendrite_tortuosity_sampled_ct[i] = dendrite_dict["tortuosity sampled"]
         if full_cells:
             soma_centres[i] = full_cell_dict[cellids[i]]["soma centre"]
+        if spiness:
+            spine_densities[i] = dendrite_dict["spine density"]
+
 
     celltime = time.time() - start
     print("%.2f sec for iterating through cells" % celltime)
@@ -199,6 +213,8 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
                             "dendrite median radius": dendrite_med_radius_ct, "axon tortuosity complete": axon_tortuosity_complete_ct,
                             "dendrite tortuosity complete": dendrite_tortuosity_complete_ct, "axon tortuosity sampled": axon_tortuosity_sampled_ct,
                             "dendrite tortuosity sampled": dendrite_tortuosity_sampled_ct}
+    if spiness:
+        ct_vol_comp_dict["spine density"] = spine_densities
     vol_comp_pd = pd.DataFrame(ct_vol_comp_dict)
     vol_comp_pd.to_csv("%s/ct_vol_comp.csv" % f_name)
 

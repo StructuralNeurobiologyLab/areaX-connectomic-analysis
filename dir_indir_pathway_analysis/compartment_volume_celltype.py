@@ -140,7 +140,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         morph_dicts = p.map(
             partial(axon_dendritic_arborization_cell, min_comp_len=min_comp_len, full_cell_dict=full_cell_dict, spiness = False),
             tqdm(cellids))
-    morph_dicts = np.array([morph_dicts])
+    morph_dicts = np.array([morph_dicts])[0]
     axon_dicts = morph_dicts[:, 0]
     dendrite_dicts = morph_dicts[:, 1]
     nonzero_inds = axon_dicts != 0

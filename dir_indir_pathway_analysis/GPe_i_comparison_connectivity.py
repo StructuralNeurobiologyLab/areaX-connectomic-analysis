@@ -99,9 +99,9 @@ if __name__ == '__main__':
 
     log.info("Step 4/5: GPe/i - FS connectivity")
     # see how GPe and GPi are connected to FS
-    GPe_FS_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=6, celltype2=8, filename=f_name, full_cells=True, cellids1 = GPe_ids, cellids2 = FS_ids, syn_prob_thresh = syn_prob)
-    GPi_FS_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=7, celltype2=8, filename=f_name, full_cells=True, cellids1 = GPi_ids, cellids2 = FS_ids, syn_prob_thresh = syn_prob)
-    GPe_i_FS_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=8, filename=f_name, foldername_ct1=GPe_FS_connectivity_resultsfolder, foldername_ct2=GPi_FS_connectivity_resultsfolder)
+    GPe_FS_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=6, celltype2=8, filename=f_name, full_cells=True, cellids1 = GPe_ids, cellids2 = FS_ids, syn_prob_thresh = syn_prob, min_comp_len = comp_length)
+    GPi_FS_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=7, celltype2=8, filename=f_name, full_cells=True, cellids1 = GPi_ids, cellids2 = FS_ids, syn_prob_thresh = syn_prob, min_comp_len = comp_length)
+    GPe_i_FS_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=8, filename=f_name, foldername_ct1=GPe_FS_connectivity_resultsfolder, foldername_ct2=GPi_FS_connectivity_resultsfolder, min_comp_length = comp_length)
 
     time_stamps = [time.time()]
     step_idents = ["connctivity GPe/i - FS finished"]
@@ -111,9 +111,9 @@ if __name__ == '__main__':
 
     log.info("Step 5/5: GPe/i - TAN connectivity")
     # see how GPe and GPi are connected to TAN
-    GPe_TAN_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=6, celltype2=5, filename=f_name, full_cells=True, cellids1 = GPe_ids, cellids2 = TAN_ids, syn_prob_thresh = syn_prob)
-    GPi_TAN_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=7, celltype2=5, filename=f_name, full_cells=True, cellids1 = GPi_ids, cellids2 = TAN_ids, syn_prob_thresh = syn_prob)
-    GPe_i_TAN_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=5, filename=f_name, foldername_ct1=GPe_TAN_connectivity_resultsfolder, foldername_ct2=GPi_TAN_connectivity_resultsfolder)
+    GPe_TAN_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=6, celltype2=5, filename=f_name, full_cells=True, cellids1 = GPe_ids, cellids2 = TAN_ids, syn_prob_thresh = syn_prob, min_comp_len = comp_length)
+    GPi_TAN_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=7, celltype2=5, filename=f_name, full_cells=True, cellids1 = GPi_ids, cellids2 = TAN_ids, syn_prob_thresh = syn_prob, min_comp_len = comp_length)
+    GPe_i_TAN_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=5, filename=f_name, foldername_ct1=GPe_TAN_connectivity_resultsfolder, foldername_ct2=GPi_TAN_connectivity_resultsfolder, min_comp_len = comp_length)
 
     time_stamps = [time.time()]
     step_idents = ["connctivity GPe/i - TAN finished"]

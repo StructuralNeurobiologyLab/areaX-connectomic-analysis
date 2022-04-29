@@ -696,7 +696,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         max_length = np.max(dict_lengths)
         results_for_plotting = pd.DataFrame(columns=self.celltypes, index=range(max_length))
         for i in range(self.amount_celltypes):
-            results_for_plotting.loc[0:len(self.dictionaries[i][key]) - 1, self.celltypes[i]] = self.dictionaryies[i][key]
+            results_for_plotting.loc[0:len(self.dictionaries[i][key]) - 1, self.celltypes[i]] = self.dictionaries[i][key]
         return results_for_plotting
 
     def plot_violin_hue(self, key, x, hue, results_df, subcell, stripplot = True, conn_celltype = None, outgoing = False):

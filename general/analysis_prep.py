@@ -12,6 +12,7 @@ if __name__ == '__main__':
     from multiprocessing import Process
     from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, \
         get_compartment_mesh_area
+    from tqdm import tqdm
 
     #V3
     #global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
@@ -99,7 +100,6 @@ if __name__ == '__main__':
         step_idents = ["full cell dictionaries for celltype %s prepared" % ct_dict[ct]]
         log.info("full cell dictionaries for celltype %s prepared" % ct_dict[ct])
 
-    raise ValueError
 
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
@@ -124,4 +124,102 @@ if __name__ == '__main__':
         step_idents = ["axon dictionaries for celltype %s prepared" % ct_dict[axct]]
         log.info("axon dictionaries for celltype %s prepared" % ct_dict[axct])
 
-    raise ValueError
+    #prepare synapse amount and sum per cell but only from cells and axon fragments with certain lengths
+    mcl = 200
+    log.info("get all cells with minimum compartment length = %i" % mcl)
+    mcl_cellids = []
+    mcl_cellids_perct = {}
+    cell_dicts = {}
+    for i in ct_dict.keys():
+        log.info("get full cells from %s" % ct_dict[i])
+        if i in ax_list:
+            cell_dicts[i] = load_pkl2obj("%s/ax_%3s_dict.pkl" % (f_name, ct_dict[i]))
+        else:
+            cell_dicts[i] = load_pkl2obj("%s/full_%3s_dict.pkl" % (f_name, ct_dict[i]))
+        mcl_cells = np.zeros(len(cell_dicts[i].keys()))
+        for ic, c in enumerate(tqdm(cell_dicts[i].keys())):
+            if cell_dicts[c]["axon length"] < mcl:
+                continue
+            if i not in ax_list:
+                if cell_dicts[c]["dendrite length"] < mcl:
+                    continue
+            mcl_cells[ic] = c
+        mcl_cells = mcl_cells[mcl_cells > 0]
+        mcl_cellids_perct[i] = mcl_cells
+        mcl_cellids.append(mcl_cells)
+        time_stamps = [time.time()]
+        step_idents = ["full cells with mcl %i for celltype %s prepared" % (mcl, ct_dict[i])]
+        log.info("full cells with mcl %i for celltype %s prepared" % (mcl, ct_dict[i]))
+
+    mcl_cellids = np.hstack(np.array([mcl_cellids]))
+    write_obj2pkl("%s/ct_dict_mcl_%i.pkl" % (f_name, mcl), mcl_cellids_perct)
+    write_obj2pkl("%s/cellids_mcl_%i.pkl" % (f_name, mcl), mcl_cellids)
+
+    time_stamps = [time.time()]
+    step_idents = ["full cells with mcl %i for all celltypes prepared" % mcl]
+    log.info("full cells with mcl %i for all celltypes prepared" % mcl)
+
+    #save per cell synapse amount and summed synapse size
+    log.info("get per cell synapse amount and summed synapse size only from cells with mcl = %i" % mcl)
+    log.info("prepare synapse caches to exclude all cells without mcl")
+    mcl_cell_inds = np.any(np.in1d(m_ssv_partners, mcl_cellids).reshape(len(m_ssv_partners), 2), axis=1)
+    m_cts = m_cts[mcl_cell_inds]
+    m_ssv_partners = m_ssv_partners[mcl_cell_inds]
+    m_axs = m_axs[mcl_cell_inds]
+    m_sizes = m_sizes[mcl_cell_inds]
+    for ct in ct_dict.keys():
+        log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix + 1, len(ct_list), ct_dict[ct]))
+        log.info("Step %.1i/%.1i: Get amount and sum of synapses per cell/axon of celltype %s" % (ix + 1, len(ct_list), ct_dict[ct]))
+        if ct in ax_list:
+            axon_syns = synapse_amount_percell(celltype=axct, syn_cts=m_cts, syn_sizes=m_sizes,
+                                               syn_ssv_partners=m_ssv_partners,
+                                               syn_axs=m_axs, axo_denso=True, all_comps=False)
+            time_stamps = [time.time()]
+            step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[axct]]
+            for axonid in list(cell_dicts[ct].keys()):
+                try:
+                    cell_dicts[ct][axonid]["axon synapse amount %i" % mcl] = axon_syns[axonid]["amount"]
+                    cell_dicts[ct][axonid]["axon summed synapse size %i" % mcl] = axon_syns[axonid]["summed size"]
+                except KeyError:
+                    cell_dicts[ct][axonid]["axon synapse amount %i" % mcl] = 0
+                    cell_dicts[ct][axonid]["axon summed synapse size %i" % mcl] = 0
+            syn_path = ("%s/ax_%.3s_dict.pkl" % (f_name, ct_dict[axct]))
+            axon_dict = dict(axon_dict)
+            write_obj2pkl(syn_path, axon_dict)
+        else:
+            axon_syns, den_syns, soma_syns = synapse_amount_percell(celltype=ct, syn_cts=m_cts, syn_sizes=m_sizes,
+                                                                    syn_ssv_partners=m_ssv_partners,
+                                                                    syn_axs=m_axs, axo_denso=True, all_comps=True)
+            time_stamps = [time.time()]
+            step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[ct]]
+            log.info("Add to per cell dictionary")
+            for cellid in list(cell_dicts[ct].keys()):
+                try:
+                    cell_dicts[ct][cellid]["axon synapse amount %i" % mcl] = axon_syns[cellid]["amount"]
+                    cell_dicts[ct][cellid]["axon summed synapse size %i" % mcl ] = axon_syns[cellid]["summed size"]
+                except KeyError:
+                    cell_dicts[ct][cellid]["axon synapse amount %i" % mcl] = 0
+                    cell_dicts[ct][cellid]["axon summed synapse size %i" % mcl] = 0
+                try:
+                    cell_dicts[ct][cellid]["dendrite synapse amount %i" % mcl] = den_syns[cellid]["amount"]
+                    cell_dicts[ct][cellid]["dendrite summed synapse size %i" % mcl] = den_syns[cellid]["summed size"]
+                except KeyError:
+                    cell_dicts[ct][cellid]["dendrite synapse amount %i" % mcl] = 0
+                    cell_dicts[ct][cellid]["dendrite summed synapse size %i" % mcl] = 0
+                try:
+                    cell_dicts[ct][cellid]["soma synapse amount %i" % mcl] = soma_syns[cellid]["amount"]
+                    cell_dicts[ct][cellid]["soma summed synapse size %i" % mcl] = soma_syns[cellid]["summed size"]
+                except KeyError:
+                    cell_dicts[ct][cellid]["soma synapse amount %i" % mcl] = 0
+                    cell_dicts[ct][cellid]["soma summed synapse size %i" % mcl] = 0
+            dict_path = ("%s/full_%.3s_dict.pkl" % (f_name, ct_dict[ct]))
+            arr_path = ("%s/full_%.3s_arr.pkl" % (f_name, ct_dict[ct]))
+            cell_dict = dict(cell_dict)
+            write_obj2pkl(dict_path, cell_dict)
+            write_obj2pkl(arr_path, cell_array)
+        time_stamps = [time.time()]
+        step_idents = ["cell dictionaries for celltype %s completed" % ct_dict[ct]]
+        log.info("cell dictionaries for celltype %s completed" % ct_dict[ct])
+
+
+

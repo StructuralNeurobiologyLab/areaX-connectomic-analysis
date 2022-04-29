@@ -207,7 +207,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         avg_soma_distance_per_cell = np.mean(distances_between_soma, axis=1)
         pairwise_soma_distances = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean") / 1000
         soma_centres_to_dataset_borders = np.min(np.hstack([soma_centres/1000, ds_size-soma_centres/1000]).reshape(len(soma_centres), 6), axis = 1)
-        ct_vol_comp_dict["dendrite soma to dataset border"] = soma_centres_to_dataset_borders
+        ct_vol_comp_dict["distance soma to dataset border"] = soma_centres_to_dataset_borders
         ct_vol_comp_dict["mean soma distance"] = avg_soma_distance_per_cell
     if spiness:
         ct_vol_comp_dict["spine density"] = spine_densities
@@ -413,13 +413,12 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
                 ct_comp_dicts[j]["pairwise_soma distance to %s" % label_cts[j]] = pairwise_distances_cts
 
     log.info("compute statistics for comparison, create violinplot and histogram")
-    ranksum_results = pd.DataFrame(columns=comp_dict_keys[1:], index=["stats", "p value"])
     amount_comparisons = np.math.factorial(amount_celltypes)
-    ct_comparisons = np.zeros(amount_comparisons)
+    ct_comparisons = np.empty(amount_comparisons).astype(str)
     for i in range(amount_celltypes):
         for j in range(1, amount_celltypes):
-            ct_comparisons[i + j - 1] = [label_cts[i], label_cts[j]]
-    ranksum_results = pd.DataFrame(columns=ct_comparisons, index=range(len(amount_comparisons) * 2))
+            ct_comparisons[i + j - 1] = [label_cts[i] + " vs " + label_cts[j]]
+    ranksum_results = pd.DataFrame(columns=ct_comparisons, index=range(amount_comparisons * 2))
     results_comparision = ComparingMultipleForPLotting(ct_list = label_cts, filename = filename, dictionary_list = ct_comp_dicts, colour_list = colours)
     for key in comp_dict_keys:
         if "ids" in key or "soma centre coords" in key:
@@ -430,8 +429,8 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
                 if i >= j:
                     continue
                 stats, p_value = ranksums(ct_comp_dicts[i][key], ct_comp_dicts[j][key])
-                ranksum_results.loc["stats" + key, ct_comparisons[i + j - 1]] = stats
-                ranksum_results.loc["p value" + key, ct_comparisons[i + j - 1]] = p_value
+                ranksum_results.loc["stats " + key, ct_comparisons[i + j - 1]] = stats
+                ranksum_results.loc["p value " + key, ct_comparisons[i + j - 1]] = p_value
         #plot parameter as violinplot
         if "axon" in key:
             subcell = "axon"

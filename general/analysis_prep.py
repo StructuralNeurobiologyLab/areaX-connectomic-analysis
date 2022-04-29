@@ -56,7 +56,7 @@ if __name__ == '__main__':
     m_axs[m_axs == 4] = 1
     time_stamps = [time.time()]
     step_idents = ["finished preparations"]
-
+    '''
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
         log.info("Get amount and sum of synapses")
@@ -123,7 +123,7 @@ if __name__ == '__main__':
         time_stamps = [time.time()]
         step_idents = ["axon dictionaries for celltype %s prepared" % ct_dict[axct]]
         log.info("axon dictionaries for celltype %s prepared" % ct_dict[axct])
-
+    '''
     #prepare synapse amount and sum per cell but only from cells and axon fragments with certain lengths
     mcl = 200
     log.info("get all cells with minimum compartment length = %i" % mcl)
@@ -158,6 +158,8 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["full cells with mcl %i for all celltypes prepared" % mcl]
     log.info("full cells with mcl %i for all celltypes prepared" % mcl)
+
+    raise ValueError
 
     #save per cell synapse amount and summed synapse size
     log.info("get per cell synapse amount and summed synapse size only from cells with mcl = %i" % mcl)
@@ -217,6 +219,8 @@ if __name__ == '__main__':
             cell_dict = dict(cell_dict)
             write_obj2pkl(dict_path, cell_dict)
             write_obj2pkl(arr_path, cell_array)
+
+            raise ValueError
         time_stamps = [time.time()]
         step_idents = ["cell dictionaries for celltype %s completed" % ct_dict[ct]]
         log.info("cell dictionaries for celltype %s completed" % ct_dict[ct])

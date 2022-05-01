@@ -114,18 +114,19 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_spiness = m_spiness[den_so_inds]
     return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness
 
-def estimate_input_ratio_ct(celltype1, celltypes, fullcelldict_ct1, fullcelldicts, label_ct1 = None, label_cts = None, min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8, only_input = True):
+def estimate_input_ratio_ct(celltype1, cellids1, celltypes, , cellids, label_ct1 = None, label_cts = None, min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8, only_input = True):
     """
-    function to determine synaptic input form one celltype to other celltypes
-    :param celltype1:
-    :param celltypes:
-    :param fullcelldict_ct1:
-    :param fullcelldicts:
-    :param label_ct1:
-    :param label_cts:
-    :param min_comp_len:
-    :param min_syn_size:
-    :param syn_prob_thresh:
-    :param only_input:
-    :return:
+    function to determine synaptic input form one celltype to other celltypes. Fractin of synapse amount and sum of synapse size in relation to overall synaptic input from cells with same
+    minimum comparment length will be analysed.
+    :param celltype1: celltype others are connected to
+    :param cellids1: cellids for celltype1
+    :param celltypes: list of celltypes connection to celltypes1
+    :param cellids: list of cellids from other celltypes to be included
+    :param label_ct1: label for celltype1 if deviating from ct_dict, e.g. if subpopulation
+    :param label_cts: label for other celltypes if deviating from ct_dict
+    :param min_comp_len: minimum compartment length for cells to be included in analysis
+    :param min_syn_size: minimum synpase size for synapses to be included
+    :param syn_prob_thresh: threshold for synapse probability
+    :param only_input: if True then only connections to other celltype from celltype one will be analysed and not vice vera
+    :return: dictionary
     """

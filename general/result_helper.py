@@ -560,6 +560,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             raise ValueError("this class needs at least two celltypes")
         self.amount_celltypes = len(ct_list)
         self.celltypes = {i: ct_list[i] for i in range(self.amount_celltypes)}
+        self.celltype_labels = ct_list
         self.dictionaries = {i: dictionary_list[i] for i in range(self.amount_celltypes)}
         self.color_palette= {ct_list[i]: colour_list[i] for i in range(self.amount_celltypes)}
 
@@ -704,7 +705,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         """
         dict_lengths = np.array([len(self.dictionaries[i][key]) for i in range(self.amount_celltypes)])
         max_length = np.max(dict_lengths)
-        results_for_plotting = pd.DataFrame(columns=self.celltypes, index=range(max_length))
+        results_for_plotting = pd.DataFrame(columns=self.celltype_labels, index=range(max_length))
         for i in range(self.amount_celltypes):
             results_for_plotting.loc[0:len(self.dictionaries[i][key]) - 1, self.celltypes[i]] = self.dictionaries[i][key]
         return results_for_plotting

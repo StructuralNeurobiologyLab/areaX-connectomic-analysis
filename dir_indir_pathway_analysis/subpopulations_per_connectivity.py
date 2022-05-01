@@ -59,7 +59,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
                                                                                            axo_den_so=True)
 
     time_stamps = [time.time()]
-    step_idents = ['t-0']
+    step_idents = ['prefilter synapses done']
 
     log.info("Step 3/4: Sort celltype into groups based on connectivity")
     #filter synapses that are not from cellids 1
@@ -275,6 +275,68 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
 
     return only_2ct2_cellids, only_2ct3_cellids, both_cellids, not_connected_ids
 
+def get_ct_via_inputfraction(sd_synssv, input_ct, output_cts, input_cellids, output_cellids, filename, input, celltype_threshold, input_label = None, output_labels = None, min_comp_len = 200, min_syn_size = 0.1, syn_prob_thresh = 0.8):
+    """
+    Get the input fraction of one celltype to one or multiple other celltypes. The fraction of synapse amount and sum of synapses is calculated in relation to
+    synaptic amount of sum of synaptic synapses from all input to one cell (only from cells/axons that fulfill minimum comaprtment requirements theirselfes).
+    :param sd_synssv: segmentation dataset for synapses.
+    :param input_ct: input celltype
+    :param output_cts: list celltypes the input should be compared to
+    :param input_cellids: cellids of input celltype
+    :param output_cellids: list of cellids from output celltypes
+    :param filename: path to dictionary where results should be saved
+    :param celltype_threshold: threshold of which fraction belongs to celltype searched for
+    :param input_label: celllabel if deviating from label in ct_dict e.g. subpopulations
+    :param output_labels: list of labels if deviating from label in ct_dict, same length as output_cts
+    :param min_comp_len: minimum compartment length for cells to e included in analysis
+    :param min_syn_size: minimum synapse size
+    :param syn_prob_thresh: threshold for synapse probability
+    :return: cellids for cells that match threshold, result dictionary
+    """
+    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               10: "NGF"}
+    input_celldict = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[input_ct])
+    output_celldicts = [load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[i]) for i in output_cts]
+    if input_label is None:
+        input_label = ct_dict[input_ct]
+    if output_labels is None:
+        output_labels = [ct_dict[i] for  i in output_cts]
+    output_ct_amount = len(output_cts)
+
+    log = initialize_logging('subpopulation grouping per connectivity', log_dir=filename + '/logs/')
+    log.info(
+        "parameters: input celltype = %s, output celltype1 = %s, output celltype2 = %s, amount of output celltypes = %i, min_comp_length = %.i, min_syn_size = %.2f, syn_prob_thresh = %.2f" %
+        (input_label, output_labels[0], output_labels[1], output_ct_amount, min_comp_len, min_syn_size, syn_prob_thresh))
+    time_stamps = [time.time()]
+    step_idents = ['t-0']
+
+    # check if cellids match minimum compartment length
+    log.info("Step 1/4: Check compartment length of cells from %i celltypes" % (output_ct_amount + 1))
+    input_cellids = check_comp_lengths_ct(input_cellids, fullcelldict=input_celldict, min_comp_len=min_comp_len)
+    output_cellids = [check_comp_lengths_ct(output_cellids[i], fullcelldict = output_celldicts[i], min_comp_len = min_comp_len) for i in range(output_ct_amount)]
+    time_stamps = [time.time()]
+    step_idents = ['check compartment length from all %i celltypes' % (output_ct_amount + 1)]
+
+
+    log.info("Step 2/4: Prefilter synapses for synapses between these celltypes")
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv,
+                                                                                           pre_cts=[input_ct],
+                                                                                           post_cts=output_cts,
+                                                                                           syn_prob_thresh=syn_prob_thresh,
+                                                                                           min_syn_size=min_syn_size,
+                                                                                           axo_den_so=True)
+
+    time_stamps = [time.time()]
+    step_idents = ['prefilter synapses done']
+
+    #get total synapse amount and synapse sum size per cell for min_comp_len
+
+    #this should be in the param dictionary
+    #if not: compute again similary to analysis prep
+
+
+    #plot results, create dictionary with results
+    #determine cells which are over threshold
 
 
 

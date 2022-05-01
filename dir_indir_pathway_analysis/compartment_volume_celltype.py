@@ -458,6 +458,7 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
             results_for_plotting = results_comparison.result_df_per_param(key)
             results_comparison.plot_hist_comparison(key, subcell, bins=10, norm_hist=False)
             results_comparison.plot_hist_comparison(key, subcell, bins=10, norm_hist=True)
+            raise ValueError
             results_comparison.plot_violin(key, results_for_plotting, subcell, stripplot=True)
             results_comparison.plot_box(key, results_for_plotting, subcell, stripplot=False)
 

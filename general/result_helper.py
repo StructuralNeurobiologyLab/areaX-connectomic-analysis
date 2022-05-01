@@ -563,7 +563,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         self.dictionaries = {i: dictionary_list[i] for i in range(self.amount_celltypes)}
         self.color_palette= {ct_list[i]: colour_list[i] for i in range(self.amount_celltypes)}
 
-    def plot_box(self, key, x, result_df, subcell, stripplot = True):
+    def plot_box(self, key, result_df, subcell, x=None, stripplot = True):
         """
         makes a violinplot of a specific parameter that is compared within two dictionaries.
         :param key: parameter that is compared
@@ -572,15 +572,20 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         :param stripplot: if true then stripplot will be overlayed
         :return: None
         """
-        sns.boxplot(x = x, y = key, data=result_df, palette=self.color_palette)
-        if stripplot:
-            sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
+        if x is None:
+            sns.boxplot(data=result_df, palette=self.color_palette)
+            if stripplot:
+                sns.stripplot(data=result_df, color="black", alpha=0.2)
+        else:
+            sns.boxplot(x = x, y = key, data=result_df, palette=self.color_palette)
+            if stripplot:
+                sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
         plt.ylabel(self.param_label(key, subcell))
         plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.savefig("%s/%s_%s_%s_%s_box.svg" % (self.filename, key,self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.close()
 
-    def plot_violin(self, key, x, result_df, subcell, stripplot = True):
+    def plot_violin(self, key, result_df, subcell , x=None, stripplot = True):
         """
         makes a violinplot of a specific parameter that is compared within two dictionaries.
         :param key: parameter that is compared
@@ -589,9 +594,14 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         :param stripplot: if true then stripplot will be overlayed
         :return: None
         """
-        sns.violinplot(x = x, y = key,data=result_df, inner="box", palette=self.color_palette)
-        if stripplot:
-            sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
+        if x is None:
+            sns.violinplot(data=result_df, inner="box", palette=self.color_palette)
+            if stripplot:
+                sns.stripplot(data=result_df, color="black", alpha=0.2)
+        else:
+            sns.violinplot(x = x, y = key,data=result_df, inner="box", palette=self.color_palette)
+            if stripplot:
+                sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
         plt.ylabel(self.param_label(key, subcell))
         plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.savefig(
@@ -684,7 +694,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             result_df[column_labels[ci]] = result_df[column_labels[ci]].astype("float64")
         return result_df
 
-    def result_df_per_param(self, key, column_labels = None):
+    def result_df_per_param(self, key):
         """
         creates pd.Dataframe per parameter for easier plotting
         :param key: parameter to be compared as key in dictionary

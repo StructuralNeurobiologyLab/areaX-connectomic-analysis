@@ -16,7 +16,7 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, ComparingMultipleForPLotting
-from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, get_compartment_bbvolume, \
+from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, get_compartment_bbvolume, \
     get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled, get_spine_density
 from syconn.reps.super_segmentation import SuperSegmentationObject
 
@@ -207,7 +207,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         avg_soma_distance_per_cell = np.mean(distances_between_soma, axis=1)
         pairwise_soma_distances = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean") / 1000
         soma_centres_to_dataset_borders = np.min(np.hstack([soma_centres/1000, ds_size-soma_centres/1000]).reshape(len(soma_centres), 6), axis = 1)
-        ct_vol_comp_dict["distance soma to dataset border"] = soma_centres_to_dataset_borders
+        ct_vol_comp_dict["soma distance to dataset border"] = soma_centres_to_dataset_borders
         ct_vol_comp_dict["mean soma distance"] = avg_soma_distance_per_cell
     if spiness:
         ct_vol_comp_dict["spine density"] = spine_densities
@@ -226,7 +226,7 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
             continue
         if "axon" in key:
             vol_result_dict.plot_hist(key=key, subcell="axon", bins = 10)
-        elif "dendrite" in key:
+        elif "dendrite" in key or "spine density" in key:
             vol_result_dict.plot_hist(key = key, subcell="dendrite", bins = 10)
         elif "soma distance" in key:
             if "pairwise" in key:
@@ -458,6 +458,7 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
             results_for_plotting = results_comparision.result_df_per_param(key)
             results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=False)
             results_comparision.plot_hist_comparison(key, subcell, bins=10, norm_hist=True)
+            raise ValueError
             results_comparision.plot_violin(key, results_for_plotting, subcell, stripplot=True)
             results_comparision.plot_box(key, results_for_plotting, subcell, stripplot=False)
 

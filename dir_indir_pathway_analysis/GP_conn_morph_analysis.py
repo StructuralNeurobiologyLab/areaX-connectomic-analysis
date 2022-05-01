@@ -3,7 +3,7 @@ if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
-        axon_den_arborization_ct, compare_compartment_volume_ct_multiple
+        axon_den_arborization_ct, compare_compartment_volume_ct_multiple, compare_compartment_volume_ct
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
     import time
     from syconn.handler.config import initialize_logging

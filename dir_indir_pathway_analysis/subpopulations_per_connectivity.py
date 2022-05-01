@@ -1,6 +1,4 @@
-# function to seperate MSN into groups based on connectivity to GPe/i
-# four groups: GPe only, GPi only, GPe/i both and none
-# plot amount and sum of synapses, cellids of GPe/i they synapse onto
+#functions to sort groups based onto connectivity
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +11,8 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from wholebrain.scratch.arother.bio_analysis.general.analysis_helper import get_compartment_length, check_comp_lengths_ct, filter_synapse_caches_for_ct
+from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct
+from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting
 
 def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
@@ -275,6 +274,8 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 
     return only_2ct2_cellids, only_2ct3_cellids, both_cellids, not_connected_ids
+
+
 
 
 

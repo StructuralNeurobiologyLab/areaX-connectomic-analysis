@@ -114,3 +114,72 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_spiness = m_spiness[den_so_inds]
     return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness
 
+def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, syn_cts, syn_ssv_partners, syn_sizes, syn_axs, seperate_soma_dens = False):
+    '''
+        gives amount and summed synapse size for each cell from other celltpye and writes it in dictionary. Calculates synapses from celltype1 to celltype2.
+        Function assumes synapses are already prefiltered with filter_synapse_caches for different thresholds and at least celltype involvement.
+        (dendrite, soma) seperately.
+        :param celltype1: celltype with outgoing synapses
+        :param cellids1: cellids with outgoing synapses
+        :param cellids2: cellids with incomng synapses
+        :param m_cts: synapse ids
+        :param syn_cts: celltypes of synaptic partners
+        :param syn_ssv_partners: cellids of synaptic partners
+        :param syn_sizes: synapse sizes
+        :param syn_axs: axoness values of synaptic partners
+        :param seperate_soma_dens: if True: seperate dictionaries for dendritic and somatic inputs
+        :return: dictionary with cell_ids as keys and amount of synapses
+        '''
+    # get synapses where input celltype is axon
+    testct = np.in1d(syn_ssv_partners, cellids1).reshape(len(syn_ssv_partners), 2)
+    testax = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
+    pre_ct_inds = np.any(testct == testax, axis=1)
+    m_cts = syn_cts[pre_ct_inds]
+    m_ids = syn_ids[pre_ct_inds]
+    m_axs = syn_axs[pre_ct_inds]
+    m_ssv_partners = syn_ssv_partners[pre_ct_inds]
+    m_sizes = syn_sizes[pre_ct_inds]
+    #get synapses where outgoing celltype gives dendrite, soma
+    testct = np.in1d(syn_ssv_partners, cellids2).reshape(len(syn_ssv_partners), 2)
+    testax = np.in1d(syn_axs, [2, 0]).reshape(len(syn_ssv_partners), 2)
+    post_ct_inds = np.any(testct == testax, axis=1)
+    m_cts = syn_cts[post_ct_inds]
+    m_ids = syn_ids[post_ct_inds]
+    m_axs = syn_axs[post_ct_inds]
+    m_ssv_partners = syn_ssv_partners[post_ct_inds]
+    m_sizes = syn_sizes[post_ct_inds]
+    if seperate_soma_dens is True:
+        #get unique cellids for cells recieving synapses, divide in dendritic and somatic synapses
+        den_inds = np.where(m_axs == 0)
+        som_inds = np.where(m_axs == 2)
+        den_ct_inds = np.where(m_cts[den_inds] != celltype1)
+        som_ct_inds = np.where(m_cts[som_inds] != celltype1)
+        den_ssvs = m_ssv_partners[den_ct_inds, den_inds[1][den_ct_inds]][0]
+        den_sizes = m_sizes[den_ct_inds]
+        den_ssv_inds, unique_den_ssvs = pd.factorize(den_ssvs)
+        den_syn_sizes = np.bincount(den_ssv_inds, den_sizes)
+        den_amounts = np.bincount(den_ssv_inds)
+        # get unique cellids from cells whose soma receive synapses, count them and sum up sizes
+        som_ssvs = m_ssv_partners[som_ct_inds, som_inds[1][som_ct_inds]][0]
+        som_sizes = m_sizes[som_ct_inds]
+        som_ssv_inds, unique_som_ssvs = pd.factorize(som_ssvs)
+        som_syn_sizes = np.bincount(som_ssv_inds, som_sizes)
+        som_amounts = np.bincount(som_ssv_inds)
+        # create dictionaries for soma, dendrite synapses
+        den_dict = {cellid: {"amount": den_amounts[i], "summed size": den_syn_sizes[i]} for i, cellid in
+                    enumerate(unique_den_ssvs)}
+        soma_dict = {cellid: {"amount": som_amounts[i], "summed size": som_syn_sizes[i]} for i, cellid in
+                     enumerate(unique_som_ssvs)}
+        return den_dict, soma_dict
+    else:
+        # get unique cellids from cells who receive synapses, count them and sum up sizes
+        rec_inds = np.where(m_axs != 1)
+        rec_ct_inds = np.where(m_cts[rec_inds] != celltype1)
+        receiv_ssvs = m_ssv_partners[rec_ct_inds, rec_inds[1][rec_ct_inds]][0]
+        rec_sizes = m_sizes[rec_ct_inds]
+        rec_ssv_inds, unique_rec_ssvs = pd.factorize(receiv_ssvs)
+        rec_syn_sizes = np.bincount(rec_ssv_inds, rec_sizes)
+        rec_amounts = np.bincount(rec_ssv_inds)
+        rec_dict = {cellid: {"amount": rec_amounts[i], "summed size": rec_syn_sizes[i]} for i, cellid in
+                    enumerate(unique_rec_ssvs)}
+        return rec_dict

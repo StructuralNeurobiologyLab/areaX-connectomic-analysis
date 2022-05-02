@@ -1,10 +1,11 @@
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
+    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity, get_ct_via_inputfraction
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
         axon_den_arborization_ct, compare_compartment_volume_ct_multiple, compare_compartment_volume_ct
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
+    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_organell_volume_density
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -14,6 +15,13 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
+    import numpy as np
+    from multiprocessing import pool
+    from functools import partial
+    from tqdm import tqdm
+    import seaborn as sns
+    import itertools
+    import matplotlib.pyplot as plt
 
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
 
@@ -39,11 +47,79 @@ if __name__ == '__main__':
     log.info("Step 1/9: Plot synaptic input from MSN to all other full celltypes to identify GPs")
     #use full_cell_dict to identify overall synapse amount and area per cell with compartment length threshold
     #for each celltype (not MSNs): get fraction of MSN input in synapse amount and summed synapse size
-    #plot as 2D plot with mitochondria volume density
-    #overlay plot with previous GP ids
-    #set threshold to get GP population
-    #save cellids
+    MSN_ids = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_arr.pkl")
+    non_MSN_fullcts = [0, 5, 6, 7, 8, 9, 10]
+    non_MSN_cellids_cts = np.array([load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_arr.pkl") % ct_dict[i] for i in non_MSN_fullcts])
+    non_MSN_cellids = np.concatenate(non_MSN_cellids_cts)
+    non_MSN_celldicts = np.array([load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl") % ct_dict[i] for i in non_MSN_fullcts])
     input_threshold = 0.25
+    log.info("Step 1a/9: Get GP cellids and MSN inputs to full cells")
+    GP_ids, msn_input_results_dict = get_ct_via_inputfraction(sd_synssv, pre_ct = 2, post_cts = non_MSN_fullcts, pre_cellids = non_MSN_cellids,
+                                                              filename = f_name, celltype_threshold = input_threshold, pre_label = None, post_labels = None,
+                                                              min_comp_len = cl, min_syn_size = min_syn_size, syn_prob = syn_prob)
+    log.info("Step 1b/9: plot results in 2D vs organelle density")
+    sd_mitossv = SegmentationDataset("mi", working_dir=global_params.config.working_dir)
+    cached_mito_ids = sd_mitossv.ids
+    cached_mito_mesh_bb = sd_mitossv.load_numpy_data("mesh_bb")
+    cached_mito_rep_coords = sd_mitossv.load_numpy_data("rep_coord")
+    cached_mito_volumes = sd_mitossv.load_numpy_data("size")
+    amount_postcts = len(non_MSN_fullcts)
+    p = pool.Pool()
+    mito_results = []
+    for mi in range(len(non_MSN_fullcts)):
+        cellids = non_MSN_cellids_cts[mi]
+        full_cell_dict =non_MSN_celldicts[mi]
+        mito_results_cell = p.map(partial(get_organell_volume_density, cached_so_ids = cached_mito_ids,
+                                                               cached_so_rep_coord = cached_mito_rep_coords,
+                                          cached_so_volume = cached_mito_volumes, full_cell_dict = full_cell_dict,
+                                          skeleton_loaded = False, k = 3, min_comp_len = cl), tqdm(cellids))
+        mito_results.append(mito_results_cell)
+    mito_results = np.concatenate(mito_results)
+    msn_input_results_dict["axon mitochondria volume density"] = mito_results[:, 2]
+    msn_input_results_dict["dendrite mitochondria volume density"] = mito_results[:, 3]
+    key_list = list(msn_input_results_dict.keys())[-2]
+    results_df = pd.DataFrame(msn_input_results_dict)
+    combinations = list(itertools.combinations(range(len(key_list)), 2))
+    palette = {ct_dict[0]: "#707070", ct_dict[5]:"#707070", ct_dict[6]:"#592A87", ct_dict[7]:"#2AC644", ct_dict[8]:"#707070", ct_dict[9]: "#707070", ct_dict[10]: "#707070"}
+    for comb in combinations:
+        x = key_list[comb[0]]
+        y = key_list[comb[1]]
+        g = sns.JointGrid(data=results_df, x=x, y=y)
+        g.plot_joint(sns.scatterplot)
+        g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
+                         kde=False, bins=10)
+        plt.legend()
+        if "synapse" in x:
+            plt.xlabel("%s" % x)
+        elif "volume density" in x:
+            plt.xlabel("%s in µm³/µm" % x)
+        if "synapse" in x:
+            plt.ylabel("%s" % x)
+        elif "volume density" in y:
+            plt.ylabel("%s in µm³/µm" % y)
+
+        plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
+        plt.close()
+        g = sns.JointGrid(data=results_df, x=x, y=y, hue = "predicted celltype", palette = palette)
+        g.plot_joint(sns.scatterplot)
+        g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
+                         kde=False, bins=10, palette = palette)
+        plt.legend()
+        if "synapse" in x:
+            plt.xlabel("%s" % x)
+        elif "volume density" in x:
+            plt.xlabel("%s in µm³/µm" % x)
+        if "synapse" in x:
+            plt.ylabel("%s" % x)
+        elif "volume density" in y:
+            plt.ylabel("%s in µm³/µm" % y)
+
+        plt.savefig("%s/%s_%s_joinplot_overlay.svg" % (f_name, x, y))
+        plt.close()
+    #plot
     time_stamps = [time.time()]
     step_idents = ["GP identification based on MSN input finished, threshold = %f" % input_threshold]
 

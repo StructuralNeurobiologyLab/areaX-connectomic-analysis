@@ -167,7 +167,7 @@ def get_myelin_fraction(cell, min_comp_len = 100):
     relative_myelin_length = absolute_myelin_length / axon_length
     return absolute_myelin_length, relative_myelin_length
 
-def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cached_so_rep_coord, cached_so_volume, full_cell_dict = None, k = 3, min_comp_len = 100):
+def get_organell_volume_density(cellid, cached_so_ids,cached_so_rep_coord, cached_so_volume, full_cell_dict = None,skeleton_loaded = False, k = 3, min_comp_len = 100):
     '''
     calculate density and volume density of a supersegmentation object per cell for axon and dendrite. Skeleton has to be loaded
     :param cell: super segmentation object
@@ -181,6 +181,10 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
     :return: densities and volume densities for aoxn and dendrite
     '''
 
+    cell = SuperSegmentationObject(cellid)
+    segmentation_object_ids = cell.mi_ids
+    if skeleton_loaded == False:
+        cell.load_skeleton()
     kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"]*cell.scaling)
     sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
     organell_volumes = cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling)  # convert to cubic µm
@@ -220,7 +224,7 @@ def get_organell_volume_density(cell, segmentation_object_ids, cached_so_ids,cac
     den_so_volume = np.sum(organell_volumes[den_inds])
     axo_so_volume_density = axo_so_volume/ axon_length
     den_so_volume_density = den_so_volume/ dendrite_length
-    return axo_so_density, den_so_density, axo_so_volume_density, den_so_volume_density
+    return np.array([axo_so_density, den_so_density, axo_so_volume_density, den_so_volume_density])
 
 def get_compartment_mesh_area(cell):
     """

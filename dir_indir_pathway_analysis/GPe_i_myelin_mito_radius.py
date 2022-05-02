@@ -90,10 +90,13 @@ if __name__ == '__main__':
         abs_myelin_cell, rel_myelin_cell = get_myelin_fraction(cell, min_comp_len = comp_length)
         if abs_myelin_cell == 0:
             continue
-        cell_mito_ids = cell.mi_ids
-        axo_mito_density_cell, den_mito_density_cell, axo_mito_volume_density_cell, den_mito_volume_density_cell = get_organell_volume_density(cell, segmentation_object_ids = cell_mito_ids, cached_so_ids = cached_mito_ids,
+        mito_results = get_organell_volume_density(cell, cached_so_ids = cached_mito_ids,
                                     cached_so_rep_coord = cached_mito_rep_coords, cached_so_volume = cached_mito_volumes,
                                     full_cell_dict = GPe_full_cell_dict, k=3, min_comp_len=100)
+        axo_mito_density_cell = mito_results[0]
+        den_mito_density_cell = mito_results[1]
+        axo_mito_volume_density_cell = mito_results[2]
+        den_mito_volume_density_cell = mito_results[3]
         if den_mito_density_cell == 0:
             continue
         axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]

@@ -151,7 +151,7 @@ if __name__ == '__main__':
         step_idents = ["full cells with mcl %i for celltype %s prepared" % (mcl, ct_dict[i])]
         log.info("full cells with mcl %i for celltype %s prepared" % (mcl, ct_dict[i]))
 
-    mcl_cellids = np.hstack(np.array([mcl_cellids]))
+    mcl_cellids = np.concatenate(np.array([mcl_cellids]))
     write_obj2pkl("%s/ct_dict_mcl_%i.pkl" % (f_name, mcl), mcl_cellids_perct)
     write_obj2pkl("%s/cellids_mcl_%i.pkl" % (f_name, mcl), mcl_cellids)
 

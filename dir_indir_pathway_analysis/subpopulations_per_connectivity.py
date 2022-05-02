@@ -348,6 +348,7 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     log.info("Step 4/5: Calculate fraction of input for each cell")
     synapse_amount_fraction = np.zeros(len(post_cellids))
     synapse_sumsize_fraction = np.zeros(len(post_cellids))
+    celltypes = np.zeros(len(post_cellids))
     fraction_dict = {post_labels[i]: {} for i in post_labels}
     if not ("dendrite synapse amount %i" % min_comp_len) in post_celldicts[post_cts[0]][post_cellids[0]]:
         #if it is not calculated, yet, calculate as in analysis prep
@@ -360,11 +361,12 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
         overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma summed synapse size %i" % min_comp_len]
         synapse_amount_fraction[i] = msn_syn_amount / overall_synapse_amount
         synapse_sumsize_fraction[i] = msn_summed_syn_size/overall_summed_synsize
+        celltypes[i] = post_labels[celltype]
         fraction_dict[post_labels[celltype]][cellid] = {"synapse amount fraction": synapse_amount_fraction[i], "synapse summed size fraction": synapse_sumsize_fraction[i]}
 
     write_obj2pkl("%s/fraction_dict.pkl", fraction_dict)
     results_dict = {"synapse amount fraction": synapse_amount_fraction,
-                    "synapse summed size fraction": synapse_sumsize_fraction, "cellids": post_cellids}
+                    "synapse summed size fraction": synapse_sumsize_fraction, "cellids": post_cellids, "predicted celltype": celltypes}
     pd_results = pd.DataFrame(results_dict)
     pd_results.to_csv("%s/results.csv" % filename)
     high_input_inds = synapse_sumsize_fraction >= celltype_threshold
@@ -389,7 +391,7 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     log.info("Finding celltype based on input fraction of %s done" % pre_label)
 
 
-    return  high_input_cellids, results_dict, fraction_dict
+    return  high_input_cellids, results_dict
 
 
 

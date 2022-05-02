@@ -39,7 +39,7 @@ if __name__ == '__main__':
     #ct_list = [2,5, 6, 7, 0, 8, 9, 10]
     ax_list = [3, 4, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
-    ct_list = [6, 7, 0, 5, 8, 9, 10, 2]
+    #ct_list = [6, 7, 0, 5, 8, 9, 10, 2]
     #ct_list = [2]
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m = syn_prob > syn_proba
@@ -130,6 +130,7 @@ if __name__ == '__main__':
     mcl_cellids = []
     mcl_cellids_perct = {}
     cell_dicts = {}
+    ct_list = list(ct_dict.keys())
     for i in ct_dict.keys():
         log.info("get full cells from %s" % ct_dict[i])
         if i in ax_list:
@@ -151,7 +152,7 @@ if __name__ == '__main__':
         step_idents = ["full cells with mcl %i for celltype %s prepared" % (mcl, ct_dict[i])]
         log.info("full cells with mcl %i for celltype %s prepared" % (mcl, ct_dict[i]))
 
-    mcl_cellids = np.concatenate(np.array([mcl_cellids]))
+    mcl_cellids = np.hstack(np.concatenate(np.array([mcl_cellids])))
     write_obj2pkl("%s/ct_dict_mcl_%i.pkl" % (f_name, mcl), mcl_cellids_perct)
     write_obj2pkl("%s/cellids_mcl_%i.pkl" % (f_name, mcl), mcl_cellids)
 
@@ -184,8 +185,8 @@ if __name__ == '__main__':
                     cell_dicts[ct][axonid]["axon synapse amount %i" % mcl] = 0
                     cell_dicts[ct][axonid]["axon summed synapse size %i" % mcl] = 0
             syn_path = ("%s/ax_%.3s_dict.pkl" % (f_name, ct_dict[ct]))
-            axon_dict = dict(axon_dict)
-            write_obj2pkl(syn_path, axon_dict)
+            axon_dict = dict(cell_dicts[ct])
+            write_obj2pkl(syn_path, cell_dicts[ct])
         else:
             axon_syns, den_syns, soma_syns = synapse_amount_percell(celltype=ct, syn_cts=m_cts, syn_sizes=m_sizes,
                                                                     syn_ssv_partners=m_ssv_partners,
@@ -216,7 +217,6 @@ if __name__ == '__main__':
             cell_dict = dict(cell_dicts[ct])
             write_obj2pkl(dict_path, cell_dict)
 
-            raise ValueError
         time_stamps = [time.time()]
         step_idents = ["cell dictionaries for celltype %s completed" % ct_dict[ct]]
         log.info("cell dictionaries for celltype %s completed" % ct_dict[ct])

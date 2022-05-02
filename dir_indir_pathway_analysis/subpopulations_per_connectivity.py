@@ -350,6 +350,7 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     synapse_sumsize_fraction = np.zeros(len(post_cellids))
     celltypes = np.zeros(len(post_cellids))
     fraction_dict = {post_labels[i]: {} for i in post_labels}
+    raise ValueError
     if not ("dendrite synapse amount %i" % min_comp_len) in post_celldicts[post_cts[0]][post_cellids[0]]:
         #if it is not calculated, yet, calculate as in analysis prep
         raise KeyError("no synapse amount and summed size calculated for this compartment length requirement")

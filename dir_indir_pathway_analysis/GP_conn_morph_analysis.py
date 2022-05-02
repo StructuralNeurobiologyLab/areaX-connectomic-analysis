@@ -69,8 +69,10 @@ if __name__ == '__main__':
     amount_postcts = len(non_MSN_fullcts)
     p = pool.Pool()
     mito_results = []
+    non_MSN_cellids = msn_input_results_dict["cellids"]
     for mi in range(len(non_MSN_fullcts)):
         cellids = non_MSN_cellids_cts[mi]
+        cellids = cellids[np.in1d(cellids, non_MSN_cellids)]
         full_cell_dict =non_MSN_celldicts[mi]
         mito_results_cell = p.map(partial(get_organell_volume_density, cached_so_ids = cached_mito_ids,
                                                                cached_so_rep_coord = cached_mito_rep_coords,

@@ -1031,9 +1031,9 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
         len(comp_cts), label_cts[0], label_cts[1], conn_ct_str, min_comp_len))
     time_stamps = [time.time()]
     step_idents = ['t-0']
+    syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], conn_ct_str, label_cts[i])) for i in range(len(comp_cts))]
     raise ValueError
-    syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], conn_ct_str, label_cts[i]) for i in range(len(comp_cts)))]
-    syn_dicts = {[conn_ct_str, label_cts[i]]: syn_dict_list[1] for i in range(len(comp_cts))}
+    syn_dicts = {[conn_ct_str, label_cts[i]]: syn_dict_list[i] for i in range(len(comp_cts))}
     ct_connections = list(syn_dicts.keys())
     log.info("compute statistics for comparison, create violinplot and histogram")
     ranksum_results = pd.DataFrame(columns=ct_connections, index=range(len(ct_connections) * 2))

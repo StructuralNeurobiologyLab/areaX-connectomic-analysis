@@ -270,7 +270,7 @@ def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200):
                 continue
         checked_cells[i] = cellid
 
-    checked_cells = checked_cells[checked_cells > 0]
+    checked_cells = checked_cells[checked_cells > 0].astype(int)
     return checked_cells
 
 

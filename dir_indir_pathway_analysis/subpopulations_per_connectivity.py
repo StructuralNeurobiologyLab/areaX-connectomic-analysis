@@ -299,12 +299,13 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
                10: "NGF"}
     pre_celldict = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[pre_ct])
     post_celldicts = [load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[i]) for i in post_cts]
-    post_cell_arrays = [post_celldicts[i].keys for i in post_cts]
+    post_ct_amount = len(post_cts)
+    post_cell_arrays = [list(post_celldicts[i].keys()) for i in range(post_ct_amount)]
     if pre_label is None:
         pre_label = ct_dict[pre_ct]
     if post_labels is None:
         post_labels = [ct_dict[i] for  i in post_cts]
-    post_ct_amount = len(post_cts)
+
 
     filename = "%s/get_ct_via_%s_input_mcl_%i_mss_%i_ct_%i_sp_%i" % (filename, pre_label, min_comp_len, min_syn_size, celltype_threshold, syn_prob_thresh)
 
@@ -318,7 +319,13 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     # check if cellids match minimum compartment length
     log.info("Step 1/5: Check compartment length of cells from %i celltypes" % (post_ct_amount + 1))
     pre_cellids = check_comp_lengths_ct(pre_cellids, fullcelldict=pre_celldict, min_comp_len=min_comp_len)
-    post_cellids = [check_comp_lengths_ct(post_cellids[i], fullcelldict = post_celldicts[i], min_comp_len = min_comp_len) for i in range(post_ct_amount)]
+    post_cellids = [check_comp_lengths_ct(post_cell_arrays[i], fullcelldict = post_celldicts[i], min_comp_len = min_comp_len) for i in range(post_ct_amount)]
+    post_lengths = np.array([len(post_cellids[i]) for i in range(post_ct_amount)])
+    max_post_length = np.max(post_lengths)
+    post_cellids_2D = np.zeros((post_ct_amount, max_post_length))
+    for i in range(post_ct_amount):
+        post_cellids_2D[i][0:post_lengths[i]] = post_cellids[i]
+    flattened_post_cellids = np.concatenate(post_cellids).astype(int)
     time_stamps = [time.time()]
     step_idents = ['check compartment length from all %i celltypes' % (post_ct_amount + 1)]
 
@@ -337,7 +344,7 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     log.info("Step 3/5: Get amount and sum size from %s for each cell" % pre_label)
 
     #for each cell: determine synapse amount and sum of synapse sizes per cell from input celltype
-    from_ct1_syn_dict = synapse_amount_sumsize_between2cts(celltype1 = pre_ct, cellids1 = pre_cellids, cellids2 = post_cellids,
+    from_ct1_syn_dict = synapse_amount_sumsize_between2cts(celltype1 = pre_ct, cellids1 = pre_cellids, cellids2 = flattened_post_cellids,
                                                            syn_ids = m_ids, syn_cts = m_cts, syn_ssv_partners = m_ssv_partners,
                                                            syn_sizes = m_sizes, syn_axs = m_axs, seperate_soma_dens = False)
 
@@ -346,18 +353,21 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
 
     #get total synapse amount and synapse sum size per cell for min_comp_len
     log.info("Step 4/5: Calculate fraction of input for each cell")
-    synapse_amount_fraction = np.zeros(len(post_cellids))
-    synapse_sumsize_fraction = np.zeros(len(post_cellids))
-    celltypes = np.zeros(len(post_cellids))
-    fraction_dict = {post_labels[i]: {} for i in post_labels}
-    raise ValueError
-    if not ("dendrite synapse amount %i" % min_comp_len) in post_celldicts[post_cts[0]][post_cellids[0]]:
+    synapse_amount_fraction = np.zeros(len(flattened_post_cellids))
+    synapse_sumsize_fraction = np.zeros(len(flattened_post_cellids))
+    celltypes = np.empty(len(flattened_post_cellids)).astype(str)
+    fraction_dict = {i: {} for i in post_labels}
+    if not ("dendrite synapse amount %i" % min_comp_len) in post_celldicts[post_cts[0]][flattened_post_cellids[0]]:
         #if it is not calculated, yet, calculate as in analysis prep
         raise KeyError("no synapse amount and summed size calculated for this compartment length requirement")
-    for i, cellid in enumerate(tqdm(post_cellids)):
-        msn_syn_amount = from_ct1_syn_dict[cellid]["amount"]
-        msn_summed_syn_size = from_ct1_syn_dict[cellid]["summed size"]
-        celltype = np.where(post_cell_arrays == cellid)[0]
+    for i, cellid in enumerate(tqdm(flattened_post_cellids)):
+        try:
+            msn_syn_amount = from_ct1_syn_dict[cellid]["amount"]
+            msn_summed_syn_size = from_ct1_syn_dict[cellid]["summed size"]
+        except KeyError:
+            msn_syn_amount = 0
+            msn_summed_syn_size = 0
+        celltype = int(np.where(post_cellids_2D == cellid)[0])
         overall_synapse_amount = post_celldicts[celltype][cellid]["dendrite synapse amount %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma synapse amount %i" % min_comp_len]
         overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma summed synapse size %i" % min_comp_len]
         synapse_amount_fraction[i] = msn_syn_amount / overall_synapse_amount
@@ -365,13 +375,13 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
         celltypes[i] = post_labels[celltype]
         fraction_dict[post_labels[celltype]][cellid] = {"synapse amount fraction": synapse_amount_fraction[i], "synapse summed size fraction": synapse_sumsize_fraction[i]}
 
-    write_obj2pkl("%s/fraction_dict.pkl", fraction_dict)
+    write_obj2pkl("%s/fraction_dict.pkl" % filename, fraction_dict)
     results_dict = {"synapse amount fraction": synapse_amount_fraction,
-                    "synapse summed size fraction": synapse_sumsize_fraction, "cellids": post_cellids, "predicted celltype": celltypes}
+                    "synapse summed size fraction": synapse_sumsize_fraction, "cellids": flattened_post_cellids, "predicted celltype": celltypes}
     pd_results = pd.DataFrame(results_dict)
     pd_results.to_csv("%s/results.csv" % filename)
     high_input_inds = synapse_sumsize_fraction >= celltype_threshold
-    high_input_cellids = post_cellids[high_input_inds]
+    high_input_cellids = flattened_post_cellids[high_input_inds]
 
     time_stamps = [time.time()]
     step_idents = ['input fraction for each cell calculated']
@@ -381,7 +391,7 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     log.info("Step 5/5: Plot results in histogram")
     result_plots = ResultsForPlotting(celltype = post_labels[0], filename = filename, dictionary = results_dict)
     for key in results_dict:
-        if "cellids" in key:
+        if "cellids" in key or "celltype" in key:
             continue
         result_plots.plot_hist(key = key, subcell = "synapse", cells = True, norm_hist = False, bins = None, xlabel = None, celltype2 = pre_label, outgoing = False)
         result_plots.plot_hist(key=key, subcell="synapse", cells=True, norm_hist=True, bins=None, xlabel=None,

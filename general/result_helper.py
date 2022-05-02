@@ -101,15 +101,23 @@ class ResultsForPlotting():
         if bins is None:
             bins = "auto"
         if norm_hist:
-            sns.histplot(self.dictionary[key], common_norm = True, element = "step", fill = False, color = self.color,
-                         kde=False, bins=bins)
+            try:
+                sns.histplot(self.dictionary[key], common_norm = True, element = "step", fill = False, color = self.color,
+                             kde=False, bins=bins)
+            except ValueError:
+                sns.histplot(self.dictionary[key], common_norm=True, element="bars", fill=False, color=self.color,
+                             kde=False, bins=bins)
             if cells:
                 plt.ylabel("fraction of cells")
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            sns.histplot(self.dictionary[key], common_norm = False, element = "step", fill = False, color = self.color,
-                         kde=False, bins=bins)
+            try:
+                sns.histplot(self.dictionary[key], common_norm=False, element="step", fill=False, color=self.color,
+                             kde=False, bins=bins)
+            except ValueError:
+                sns.histplot(self.dictionary[key], common_norm=False, element="bars", fill=False, color=self.color,
+                             kde=False, bins=bins)
             if cells:
                 plt.ylabel("count of cells")
             else:

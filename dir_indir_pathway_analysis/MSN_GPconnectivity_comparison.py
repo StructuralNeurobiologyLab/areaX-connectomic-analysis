@@ -87,6 +87,7 @@ if __name__ == '__main__':
                                                               cellids1=msn2gpe_ids, cellids2=msn_nogp_ids,
                                                               min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                               label_ct1="MSN only GPe", label_ct2="MSN no GPs")
+    '''
     MSN_onlyGPi_MSN_both_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                               filename=f_name, full_cells=True,
                                                               cellids1=msn2gpi_ids, cellids2=msn2gpei_ids,
@@ -102,10 +103,12 @@ if __name__ == '__main__':
                                                            cellids1=msn_nogp_ids, cellids2=msn2gpei_ids,
                                                            min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                            label_ct1="MSN no GPs", label_ct2="MSN both GPs")
+    '''
     msn_onlyGPe_msn_summed_synapse = compare_connectivity_multiple(comp_cts = msn_cts[1:], filename = f_name,
                                                                    foldernames = [MSN_onlyGPe_MSN_onlyGPi_resultsfolder, MSN_onlyGPe_MSN_both_resultsfolder, MSN_onlyGPe_MSN_none_resultsfolder],
                                                                    connected_ct = 2, min_comp_len = cl, label_cts =["MSN only GPi", "MSN both GPs", "MSN no GPs"],
                                                                    label_conn_ct = "MSN only GPe", colours = msn_colors[2:])
+    raise ValueError
     msn_onlyGPi_msn_summed_synapse = compare_connectivity_multiple(comp_cts=msn_cts[2:], filename=f_name,
                                                                    foldernames=[MSN_onlyGPi_MSN_both_resultsfolder,
                                                                                 MSN_onlyGPi_MSN_none_resultsfolder],

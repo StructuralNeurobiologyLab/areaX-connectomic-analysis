@@ -418,8 +418,8 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
     for i in range(amount_celltypes):
         for j in range(1, amount_celltypes):
             ct_comparisons[i + j - 1] = label_cts[i] + " vs " + label_cts[j]
-    ranksum_results = pd.DataFrame(columns=ct_comparisons, index=range(amount_comparisons * 2))
-    results_comparison = ComparingMultipleForPLotting(ct_list = label_cts, filename = filename, dictionary_list = ct_comp_dicts, colour_list = colours)
+    ranksum_results = pd.DataFrame(columns=ct_comparisons)
+    results_comparison = ComparingMultipleForPLotting(ct_list = label_cts, filename = f_name, dictionary_list = ct_comp_dicts, colour_list = colours)
     for key in comp_dict_keys:
         if "ids" in key or "soma centre coords" in key:
             continue

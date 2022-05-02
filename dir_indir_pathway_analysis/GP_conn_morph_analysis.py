@@ -57,7 +57,7 @@ if __name__ == '__main__':
         "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[i]) for i in non_MSN_fullcts])
     input_threshold = 0.25
     log.info("Step 1a/9: Get GP cellids and MSN inputs to full cells")
-    GP_ids, msn_input_results_dict = get_ct_via_inputfraction(sd_synssv, pre_ct = 2, post_cts = non_MSN_fullcts, pre_cellids = non_MSN_cellids,
+    GP_ids, msn_input_results_dict = get_ct_via_inputfraction(sd_synssv, pre_ct = 2, post_cts = non_MSN_fullcts, pre_cellids = MSN_ids, post_cellids = non_MSN_cellids,
                                                               filename = f_name, celltype_threshold = input_threshold, pre_label = None, post_labels = None,
                                                               min_comp_len = cl, min_syn_size = min_syn_size, syn_prob_thresh = syn_prob)
     log.info("Step 1b/9: plot results in 2D vs organelle density")
@@ -80,6 +80,7 @@ if __name__ == '__main__':
     mito_results = np.concatenate(mito_results)
     msn_input_results_dict["axon mitochondria volume density"] = mito_results[:, 2]
     msn_input_results_dict["dendrite mitochondria volume density"] = mito_results[:, 3]
+    raise ValueError
     key_list = list(msn_input_results_dict.keys())[-2]
     results_df = pd.DataFrame(msn_input_results_dict)
     combinations = list(itertools.combinations(range(len(key_list)), 2))

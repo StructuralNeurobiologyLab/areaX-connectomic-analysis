@@ -134,11 +134,11 @@ def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, s
     testct = np.in1d(syn_ssv_partners, cellids1).reshape(len(syn_ssv_partners), 2)
     testax = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
     pre_ct_inds = np.any(testct == testax, axis=1)
-    m_cts = syn_cts[pre_ct_inds]
-    m_ids = syn_ids[pre_ct_inds]
-    m_axs = syn_axs[pre_ct_inds]
-    m_ssv_partners = syn_ssv_partners[pre_ct_inds]
-    m_sizes = syn_sizes[pre_ct_inds]
+    syn_cts = syn_cts[pre_ct_inds]
+    syn_ids = syn_ids[pre_ct_inds]
+    syn_axs = syn_axs[pre_ct_inds]
+    syn_ssv_partners = syn_ssv_partners[pre_ct_inds]
+    syn_sizes = syn_sizes[pre_ct_inds]
     #get synapses where outgoing celltype gives dendrite, soma
     testct = np.in1d(syn_ssv_partners, cellids2).reshape(len(syn_ssv_partners), 2)
     testax = np.in1d(syn_axs, [2, 0]).reshape(len(syn_ssv_partners), 2)

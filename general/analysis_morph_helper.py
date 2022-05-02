@@ -137,10 +137,13 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
         max_z = np.max(sample_nodes[:, 2])
         min = np.array([min_x, min_y, min_z])
         max = np.array([max_x, max_y, max_z])
-        sample_diagonal = np.linalg.norm(max - min) / 1000  # in µm
+        sample_diagonal = np.linalg.norm(max - min) / 1000 # in µm
+        if sample_diagonal == 0 or sample_diagonal < 10**(-5):
+            continue
         sample_tortuosity = (sample_length/ sample_diagonal) ** 2
         tortuosities[i] = sample_tortuosity
     avg_tortuosity = np.nanmean(tortuosities)
+
     return avg_tortuosity
 
 def get_myelin_fraction(cell, min_comp_len = 100):

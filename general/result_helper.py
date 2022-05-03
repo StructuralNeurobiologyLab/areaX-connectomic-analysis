@@ -572,7 +572,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         self.dictionaries = {i: dictionary_list[i] for i in range(self.amount_celltypes)}
         self.color_palette= {ct_list[i]: colour_list[i] for i in range(self.amount_celltypes)}
 
-    def plot_box(self, key, result_df, subcell, x=None, stripplot = True):
+    def plot_box(self, key, result_df, subcell, x=None, stripplot = True, outgoing = False):
         """
         makes a violinplot of a specific parameter that is compared within two dictionaries.
         :param key: parameter that is compared
@@ -590,11 +590,19 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             if stripplot:
                 sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
         plt.ylabel(self.param_label(key, subcell))
-        plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
-        plt.savefig("%s/%s_%s_%s_%s_box.svg" % (self.filename, key,self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        if outgoing:
+            plt.title("%s from %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            plt.savefig(
+                "%s/%s_%s_%s_%s_box_outgoing.svg" % (
+                    self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        else:
+            plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            plt.savefig(
+                "%s/%s_%s_%s_%s_box.svg" % (
+                self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.close()
 
-    def plot_violin(self, key, result_df, subcell , x=None, stripplot = True):
+    def plot_violin(self, key, result_df, subcell , x=None, stripplot = True, outgoing = False):
         """
         makes a violinplot of a specific parameter that is compared within two dictionaries.
         :param key: parameter that is compared
@@ -612,12 +620,18 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             if stripplot:
                 sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
         plt.ylabel(self.param_label(key, subcell))
-        plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
-        plt.savefig(
-            "%s/%s_%s_%s_%s_violin.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        if outgoing:
+            plt.title("%s from %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            plt.savefig(
+                "%s/%s_%s_%s_%s_violin_outgoing.svg" % (
+                self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        else:
+            plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            plt.savefig(
+                "%s/%s_%s_%s_%s_violin.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.close()
 
-    def plot_hist_comparison(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None):
+    def plot_hist_comparison(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, outgoing = False):
         """
                  plots two arrays and compares them in histogram and saves it.
                  :param key: key of dictionary that should be plotted
@@ -656,11 +670,18 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             plt.xlabel(xlabel)
         else:
             plt.xlabel(self.param_label(key, subcell))
-        plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
-        if norm_hist:
-            plt.savefig("%s/%s_%s_%s_%s_hist_norm.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+        if outgoing:
+            plt.title("%s from %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            if norm_hist:
+                plt.savefig("%s/%s_%s_%s_%s_hist_norm_outgoing.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            else:
+                plt.savefig("%s/%s_%s_%s_%s_hist_outgoing.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         else:
-            plt.savefig("%s/%s_%s_%s_%s_hist.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            plt.title("%s in %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            if norm_hist:
+                plt.savefig("%s/%s_%s_%s_%s_hist_norm.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
+            else:
+                plt.savefig("%s/%s_%s_%s_%s_hist.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.close()
 
     def result_df_categories(self, label_category):

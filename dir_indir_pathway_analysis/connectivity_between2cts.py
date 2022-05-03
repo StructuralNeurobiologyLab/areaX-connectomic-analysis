@@ -1041,7 +1041,7 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], conn_ct_str, label_cts[i])) for i in range(len(comp_cts))]
     ct_connections = [[conn_ct_str, label_cts[i]] for i in range(len(comp_cts))]
     log.info("compute statistics for comparison, create violinplot and histogram")
-    ranksum_results = pd.DataFrame(columns=ct_connections, index=range(len(ct_connections) * 2))
+
 
 
     #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
@@ -1056,12 +1056,13 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
         result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
 
         result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, conn_ct_str, label_cts[0], label_cts[1]))
-        raise ValueError
         for key in result_df_multi_params.keys():
             if "celltype" in key or "compartment" in key:
                 continue
             results_comparison.plot_violin_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= conn_ct_str, outgoing=False, stripplot=True)
             results_comparison.plot_box_hue(x = "compartment", key = key, subcell="synapse", results_df = result_df_multi_params, hue = "celltype", conn_celltype= conn_ct_str, outgoing=False, stripplot=False)
+
+    ranksum_results = pd.DataFrame()
 
     for key in syn_dict_list[0].keys():
         if "ids" in key or "multi" in key:
@@ -1072,23 +1073,23 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
                 if i <= j:
                     continue
                 stats, p_value = ranksums(syn_dict_list[i][key], syn_dict_list[j][key])
-                ranksum_results.loc["stats " + key, ct_connections[i] + " vs " + ct_connections[j]] = stats
-                ranksum_results.loc["p value",+ key, ct_connections[i] + " vs " + ct_connections[j]] = p_value
+                ranksum_results.loc["stats " + key, ct_connections[i][0] + " 2 " + ct_connections[i][1] + " vs " + ct_connections[j][0] + " 2 " + ct_connections[j][1]] = stats
+                ranksum_results.loc["p value " + key, ct_connections[i][0] + " 2 " + ct_connections[i][1] + " vs " + ct_connections[j][0] + " 2 " + ct_connections[j][1]] = p_value
         # plot parameter as violinplot
         if "-" not in key:
             results_for_plotting = results_comparison.result_df_per_param(key)
-            results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, conn_celltype=conn_ct_str, outgoing=False)
+            results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, outgoing=False)
             results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot= False,
-                                    conn_celltype=conn_ct_str, outgoing = False)
+                                     outgoing = False)
         if "all" in key:
             results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
-                                                    conn_celltype=conn_ct_str, outgoing=False)
+                                                    outgoing=False)
             results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
-                                                    conn_celltype=conn_ct_str, outgoing=False)
+                                                    outgoing=False)
         else:
-            results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=conn_ct_str, outgoing=False)
+            results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, outgoing=False)
             results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
-                                                    conn_celltype=conn_ct_str, outgoing=False)
+                                                    outgoing=False)
 
     ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, conn_ct_str, label_cts[0], label_cts[1]))
 
@@ -1112,14 +1113,14 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
 
         multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, conn_ct_str, label_cts[0], label_cts[1]))
         results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
-                                              hue="celltype", conn_celltype = conn_ct_str, outgoing = False)
+                                              hue="celltype", conn_celltype= conn_ct_str, outgoing = False)
         results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
-                                               hue="celltype", conn_celltype = conn_ct_str, outgoing = False)
+                                               hue="celltype", conn_celltype= conn_ct_str, outgoing = False)
 
     #calculate summed synapse size per celltype
     summed_synapse_sizes = {}
-    for i in ct_connections:
-        summed_synapse_sizes[i] = np.sum(syn_dicts[i]["sum size synapses"])
+    for i, ic in enumerate(ct_connections):
+        summed_synapse_sizes[ic] = np.sum(syn_dict_list[i]["sum size synapses"])
 
     #also compare outgoing connections from celltype, only needed if connected ct is not axon
     if connected_ct not in axon_cts:
@@ -1127,7 +1128,7 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
         syn_dicts = {[label_cts[i], conn_ct_str]: syn_dict_list[1] for i in range(len(comp_cts))}
         ct_connections = list(syn_dicts.keys())
         log.info("compute statistics for comparison, create violinplot and histogram")
-        ranksum_results = pd.DataFrame(columns=ct_connections, index=range(len(ct_connections) * 2))
+        ranksum_results = pd.DataFrame()
 
 
         #put dictionaries into ComparingResultsForPlotting to make plotting of results easier
@@ -1161,18 +1162,17 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
             # plot parameter as violinplot
             if "-" not in key:
                 results_for_plotting = results_comparison.result_df_per_param(key)
-                results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, conn_celltype=conn_ct_str, outgoing=True)
-                results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot= False,
-                                        conn_celltype=conn_ct_str, outgoing = True)
+                results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, outgoing=True)
+                results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot= False, outgoing = True)
             if "all" in key:
                 results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
-                                                        conn_celltype=conn_ct_str, outgoing=True)
+                                                        outgoing=True)
                 results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
-                                                        conn_celltype=conn_ct_str, outgoing=True)
+                                                        outgoing=True)
             else:
-                results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=conn_ct_str, outgoing=True)
+                results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, outgoing=True)
                 results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
-                                                        conn_celltype=conn_ct_str, outgoing=True)
+                                                        outgoing=True)
 
         ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, label_cts[0], label_cts[1], conn_ct_str))
 
@@ -1195,9 +1195,9 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
 
             multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, conn_ct_str, label_cts[0], label_cts[1]))
             results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
-                                                  hue="celltype", conn_celltype = conn_ct_str, outgoing = True)
+                                                  hue="celltype", conn_celltype= conn_ct_str, outgoing = True)
             results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
-                                                   hue="celltype", conn_celltype = conn_ct_str, outgoing = True)
+                                                   hue="celltype", conn_celltype= conn_ct_str, outgoing = True)
 
         for i in ct_connections:
             summed_synapse_sizes[i] = np.sum(syn_dicts[i]["sum size synapses"])

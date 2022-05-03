@@ -133,7 +133,7 @@ def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, s
     # get synapses where input celltype is axon
     testct = np.in1d(syn_ssv_partners, cellids1).reshape(len(syn_ssv_partners), 2)
     testax = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
-    pre_ct_inds = np.any(testct == testax, axis=1)
+    pre_ct_inds = np.all(testct == testax, axis=1)
     syn_cts = syn_cts[pre_ct_inds]
     syn_ids = syn_ids[pre_ct_inds]
     syn_axs = syn_axs[pre_ct_inds]
@@ -142,7 +142,7 @@ def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, s
     #get synapses where outgoing celltype gives dendrite, soma
     testct = np.in1d(syn_ssv_partners, cellids2).reshape(len(syn_ssv_partners), 2)
     testax = np.in1d(syn_axs, [2, 0]).reshape(len(syn_ssv_partners), 2)
-    post_ct_inds = np.any(testct == testax, axis=1)
+    post_ct_inds = np.all(testct == testax, axis=1)
     m_cts = syn_cts[post_ct_inds]
     m_ids = syn_ids[post_ct_inds]
     m_axs = syn_axs[post_ct_inds]
@@ -154,14 +154,16 @@ def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, s
         som_inds = np.where(m_axs == 2)
         den_ct_inds = np.where(m_cts[den_inds] != celltype1)
         som_ct_inds = np.where(m_cts[som_inds] != celltype1)
-        den_ssvs = m_ssv_partners[den_ct_inds, den_inds[1][den_ct_inds]][0]
-        den_sizes = m_sizes[den_ct_inds]
+        den_ssv_partners = m_ssv_partners[den_inds[0]]
+        den_ssvs = den_ssv_partners[den_ct_inds, den_inds[1][den_ct_inds]][0]
+        den_sizes = m_sizes[den_inds[0]][den_ct_inds]
         den_ssv_inds, unique_den_ssvs = pd.factorize(den_ssvs)
         den_syn_sizes = np.bincount(den_ssv_inds, den_sizes)
         den_amounts = np.bincount(den_ssv_inds)
         # get unique cellids from cells whose soma receive synapses, count them and sum up sizes
-        som_ssvs = m_ssv_partners[som_ct_inds, som_inds[1][som_ct_inds]][0]
-        som_sizes = m_sizes[som_ct_inds]
+        som_ssv_partners = m_ssv_partners[som_inds[0]]
+        som_ssvs = som_ssv_partners[som_ct_inds, som_inds[1][som_ct_inds]][0]
+        som_sizes = m_sizes[som_inds[0]][som_ct_inds]
         som_ssv_inds, unique_som_ssvs = pd.factorize(som_ssvs)
         som_syn_sizes = np.bincount(som_ssv_inds, som_sizes)
         som_amounts = np.bincount(som_ssv_inds)

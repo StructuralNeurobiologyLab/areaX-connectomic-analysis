@@ -33,7 +33,7 @@ if __name__ == '__main__':
     cl = 200
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f_allsyns" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GP identificationa and comparison connectivity', log_dir=f_name + '/logs/')

@@ -45,7 +45,7 @@ def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100, full_ce
     comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] == compartment)[0]
     comp_nodes = sso.skeleton["nodes"][comp_inds] * sso.scaling
     comp_volume = get_compartment_bbvolume(comp_nodes)
-    comp_radii = get_compartment_radii(sso.id, comp_inds, load_skeleton = False)
+    comp_radii = get_compartment_radii(sso.id, comp_inds, load_skeleton = True)
     median_comp_radius = np.median(comp_radii)
     tortuosity_complete = get_compartment_tortuosity_complete(comp_length, comp_nodes)
     tortosity_sampled = get_compartment_tortuosity_sampled(cell_graph, comp_nodes)

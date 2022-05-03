@@ -62,13 +62,14 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
     spine_density = spine_amount/no_spine_dendrite_length
     return spine_density
 
-def get_compartment_radii(cellid, comp_inds = None, load_skeleton = False):
+def get_compartment_radii(cellid, cell = None, comp_inds = None, load_skeleton = False):
     """
     get radii from compartment graph of one cell
     :param comp_inds: indicies of compartment
     :return: comp_radii as array in µm
     """
-    cell = SuperSegmentationObject(cellid)
+    if cell is None:
+        cell = SuperSegmentationObject(cellid)
     if load_skeleton:
         cell.load_skeleton()
     if not np.all(comp_inds) is None:

@@ -1039,8 +1039,7 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     time_stamps = [time.time()]
     step_idents = ['t-0']
     syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], conn_ct_str, label_cts[i])) for i in range(len(comp_cts))]
-    syn_dicts = {[conn_ct_str, label_cts[i]]: syn_dict_list[i] for i in range(len(comp_cts))}
-    ct_connections = list(syn_dicts.keys())
+    ct_connections = [[conn_ct_str, label_cts[i]] for i in range(len(comp_cts))]
     log.info("compute statistics for comparison, create violinplot and histogram")
     ranksum_results = pd.DataFrame(columns=ct_connections, index=range(len(ct_connections) * 2))
 
@@ -1057,6 +1056,7 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
         result_df_multi_params = results_comparison.result_df_categories(label_category= "compartment")
 
         result_df_multi_params.to_csv("%s/%s_2_%s_%s_syn_compartments.csv" % (f_name, conn_ct_str, label_cts[0], label_cts[1]))
+        raise ValueError
         for key in result_df_multi_params.keys():
             if "celltype" in key or "compartment" in key:
                 continue

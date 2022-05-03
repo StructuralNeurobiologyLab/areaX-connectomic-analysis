@@ -682,19 +682,19 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         if len(column_labels) == 0:
             raise ValueError("keys in dictionary not labelled correctly")
         celltypes = [self.celltypes[i] for i in range(self.amount_celltypes)]
-        column_labels = np.hstack([np.unique(column_labels), celltypes, label_category])
+        columns = np.hstack([np.unique(column_labels), "celltype", label_category])
         labels = np.unique(labels)
         key_example = column_labels[0] + " - " + labels[0]
         dict_lengths = np.array([len(self.dictionaries[i][key_example]) for i in range(self.amount_celltypes)])
         sum_length = np.sum(dict_lengths)
         result_df = pd.DataFrame(
-            columns=column_labels, index=range(sum_length * len(labels)))
+            columns=columns, index=range(sum_length * len(labels)))
         result_df[label_category] = type(labels[0])
         for i, label in enumerate(labels):
             result_df.loc[sum_length * i: sum_length * (i + 1) - 1, label_category] = label
             start_length_ct = 0
             for j in range(self.amount_celltypes):
-                end_length_ct = dict_lengths[j]
+                end_length_ct = dict_lengths[j] + start_length_ct
                 result_df.loc[sum_length * i + start_length_ct: sum_length * i + end_length_ct -1 , "celltype"] = self.celltypes[j]
                 for ci in range(len(column_labels) - 2):
                     result_df.loc[sum_length * i + start_length_ct: sum_length * i + end_length_ct - 1, column_labels[ci]] = self.dictionaries[j][column_labels[ci] + " - " + label]

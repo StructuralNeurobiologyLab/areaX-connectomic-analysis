@@ -206,8 +206,8 @@ if __name__ == '__main__':
     GPi_ids = gp_results_dict["cellids"][gpi_myelin_inds]
     write_obj2pkl("%s/gpe_ids.pkl" % f_name, GPe_ids)
     write_obj2pkl("%s/gpe_ids.pkl" % f_name, GPi_ids)
-    write_obj2pkl["wholebrain/scratch/j0251v4_prep/conn_morph_gpe_ids.pkl", GPe_ids]
-    write_obj2pkl["wholebrain/scratch/j0251v4_prep/conn_morph_gpi_ids.pkl", GPi_ids]
+    write_obj2pkl("wholebrain/scratch/arother//j0251v4_prep/conn_morph_gpe_ids.pkl", GPe_ids)
+    write_obj2pkl("wholebrain/scratch/arother/j0251v4_prep/conn_morph_gpi_ids.pkl", GPi_ids)
     time_stamps = [time.time()]
     step_idents = ["GP identification based on MSN input finished, threshold myelin fraction = %f" % (threshold_myelin)]
 

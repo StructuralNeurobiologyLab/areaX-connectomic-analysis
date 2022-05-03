@@ -37,7 +37,10 @@ def comp_aroborization(sso, compartment, cell_graph, min_comp_len = 100, full_ce
     # use full cell dict to lookup versions
     comp_dict = {1: "axon", 0: "dendrite"}
     if full_cell_dict is not None:
-        comp_length = full_cell_dict[sso.id][comp_dict[compartment] + " length"]
+        try:
+            comp_length = full_cell_dict[sso.id][comp_dict[compartment] + " length"]
+        except KeyError:
+            comp_length = get_compartment_length(sso, compartment, cell_graph)
     else:
         comp_length = get_compartment_length(sso, compartment, cell_graph)
     if comp_length < min_comp_len:

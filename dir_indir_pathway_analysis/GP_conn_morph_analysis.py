@@ -91,7 +91,7 @@ if __name__ == '__main__':
     new_gp_ids = new_gp_ids[mito_inds]
     new_ax_mitos = new_ax_mitos[mito_inds]
     new_pred_cts = new_pred_cts[mito_inds]
-    write_obj2pkl("%s/synsize_mito_gp_ids.pkl" % f_name)
+    write_obj2pkl("%s/synsize_mito_gp_ids.pkl" % f_name, new_gp_ids)
 
     key_list = list(msn_input_results_dict.keys())
     key_list.remove("cellids")
@@ -154,7 +154,7 @@ if __name__ == '__main__':
 
     gp_results_dict = {"axon median radius": axon_median_radius,
      "axon mitochondria volume density": new_ax_mitos,
-     "axon myelin fraction": rel_myelin, "cellids": new_gp_ids}
+     "axon myelin fraction": rel_myelin, "cellids": new_gp_ids, "predicted celltype": new_pred_cts}
     GP_results_df = pd.DataFrame(gp_results_dict)
     GP_results_df.to_csv("%s/GP_myelin_mito_results.csv" % f_name)
     write_obj2pkl("%s/GP_mylein_mito_dict.pkl" % f_name, gp_results_dict)
@@ -206,6 +206,8 @@ if __name__ == '__main__':
     GPi_ids = gp_results_dict["cellids"][gpi_myelin_inds]
     write_obj2pkl("%s/gpe_ids.pkl" % f_name, GPe_ids)
     write_obj2pkl("%s/gpe_ids.pkl" % f_name, GPi_ids)
+    write_obj2pkl["wholebrain/scratch/j0251v4_prep/conn_morph_gpe_ids.pkl", GPe_ids]
+    write_obj2pkl["wholebrain/scratch/j0251v4_prep/conn_morph_gpi_ids.pkl", GPi_ids]
     time_stamps = [time.time()]
     step_idents = ["GP identification based on MSN input finished, threshold myelin fraction = %f" % (threshold_myelin)]
 

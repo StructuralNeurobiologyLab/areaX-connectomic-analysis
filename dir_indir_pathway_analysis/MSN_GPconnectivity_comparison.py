@@ -23,7 +23,7 @@ if __name__ == '__main__':
     cl = 200
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220502_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     labels_cts = ["MSN only GPe", "MSN only GPi", "MSN both GPs", "MSN no GPs"]
     msn_cts = [2, 2, 2, 2]
     msn_colors = ["#EAAE34", '#2F86A8', "#707070", "black"]
-    """
+
     log.info("Step 2/11: Compare new MSN groups based on morphology")
     MSN_only_GPe_results = axon_den_arborization_ct(ssd, celltype = 2, filename = f_name, cellids = msn2gpe_ids,
                                                     min_comp_len = cl, full_cells = True, percentile = None, label_cts = "MSN only GPe", spiness = True)
@@ -69,8 +69,8 @@ if __name__ == '__main__':
     #also compare spiness
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups finished']
-    """
 
+    '''
     log.info("Step 3/11: Compare connectivity between MSN groups")
     MSN_onlyGPe_MSN_both_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                               filename=f_name, full_cells=True,
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                                                               cellids1=msn2gpe_ids, cellids2=msn_nogp_ids,
                                                               min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                               label_ct1="MSN only GPe", label_ct2="MSN no GPs")
-    '''
+
     MSN_onlyGPi_MSN_both_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                               filename=f_name, full_cells=True,
                                                               cellids1=msn2gpi_ids, cellids2=msn2gpei_ids,
@@ -103,7 +103,7 @@ if __name__ == '__main__':
                                                            cellids1=msn_nogp_ids, cellids2=msn2gpei_ids,
                                                            min_comp_len=cl, syn_prob_thresh=syn_prob,
                                                            label_ct1="MSN no GPs", label_ct2="MSN both GPs")
-    '''
+
     msn_onlyGPe_msn_summed_synapse = compare_connectivity_multiple(comp_cts = msn_cts[1:], filename = f_name,
                                                                    foldernames = [MSN_onlyGPe_MSN_onlyGPi_resultsfolder, MSN_onlyGPe_MSN_both_resultsfolder, MSN_onlyGPe_MSN_none_resultsfolder],
                                                                    connected_ct = 2, min_comp_len = cl, label_cts =["MSN only GPi", "MSN both GPs", "MSN no GPs"],
@@ -123,6 +123,7 @@ if __name__ == '__main__':
     # connectivity comparison for multiple groups
     time_stamps = [time.time()]
     step_idents = ['compare MSN within groups connectivity finished']
+    '''
 
     log.info("Step 4/11: Compare connectivity of two MSN groups (both, only GPe) to GPe")
     MSN_onlyGPe_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=6,

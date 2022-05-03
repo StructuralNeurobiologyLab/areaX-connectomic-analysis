@@ -502,8 +502,15 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")
     # prepare synapse caches with synapse threshold
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1], post_cts = [celltype2],
-                                                                                           syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
+    if celltype1 == celltype2:
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv,
+                                                                                               pre_cts=[celltype1],
+                                                                                               syn_prob_thresh=syn_prob_thresh,
+                                                                                               min_syn_size=min_syn_size,
+                                                                                               axo_den_so=True)
+    else:
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1], post_cts = [celltype2],
+                                                                                               syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
     prepsyntime = time.time() - ct2time
     print("%.2f sec for preprocessing synapses" % prepsyntime)
     time_stamps.append(time.time())
@@ -1032,7 +1039,6 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     time_stamps = [time.time()]
     step_idents = ['t-0']
     syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], conn_ct_str, label_cts[i])) for i in range(len(comp_cts))]
-    raise ValueError
     syn_dicts = {[conn_ct_str, label_cts[i]]: syn_dict_list[i] for i in range(len(comp_cts))}
     ct_connections = list(syn_dicts.keys())
     log.info("compute statistics for comparison, create violinplot and histogram")

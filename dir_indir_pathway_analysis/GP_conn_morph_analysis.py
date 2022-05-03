@@ -33,7 +33,7 @@ if __name__ == '__main__':
     cl = 200
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220502_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GP identificationa and comparison connectivity', log_dir=f_name + '/logs/')
@@ -52,7 +52,6 @@ if __name__ == '__main__':
     non_MSN_fullcts = [0, 5, 6, 7, 8, 9, 10]
     non_MSN_cellids_cts = np.array([load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[i]) for i in non_MSN_fullcts])
-    non_MSN_cellids = np.concatenate(non_MSN_cellids_cts)
     non_MSN_celldicts = np.array([load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[i]) for i in non_MSN_fullcts])
     input_threshold = 0.25
@@ -82,19 +81,20 @@ if __name__ == '__main__':
     mito_results = np.concatenate(mito_results)
     msn_input_results_dict["axon mitochondria volume density"] = mito_results[:, 2]
     msn_input_results_dict["dendrite mitochondria volume density"] = mito_results[:, 3]
-    raise ValueError
-    key_list = list(msn_input_results_dict.keys())[-2]
+    key_list = list(msn_input_results_dict.keys())
+    key_list.remove("cellids")
+    key_list.remove("predicted celltype")
     results_df = pd.DataFrame(msn_input_results_dict)
     combinations = list(itertools.combinations(range(len(key_list)), 2))
     palette = {ct_dict[0]: "#707070", ct_dict[5]:"#707070", ct_dict[6]:"#592A87", ct_dict[7]:"#2AC644", ct_dict[8]:"#707070", ct_dict[9]: "#707070", ct_dict[10]: "#707070"}
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
+        raise ValueError
         g = sns.JointGrid(data=results_df, x=x, y=y)
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
                          kde=False, bins=10)
-        plt.legend()
         if "synapse" in x:
             plt.xlabel("%s" % x)
         elif "volume density" in x:

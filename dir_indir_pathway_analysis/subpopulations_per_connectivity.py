@@ -300,7 +300,6 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     pre_celldict = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[pre_ct])
     post_celldicts = [load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[i]) for i in post_cts]
     post_ct_amount = len(post_cts)
-    post_cell_arrays = [list(post_celldicts[i].keys()) for i in range(post_ct_amount)]
     if pre_label is None:
         pre_label = ct_dict[pre_ct]
     if post_labels is None:
@@ -319,7 +318,7 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     # check if cellids match minimum compartment length
     log.info("Step 1/5: Check compartment length of cells from %i celltypes" % (post_ct_amount + 1))
     pre_cellids = check_comp_lengths_ct(pre_cellids, fullcelldict=pre_celldict, min_comp_len=min_comp_len)
-    post_cellids = [check_comp_lengths_ct(post_cell_arrays[i], fullcelldict = post_celldicts[i], min_comp_len = min_comp_len) for i in range(post_ct_amount)]
+    post_cellids = [check_comp_lengths_ct(post_cellids[i], fullcelldict = post_celldicts[i], min_comp_len = min_comp_len) for i in range(post_ct_amount)]
     post_lengths = np.array([len(post_cellids[i]) for i in range(post_ct_amount)])
     max_post_length = np.max(post_lengths)
     post_cellids_2D = np.zeros((post_ct_amount, max_post_length))

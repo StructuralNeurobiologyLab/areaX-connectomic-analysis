@@ -277,7 +277,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
 
     return only_2ct2_cellids, only_2ct3_cellids, both_cellids, not_connected_ids
 
-def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cellids, filename, celltype_threshold, pre_label = None, post_labels = None, min_comp_len = 200, min_syn_size = 0.1, syn_prob_thresh = 0.8):
+def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cellids, filename, celltype_threshold, pre_label = None, post_labels = None, min_comp_len = 200, min_syn_size = 0.1, syn_prob_thresh = 0.8, compare2mcl = True):
     """
     Get the input fraction of one celltype to one or multiple other celltypes. The fraction of synapse amount and sum of synapses is calculated in relation to
     synaptic amount of sum of synaptic synapses from all input to one cell (only from cells/axons that fulfill minimum comaprtment requirements theirselfes).
@@ -293,6 +293,7 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     :param min_comp_len: minimum compartment length for cells to e included in analysis
     :param min_syn_size: minimum synapse size
     :param syn_prob_thresh: threshold for synapse probability
+    :param compare2mcl: if True: compare to synapses only from cells with same min comparment length
     :return: cellids for cells that match threshold, result dictionary
     """
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
@@ -317,7 +318,8 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
 
     # check if cellids match minimum compartment length
     log.info("Step 1/5: Check compartment length of cells from %i celltypes" % (post_ct_amount + 1))
-    pre_cellids = check_comp_lengths_ct(pre_cellids, fullcelldict=pre_celldict, min_comp_len=min_comp_len)
+    if compare2mcl:
+        pre_cellids = check_comp_lengths_ct(pre_cellids, fullcelldict=pre_celldict, min_comp_len=min_comp_len)
     post_cellids = [check_comp_lengths_ct(post_cellids[i], fullcelldict = post_celldicts[i], min_comp_len = min_comp_len) for i in range(post_ct_amount)]
     post_lengths = np.array([len(post_cellids[i]) for i in range(post_ct_amount)])
     max_post_length = np.max(post_lengths)
@@ -367,15 +369,16 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
             msn_syn_amount = 0
             msn_summed_syn_size = 0
         celltype = int(np.where(post_cellids_2D == cellid)[0])
-        overall_synapse_amount = post_celldicts[celltype][cellid]["dendrite synapse amount %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma synapse amount %i" % min_comp_len]
-        overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma summed synapse size %i" % min_comp_len]
-        if overall_synapse_amount == 0:
-            continue
-        #overall_synapse_amount = post_celldicts[celltype][cellid]["dendrite synapse amount"] + \
-        #                         post_celldicts[celltype][cellid]["soma synapse amount"]
-        #overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size"] + post_celldicts[celltype][cellid]["soma summed synapse size"]
-        synapse_amount_fraction[i] = msn_syn_amount / overall_synapse_amount
-        synapse_sumsize_fraction[i] = msn_summed_syn_size/overall_summed_synsize
+        if compare2mcl:
+            overall_synapse_amount = post_celldicts[celltype][cellid]["dendrite synapse amount %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma synapse amount %i" % min_comp_len]
+            overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma summed synapse size %i" % min_comp_len]
+        else:
+            overall_synapse_amount = post_celldicts[celltype][cellid]["dendrite synapse amount"] + \
+                                     post_celldicts[celltype][cellid]["soma synapse amount"]
+            overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size"] + post_celldicts[celltype][cellid]["soma summed synapse size"]
+        if overall_synapse_amount > 0:
+            synapse_amount_fraction[i] = msn_syn_amount / overall_synapse_amount
+            synapse_sumsize_fraction[i] = msn_summed_syn_size/overall_summed_synsize
         celltypes[i] = post_labels[celltype]
         fraction_dict[post_labels[celltype]][cellid] = {"synapse amount fraction": synapse_amount_fraction[i], "synapse summed size fraction": synapse_sumsize_fraction[i]}
 

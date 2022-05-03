@@ -33,7 +33,7 @@ if __name__ == '__main__':
     cl = 200
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f_" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GP identificationa and comparison connectivity', log_dir=f_name + '/logs/')
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     log.info("Step 1a/9: Get GP cellids and MSN inputs to full cells")
     GP_ids, msn_input_results_dict = get_ct_via_inputfraction(sd_synssv, pre_ct = 2, post_cts = non_MSN_fullcts, pre_cellids = MSN_ids, post_cellids = non_MSN_cellids_cts,
                                                               filename = f_name, celltype_threshold = input_threshold, pre_label = None, post_labels = None,
-                                                              min_comp_len = cl, min_syn_size = min_syn_size, syn_prob_thresh = syn_prob)
+                                                              min_comp_len = cl, min_syn_size = min_syn_size, syn_prob_thresh = syn_prob, compare2mcl = True)
     log.info("Step 1b/9: plot results in 2D vs organelle density")
     sd_mitossv = SegmentationDataset("mi", working_dir=global_params.config.working_dir)
     cached_mito_ids = sd_mitossv.ids
@@ -105,6 +105,7 @@ if __name__ == '__main__':
 
         plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
         plt.close()
+        raise ValueError
         g = sns.JointGrid(data=results_df, x=x, y=y, hue = "predicted celltype", palette = palette)
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,

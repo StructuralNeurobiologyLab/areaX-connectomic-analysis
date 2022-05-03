@@ -62,12 +62,15 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
     spine_density = spine_amount/no_spine_dendrite_length
     return spine_density
 
-def get_compartment_radii(cell, comp_inds = None):
+def get_compartment_radii(cellid, comp_inds = None, load_skeleton = False):
     """
     get radii from compartment graph of one cell
     :param comp_inds: indicies of compartment
     :return: comp_radii as array in µm
     """
+    cell = SuperSegmentationObject(cellid)
+    if load_skeleton:
+        cell.load_skeleton()
     if not np.all(comp_inds) is None:
         comp_radii = cell.skeleton["diameters"][comp_inds] * 2 * cell.scaling[0] / 1000 #in µm
     else:
@@ -140,19 +143,24 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
         sample_diagonal = np.linalg.norm(max - min) / 1000 # in µm
         if sample_diagonal == 0 or sample_diagonal < 10**(-5):
             continue
+        if sample_tortuosity > 100:
+            continue
         sample_tortuosity = (sample_length/ sample_diagonal) ** 2
         tortuosities[i] = sample_tortuosity
     avg_tortuosity = np.nanmean(tortuosities)
 
     return avg_tortuosity
 
-def get_myelin_fraction(cell, min_comp_len = 100):
+def get_myelin_fraction(cellid, min_comp_len = 100, load_skeleton = False):
     """
     calculate length and fraction of myelin for axon. Skeleton has to be loaded
     :param cell:super-segmentation object graph should be calculated on
     :param min_comp_len: compartment lengfh threshold
     :return: absolute length of mylein, relative length of myelin
     """
+    cell = SuperSegmentationObject(cellid)
+    if load_skeleton:
+        cell.load_skeleton()
     non_axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 1)[0]
     non_myelin_inds = np.nonzero(cell.skeleton["myelin"] == 0)[0]
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000', "myelin"))
@@ -165,7 +173,7 @@ def get_myelin_fraction(cell, min_comp_len = 100):
     myelin_graph.remove_nodes_from(non_myelin_inds)
     absolute_myelin_length = myelin_graph.size(weight="weight") / 1000  # in µm
     relative_myelin_length = absolute_myelin_length / axon_length
-    return absolute_myelin_length, relative_myelin_length
+    return [absolute_myelin_length, relative_myelin_length]
 
 def get_organell_volume_density(cellid, cached_so_ids,cached_so_rep_coord, cached_so_volume, full_cell_dict = None,skeleton_loaded = False, k = 3, min_comp_len = 100):
     '''

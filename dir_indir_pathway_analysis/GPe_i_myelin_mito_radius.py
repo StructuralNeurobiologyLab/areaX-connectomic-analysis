@@ -87,10 +87,12 @@ if __name__ == '__main__':
     log.info("Step 1/3: Get information from GPe")
     for i, cell in enumerate(tqdm(ssd.get_super_segmentation_object(GPe_ids))):
         cell.load_skeleton()
-        abs_myelin_cell, rel_myelin_cell = get_myelin_fraction(cell, min_comp_len = comp_length)
+        myelin_results= get_myelin_fraction(cell.id, min_comp_len = comp_length, load_skeleton = False)
+        abs_myelin_cell = myelin_results[0]
+        rel_myelin_cell = myelin_results[1]
         if abs_myelin_cell == 0:
             continue
-        mito_results = get_organell_volume_density(cell, cached_so_ids = cached_mito_ids,
+        mito_results = get_organell_volume_density(cell.id, cached_so_ids = cached_mito_ids,
                                     cached_so_rep_coord = cached_mito_rep_coords, cached_so_volume = cached_mito_volumes,
                                     full_cell_dict = GPe_full_cell_dict, k=3, min_comp_len=100)
         axo_mito_density_cell = mito_results[0]
@@ -100,7 +102,7 @@ if __name__ == '__main__':
         if den_mito_density_cell == 0:
             continue
         axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
-        axon_radii_cell = get_compartment_radii(cell, comp_inds = axon_inds)
+        axon_radii_cell = get_compartment_radii(cell.id, comp_inds = axon_inds, load_skeleton = False)
         ax_median_radius_cell = np.median(axon_radii_cell)
         dendrite_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 0)[0]
         den_radii_cell = get_compartment_radii(cell, comp_inds=dendrite_inds)

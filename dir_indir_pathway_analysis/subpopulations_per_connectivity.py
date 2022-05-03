@@ -367,8 +367,11 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
             msn_syn_amount = 0
             msn_summed_syn_size = 0
         celltype = int(np.where(post_cellids_2D == cellid)[0])
-        overall_synapse_amount = post_celldicts[celltype][cellid]["dendrite synapse amount %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma synapse amount %i" % min_comp_len]
-        overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma summed synapse size %i" % min_comp_len]
+        #overall_synapse_amount = post_celldicts[celltype][cellid]["dendrite synapse amount %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma synapse amount %i" % min_comp_len]
+        #overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size %i" % min_comp_len] + post_celldicts[celltype][cellid]["soma summed synapse size %i" % min_comp_len]
+        overall_synapse_amount = post_celldicts[celltype][cellid]["dendrite synapse amount"] + \
+                                 post_celldicts[celltype][cellid]["soma synapse amount"]
+        overall_summed_synsize = post_celldicts[celltype][cellid]["dendrite summed synapse size"] + post_celldicts[celltype][cellid]["soma summed synapse size"]
         synapse_amount_fraction[i] = msn_syn_amount / overall_synapse_amount
         synapse_sumsize_fraction[i] = msn_summed_syn_size/overall_summed_synsize
         celltypes[i] = post_labels[celltype]

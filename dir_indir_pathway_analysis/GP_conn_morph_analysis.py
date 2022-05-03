@@ -33,7 +33,7 @@ if __name__ == '__main__':
     cl = 200
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f_allsyns" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GP identificationa and comparison connectivity', log_dir=f_name + '/logs/')
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[i]) for i in non_MSN_fullcts])
     input_threshold = 0.25
     log.info("Step 1a/9: Get GP cellids and MSN inputs to full cells")
-    GP_ids, msn_input_results_dict = get_ct_via_inputfraction(sd_synssv, pre_ct = 2, post_cts = non_MSN_fullcts, pre_cellids = MSN_ids, post_cellids = non_MSN_cellids,
+    GP_ids, msn_input_results_dict = get_ct_via_inputfraction(sd_synssv, pre_ct = 2, post_cts = non_MSN_fullcts, pre_cellids = MSN_ids, post_cellids = non_MSN_cellids_cts,
                                                               filename = f_name, celltype_threshold = input_threshold, pre_label = None, post_labels = None,
                                                               min_comp_len = cl, min_syn_size = min_syn_size, syn_prob_thresh = syn_prob)
     log.info("Step 1b/9: plot results in 2D vs organelle density")
@@ -90,7 +90,6 @@ if __name__ == '__main__':
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
-        raise ValueError
         g = sns.JointGrid(data=results_df, x=x, y=y)
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
@@ -126,12 +125,14 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["GP identification based on MSN input finished, threshold = %f" % input_threshold]
 
+    raise ValueError
+
     log.info("Step 2/9: Seperate GPe and GPi based on mitochondrial volume density, axon median radius and axon mylein fraction")
-    #see script GPe/i myelin_mito_radius
-    #make similar plot with GPs identified above
-    #put threshold to seperate GPe and GPi
-    #plot also version with overlay with old GP labels
-    #save cellids
+    #get mylein fraction
+    myelin_results = p.map(partial(get_myelin_fraction, min_comp_len = comp_length, load_skeleton = True), tqdm(GP_ids))
+    myelin_results = np.array(myelin_results)
+    abs_myelin = myelin_results[:, 0]
+    rel_myelin = myelin_results[:, 1]
     threshold_1 = 0.1
     threshold_2 = 0.1
     time_stamps = [time.time()]

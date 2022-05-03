@@ -160,6 +160,8 @@ if __name__ == '__main__':
     step_idents = ["full cells with mcl %i for all celltypes prepared" % mcl]
     log.info("full cells with mcl %i for all celltypes prepared" % mcl)
 
+    raise ValueError
+
     #save per cell synapse amount and summed synapse size
     log.info("get per cell synapse amount and summed synapse size only from cells with mcl = %i" % mcl)
     log.info("prepare synapse caches to exclude all cells without mcl")

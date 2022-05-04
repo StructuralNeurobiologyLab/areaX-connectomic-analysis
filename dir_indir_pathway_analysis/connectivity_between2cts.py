@@ -1096,20 +1096,19 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     #compare multisynapses in boxplot
     # only if connected_ct as otherwise already in synapses_between2cts
     if "multisynapse amount" in syn_dict_list[0].keys():
-        max_multisyns = np.array([len(syn_dict_list[i]["multisynapse amount"].keys())])
+        max_multisyns = np.array([len(syn_dict_list[i]["multisynapse amount"].keys()) for i in range(len(label_cts))])
         sum_max_multisyn = np.sum(max_multisyns)
         multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
                                    index=range(sum_max_multisyn))
         start_length = 0
         for i in range(len(label_cts)):
-            end_length = max_multisyns[i]
+            end_length = max_multisyns[i] + start_length
             multisyn_df.loc[start_length: end_length - 1, "celltype"] = label_cts[0]
             multisyn_df.loc[start_length: end_length - 1, "multisynapse amount"] = range(1, max_multisyns[i] + 1)
-
             for j, key in enumerate(syn_dict_list[i]["multisynapse amount"].keys()):
                 multisyn_df.loc[start_length + j, "amount of cells"] = syn_dict_list[i]["multisynapse amount"][key]
                 multisyn_df.loc[start_length + j, "sum size synapses"] = syn_dict_list[i]["multisynapse sum size"][key]
-                start_length += max_multisyns[i]
+            start_length += max_multisyns[i]
 
         multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, conn_ct_str, label_cts[0], label_cts[1]))
         results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
@@ -1120,13 +1119,12 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     #calculate summed synapse size per celltype
     summed_synapse_sizes = {}
     for i, ic in enumerate(ct_connections):
-        summed_synapse_sizes[ic] = np.sum(syn_dict_list[i]["sum size synapses"])
+        summed_synapse_sizes[ct_connections[i][0], ct_connections[i][1]] = np.sum(syn_dict_list[i]["sum size synapses"])
 
     #also compare outgoing connections from celltype, only needed if connected ct is not axon
     if connected_ct not in axon_cts:
-        syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], label_cts[i], conn_ct_str) for i in range(len(comp_cts)))]
-        syn_dicts = {[label_cts[i], conn_ct_str]: syn_dict_list[1] for i in range(len(comp_cts))}
-        ct_connections = list(syn_dicts.keys())
+        syn_dict_list = [load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldernames[i], conn_ct_str, label_cts[i])) for i in range(len(comp_cts))]
+        ct_connections = [[conn_ct_str, label_cts[i]] for i in range(len(comp_cts))]
         log.info("compute statistics for comparison, create violinplot and histogram")
         ranksum_results = pd.DataFrame()
 
@@ -1157,8 +1155,10 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
                     if i <= j:
                         continue
                     stats, p_value = ranksums(syn_dict_list[i][key], syn_dict_list[j][key])
-                    ranksum_results.loc["stats " + key, ct_connections[i] + " vs " + ct_connections[j]] = stats
-                    ranksum_results.loc["p value",+ key, ct_connections[i] + " vs " + ct_connections[j]] = p_value
+                    ranksum_results.loc["stats " + key, ct_connections[i][0] + " 2 " + ct_connections[i][1] + " vs " +
+                                        ct_connections[j][0] + " 2 " + ct_connections[j][1]] = stats
+                    ranksum_results.loc["p value " + key, ct_connections[i][0] + " 2 " + ct_connections[i][1] + " vs " +
+                                        ct_connections[j][0] + " 2 " + ct_connections[j][1]] = p_value
             # plot parameter as violinplot
             if "-" not in key:
                 results_for_plotting = results_comparison.result_df_per_param(key)
@@ -1178,20 +1178,20 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
 
         #compare multisynapses in boxplot
         if "multisynapse amount" in syn_dict_list[0].keys():
-            max_multisyns = np.array([len(syn_dict_list[i]["multisynapse amount"].keys())])
+            max_multisyns = np.array([len(syn_dict_list[i]["multisynapse amount"].keys()) for i in range(len(label_cts))])
             sum_max_multisyn = np.sum(max_multisyns)
             multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
                                        index=range(sum_max_multisyn))
             start_length = 0
             for i in range(len(label_cts)):
-                end_length = max_multisyns[i]
+                end_length = max_multisyns[i] + start_length
                 multisyn_df.loc[start_length: end_length - 1, "celltype"] = label_cts[0]
                 multisyn_df.loc[start_length: end_length - 1, "multisynapse amount"] = range(1, max_multisyns[i] + 1)
 
                 for j, key in enumerate(syn_dict_list[i]["multisynapse amount"].keys()):
                     multisyn_df.loc[start_length + j, "amount of cells"] = syn_dict_list[i]["multisynapse amount"][key]
                     multisyn_df.loc[start_length + j, "sum size synapses"] = syn_dict_list[i]["multisynapse sum size"][key]
-                    start_length += max_multisyns[i]
+                start_length += max_multisyns[i]
 
             multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, conn_ct_str, label_cts[0], label_cts[1]))
             results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
@@ -1199,8 +1199,8 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
             results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
                                                    hue="celltype", conn_celltype= conn_ct_str, outgoing = True)
 
-        for i in ct_connections:
-            summed_synapse_sizes[i] = np.sum(syn_dicts[i]["sum size synapses"])
+        for i, ic in enumerate(ct_connections):
+            summed_synapse_sizes[ct_connections[i][0], ct_connections[i][1]] = np.sum(syn_dict_list[i]["sum size synapses"])
 
 
     sum_synapses_pd = pd.DataFrame(summed_synapse_sizes, index = [0])

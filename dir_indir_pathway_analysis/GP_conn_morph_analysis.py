@@ -35,7 +35,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     sumsize_threshold = 0.25
     mito_gp_threshold = 0.025
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220503_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f__sumt_%f_mitot_%f" % (cl, syn_prob, sumsize_threshold, mito_gp_threshold)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220505_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f__sumt_%f_mitot_%f" % (cl, syn_prob, sumsize_threshold, mito_gp_threshold)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GP identificationa and comparison connectivity', log_dir=f_name + '/logs/')

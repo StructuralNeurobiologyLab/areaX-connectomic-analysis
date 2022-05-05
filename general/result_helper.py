@@ -126,6 +126,8 @@ class ResultsForPlotting():
             plt.xlabel(xlabel)
         else:
             plt.xlabel(self.param_label(key, subcell))
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if celltype2:
             if outgoing:
                 plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
@@ -154,7 +156,7 @@ class ResultsForPlotting():
     def plot_violin_params(self, key, param_list,subcell, xlabel = None, ticks = None, stripplot = True, celltype2 = None, outgoing = False):
         sns.violinplot(data=param_list, inner="box")
         if stripplot:
-            sns.stripplot(data=param_list, color="black", alpha=0.2)
+            sns.stripplot(data=param_list, color="black", alpha=0.2, size=2)
         if xlabel:
             if ticks is None:
                 raise ValueError("need labels and ticks")
@@ -162,6 +164,8 @@ class ResultsForPlotting():
         else:
             plt.xticks(ticks=self.m_ticks, labels=self.m_labels)
         plt.ylabel(self.param_label(key, subcell))
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if celltype2:
             if outgoing:
                 plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
@@ -177,13 +181,15 @@ class ResultsForPlotting():
     def plot_box_params(self, key, param_list,subcell, xlabel = None, ticks = None, stripplot = True, celltype2 = None, outgoing = False):
         sns.violinplot(data=param_list, inner="box")
         if stripplot:
-            sns.stripplot(data=param_list, color="black", alpha=0.2)
+            sns.stripplot(data=param_list, color="black", alpha=0.2, size = 2)
         if xlabel:
             if ticks is None:
                 raise ValueError("need labels and ticks")
             plt.xticks(ticks = ticks, labels= xlabel)
         else:
             plt.xticks(ticks=self.m_ticks, labels=self.m_labels)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         plt.ylabel(self.param_label(key, subcell))
         if celltype2:
             if outgoing:
@@ -210,6 +216,8 @@ class ResultsForPlotting():
         :return: None
         """
         sns.barplot(x=x, y=key, data=results_df, color=self.color)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s to %s' % (key, self.celltype, conn_celltype))
@@ -299,6 +307,8 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             else:
                 plt.ylabel("count of %s" % subcell)
         plt.legend()
+        plt.xticks(fontsize = 20)
+        plt.yticks(fontsize = 20)
         if xlabel:
             plt.xlabel(xlabel)
         else:
@@ -415,8 +425,10 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         """
         sns.violinplot(data=result_df, inner="box", palette=self.color_palette)
         if stripplot:
-            sns.stripplot(data=result_df, color="black", alpha=0.2)
+            sns.stripplot(data=result_df, color="black", alpha=0.2, size = 2)
         plt.ylabel(self.param_label(key, subcell))
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title("%s in %s, %s to%s" % (key, self.celltype1, self.celltype2, conn_celltype))
@@ -443,8 +455,10 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         """
         sns.boxplot(data=result_df, palette=self.color_palette)
         if stripplot:
-            sns.stripplot(data=result_df, color="black", alpha=0.2)
+            sns.stripplot(data=result_df, color="black", alpha=0.2, size=2)
         plt.ylabel(self.param_label(key, subcell))
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title("%s in %s, %s to%s" % (key, self.celltype1, self.celltype2, conn_celltype))
@@ -472,7 +486,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         """
         if stripplot:
             sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
-                          dodge=True)
+                          dodge=True, size = 2)
             ax = sns.violinplot(x=x, y=key, data=results_df.reset_index(), inner="box",
                                 palette=self.color_palette, hue=hue)
             handles, labels = ax.get_legend_handles_labels()
@@ -480,6 +494,8 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             plt.ylabel(self.param_label(key, subcell))
         else:
             sns.violinplot(x = x, y= key, data = results_df, inner = "box", palette=self.color_palette, hue=hue)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
@@ -508,7 +524,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         """
         if stripplot:
             sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
-                          dodge=True)
+                          dodge=True, size = 2)
             ax = sns.boxplot(x=x, y=key, data=results_df.reset_index(),
                                 palette=self.color_palette, hue=hue)
             handles, labels = ax.get_legend_handles_labels()
@@ -516,6 +532,8 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             plt.ylabel(self.param_label(key, subcell))
         else:
             sns.boxplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
@@ -543,6 +561,8 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         :return: None
         """
         sns.barplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue, orient="h")
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltype1, self.celltype2, conn_celltype))
@@ -584,12 +604,14 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         if x is None:
             sns.boxplot(data=result_df, palette=self.color_palette)
             if stripplot:
-                sns.stripplot(data=result_df, color="black", alpha=0.2)
+                sns.stripplot(data=result_df, color="black", alpha=0.2, size = 2)
         else:
             sns.boxplot(x = x, y = key, data=result_df, palette=self.color_palette)
             if stripplot:
-                sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
+                sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2, size = 2)
         plt.ylabel(self.param_label(key, subcell))
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if outgoing:
             plt.title("%s from %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
             plt.savefig(
@@ -614,12 +636,14 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         if x is None:
             sns.violinplot(data=result_df, inner="box", palette=self.color_palette)
             if stripplot:
-                sns.stripplot(data=result_df, color="black", alpha=0.2)
+                sns.stripplot(data=result_df, color="black", alpha=0.2, size = 2)
         else:
             sns.violinplot(x = x, y = key,data=result_df, inner="box", palette=self.color_palette)
             if stripplot:
-                sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2)
+                sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2, size = 2)
         plt.ylabel(self.param_label(key, subcell))
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if outgoing:
             plt.title("%s from %s, %s, %s" % (key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
             plt.savefig(
@@ -666,6 +690,8 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             else:
                 plt.ylabel("count of %s" % subcell)
         plt.legend()
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if xlabel:
             plt.xlabel(xlabel)
         else:
@@ -753,7 +779,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         """
         if stripplot:
             sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
-                          dodge=True)
+                          dodge=True, size=2)
             ax = sns.violinplot(x=x, y=key, data=results_df.reset_index(), inner="box",
                                 palette=self.color_palette, hue=hue)
             handles, labels = ax.get_legend_handles_labels()
@@ -761,6 +787,8 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             plt.ylabel(self.param_label(key, subcell))
         else:
             sns.violinplot(x = x, y= key, data = results_df, inner = "box", palette=self.color_palette, hue=hue)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltypes[0], self.celltypes[1], conn_celltype))
@@ -789,7 +817,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         """
         if stripplot:
             sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
-                          dodge=True)
+                          dodge=True, s = 2)
             ax = sns.boxplot(x=x, y=key, data=results_df.reset_index(),
                                 palette=self.color_palette, hue=hue)
             handles, labels = ax.get_legend_handles_labels()
@@ -797,6 +825,8 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             plt.ylabel(self.param_label(key, subcell))
         else:
             sns.boxplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltypes[0], self.celltypes[1], conn_celltype))
@@ -824,6 +854,8 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         :return: None
         """
         sns.barplot(x=x, y=key, data=results_df, palette=self.color_palette, hue=hue, orient="h")
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
         if conn_celltype:
             if outgoing:
                 plt.title('%s, %s/ %s to %s' % (key, self.celltypes[0], self.celltypes[1], conn_celltype))

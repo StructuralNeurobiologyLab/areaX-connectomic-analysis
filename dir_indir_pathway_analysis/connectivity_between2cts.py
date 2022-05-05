@@ -15,7 +15,7 @@ from wholebrain.scratch.arother.bio_analysis.general.result_helper import Result
 
 
 def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = None, cellids2 = None, full_cells = True, percentile_ct1 = None,
-                         min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8, label_ct1 = None, label_ct2 = None):
+                         min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8, label_ct1 = None, label_ct2 = None, limit_multisynapse = None):
     '''
     looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
     the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic
@@ -32,6 +32,7 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     :param min_syn_size: minimum size for synapses
     :param syn_prob_thresh: threshold for synapse probability
     :param label_ct1, label_ct2: label of celltypes or subgroups not in ct_dict
+    :param limit_multisynapse: maximum amount of multisynapse number shown in plot
     :return: f_name: foldername in which results are stored
     '''
 
@@ -348,7 +349,7 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
                                                                     dictionary2=ct1_2_ct2_multi_syn_sumsize)
 
         sum_max_multisyn = int(ct2_2_ct1_max_multisyn + ct1_2_ct2_max_multisyn)
-        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of cells", "celltype"],
+        multisyn_df = pd.DataFrame(columns=["multisynapse amount", "sum size synapses", "amount of connections", "celltype"],
                                    index=range(sum_max_multisyn))
         multisyn_df.loc[0: ct2_2_ct1_max_multisyn - 1, "celltype"] = ct1_str
         multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "celltype"] = ct2_str
@@ -356,13 +357,16 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
         multisyn_df.loc[ct2_2_ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1,
                                                                                                      ct1_2_ct2_max_multisyn + 1)
         for i, key in enumerate(ct2_2_ct1_multi_syn_amount.keys()):
-            multisyn_df.loc[i, "amount of cells"] = ct2_2_ct1_multi_syn_amount[key]
+            if limit_multisynapse is not None:
+                if i > limit_multisynapse:
+                    continue
+            multisyn_df.loc[i, "amount of connections"] = ct2_2_ct1_multi_syn_amount[key]
             multisyn_df.loc[i, "sum size synapses"] = ct2_2_ct1_multi_syn_sumsize[key]
-            multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "amount of cells"] = ct1_2_ct2_multi_syn_amount[key]
+            multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "amount of connections"] = ct1_2_ct2_multi_syn_amount[key]
             multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "sum size synapses"] = ct1_2_ct2_multi_syn_sumsize[key]
 
         multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct1_str, ct2_str))
-        multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df, hue = "celltype")
+        multisyn_plotting_amount.plot_bar_hue(key = "multisynapse amount", x = "amount of connections", results_df = multisyn_df, hue = "celltype")
         multisyn_plotting_sumsize.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
                                               hue="celltype")
 

@@ -62,16 +62,12 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
     spine_density = spine_amount/no_spine_dendrite_length
     return spine_density
 
-def get_compartment_radii(cellid, cell = None, comp_inds = None, load_skeleton = False):
+def get_compartment_radii(cell, comp_inds = None):
     """
     get radii from compartment graph of one cell
     :param comp_inds: indicies of compartment
     :return: comp_radii as array in µm
     """
-    if cell is None:
-        cell = SuperSegmentationObject(cellid)
-    if load_skeleton:
-        cell.load_skeleton()
     if not np.all(comp_inds) is None:
         comp_radii = cell.skeleton["diameters"][comp_inds] * 2 * cell.scaling[0] / 1000 #in µm
     else:
@@ -152,14 +148,15 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
 
     return avg_tortuosity
 
-def get_myelin_fraction(cellid, min_comp_len = 100, load_skeleton = False):
+def get_myelin_fraction(cellid, cell = None, min_comp_len = 100, load_skeleton = False):
     """
     calculate length and fraction of myelin for axon. Skeleton has to be loaded
     :param cell:super-segmentation object graph should be calculated on
     :param min_comp_len: compartment lengfh threshold
     :return: absolute length of mylein, relative length of myelin
     """
-    cell = SuperSegmentationObject(cellid)
+    if cell is None:
+        cell = SuperSegmentationObject(cellid)
     if load_skeleton:
         cell.load_skeleton()
     non_axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 1)[0]
@@ -176,7 +173,7 @@ def get_myelin_fraction(cellid, min_comp_len = 100, load_skeleton = False):
     relative_myelin_length = absolute_myelin_length / axon_length
     return [absolute_myelin_length, relative_myelin_length]
 
-def get_organell_volume_density(cellid, cached_so_ids,cached_so_rep_coord, cached_so_volume, full_cell_dict = None,skeleton_loaded = False, k = 3, min_comp_len = 100):
+def get_organell_volume_density(cellid, cached_so_ids,cached_so_rep_coord, cached_so_volume, cell = None, full_cell_dict = None,skeleton_loaded = False, k = 3, min_comp_len = 100):
     '''
     calculate density and volume density of a supersegmentation object per cell for axon and dendrite. Skeleton has to be loaded
     :param cell: super segmentation object
@@ -189,8 +186,8 @@ def get_organell_volume_density(cellid, cached_so_ids,cached_so_rep_coord, cache
     :param min_comp_len: minimum compartment length
     :return: densities and volume densities for aoxn and dendrite
     '''
-
-    cell = SuperSegmentationObject(cellid)
+    if cell is None:
+        cell = SuperSegmentationObject(cellid)
     segmentation_object_ids = cell.mi_ids
     if skeleton_loaded == False:
         cell.load_skeleton()

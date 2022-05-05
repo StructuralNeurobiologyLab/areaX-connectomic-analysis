@@ -20,7 +20,7 @@ if __name__ == '__main__':
     start = time.time()
     comp_length = 200
     syn_prob = 0.8
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220429_j0251v4_GPe_i_comparison_mcl_%i_synprob_%.2f" % (comp_length, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220505_j0251v4_GPe_i_comparison_mcl_%i_synprob_%.2f" % (comp_length, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     # see how GPe and GPi are connected to FS
     GPe_FS_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=6, celltype2=8, filename=f_name, full_cells=True, cellids1 = GPe_ids, cellids2 = FS_ids, syn_prob_thresh = syn_prob, min_comp_len = comp_length)
     GPi_FS_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=7, celltype2=8, filename=f_name, full_cells=True, cellids1 = GPi_ids, cellids2 = FS_ids, syn_prob_thresh = syn_prob, min_comp_len = comp_length)
-    GPe_i_FS_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=8, filename=f_name, foldername_ct1=GPe_FS_connectivity_resultsfolder, foldername_ct2=GPi_FS_connectivity_resultsfolder, min_comp_length = comp_length)
+    GPe_i_FS_sum_synapses = compare_connectivity(comp_ct1=6, comp_ct2=7, connected_ct=8, filename=f_name, foldername_ct1=GPe_FS_connectivity_resultsfolder, foldername_ct2=GPi_FS_connectivity_resultsfolder, min_comp_len = comp_length)
 
     time_stamps = [time.time()]
     step_idents = ["connctivity GPe/i - FS finished"]

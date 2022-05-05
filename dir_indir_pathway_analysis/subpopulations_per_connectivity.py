@@ -400,8 +400,8 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     for key in results_dict:
         if "cellids" in key or "celltype" in key:
             continue
-        result_plots.plot_hist(key = key, subcell = "synapse", cells = True, norm_hist = False, bins = None, xlabel = None, celltype2 = pre_label, outgoing = False)
-        result_plots.plot_hist(key=key, subcell="synapse", cells=True, norm_hist=True, bins=None, xlabel=None,
+        result_plots.plot_hist(key = key, subcell = "synapse", cells = True, norm_hist = False, bins = 20, xlabel = None, celltype2 = pre_label, outgoing = False)
+        result_plots.plot_hist(key=key, subcell="synapse", cells=True, norm_hist=True, bins=20, xlabel=None,
                                celltype2=pre_label, outgoing=False)
 
     time_stamps = [time.time()]

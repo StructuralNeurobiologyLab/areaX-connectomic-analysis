@@ -50,7 +50,7 @@ if __name__ == '__main__':
     msn_cts = [2, 2, 2, 2]
     msn_colors = ["#EAAE34", '#2F86A8', "#707070", "black"]
 
-
+    '''
     log.info("Step 2/11: Compare new MSN groups based on morphology")
     MSN_only_GPe_results = axon_den_arborization_ct(ssd, celltype = 2, filename = f_name, cellids = msn2gpe_ids,
                                                     min_comp_len = cl, full_cells = True, percentile = None, label_cts = "MSN only GPe", spiness = True)
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     #also compare spiness
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups finished']
-    '''
+
     log.info("Step 3/11: Compare connectivity between MSN groups")
     MSN_onlyGPe_MSN_both_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                               filename=f_name, full_cells=True,

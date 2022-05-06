@@ -101,23 +101,16 @@ class ResultsForPlotting():
         if bins is None:
             bins = "auto"
         if norm_hist:
-            try:
-                sns.histplot(self.dictionary[key], common_norm = True, element = "step", fill = False, color = self.color,
-                             kde=False, bins=bins)
-            except ValueError:
-                sns.histplot(self.dictionary[key], common_norm=True, element="bars", fill=False, color=self.color,
-                             kde=False, bins=bins)
+            sns.distplot(self.dictionary[key], hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color},
+             kde=False, norm_hist=True, bins=bins)
             if cells:
                 plt.ylabel("fraction of cells")
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            try:
-                sns.histplot(self.dictionary[key], common_norm=False, element="step", fill=False, color=self.color,
-                             kde=False, bins=bins)
-            except ValueError:
-                sns.histplot(self.dictionary[key], common_norm=False, element="bars", fill=False, color=self.color,
-                             kde=False, bins=bins)
+            sns.distplot(self.dictionary[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color},
+                         kde=False, norm_hist=False, bins=bins)
             if cells:
                 plt.ylabel("count of cells")
             else:
@@ -271,17 +264,21 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if bins is None:
             bins = "auto"
         if norm_hist:
-            sns.histplot(self.dictionary1[key], common_norm = True, element = "step", fill = False, color = self.color1,
-                         kde=False, bins=bins, label=self.celltype1)
-            sns.histplot(self.dictionary2[key], common_norm = True, element = "step", fill = False, color = self.color2,
-                         kde=False, bins=bins, label=self.celltype2)
+            sns.distplot(self.dictionary1[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
+                         kde=False, norm_hist=True, bins=bins, label = self.celltype1)
+            sns.distplot(self.dictionary2[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
+                         kde=False, norm_hist=True, bins=bins, label=self.celltype2)
             if add_key:
                 try:
-                    sns.histplot(self.dictionary1[add_key], common_norm = True, element = "step", fill = False, color ="gray",
-                                 kde=False, bins=bins, label=add_key)
+                    sns.distplot(self.dictionary1[add_key],
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 kde=False, norm_hist=True, bins=bins, label=add_key)
                 except KeyError:
-                    sns.histplot(self.dictionary2[add_key], common_norm = True, element = "step", fill = False, color ="gray",
-                                 kde=False, bins=bins, label=add_key)
+                    sns.distplot(self.dictionary2[add_key],
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 kde=False, norm_hist=True, bins=bins, label=add_key)
             if cells:
                 plt.ylabel("fraction of cells")
             elif "pair" in key:
@@ -289,17 +286,21 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            sns.histplot(self.dictionary1[key],common_norm = False, element = "step", fill = False, color = self.color1,
-                         kde=False, bins=bins, label = self.celltype1)
-            sns.histplot(self.dictionary2[key],common_norm = False, element = "step", fill = False, color = self.color2,
-                         kde=False, bins=bins, label=self.celltype2)
+            sns.distplot(self.dictionary1[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
+                         kde=False, norm_hist=False, bins=bins, label=self.celltype1)
+            sns.distplot(self.dictionary2[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
+                         kde=False, norm_hist=False, bins=bins, label=self.celltype2)
             if add_key:
                 try:
-                    sns.histplot(self.dictionary1[add_key], common_norm = False, element = "step", fill = False, color = "black",
-                                 kde=False, bins=bins, label=add_key)
+                    sns.distplot(self.dictionary1[add_key],
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 kde=False, norm_hist=False, bins=bins, label=add_key)
                 except KeyError:
-                    sns.histplot(self.dictionary2[add_key],common_norm = False, element = "step", fill = False, color = "black",
-                                 kde=False, bins=bins, label=add_key)
+                    sns.distplot(self.dictionary2[add_key],
+                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
+                                 kde=False, norm_hist=False, bins=bins, label=add_key)
             if cells:
                 plt.ylabel("count of cells")
             elif "pair" in key:
@@ -670,8 +671,9 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             bins = "auto"
         if norm_hist:
             for i in range(len(list(self.celltypes.keys()))):
-                sns.histplot(self.dictionaries[i][key], common_norm = True, element = "step", fill = False, color = self.color_palette[self.celltypes[i]],
-                         kde=False, bins=bins, label=self.celltypes[i])
+                sns.distplot(self.dictionary[i][key],
+                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color_palette[self.celltypes[i]]},
+                             kde=False, norm_hist=True, bins=bins, label=self.celltyps[i])
             if cells:
                 plt.ylabel("fraction of cells")
             elif "pair" in key:
@@ -680,9 +682,10 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
                 plt.ylabel("fraction of %s" % subcell)
         else:
             for i in range(len(list(self.celltypes.keys()))):
-                sns.histplot(self.dictionaries[i][key], common_norm=False, element="step", fill=False,
-                             color=self.color_palette[self.celltypes[i]],
-                             kde=False, bins=bins, label=self.celltypes[i])
+                sns.distplot(self.dictionary[i][key],
+                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1,
+                                       "color": self.color_palette[self.celltypes[i]]},
+                             kde=False, norm_hist=False, bins=bins, label=self.celltyps[i])
             if cells:
                 plt.ylabel("count of cells")
             elif "pair" in key:

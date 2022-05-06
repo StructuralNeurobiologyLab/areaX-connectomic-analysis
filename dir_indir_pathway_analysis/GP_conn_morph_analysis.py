@@ -106,6 +106,8 @@ if __name__ == '__main__':
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
                          kde=False, bins=10)
+        g.ax_joint.set_xticklabels(g.ax_joint.get_xticks(), fontsize=20)
+        g.ax_joint.set_yticklabels(g.ax_joint.get_yticks(), fontsize=20)
         if "synapse" in x:
             plt.xlabel("%s" % x)
         elif "volume density" in x:
@@ -122,6 +124,8 @@ if __name__ == '__main__':
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
                          kde=False, bins=10, palette = palette)
         plt.legend()
+        g.ax_joint.set_xticklabels(g.ax_joint.get_xticks(), fontsize=20)
+        g.ax_joint.set_yticklabels(g.ax_joint.get_yticks(), fontsize=20)
         if "synapse" in x:
             plt.xlabel("%s" % x)
         elif "volume density" in x:
@@ -170,6 +174,8 @@ if __name__ == '__main__':
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
                          kde=False, bins=10)
         plt.legend()
+        g.ax_joint.set_xticklabels(g.ax_joint.get_xticks(), fontsize=20)
+        g.ax_joint.set_yticklabels(g.ax_joint.get_yticks(), fontsize=20)
         if "radius" in x:
             plt.xlabel("%s in µm" % x)
         elif "volume density" in x:
@@ -187,6 +193,8 @@ if __name__ == '__main__':
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
                          kde=False, bins=10, palette=palette)
         plt.legend()
+        g.ax_joint.set_xticklabels(g.ax_joint.get_xticks(), fontsize=20)
+        g.ax_joint.set_yticklabels(g.ax_joint.get_yticks(), fontsize=20)
         if "radius" in x:
             plt.xlabel("%s in µm" % x)
         elif "volume density" in x:

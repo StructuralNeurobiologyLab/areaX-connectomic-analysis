@@ -424,7 +424,7 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
     ranksum_results = pd.DataFrame(columns=ct_comparisons)
     results_comparison = ComparingMultipleForPLotting(ct_list = label_cts, filename = f_name, dictionary_list = ct_comp_dicts, colour_list = colours)
     for key in comp_dict_keys:
-        if "ids" in key or "soma centre coords" in key:
+        if "ids" in key or "soma centre coords" in key or "tortuosity" in key:
             continue
         #calculate p_value for parameter
         for i in range(amount_celltypes):

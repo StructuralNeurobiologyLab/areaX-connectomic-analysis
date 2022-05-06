@@ -671,9 +671,9 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             bins = "auto"
         if norm_hist:
             for i in range(len(list(self.celltypes.keys()))):
-                sns.distplot(self.dictionary[i][key],
+                sns.distplot(self.dictionaries[i][key],
                              hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color_palette[self.celltypes[i]]},
-                             kde=False, norm_hist=True, bins=bins, label=self.celltyps[i])
+                             kde=False, norm_hist=True, bins=bins, label=self.celltypes[i])
             if cells:
                 plt.ylabel("fraction of cells")
             elif "pair" in key:
@@ -682,10 +682,10 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
                 plt.ylabel("fraction of %s" % subcell)
         else:
             for i in range(len(list(self.celltypes.keys()))):
-                sns.distplot(self.dictionary[i][key],
+                sns.distplot(self.dictionaries[i][key],
                              hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1,
                                        "color": self.color_palette[self.celltypes[i]]},
-                             kde=False, norm_hist=False, bins=bins, label=self.celltyps[i])
+                             kde=False, norm_hist=False, bins=bins, label=self.celltypes[i])
             if cells:
                 plt.ylabel("count of cells")
             elif "pair" in key:

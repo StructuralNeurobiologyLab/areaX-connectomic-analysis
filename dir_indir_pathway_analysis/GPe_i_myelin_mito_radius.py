@@ -29,7 +29,7 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
     comp_length = 200
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220505_j0251v4_GPe_i_hpv3_myelin_mito_radius_%i_newcolors" % comp_length
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220506_j0251v4_GPe_i_hpv3_myelin_mito_radius_%i_newcolors" % comp_length
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -203,6 +203,7 @@ if __name__ == '__main__':
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
+        raise ValueError
         g = sns.JointGrid(data= all_param_df, x = x, y = y, hue = "celltype", palette = results_comparison.color_palette)
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot,  fill = True, alpha = 0.3,

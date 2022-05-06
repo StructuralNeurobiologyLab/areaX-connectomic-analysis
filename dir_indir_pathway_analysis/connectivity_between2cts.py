@@ -359,7 +359,7 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
         for i, key in enumerate(ct2_2_ct1_multi_syn_amount.keys()):
             if limit_multisynapse is not None:
                 if i > limit_multisynapse:
-                    continue
+                    break
             multisyn_df.loc[i, "amount of connections"] = ct2_2_ct1_multi_syn_amount[key]
             multisyn_df.loc[i, "sum size synapses"] = ct2_2_ct1_multi_syn_sumsize[key]
             multisyn_df.loc[ct2_2_ct1_max_multisyn + i, "amount of connections"] = ct1_2_ct2_multi_syn_amount[key]
@@ -660,11 +660,11 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
 
         multisyn_df.loc[0: max_multisyn - 1, "multisynapse amount"] = range(1, max_multisyn + 1)
         for i, key in enumerate(ct1_2_ct2_multi_syn_amount.keys()):
-            multisyn_df.loc[i, "amount of cells"] = ct1_2_ct2_multi_syn_amount[key]
+            multisyn_df.loc[i, "amount of connections"] = ct1_2_ct2_multi_syn_amount[key]
             multisyn_df.loc[i, "sum size synapses"] = ct1_2_ct2_multi_syn_sumsize[key]
 
         multisyn_df.to_csv("%s/multi_synapses_%s_%s.csv" % (f_name, ct1_str, ct2_str))
-        multisyn_plotting_amount.plot_bar(key = "multisynapse amount", x = "amount of cells", results_df = multisyn_df)
+        multisyn_plotting_amount.plot_bar(key = "multisynapse amount", x = "amount of connections", results_df = multisyn_df)
         multisyn_plotting_sumsize.plot_bar(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df)
 
     # put all synsizes array into dictionary (but not into dataframe)
@@ -710,7 +710,8 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
 
     return f_name
 
-def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100, label_ct1 = None, label_ct2 = None, label_conn_ct = None):
+def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100, label_ct1 = None, label_ct2 = None,
+                         label_conn_ct = None, limit_multisynapse = None):
     '''
     compares connectivity parameters between two celltypes or connectivity of a third celltype to the two celltypes. Connectivity parameters are calculated in
     synapses_between2cts. Parameters include synapse amount and average synapse size, as well as amount and average synapse size in shaft, soma, spine head and spine neck.
@@ -721,6 +722,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     :param foldername_ct1, foldername_ct2: foldernames where parameters of connectivity are stored
     :param min_comp_len: minimum compartment length
     :param label_ct1, label_ct2, label_conn_ct: celltype labels deviating from ct_dict e.g. for subpopulations
+    :param limit_multisynapse: paramter for maximal number of connections
     :return: summed synapse sizes
     '''
     start = time.time()
@@ -866,10 +868,13 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             multisyn_df.loc[0: ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct1_max_multisyn + 1)
             multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_max_multisyn + 1)
             for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
-                multisyn_df.loc[i, "amount of cells"] = ct1_syn_dict["multisynapse amount"][key]
+                if limit_multisynapse is not None:
+                    if i > limit_multisynapse:
+                        break
+                multisyn_df.loc[i, "amount of connections"] = ct1_syn_dict["multisynapse amount"][key]
                 multisyn_df.loc[i, "sum size synapses"] = ct1_syn_dict["multisynapse sum size"][key]
                 try:
-                    multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
+                    multisyn_df.loc[ct1_max_multisyn + i, "amount of connections"] = ct2_syn_dict["multisynapse amount"][key]
                     multisyn_df.loc[ct1_max_multisyn + i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
                 except KeyError:
                     continue

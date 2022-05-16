@@ -268,7 +268,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
                          kde=False, norm_hist=True, bins=bins, label = self.celltype1)
             sns.distplot(self.dictionary2[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color2},
                          kde=False, norm_hist=True, bins=bins, label=self.celltype2)
             if add_key:
                 try:
@@ -290,7 +290,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
                          hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
                          kde=False, norm_hist=False, bins=bins, label=self.celltype1)
             sns.distplot(self.dictionary2[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color2},
                          kde=False, norm_hist=False, bins=bins, label=self.celltype2)
             if add_key:
                 try:

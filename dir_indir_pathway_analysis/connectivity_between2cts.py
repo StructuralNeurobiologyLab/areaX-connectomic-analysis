@@ -880,7 +880,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                     continue
 
             multisyn_df.to_csv("%s/multi_synapses_%s_2_%s_%s.csv" % (f_name, conn_ct_str, ct1_str, ct2_str))
-            results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
+            results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of connections", results_df=multisyn_df,
                                                   hue="celltype", conn_celltype = conn_ct_str, outgoing = False)
             results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
                                                    hue="celltype", conn_celltype = conn_ct_str, outgoing = False)
@@ -968,17 +968,20 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         multisyn_df.loc[0: ct1_max_multisyn - 1, "multisynapse amount"] = range(1, ct1_max_multisyn + 1)
         multisyn_df.loc[ct1_max_multisyn: sum_max_multisyn - 1, "multisynapse amount"] = range(1, ct2_max_multisyn + 1)
         for i, key in enumerate(ct1_syn_dict["multisynapse amount"].keys()):
-            multisyn_df.loc[i, "amount of cells"] = ct1_syn_dict["multisynapse amount"][key]
+            if limit_multisynapse is not None:
+                if i > limit_multisynapse:
+                    break
+            multisyn_df.loc[i, "amount of connections"] = ct1_syn_dict["multisynapse amount"][key]
             multisyn_df.loc[i, "sum size synapses"] = ct1_syn_dict["multisynapse sum size"][key]
             try:
-                multisyn_df.loc[ct1_max_multisyn + i, "amount of cells"] = ct2_syn_dict["multisynapse amount"][key]
+                multisyn_df.loc[ct1_max_multisyn + i, "amount of connections"] = ct2_syn_dict["multisynapse amount"][key]
                 multisyn_df.loc[ct1_max_multisyn + i, "sum size synapses"] = ct2_syn_dict["multisynapse sum size"][key]
             except KeyError:
                 continue
 
         multisyn_df.to_csv(
             "%s/multi_synapses_%s_%s_2_%s.csv" % (f_name, ct1_str, ct2_str, conn_ct_str))
-        results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of cells", results_df=multisyn_df,
+        results_comparison.plot_bar_hue(key="multisynapse amount", x="amount of connections", results_df=multisyn_df,
                                         hue="celltype", conn_celltype=conn_ct_str,
                                         outgoing=True)
         results_comparison.plot_bar_hue(key="multisynapse amount", x="sum size synapses", results_df=multisyn_df,
@@ -1115,7 +1118,7 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
             multisyn_df.loc[start_length: end_length - 1, "celltype"] = label_cts[0]
             multisyn_df.loc[start_length: end_length - 1, "multisynapse amount"] = range(1, max_multisyns[i] + 1)
             for j, key in enumerate(syn_dict_list[i]["multisynapse amount"].keys()):
-                multisyn_df.loc[start_length + j, "amount of cells"] = syn_dict_list[i]["multisynapse amount"][key]
+                multisyn_df.loc[start_length + j, "amount of connections"] = syn_dict_list[i]["multisynapse amount"][key]
                 multisyn_df.loc[start_length + j, "sum size synapses"] = syn_dict_list[i]["multisynapse sum size"][key]
             start_length += max_multisyns[i]
 

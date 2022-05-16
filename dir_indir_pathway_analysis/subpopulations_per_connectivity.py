@@ -128,9 +128,9 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     ct1_ct3_partner_inds = np.where(ct3_cts == ct3)
     ct1_ct3_partners = ct3_ssv_partners[ct1_ct3_partner_inds]
     # make dictionary for each group
-    only_ct2_dict = {cellid: {"synapse amount": only_ct1ct2_syn_amounts[i], "sum size synapses": only_ct1ct2_syn_sumsizes[i], "ct partners": ct1_ct2_partners[np.where(ct1_ct2_ssvsids == cellid)]} for i, cellid in enumerate(only_2ct2_cellids)}
+    only_ct2_dict = {cellid: {"synapse amount": only_ct1ct2_syn_amounts[i], "sum size synapses": only_ct1ct2_syn_sumsizes[i], "ct partners": np.unique(ct1_ct2_partners[np.where(ct1_ct2_ssvsids == cellid)])} for i, cellid in enumerate(only_2ct2_cellids)}
     only_ct3_dict = {
-        cellid: {"synapse amount": only_ct1ct3_syn_amounts[i], "sum size synapses": only_ct1ct3_syn_sumsizes[i], "ct partners": ct1_ct3_partners[np.where(ct1_ct3_ssvsids == cellid)]} for
+        cellid: {"synapse amount": only_ct1ct3_syn_amounts[i], "sum size synapses": only_ct1ct3_syn_sumsizes[i], "ct partners": np.unique(ct1_ct3_partners[np.where(ct1_ct3_ssvsids == cellid)])} for
         i, cellid in enumerate(only_2ct3_cellids)}
     both_dict = {cellid: {"synapse amount": both_syn_amounts[i], "sum size synapses": both_syn_sumsizes[i], "ct partners": np.unique(np.hstack([ct1_ct2_partners[np.where(ct1_ct2_ssvsids == cellid)], ct1_ct3_partners[np.where(ct1_ct3_ssvsids == cellid)]]))} for i, cellid in enumerate(both_cellids)}
     #those that are in fullcells of ct1 and do not have nay connectivity here are in group four
@@ -272,6 +272,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
         conn_synapses.plot_violin(key = key, x = "connection to cts", result_df = conn_df, subcell="synapse", stripplot=True)
         conn_synapses.plot_box(key=key, x = "connection to cts", result_df=conn_df, subcell="synapse", stripplot=False)
         conn_synapses.plot_hist_comparison(key=key, subcell="synapse", cells=True, norm_hist = True, bins= 10)
+        conn_synapses.plot_hist_comparison(key=key, subcell="synapse", cells=True, norm_hist=False, bins=10)
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 
@@ -345,9 +346,20 @@ def get_ct_via_inputfraction(sd_synssv, pre_ct, post_cts, pre_cellids, post_cell
     log.info("Step 3/5: Get amount and sum size from %s for each cell" % pre_label)
 
     #for each cell: determine synapse amount and sum of synapse sizes per cell from input celltype
-    from_ct1_syn_dict = synapse_amount_sumsize_between2cts(celltype1 = pre_ct, cellids1 = pre_cellids, cellids2 = flattened_post_cellids,
-                                                           syn_ids = m_ids, syn_cts = m_cts, syn_ssv_partners = m_ssv_partners,
-                                                           syn_sizes = m_sizes, syn_axs = m_axs, seperate_soma_dens = False)
+    if compare2mcl:
+        from_ct1_syn_dict = synapse_amount_sumsize_between2cts(celltype1=pre_ct, cellids1=pre_cellids,
+                                                               cellids2=flattened_post_cellids,
+                                                               syn_ids=m_ids, syn_cts=m_cts,
+                                                               syn_ssv_partners=m_ssv_partners,
+                                                               syn_sizes=m_sizes, syn_axs=m_axs,
+                                                               seperate_soma_dens=False, fragments_pre = False)
+    else:
+        from_ct1_syn_dict = synapse_amount_sumsize_between2cts(celltype1=pre_ct, cellids1=pre_cellids,
+                                                               cellids2=flattened_post_cellids,
+                                                               syn_ids=m_ids, syn_cts=m_cts,
+                                                               syn_ssv_partners=m_ssv_partners,
+                                                               syn_sizes=m_sizes, syn_axs=m_axs,
+                                                               seperate_soma_dens=False, fragments_pre=True)
 
     time_stamps = [time.time()]
     step_idents = ['getting %s amount and summed size per cell done' % pre_label]

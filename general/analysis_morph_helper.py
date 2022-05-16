@@ -36,7 +36,11 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     if full_cell_dict is not None:
-        axon_length = full_cell_dict[cell.id]["axon length"]
+        try:
+            axon_length = full_cell_dict[cell.id]["axon length"]
+        except KeyError:
+            all_cell_dict = load_pkl2obj("wholebrain/scratch/arother/j0251v4_prep.pkl")
+            axon_length = all_cell_dict[cell.id]["axon length"]
     else:
         axon_length = get_compartment_length(cell, compartment = 1, cell_graph = g)
     if axon_length < min_comp_len:

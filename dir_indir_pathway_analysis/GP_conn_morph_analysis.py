@@ -35,7 +35,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     sumsize_threshold = 0.25
     mito_gp_threshold = 0.025
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220505_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f__sumt_%f_mitot_%f" % (cl, syn_prob, sumsize_threshold, mito_gp_threshold)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220506_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f__sumt_%f_mitot_%f_allsyns" % (cl, syn_prob, sumsize_threshold, mito_gp_threshold)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GP identificationa and comparison connectivity', log_dir=f_name + '/logs/')
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     log.info("Step 1a/9: Get GP cellids and MSN inputs to full cells")
     GP_ids, msn_input_results_dict = get_ct_via_inputfraction(sd_synssv, pre_ct = 2, post_cts = non_MSN_fullcts, pre_cellids = MSN_ids, post_cellids = non_MSN_cellids_cts,
                                                               filename = f_name, celltype_threshold = sumsize_threshold, pre_label = None, post_labels = None,
-                                                              min_comp_len = cl, min_syn_size = min_syn_size, syn_prob_thresh = syn_prob, compare2mcl = True)
+                                                              min_comp_len = cl, min_syn_size = min_syn_size, syn_prob_thresh = syn_prob, compare2mcl = False)
     log.info("Step 1b/9: plot results in 2D vs organelle density")
     sd_mitossv = SegmentationDataset("mi", working_dir=global_params.config.working_dir)
     cached_mito_ids = sd_mitossv.ids
@@ -124,8 +124,8 @@ if __name__ == '__main__':
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
                          kde=False, bins=10, palette = palette)
         plt.legend()
-        g.ax_joint.set_xticklabels(g.ax_joint.get_xticks(), fontsize=20)
-        g.ax_joint.set_yticklabels(g.ax_joint.get_yticks(), fontsize=20)
+        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=20)
+        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=20)
         if "synapse" in x:
             plt.xlabel("%s" % x)
         elif "volume density" in x:
@@ -193,8 +193,8 @@ if __name__ == '__main__':
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
                          kde=False, bins=10, palette=palette)
         plt.legend()
-        g.ax_joint.set_xticklabels(g.ax_joint.get_xticks(), fontsize=20)
-        g.ax_joint.set_yticklabels(g.ax_joint.get_yticks(), fontsize=20)
+        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=20)
+        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=20)
         if "radius" in x:
             plt.xlabel("%s in µm" % x)
         elif "volume density" in x:

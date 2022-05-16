@@ -203,14 +203,13 @@ if __name__ == '__main__':
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
-        raise ValueError
         g = sns.JointGrid(data= all_param_df, x = x, y = y, hue = "celltype", palette = results_comparison.color_palette)
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot,  fill = True, alpha = 0.3,
                          kde=False, bins=10, palette = results_comparison.color_palette)
         plt.legend()
-        g.ax_joint.set_xticklabels(g.ax_joint.get_xticks(), fontsize = 20)
-        g.ax_joint.set_yticklabels(g.ax_joint.get_yticks(), fontsize=20)
+        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize = 20)
+        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=20)
         if "radius" in x:
             plt.xlabel("%s in µm" % x)
         elif "volume density" in x:

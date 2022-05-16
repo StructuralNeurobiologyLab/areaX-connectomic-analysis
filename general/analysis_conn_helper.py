@@ -114,7 +114,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_spiness = m_spiness[den_so_inds]
     return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness
 
-def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, syn_cts, syn_ssv_partners, syn_sizes, syn_axs, seperate_soma_dens = False):
+def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, syn_cts, syn_ssv_partners, syn_sizes, syn_axs, seperate_soma_dens = False, fragments_pre = False):
     '''
         gives amount and summed synapse size for each cell from other celltpye and writes it in dictionary. Calculates synapses from celltype1 to celltype2.
         Function assumes synapses are already prefiltered with filter_synapse_caches for different thresholds and at least celltype involvement.
@@ -128,17 +128,19 @@ def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, s
         :param syn_sizes: synapse sizes
         :param syn_axs: axoness values of synaptic partners
         :param seperate_soma_dens: if True: seperate dictionaries for dendritic and somatic inputs
+        :param if fragments_pre = True: all cellfragments will be included not only fullcells or cellids for presynapse
         :return: dictionary with cell_ids as keys and amount of synapses
         '''
     # get synapses where input celltype is axon
-    testct = np.in1d(syn_ssv_partners, cellids1).reshape(len(syn_ssv_partners), 2)
-    testax = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
-    pre_ct_inds = np.all(testct == testax, axis=1)
-    syn_cts = syn_cts[pre_ct_inds]
-    syn_ids = syn_ids[pre_ct_inds]
-    syn_axs = syn_axs[pre_ct_inds]
-    syn_ssv_partners = syn_ssv_partners[pre_ct_inds]
-    syn_sizes = syn_sizes[pre_ct_inds]
+    if fragments_pre:
+        testct = np.in1d(syn_ssv_partners, cellids1).reshape(len(syn_ssv_partners), 2)
+        testax = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
+        pre_ct_inds = np.all(testct == testax, axis=1)
+        syn_cts = syn_cts[pre_ct_inds]
+        syn_ids = syn_ids[pre_ct_inds]
+        syn_axs = syn_axs[pre_ct_inds]
+        syn_ssv_partners = syn_ssv_partners[pre_ct_inds]
+        syn_sizes = syn_sizes[pre_ct_inds]
     #get synapses where outgoing celltype gives dendrite, soma
     testct = np.in1d(syn_ssv_partners, cellids2).reshape(len(syn_ssv_partners), 2)
     testax = np.in1d(syn_axs, [2, 0]).reshape(len(syn_ssv_partners), 2)

@@ -418,10 +418,7 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
     log.info("compute statistics for comparison, create violinplot and histogram")
     amount_comparisons = np.math.factorial(amount_celltypes)
     ct_comparisons = np.empty(amount_comparisons).astype(str)
-    for i in range(amount_celltypes):
-        for j in range(1, amount_celltypes):
-            ct_comparisons[i + j - 1] = label_cts[i] + " vs " + label_cts[j]
-    ranksum_results = pd.DataFrame(columns=ct_comparisons)
+    ranksum_results = pd.DataFrame()
     results_comparison = ComparingMultipleForPLotting(ct_list = label_cts, filename = f_name, dictionary_list = ct_comp_dicts, colour_list = colours)
     for key in comp_dict_keys:
         if "ids" in key or "soma centre coords" in key or "tortuosity" in key:
@@ -432,8 +429,9 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
                 if i >= j:
                     continue
                 stats, p_value = ranksums(ct_comp_dicts[i][key], ct_comp_dicts[j][key])
-                ranksum_results.loc["stats " + key, ct_comparisons[i + j - 1]] = stats
-                ranksum_results.loc["p value " + key, ct_comparisons[i + j - 1]] = p_value
+                ranksum_results.loc["stats " + key, label_cts[i] + " vs " + label_cts[j]] = stats
+                ranksum_results.loc["p value " + key, label_cts[i] + " vs " + label_cts[j]] = p_value
+        continue
         #plot parameter as violinplot
         if "axon" in key:
             subcell = "axon"
@@ -466,6 +464,7 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
 
 
     ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name,label_cts[0], label_cts[1]))
+    raise ValueError
 
     plottime = time.time() - start
     print("%.2f sec for statistics and plotting" % plottime)

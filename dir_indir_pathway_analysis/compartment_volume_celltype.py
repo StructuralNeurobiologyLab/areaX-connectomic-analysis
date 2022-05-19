@@ -176,7 +176,11 @@ def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 10
         axon_tortuosity_sampled_ct[i] = axon_dict["tortuosity sampled"]
         dendrite_tortuosity_sampled_ct[i] = dendrite_dict["tortuosity sampled"]
         if full_cells:
-            soma_centres[i] = full_cell_dict[cellids[i]]["soma centre"]
+            try:
+                soma_centres[i] = full_cell_dict[cellids[i]]["soma centre"]
+            except KeyError:
+                all_cell_dict = load_pkl2obj("wholebrain/scratch/arother/j0251v4_prep/combined_fullcell_ax_dict.pkl")
+                soma_centres[i] = all_cell_dict[cellids[i]]["soma centre"]
         if spiness:
             spine_densities[i] = dendrite_dict["spine density"]
 

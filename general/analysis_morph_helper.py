@@ -5,6 +5,7 @@ import scipy
 from tqdm import tqdm
 from syconn.proc.meshes import mesh_area_calc, compartmentalize_mesh_fromskel
 from syconn.reps.super_segmentation import SuperSegmentationObject
+from syconn.handler.basics import load_pkl2obj, write_obj2pkl
 
 
 def get_compartment_length(sso, compartment, cell_graph):
@@ -39,14 +40,17 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
         try:
             axon_length = full_cell_dict[cell.id]["axon length"]
         except KeyError:
-            all_cell_dict = load_pkl2obj("wholebrain/scratch/arother/j0251v4_prep.pkl")
+            all_cell_dict = load_pkl2obj("wholebrain/scratch/arother/j0251v4_prep/combined_fullcell_ax_dict.pkl")
             axon_length = all_cell_dict[cell.id]["axon length"]
     else:
         axon_length = get_compartment_length(cell, compartment = 1, cell_graph = g)
     if axon_length < min_comp_len:
         return 0
     if full_cell_dict is not None:
-        dendrite_length = full_cell_dict[cell.id]["dendrite length"]
+        try:
+            dendrite_length = full_cell_dict[cell.id]["dendrite length"]
+        except KeyError:
+            dendrite_length = all_cell_dict[cell.id]["dendrite length"]
     else:
         dendrite_length = get_compartment_length(cell, compartment = 0, cell_graph = g)
     if dendrite_length < min_comp_len:
@@ -262,10 +266,17 @@ def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200):
     checked_cells = np.zeros(len(cellids))
     for i, cellid in enumerate(tqdm(cellids)):
         if fullcelldict is not None:
-            cell_axon_length = fullcelldict[cellid]["axon length"]
+            try:
+                cell_axon_length = fullcelldict[cellid]["axon length"]
+            except KeyError:
+                all_cell_dict = load_pkl2obj("wholebrain/scratch/arother/j0251v4_prep/combined_fullcell_ax_dict.pkl")
+                cell_axon_length = all_cell_dict[cellid]["axon length"]
             if cell_axon_length < min_comp_len:
                 continue
-            cell_den_length = fullcelldict[cellid]["dendrite length"]
+            try:
+                cell_den_length = fullcelldict[cellid]["dendrite length"]
+            except KeyError:
+                cell_den_length = all_cell_dict[cellid]["dendrite length"]
             if cell_den_length < min_comp_len:
                 continue
         else:

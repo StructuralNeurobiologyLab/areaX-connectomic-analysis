@@ -21,6 +21,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
     :param sd_synssv: segmentation dataset
     :param pre_cts: celltypes that can be on presynaptic side
     :param post_cts: celltypes that can be on postsynaptic side, if None, pre_cts can also be post
+    :param sd_csssv: segmentation dataset for contact sites
     :param syn_prob_thresh: threshold for synapse proabbility
     :param min_syn_size: minimal synapse size
     :param axo_den_so: if true only axo-dendritic oraxo-somatic synapses allowed
@@ -36,6 +37,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
     m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")[m]
     m_sizes = sd_synssv.load_numpy_data("mesh_area")[m] / 2
     m_spiness = sd_synssv.load_numpy_data("partner_spiness")[m]
+
     # select only those of given_celltypes
     # if post and pre not specified both celltypes can be on both sides
     if post_cts is None:
@@ -187,3 +189,26 @@ def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, s
         rec_dict = {cellid: {"amount": rec_amounts[i], "summed size": rec_syn_sizes[i]} for i, cellid in
                     enumerate(unique_rec_ssvs)}
         return rec_dict
+
+
+def filter_contact_caches_for_cellids(sd_cs_ssv, cellids1, cellids2):
+    """
+    filter contact sites to find contact sites between cells from cellids1 and cellids2.
+    :param sd_cs_ssv: segmentation Dataset contact sites
+    :param cellids1: cellids that should be part of one contact site
+    :param cellids2: cellids that should be part of the other contact site
+    :return:
+    """
+    raise ValueError
+    cs_partners = sd_cs_ssv.cs_partners
+    cs_ids = sd_cs_ssv.ids
+    ct1_inds = np.any(np.in1d(cs_partners, cellids1).reshape(len(cs_partners), 2), axis=1)
+    cs_partners = cs_partners[ct1_inds]
+    cs_ids = cs_ids[ct1_inds]
+    ct2_inds = np.any(np.in1d(cs_partners, cellids2).reshape(len(cs_partners), 2), axis=1)
+    cs_partners = cs_partners[ct2_inds]
+    cs_ids = cs_ids[ct2_inds]
+
+    return cs_partners, cs_ids
+
+

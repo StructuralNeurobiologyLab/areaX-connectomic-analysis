@@ -17,13 +17,14 @@ if __name__ == '__main__':
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
+    sd_csssv = SegmentationDataset("cs_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     cl = 200
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220516_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f_ranksums" % (cl, syn_prob)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220519_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f_ranksums" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
@@ -40,7 +41,7 @@ if __name__ == '__main__':
         "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_arr.pkl")
 
     log.info("Step 1/X: sort MSN based on connectivity to GPe and GPi")
-    msn2gpe_ids, msn2gpi_ids, msn2gpei_ids, msn_nogp_ids = sort_by_connectivity(sd_synssv, ct1 = 2, ct2 = 6, ct3 = 7, cellids1 = MSN_ids, cellids2 = GPe_ids, cellids3 = GPi_ids,
+    msn2gpe_ids, msn2gpi_ids, msn2gpei_ids, msn_nogp_ids = sort_by_connectivity(sd_synssv, sd_csssv = sd_csssv, ct1 = 2, ct2 = 6, ct3 = 7, cellids1 = MSN_ids, cellids2 = GPe_ids, cellids3 = GPi_ids,
                          f_name = f_name, f_name_saving = f_name_saving, min_comp_len = cl, syn_prob_thresh = syn_prob, min_syn_size = min_syn_size)
 
     time_stamps = [time.time()]

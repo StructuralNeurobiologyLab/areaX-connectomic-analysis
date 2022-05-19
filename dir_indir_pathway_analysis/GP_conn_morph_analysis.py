@@ -35,7 +35,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     sumsize_threshold = 0.25
     mito_gp_threshold = 0.025
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220506_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f__sumt_%f_mitot_%f_allsyns" % (cl, syn_prob, sumsize_threshold, mito_gp_threshold)
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220519_j0251v4_GP_conn_morph_comparison_mcl_%i_synprob_%.2f__sumt_%f_mitot_%f" % (cl, syn_prob, sumsize_threshold, mito_gp_threshold)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GP identificationa and comparison connectivity', log_dir=f_name + '/logs/')
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     log.info("Step 1a/9: Get GP cellids and MSN inputs to full cells")
     GP_ids, msn_input_results_dict = get_ct_via_inputfraction(sd_synssv, pre_ct = 2, post_cts = non_MSN_fullcts, pre_cellids = MSN_ids, post_cellids = non_MSN_cellids_cts,
                                                               filename = f_name, celltype_threshold = sumsize_threshold, pre_label = None, post_labels = None,
-                                                              min_comp_len = cl, min_syn_size = min_syn_size, syn_prob_thresh = syn_prob, compare2mcl = False)
+                                                              min_comp_len = cl, min_syn_size = min_syn_size, syn_prob_thresh = syn_prob, compare2mcl = True)
     log.info("Step 1b/9: plot results in 2D vs organelle density")
     sd_mitossv = SegmentationDataset("mi", working_dir=global_params.config.working_dir)
     cached_mito_ids = sd_mitossv.ids
@@ -83,6 +83,11 @@ if __name__ == '__main__':
     mito_results = np.concatenate(mito_results)
     msn_input_results_dict["axon mitochondria volume density"] = mito_results[:, 2]
     msn_input_results_dict["dendrite mitochondria volume density"] = mito_results[:, 3]
+    #summarise all interneuton types as INT
+    msn_input_results_dict["predicted celltype"][msn_input_results_dict["predicted celltype"] == "FS"] = "INT"
+    msn_input_results_dict["predicted celltype"][msn_input_results_dict["predicted celltype"] == "TAN"] = "INT"
+    msn_input_results_dict["predicted celltype"][msn_input_results_dict["predicted celltype"] == "LTS"] = "INT"
+    msn_input_results_dict["predicted celltype"][msn_input_results_dict["predicted celltype"] == "NGF"] = "INT"
     gp_inds = np.in1d(msn_input_results_dict["cellids"], GP_ids)
     new_gp_ids = msn_input_results_dict["cellids"][gp_inds]
     new_ax_mitos = msn_input_results_dict["axon mitochondria volume density"][gp_inds]
@@ -98,7 +103,7 @@ if __name__ == '__main__':
     key_list.remove("predicted celltype")
     results_df = pd.DataFrame(msn_input_results_dict)
     combinations = list(itertools.combinations(range(len(key_list)), 2))
-    palette = {ct_dict[0]: "#707070", ct_dict[5]:"#707070", ct_dict[6]:"#592A87", ct_dict[7]:"#2AC644", ct_dict[8]:"#707070", ct_dict[9]: "#707070", ct_dict[10]: "#707070"}
+    palette = {ct_dict[0]: "black", ct_dict[5]:"#707070", ct_dict[6]:"#592A87", ct_dict[7]:"#2AC644", ct_dict[8]:"#707070", ct_dict[9]: "#707070", ct_dict[10]: "#707070", "INT": "#707070"}
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
@@ -152,7 +157,7 @@ if __name__ == '__main__':
         gp = SuperSegmentationObject(gpid)
         gp.load_skeleton()
         axon_inds = np.nonzero(gp.skeleton["axoness_avg10000"] == 1)[0]
-        axon_radii_cell = get_compartment_radii(gp.id, cell = gp, comp_inds=axon_inds, load_skeleton=False)
+        axon_radii_cell = get_compartment_radii(cell = gp, comp_inds=axon_inds)
         ax_median_radius_cell = np.median(axon_radii_cell)
         axon_median_radius[ig] = ax_median_radius_cell
 
@@ -218,6 +223,8 @@ if __name__ == '__main__':
     write_obj2pkl("wholebrain/scratch/arother/j0251v4_prep/conn_morph_gpi_ids.pkl", GPi_ids)
     time_stamps = [time.time()]
     step_idents = ["GP identification based on MSN input finished, threshold myelin fraction = %f" % (threshold_myelin)]
+
+    all_cell_dict = load_pkl2obj("wholebrain/scratch/arother/j0251v4_prep/combined_fullcell_ax_dict.pkl")
 
     #from here on similar to GP_i_comparison_connectivity
 

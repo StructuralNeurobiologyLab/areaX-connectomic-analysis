@@ -13,11 +13,11 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct
-from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts
+from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
 from wholebrain.scratch.arother.bio_analysis.general.analysis_prep_func import synapse_amount_percell
 
-def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
+def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, sd_csssv = None, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     """
     sort one celltype into 4 groups based on connectivty to two other celltypes. Groups will be only one of them, neither or both.
     Also synapse amount, sum of synaptic area and cellids of the cells they synapsed onto will be looked at.
@@ -27,6 +27,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     :param cellids1, cellids2, cellids3: cellids of corresponding celltypes, will be checked for
     minimal compartment length
     :param f_name: filename where plots should be saved
+    :param sd_csssv: segmentation dataset for contact sites
     :param f_name_saving: where cellids should be saved, if not given then f_name
     :param full_celldict1, full_celldict2, full_celledcit3: dictionaries with parameters of correpsonding celltypes
     :param min_comp_len: minimal compartment length for axon and dendrite
@@ -59,6 +60,14 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
                                                                                            syn_prob_thresh=syn_prob_thresh,
                                                                                            min_syn_size=min_syn_size,
                                                                                            axo_den_so=True)
+    cs_partners, cs_ids = filter_contact_caches_for_cellids(sd_csssv, cellids1 = cellids1, cellids2 = np.hstack([cellids2, cellids3]))
+    raise ValueError
+    #To Do: add contact areas between two celltypes
+    #caculate synapses in relation to contact areas
+    #plot ratio of synapses to contact areas between two cells (as pairs, not per cell)
+    #plot per cell averae ratio
+    #plot amount of contacts with celltypes it doesn synapse to as pairs and per cell
+    #e.g. plot amount of contact sites in pairs for GPe for all three groups, area and another plot for GPi
 
     time_stamps = [time.time()]
     step_idents = ['prefilter synapses done']
@@ -256,6 +265,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
 
     r_columns = ["connected to only %s vs only %s" % (ct_dict[ct2], ct_dict[ct3]), "connected to both vs only %s" % ct_dict[ct2], "connected to both vs only %s" % ct_dict[ct3]]
     ranksum_results = pd.DataFrame(columns= r_columns)
+    anksum_results = pd.DataFrame()
     for key in ct2_arr_dict:
         if "cellids" in key:
             continue

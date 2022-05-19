@@ -12,10 +12,13 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct
+from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes
 from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
 from wholebrain.scratch.arother.bio_analysis.general.analysis_prep_func import synapse_amount_percell
+from multiprocessing import pool
+from functools import partial
+import scipy
 
 def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, sd_csssv = None, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     """
@@ -60,7 +63,17 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
                                                                                            syn_prob_thresh=syn_prob_thresh,
                                                                                            min_syn_size=min_syn_size,
                                                                                            axo_den_so=True)
-    cs_partners, cs_ids = filter_contact_caches_for_cellids(sd_csssv, cellids1 = cellids1, cellids2 = np.hstack([cellids2, cellids3]))
+    if sd_csssv is not None:
+        cs_partners, cs_ids, cs_coords = filter_contact_caches_for_cellids(sd_csssv, cellids1 = cellids1, cellids2 = np.hstack([cellids2, cellids3]))
+        p = pool.Pool()
+        ct1_axon_coords = p.map(partial(get_compartment_nodes, compartment = 1),tqdm(cellids1))
+        ct1_axon_coords = np.array(ct1_axon_coords)
+        kdtree = scipy.spatial.cKDTree(ct1_axon_coords)
+        close_ax_ids = kdtree.query(so_rep_coord, k=k)[1].astype(int)
+        #make sure that contact sites are between ct1 axon and ct2 dendrite
+        #get axon nodes from all cellids1
+
+
     raise ValueError
     #To Do: add contact areas between two celltypes
     #caculate synapses in relation to contact areas

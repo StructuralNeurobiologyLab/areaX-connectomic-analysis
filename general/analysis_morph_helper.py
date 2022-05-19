@@ -294,6 +294,19 @@ def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200):
     checked_cells = checked_cells[checked_cells > 0].astype(int)
     return checked_cells
 
+def get_compartment_nodes(ssoid, compartment):
+    """
+            calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
+            :param compartment: 0 = dendrite, 1 = axon, 2 = soma
+            :param cell_graph: sso.weighted graph
+            :return: comp_len in µm
+            """
+    sso = SuperSegmentationObject(ssoid)
+    sso.load_skeleton()
+    comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] == compartment)[0]
+    comp_nodes = sso.skeleton["nodes"][comp_inds] * sso.scaling
+    return comp_nodes
+
 
 
 

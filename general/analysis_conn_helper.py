@@ -199,8 +199,7 @@ def filter_contact_caches_for_cellids(sd_cs_ssv, cellids1, cellids2):
     :param cellids2: cellids that should be part of the other contact site
     :return:
     """
-    raise ValueError
-    cs_partners = sd_cs_ssv.cs_partners
+    cs_partners = sd_cs_ssv.load_numpy_data("neuron_partners")
     cs_ids = sd_cs_ssv.ids
     ct1_inds = np.any(np.in1d(cs_partners, cellids1).reshape(len(cs_partners), 2), axis=1)
     cs_partners = cs_partners[ct1_inds]

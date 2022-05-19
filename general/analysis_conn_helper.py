@@ -213,4 +213,33 @@ def filter_contact_caches_for_cellids(sd_cs_ssv, cellids1, cellids2):
 
     return cs_partners, cs_ids, cs_coords
 
+def get_contact_site_axoness_percell(compartment, cs_dict):
+    """
+    get contact sites related to a specific compartment per cell
+    :param cellid: id of the cell
+    :param compartment: 0 = dendrite, 1 = axon; compartment contact site should be close to
+    :param cs_coords: coordinates of all contact sites
+    :param cs_ids: ids of all contact sites
+    :param cs_partners: ids of partner cells
+    :return: dictionary with contact site ids per cell
+    """
+    cellid = cs_dict["cellid"]
+    sso = SuperSegmentationObject(cellid)
+    sso.load_skeleton()
+    cell_nodes = sso.skeleton["nodes"] * sso.scaling
+    axo = np.array(sso.skeleton["axoness_avg10000"])
+    axo[axo == 3] = 1
+    axo[axo == 4] = 1
+    cs_partners = cs_dict["cs partners"]
+    cs_coords = cs_dict["cs coords"] * sso.scaling
+    cs_ids = cs_dict["cs ids"]
+    kdtree = scipy.spatial.cKDTree(cell_nodes)
+    close_node_ids = kdtree.query(cs_coords, k=1)[1].astype(int)
+    close_node_comp = np.array(axo[close_node_ids])
+    close_node_comp_inds = np.where(close_node_comp == compartment)
+    cs_dict["cs partners"] = cs_partners[close_node_comp_inds]
+    cs_dict["cs coords"] = cs_coords[close_node_comp_inds]
+    cs_dict["cs ids"] = cs_ids[close_node_comp_inds]
+    return cs_dict
+
 

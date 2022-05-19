@@ -12,12 +12,13 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes
-from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids
+from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes, get_cell_nodes_ax
+from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids, get_contact_site_axoness_percell
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
 from wholebrain.scratch.arother.bio_analysis.general.analysis_prep_func import synapse_amount_percell
 from multiprocessing import pool
 from functools import partial
+from syconn.reps.super_segmentation import SuperSegmentationObject
 import scipy
 
 def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, sd_csssv = None, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
@@ -64,23 +65,62 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
                                                                                            min_syn_size=min_syn_size,
                                                                                            axo_den_so=True)
     if sd_csssv is not None:
-        cs_partners, cs_ids, cs_coords = filter_contact_caches_for_cellids(sd_csssv, cellids1 = cellids1, cellids2 = np.hstack([cellids2, cellids3]))
+        post_cellids = np.hstack([cellids2, cellids3])
+        cs_partners, cs_ids, cs_coords = filter_contact_caches_for_cellids(sd_csssv, cellids1 = cellids1, cellids2 = post_cellids)
+        #order contact site ids, cs partners and cs coords per cell
+        #make list of dictionaries
+        # find only contact sites that are on cellid1 axon
+        cs_cell_dict_list_ct1 = []
+        for ci, cellid in enumerate(tqdm(cellids1)):
+            percell_cs_partner_inds = np.where(cs_partners == cellid)[0]
+            cell_dict = {}
+            cell_dict["cs partners"] = cs_partners[percell_cs_partner_inds]
+            cell_dict["cs ids"] = cs_ids[percell_cs_partner_inds]
+            cell_dict["cs coords"] = cs_coords[percell_cs_partner_inds]
+            cell_dict["cellid"] = cellid
+            cs_cell_dict_list_ct1.append(cell_dict)
         p = pool.Pool()
-        ct1_axon_coords = p.map(partial(get_compartment_nodes, compartment = 1),tqdm(cellids1))
-        ct1_axon_coords = np.array(ct1_axon_coords)
-        kdtree = scipy.spatial.cKDTree(ct1_axon_coords)
-        close_ax_ids = kdtree.query(so_rep_coord, k=k)[1].astype(int)
-        #make sure that contact sites are between ct1 axon and ct2 dendrite
-        #get axon nodes from all cellids1
+        cs_result_dicts_ct1 = p.map(partial(get_contact_site_axoness_percell, compartment = 1), tqdm(cs_cell_dict_list_ct1))
+        #find contact sites that are close to postcellid dendrites
+        cs_cell_dict_list_post = []
+        for ci, cellid in enumerate(tqdm(post_cellids)):
+            percell_cs_partner_inds = np.where(cs_partners == cellid)[0]
+            cell_dict = {}
+            cell_dict["cs partners"] = cs_partners[percell_cs_partner_inds]
+            cell_dict["cs ids"] = cs_ids[percell_cs_partner_inds]
+            cell_dict["cs coords"] = cs_coords[percell_cs_partner_inds]
+            cell_dict["cellid"] = cellid
+            cs_cell_dict_list_post.append(cell_dict)
+        p = pool.Pool()
+        cs_result_dicts_post = p.map(partial(get_contact_site_axoness_percell, compartment=0), tqdm(cs_cell_dict_list_post))
+        cs_ids_ct1 = []
+        for ci, cellid in enumerate(tqdm(cellids1)):
+            cs_ids_ct1.append(cs_result_dicts_ct1["cs ids"])
+        cs_ids_post = []
+        for ci, cellid in enumerate(tqdm(post_cellids)):
+            cs_ids_post.append(cs_result_dicts_post["cs ids"])
+        cs_ids_ct1 = np.hstack(np.array(cs_ids_ct1))
+        cs_ids_post = np.hstack(np.array(cs_ids_post))
+        if len(cs_ids_ct1) > len(cs_ids_post):
+            suitalbe_cs_inds = np.in1d(cs_ids_ct1, cs_ids_post)
+            suitalbe_cs_ids = cs_ids_ct1[suitalbe_cs_inds]
+        else:
+            suitable_cs_inds = np.in1d(cs_ids_post, cs_ids_ct1)
+            suitable_cs_ids = cs_ids_post[suitable_cs_inds]
 
+
+
+
+
+
+
+
+
+        #get percell and per cell pair contact sites
 
     raise ValueError
-    #To Do: add contact areas between two celltypes
-    #caculate synapses in relation to contact areas
-    #plot ratio of synapses to contact areas between two cells (as pairs, not per cell)
-    #plot per cell averae ratio
-    #plot amount of contacts with celltypes it doesn synapse to as pairs and per cell
-    #e.g. plot amount of contact sites in pairs for GPe for all three groups, area and another plot for GPi
+
+
 
     time_stamps = [time.time()]
     step_idents = ['prefilter synapses done']
@@ -159,6 +199,12 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     connected_cellids1 = np.hstack([only_2ct3_cellids, only_2ct2_cellids, both_cellids])
     not_conn_inds = np.in1d(cellids1, connected_cellids1) == False
     not_connected_ids = cellids1[not_conn_inds]
+
+    if sd_cssv is not None:
+       #calculazte synapse in relation to contact sites, both between two cellpairs and average per cell
+        #plot relation of synapse to contact area
+        #plot amount of contact sites to cellids2 in pairs, also cellids3 and average per cell
+
 
 
 

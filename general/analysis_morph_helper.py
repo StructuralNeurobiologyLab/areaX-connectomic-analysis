@@ -307,6 +307,21 @@ def get_compartment_nodes(ssoid, compartment):
     comp_nodes = sso.skeleton["nodes"][comp_inds] * sso.scaling
     return comp_nodes
 
+def get_cell_nodes_ax(ssoid):
+    """
+            calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
+            :param compartment: 0 = dendrite, 1 = axon, 2 = soma
+            :param cell_graph: sso.weighted graph
+            :return: comp_len in µm
+            """
+    sso = SuperSegmentationObject(ssoid)
+    sso.load_skeleton()
+    cell_nodes = sso.skeleton["nodes"] * sso.scaling
+    axo = np.array(sso.skeleton["axoness_avg10000"])
+    axo[axo == 3] = 1
+    axo[axo == 4] = 1
+    return [cell_nodes, axo]
+
 
 
 

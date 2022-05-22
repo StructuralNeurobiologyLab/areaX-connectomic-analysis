@@ -95,32 +95,32 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
         cs_result_dicts_post = p.map(partial(get_contact_site_axoness_percell, compartment=0), tqdm(cs_cell_dict_list_post))
         cs_ids_ct1 = []
         for ci, cellid in enumerate(tqdm(cellids1)):
-            cs_ids_ct1.append(cs_result_dicts_ct1["cs ids"])
+            cs_ids_ct1.append(cs_result_dicts_ct1[ci]["cs ids"])
         cs_ids_post = []
         for ci, cellid in enumerate(tqdm(post_cellids)):
-            cs_ids_post.append(cs_result_dicts_post["cs ids"])
+            cs_ids_post.append(cs_result_dicts_post[ci]["cs ids"])
         cs_ids_ct1 = np.hstack(np.array(cs_ids_ct1))
         cs_ids_post = np.hstack(np.array(cs_ids_post))
         if len(cs_ids_ct1) > len(cs_ids_post):
-            suitalbe_cs_inds = np.in1d(cs_ids_ct1, cs_ids_post)
-            suitalbe_cs_ids = cs_ids_ct1[suitalbe_cs_inds]
+            suitable_cs_inds_ct = np.in1d(cs_ids_ct1, cs_ids_post)
+            suitable_cs_ids = cs_ids_ct1[suitable_cs_inds_ct]
         else:
-            suitable_cs_inds = np.in1d(cs_ids_post, cs_ids_ct1)
-            suitable_cs_ids = cs_ids_post[suitable_cs_inds]
-
-
-
-
-
-
-
-
-
-        #get percell and per cell pair contact sites
-
-    raise ValueError
-
-
+            suitable_cs_inds_ct = np.in1d(cs_ids_post, cs_ids_ct1)
+            suitable_cs_ids = cs_ids_post[suitable_cs_inds_ct]
+        suitable_cs_inds = np.in1d(cs_ids, suitable_cs_ids)
+        suitable_cs_coords = cs_coords[suitable_cs_inds]
+        suitable_cs_partners = cs_partners[suitable_cs_inds]
+        suitable_cs_ids = cs_ids[suitable_cs_inds]
+        for ci, cellid in enumerate(tqdm(cellids1)):
+            cs_inds = np.in1d(cs_result_dicts_ct1[ci]["cs ids"], suitable_cs_ids)
+            cs_result_dicts_ct1[ci]["cs ids"] = cs_result_dicts_ct1[ci]["cs ids"][cs_inds]
+            cs_result_dicts_ct1[ci]["cs partners"] = cs_result_dicts_ct1[ci]["cs partners"][cs_inds]
+            cs_result_dicts_ct1[ci]["cs coords"] = cs_result_dicts_ct1[ci]["cs coords"][cs_inds]
+        for ci, cellid in enumerate(tqdm(post_cellids)):
+            cs_inds = np.in1d(cs_result_dicts_post[ci]["cs ids"], suitable_cs_ids)
+            cs_result_dicts_post[ci]["cs ids"] = cs_result_dicts_post[ci]["cs ids"][cs_inds]
+            cs_result_dicts_post[ci]["cs partners"] = cs_result_dicts_post[ci]["cs partners"][cs_inds]
+            cs_result_dicts_post[ci]["cs coords"] = cs_result_dicts_post[ci]["cs coords"][cs_inds]
 
     time_stamps = [time.time()]
     step_idents = ['prefilter synapses done']
@@ -200,14 +200,88 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     not_conn_inds = np.in1d(cellids1, connected_cellids1) == False
     not_connected_ids = cellids1[not_conn_inds]
 
-    if sd_cssv is not None:
-       #calculazte synapse in relation to contact sites, both between two cellpairs and average per cell
-        #plot relation of synapse to contact area
-        #plot amount of contact sites to cellids2 in pairs, also cellids3 and average per cell
+    if sd_csssv is not None:
+        #relate cs ids back to synapses and per cell
+        not_conn_dict = {}
+        for ci, cellid in enumerate(tqdm(cellids1)):
+            ct2_ct3_cs_inds = np.where(cs_result_dicts_ct1[ci]["cs partners"] != cellid)
+            ct2_ct3_cs_cellids = cs_result_dicts_ct1[ci]["cs partners"][ct2_ct3_cs_inds]
+            ct2_cs_inds = np.in1d(ct2_ct3_cs_cellids, cellids2)
+            ct2_cs_ids = cs_result_dicts_ct1[ci]["cs ids"][ct2_cs_inds]
+            ct2_cs_cellids = ct2_ct3_cs_cellids[ct2_cs_inds]
+            unique_ct2_cs_cellids = np.unique(ct2_cs_cellids)
+            ct3_cs_inds = np.in1d(ct2_ct3_cs_cellids, cellids3)
+            ct3_cs_ids = cs_result_dicts_ct1[ci]["cs ids"][ct3_cs_inds]
+            ct3_cs_cellids = ct2_ct3_cs_cellids[ct3_cs_inds]
+            unique_ct3_cs_cellids = np.unique(ct3_cs_cellids)
+            if cellid in only_2ct2_cellids:
+                only_ct2_dict[cellid]["sum contact sites"] = len(cs_result_dicts_ct1[ci]["cs ids"])
+                only_ct2_dict[cellid]["sum contact sites %s" % ct_dict[ct2]] = len(ct2_cs_ids)
+                only_ct2_dict[cellid]["average contact sites %s per cell" % ct_dict[ct2]] = len(ct2_cs_ids)/ len(unique_ct2_cs_cellids)
+                only_ct2_dict[cellid]["sum contact sites %s" % ct_dict[ct3]] = len(ct3_cs_ids)
+                try:
+                    only_ct2_dict[cellid]["average contact sites %s per cell" % ct_dict[ct3]] = len(ct3_cs_ids) / len(
+                        unique_ct3_cs_cellids)
+                except ZeroDivisionError:
+                    only_ct2_dict[cellid]["average contact sites %s per cell" % ct_dict[ct3]] = 0
+                only_ct2_dict[cellid]["percentage synapse amount to contact sites"] = (only_ct2_dict[cellid]["synapse amount"] * 100)/ len(ct2_cs_ids)
+                only_ct2_dict[cellid]["percentage synapse amount to contact sites %s"  % ct_dict[ct2]] = only_ct2_dict[cellid]["percentage synapse amount to contact sites"]
+            elif cellid in only_2ct3_cellids:
+                only_ct3_dict[cellid]["sum contact sites"] = len(cs_result_dicts_ct1[ci]["cs ids"])
+                only_ct3_dict[cellid]["sum contact sites %s" % ct_dict[ct2]] = len(ct2_cs_ids)
+                try:
+                    only_ct3_dict[cellid]["average contact sites %s per cell" % ct_dict[ct2]] = len(ct2_cs_ids) / len(
+                        unique_ct2_cs_cellids)
+                except ZeroDivisionError:
+                    only_ct3_dict[cellid]["average contact sites %s per cell" % ct_dict[ct2]] = 0
+                only_ct3_dict[cellid]["sum contact sites %s" % ct_dict[ct3]] = len(ct3_cs_ids)
+                only_ct3_dict[cellid]["average contact sites %s per cell" % ct_dict[ct3]] = len(ct3_cs_ids) / len(
+                    unique_ct3_cs_cellids)
+                only_ct3_dict[cellid]["percentage synapse amount to contact sites"] = (only_ct3_dict[cellid][
+                                                                                           "synapse amount"] * 100) / len(
+                    ct3_cs_ids)
+                only_ct3_dict[cellid]["percentage synapse amount to contact sites %s" % ct_dict[ct3]] = \
+                only_ct3_dict[cellid]["percentage synapse amount to contact sites"]
+            elif cellid in both_cellids:
+                both_dict[cellid]["sum contact sites"] = len(cs_result_dicts_ct1[ci]["cs ids"])
+                both_dict[cellid]["sum contact sites %s" % ct_dict[ct2]] = len(ct2_cs_ids)
+                try:
+                    both_dict[cellid]["average contact sites %s per cell" % ct_dict[ct2]] = len(ct2_cs_ids) / len(
+                        unique_ct2_cs_cellids)
+                except ZeroDivisionError:
+                    both_dict[cellid]["average contact sites %s per cell" % ct_dict[ct2]] = 0
+                both_dict[cellid]["sum contact sites %s" % ct_dict[ct3]] = len(ct3_cs_ids)
+                try:
+                    both_dict[cellid]["average contact sites %s per cell" % ct_dict[ct3]] = len(ct3_cs_ids) / len(
+                        unique_ct3_cs_cellids)
+                except ZeroDivisionError:
+                    both_dict[cellid]["average contact sites %s per cell" % ct_dict[ct3]] = 0
+                both_dict[cellid]["percentage synapse amount to contact sites"] = (both_dict[cellid][
+                                                                                           "synapse amount"] * 100) / (len(
+                    ct2_cs_ids) + len(ct3_cs_ids))
+                syn_amount_cell_ind = np.where(both_cellids == cellid)
+                ct2_syn_amount_cell = sorted_ct2_amounts[syn_amount_cell_ind]
+                ct3_syn_amount_cell = sorted_ct3_amounts[syn_amount_cell_ind]
+                both_dict[cellid]["percentage synapse amount to contact sites %s" % ct_dict[ct2]] = ((ct2_syn_amount_cell * 100) / len(ct2_cs_ids))[0]
+                both_dict[cellid]["percentage synapse amount to contact sites %s" % ct_dict[ct3]] = ((ct3_syn_amount_cell * 100) / len(
+                    ct3_cs_ids))[0]
+            else:
+                not_conn_dict[cellid] = {}
+                not_conn_dict[cellid]["sum contact sites"] = len(cs_result_dicts_ct1[ci]["cs ids"])
+                not_conn_dict[cellid]["sum contact sites %s" % ct_dict[ct2]] = len(ct2_cs_ids)
+                try:
+                    not_conn_dict[cellid]["average contact sites %s per cell" % ct_dict[ct2]] = len(ct2_cs_ids) / len(
+                        unique_ct2_cs_cellids)
+                except ZeroDivisionError:
+                    not_conn_dict[cellid]["average contact sites %s per cell" % ct_dict[ct2]] = 0
+                not_conn_dict[cellid]["sum contact sites %s" % ct_dict[ct3]] = len(ct3_cs_ids)
+                try:
+                    not_conn_dict[cellid]["average contact sites %s per cell" % ct_dict[ct3]] = len(ct3_cs_ids) / len(
+                        unique_ct3_cs_cellids)
+                except ZeroDivisionError:
+                    not_conn_dict[cellid]["average contact sites %s per cell" % ct_dict[ct3]] = 0
 
-
-
-
+    raise ValueError
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -324,7 +398,6 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
 
     r_columns = ["connected to only %s vs only %s" % (ct_dict[ct2], ct_dict[ct3]), "connected to both vs only %s" % ct_dict[ct2], "connected to both vs only %s" % ct_dict[ct3]]
     ranksum_results = pd.DataFrame(columns= r_columns)
-    anksum_results = pd.DataFrame()
     for key in ct2_arr_dict:
         if "cellids" in key:
             continue
@@ -344,6 +417,163 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
         conn_synapses.plot_hist_comparison(key=key, subcell="synapse", cells=True, norm_hist=False, bins=10)
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
+
+    if sd_cssv is not None:
+        log.info("Step 4b/4: Compute statistics for contact sites and plot results")
+        cs_columnns = ["cellids", "connection to cts", "sum contact sites", "sum contact sites %s" % ct_dict[ct2], "average contact sites %s per cell" % ct_dict[ct2],
+                       "sum contact sites %s" % ct_dict[ct3], "average contact sites %s per cell" % ct_dict[ct3], "percentage synapse amount to contact sites",
+                       "percentage synapse amount to contact sites %s" % ct_dict[ct2], "percentage synapse amount to contact sites %s" % ct_dict[ct3]]
+        conn_df = pd.DataFrame(
+            columns=cs_columnns,
+            index=len(cellids1))
+        conn_df.loc[0:len(only_2ct2_cellids) - 1, "cellids"] = only_2ct2_cellids
+        conn_df.loc[0:len(only_2ct2_cellids) - 1, "connection to cts"] = "only %s" % ct_dict[ct2]
+        conn_df.loc[0:len(only_2ct2_cellids) - 1, "synapse amount"] = only_ct1ct2_syn_amounts
+        conn_df.loc[0:len(only_2ct2_cellids) - 1, "sum size synapses"] = only_ct1ct2_syn_sumsizes
+        conn_df.loc[len(only_2ct2_cellids):len(only_2ct2_cellids) + len(only_2ct3_cellids) - 1,
+        "cellids"] = only_2ct3_cellids
+        conn_df.loc[len(only_2ct2_cellids):len(only_2ct2_cellids) + len(only_2ct3_cellids) - 1,
+        "connection to cts"] = "only %s" % ct_dict[ct3]
+        conn_df.loc[len(only_2ct2_cellids):len(only_2ct2_cellids) + len(only_2ct3_cellids) - 1,
+        "synapse amount"] = only_ct1ct3_syn_amounts
+        conn_df.loc[len(only_2ct2_cellids):len(only_2ct2_cellids) + len(only_2ct3_cellids) - 1,
+        "sum size synapses"] = only_ct1ct3_syn_sumsizes
+        conn_df.loc[len(only_2ct2_cellids) + len(only_2ct3_cellids): len(connected_cellids1) - 1,
+        "cellids"] = both_cellids
+        conn_df.loc[len(only_2ct2_cellids) + len(only_2ct3_cellids): len(connected_cellids1) - 1,
+        "connection to cts"] = "both"
+        conn_df.loc[len(only_2ct2_cellids) + len(only_2ct3_cellids): len(connected_cellids1) - 1,
+        "synapse amount"] = both_syn_amounts
+        conn_df.loc[len(only_2ct2_cellids) + len(only_2ct3_cellids): len(connected_cellids1) - 1,
+        "sum size synapses"] = both_syn_sumsizes
+        key_list = list(conn_df.keys())
+        key_list.remove("connection to cts")
+        ct2_arr_dict = {key: np.zeros(len(only_2ct2_cellids)) for key in key_list}
+        ct3_arr_dict = {key: np.zeros(len(only_2ct3_cellids)) for key in key_list}
+        both_arr_dict = {key: np.zeros(len(both_cellids)) for key in key_list}
+        ct2_arr_dict["cellids"] = only_2ct2_cellids
+        ct3_arr_dict["cellids"] = only_2ct3_cellids
+        both_arr_dict["cellids"] = both_cellids
+        for cellid in cellids1:
+            if cellid in only_2ct2_cellids:
+                amount_partners = len(only_ct2_dict[cellid]["ct partners"])
+                avg_syn_amount_partner = only_ct2_dict[cellid]["synapse amount"] / len(
+                    only_ct2_dict[cellid]["ct partners"])
+                avg_syn_size_partner = only_ct2_dict[cellid]["sum size synapses"] / len(
+                    only_ct2_dict[cellid]["ct partners"])
+                conn_df.loc[np.where(only_2ct2_cellids == cellid)[0], "amount partners"] = amount_partners
+                conn_df.loc[
+                    np.where(only_2ct2_cellids == cellid)[0], "avg synapse amount per partner"] = avg_syn_amount_partner
+                conn_df.loc[
+                    np.where(only_2ct2_cellids == cellid)[0], "avg synapse size per partner"] = avg_syn_size_partner
+                only_ct2_dict[cellid]["amount partners"] = amount_partners
+                only_ct2_dict[cellid]["avg synapse amount per partner"] = avg_syn_amount_partner
+                only_ct2_dict[cellid]["avg synapse size per partner"] = avg_syn_size_partner
+                ind = np.where(ct2_arr_dict["cellids"] == cellid)
+                for key in key_list:
+                    if "cellids" in key:
+                        continue
+                    ct2_arr_dict[key][ind] = only_ct2_dict[cellid][key]
+            elif cellid in only_2ct3_cellids:
+                amount_partners = len(only_ct3_dict[cellid]["ct partners"])
+                avg_syn_amount_partner = only_ct3_dict[cellid]["synapse amount"] / len(
+                    only_ct3_dict[cellid]["ct partners"])
+                avg_syn_size_partner = only_ct3_dict[cellid]["sum size synapses"] / len(
+                    only_ct3_dict[cellid]["ct partners"])
+                conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(
+                    only_2ct2_cellids), "amount partners"] = amount_partners
+                conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(
+                    only_2ct2_cellids), "avg synapse amount per partner"] = avg_syn_amount_partner
+                conn_df.loc[np.where(only_2ct3_cellids == cellid)[0] + len(
+                    only_2ct2_cellids), "avg synapse size per partner"] = avg_syn_size_partner
+                only_ct3_dict[cellid]["amount partners"] = amount_partners
+                only_ct3_dict[cellid]["avg synapse amount per partner"] = avg_syn_amount_partner
+                only_ct3_dict[cellid]["avg synapse size per partner"] = avg_syn_size_partner
+                ind = np.where(ct3_arr_dict["cellids"] == cellid)
+                for key in key_list:
+                    if "cellids" in key:
+                        continue
+                    ct3_arr_dict[key][ind] = only_ct3_dict[cellid][key]
+            elif cellid in both_cellids:
+                amount_partners = len(both_dict[cellid]["ct partners"])
+                avg_syn_amount_partner = both_dict[cellid]["synapse amount"] / len(both_dict[cellid]["ct partners"])
+                avg_syn_size_partner = both_dict[cellid]["sum size synapses"] / len(
+                    both_dict[cellid]["ct partners"])
+                conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
+                    only_2ct3_cellids), "amount partners"] = amount_partners
+                conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
+                    only_2ct3_cellids), "avg synapse amount per partner"] = avg_syn_amount_partner
+                conn_df.loc[np.where(both_cellids == cellid)[0] + len(only_2ct2_cellids) + len(
+                    only_2ct3_cellids), "avg synapse size per partner"] = avg_syn_size_partner
+                both_dict[cellid]["amount partners"] = amount_partners
+                both_dict[cellid]["avg synapse amount per partner"] = avg_syn_amount_partner
+                both_dict[cellid]["avg synapse size per partner"] = avg_syn_size_partner
+                ind = np.where(both_arr_dict["cellids"] == cellid)
+                for key in key_list:
+                    if "cellids" in key:
+                        continue
+                    both_arr_dict[key][ind] = both_dict[cellid][key]
+            else:
+                continue
+
+        # state type of columns with float entries to prevent plotting issues
+        for key in key_list[1:]:
+            conn_df[key] = conn_df[key].astype(float)
+
+        conn_df.to_csv("%s/result_params.csv" % f_name)
+
+        write_obj2pkl("%s/full_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
+                      only_ct2_dict)
+        write_obj2pkl("%s/full_%s_2_%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
+                      only_ct3_dict)
+        write_obj2pkl(
+            "%s/full_%s_2_%s%s_dict_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+            both_dict)
+        write_obj2pkl("%s/full_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], min_comp_len),
+                      only_2ct2_cellids)
+        write_obj2pkl("%s/full_%s_2_%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct3], min_comp_len),
+                      only_2ct3_cellids)
+        write_obj2pkl(
+            "%s/full_%s_2_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+            both_dict)
+        write_obj2pkl(
+            "%s/full_%s_no_conn_%s%s_arr_%i.pkl" % (
+            f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
+            not_connected_ids)
+
+        write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct2]), ct2_arr_dict)
+        write_obj2pkl("%s/%s_2_%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct3]), ct3_arr_dict)
+        write_obj2pkl("%s/%s_2_both%s%s_dict.pkl" % (f_name, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3]), both_arr_dict)
+
+        conn_synapses = ComparingMultipleForPLotting(
+            ct_list=["only %s" % ct_dict[ct2], "only %s" % ct_dict[ct3], "both"], filename=f_name,
+            dictionary_list=[ct2_arr_dict, ct3_arr_dict, both_arr_dict], colour_list=["#EAAE34", '#2F86A8', "#707070"])
+
+        r_columns = ["connected to only %s vs only %s" % (ct_dict[ct2], ct_dict[ct3]),
+                     "connected to both vs only %s" % ct_dict[ct2], "connected to both vs only %s" % ct_dict[ct3]]
+        ranksum_results = pd.DataFrame(columns=r_columns)
+        for key in ct2_arr_dict:
+            if "cellids" in key:
+                continue
+            # calculate p_value for parameter
+            stats_23, p_value_23 = ranksums(ct2_arr_dict[key], ct3_arr_dict[key])
+            stats_b2, p_value_b2 = ranksums(both_arr_dict[key], ct2_arr_dict[key])
+            stats_b3, p_value_b3 = ranksums(both_arr_dict[key], ct3_arr_dict[key])
+            ranksum_results.loc["stats - " + key, r_columns[0]] = stats_23
+            ranksum_results.loc["p value - " + key, r_columns[0]] = p_value_23
+            ranksum_results.loc["stats - " + key, r_columns[1]] = stats_b2
+            ranksum_results.loc["p value - " + key, r_columns[1]] = p_value_b2
+            ranksum_results.loc["stats - " + key, r_columns[2]] = stats_b3
+            ranksum_results.loc["p value - " + key, r_columns[2]] = p_value_b3
+            conn_synapses.plot_violin(key=key, x="connection to cts", result_df=conn_df, subcell="synapse",
+                                      stripplot=True)
+            conn_synapses.plot_box(key=key, x="connection to cts", result_df=conn_df, subcell="synapse",
+                                   stripplot=False)
+            conn_synapses.plot_hist_comparison(key=key, subcell="synapse", cells=True, norm_hist=True, bins=10)
+            conn_synapses.plot_hist_comparison(key=key, subcell="synapse", cells=True, norm_hist=False, bins=10)
+
+        ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
+
 
     return only_2ct2_cellids, only_2ct3_cellids, both_cellids, not_connected_ids
 

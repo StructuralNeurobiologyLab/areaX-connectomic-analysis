@@ -213,7 +213,7 @@ def filter_contact_caches_for_cellids(sd_cs_ssv, cellids1, cellids2):
 
     return cs_partners, cs_ids, cs_coords
 
-def get_contact_site_axoness_percell(compartment, cs_dict):
+def get_contact_site_axoness_percell(cs_dict, compartment):
     """
     get contact sites related to a specific compartment per cell
     :param cellid: id of the cell

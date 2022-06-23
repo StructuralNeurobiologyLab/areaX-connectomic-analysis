@@ -1,11 +1,14 @@
 #script to debug contact sites
 
 import numpy as np
-form syconn import global_params
+from syconn import global_params
 from syconn.reps.segmentation import SegmentationDataset
+from syconn.extraction import cs_processing_steps as cps
+from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
 
 
 global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 
 #example cells and synapse id
 cellid1 = 1820916030
@@ -69,5 +72,10 @@ cs_syn_size = cs_sizes[cs_syn_index]
 cs_cs1_index = np.where(cs_ids == c12_cs_ssv_cs_ids[0])[0]
 cs_cs1_coord = cs_coords[cs_cs1_index]
 cs_cs1_size = cs_sizes[cs_cs1_index]
+
+#go through steps in cps
+filtered_cs = cps.filter_relevant_syn(sd_cs, ssd, log = None)
+
+
 
 raise ValueError

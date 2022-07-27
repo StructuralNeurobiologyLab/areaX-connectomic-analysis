@@ -13,6 +13,7 @@ if __name__ == '__main__':
     from syconn.handler.basics import load_pkl2obj, write_obj2pkl
     from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from tqdm import tqdm
 
     start = time.time()
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     loadtime = time.time() - start
     print("%.2f min, %.2f sec for loading" % (loadtime // 60, loadtime % 60))
 
-    f_name = "u/arother/test_folder/220727_tan_da_syn_all_allaxons"
+    f_name = "wholebrain/scratch/aorther/bio_analysis_results/TAN_DA_axo_analysis/220727_tan_da_syn_all_allaxons"
     log = initialize_logging('TAN DA axonic synapses', log_dir=f_name + '/logs/')
     time_stamps = [time.time()]
     step_idents = ['t-0']
@@ -40,8 +41,8 @@ if __name__ == '__main__':
     #da_ids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == 1]
     da_ids = list(DA_dict.keys())
 
-    tan_ids = check_comp_lengths_ct(tan_ids, TAN_dict, min_comp_length = min_comp_length, axo_only = False)
-    da_ids = check_comp_lengths_ct(da_ids, DA_dict, min_comp_length = min_comp_length, axo_only = True)
+    tan_ids = check_comp_lengths_ct(tan_ids, TAN_dict, min_comp_len = min_comp_length, axon_only = False)
+    da_ids = check_comp_lengths_ct(da_ids, DA_dict, min_comp_len = min_comp_length, axon_only = True)
 
     log.info('Step 2/4 iterate trough synapses of TAN and DA')
     celltype1 = 1
@@ -68,7 +69,7 @@ if __name__ == '__main__':
     da_noskel_ids = np.zeros(len(da_ids))
     #TO DO: if too close to soma: classify as AIS
     # either use shortestpathtosoma (needs to load skeleton) or load soma center and go from there
-    for ix, id in enumerate(m_ids):
+    for ix, id in enumerate(tqdm(m_ids)):
         syn_ax = m_axs[ix]
         if not 1 in syn_ax:
             continue
@@ -79,10 +80,6 @@ if __name__ == '__main__':
         if not np.any(np.in1d(m_ssv_partners[ix], da_ids)):
             continue
         m_size = m_sizes[ix]
-        percentage = 100 * (ix / len(m_ids))
-        if int(percentage) != int_percentage:
-            print("%.2f percent" % percentage)
-            int_percentage = int(percentage)
         da_ind = np.where(m_cts[ix] == celltype1)
         da_id = int(m_ssv_partners[ix][da_ind])
         da_ids_ind = np.where(da_ids == da_id)

@@ -254,7 +254,7 @@ def get_compartment_mesh_area(cell):
 
     return mesh_areas
 
-def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200):
+def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200, axon_only = False):
     """
     iterates of cellids and checks if their compartment length (axon, dendrite) are
     over a certain threshold.
@@ -273,12 +273,13 @@ def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200):
                 cell_axon_length = all_cell_dict[cellid]["axon length"]
             if cell_axon_length < min_comp_len:
                 continue
-            try:
-                cell_den_length = fullcelldict[cellid]["dendrite length"]
-            except KeyError:
-                cell_den_length = all_cell_dict[cellid]["dendrite length"]
-            if cell_den_length < min_comp_len:
-                continue
+            if not axon_only:
+                try:
+                    cell_den_length = fullcelldict[cellid]["dendrite length"]
+                except KeyError:
+                    cell_den_length = all_cell_dict[cellid]["dendrite length"]
+                if cell_den_length < min_comp_len:
+                    continue
         else:
             cell = SuperSegmentationObject(cellid)
             cell.load_skeleton()

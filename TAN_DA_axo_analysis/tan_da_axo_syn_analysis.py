@@ -11,9 +11,11 @@ if __name__ == '__main__':
     import time
     from syconn.handler.config import initialize_logging
     from syconn.handler.basics import load_pkl2obj, write_obj2pkl
+    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
 
     start = time.time()
-    global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
+    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
@@ -23,22 +25,31 @@ if __name__ == '__main__':
     loadtime = time.time() - start
     print("%.2f min, %.2f sec for loading" % (loadtime // 60, loadtime % 60))
 
-    f_name = "u/arother/test_folder/210401_tan_da_syn_all_allaxons"
+    f_name = "u/arother/test_folder/220727_tan_da_syn_all_allaxons"
     log = initialize_logging('TAN DA axonic synapses', log_dir=f_name + '/logs/')
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
-    log.info('Step 1/4 load full cells')
+    min_comp_length = 200
 
-    tan_ids = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_TAN_handpicked.pkl")
-    TAN_soma_centres = load_pkl2obj("/wholebrain/scratch/arother/j0251v3_prep/full_TAN_dict.pkl")
-    da_ids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == 1]
+    log.info('Step 1/4 load full cells and filter wit min comp length %i' % min_comp_length)
+
+    tan_ids = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_TAN_arr.pkl")
+    TAN_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_TAN_dict.pkl")
+    DA_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/ax_DA_dict.pkl")
+    #da_ids = ssd.ssv_ids[ssd.load_cached_data("celltype_cnn_e3") == 1]
+    da_ids = list(DA_dict.keys())
+
+    tan_ids = check_comp_lengths_ct(tan_ids, TAN_dict, min_comp_length = min_comp_length, axo_only = False)
+    da_ids = check_comp_lengths_ct(da_ids, DA_dict, min_comp_length = min_comp_length, axo_only = True)
 
     log.info('Step 2/4 iterate trough synapses of TAN and DA')
     celltype1 = 1
     celltype2 = 5
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [1,5], post_cts=None, syn_prob_thresh=0.8, min_syn_size=0.1,
+                                 axo_den_so=False)
     syn_prob = sd_synssv.load_cached_data("syn_prob")
     syn_proba = 0.6
     m = syn_prob > syn_proba

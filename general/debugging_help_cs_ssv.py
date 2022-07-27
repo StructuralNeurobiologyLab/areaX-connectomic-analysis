@@ -100,5 +100,98 @@ print(f"{time() - start}")
 #filtered_cs = cps.filter_relevant_syn(sd_cs, ssd, log = None)
 
 
+#debugging to find attr_dict for cell
+#load all of them
+
+
 
 raise ValueError
+
+
+#debugging part two
+cellid1 = 1820916030
+cellid2 = 64210280
+synid1 = 18562800
+cs_id = 275781054487918910
+cs_ssv_id = 662539735
+
+import numpy as np
+from syconn.handler.basics import load_pkl2obj, write_obj2pkl
+from syconn import global_params
+from syconn.reps.segmentation import SegmentationDataset, SegmentationObject
+global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+sd_cs_ssv = SegmentationDataset("cs_ssv", working_dir=global_params.config.working_dir)
+cs_ssv_ids = sd_cs_ssv.ids
+cs_ssv_coords = sd_cs_ssv.load_numpy_data("rep_coord")
+cs_ssv_cs_ids = sd_cs_ssv.load_numpy_data("cs_ids")
+cs_ssv_sizes = sd_cs_ssv.load_numpy_data("size")
+h=input()
+cs_id_index = np.where(cs_ssv_cs_ids == cs_id)[0]
+example_cs_ssv_id = cs_ssv_ids[cs_id_index]
+
+attr_dc = {}
+
+for ssvpartners_enc, cs_ids in tqdm(rel_cs_items9255):
+    n_items_for_path += 1
+    ssv_ids = ch.cs_id_to_partner_ids_vec([ssvpartners_enc])[0]
+
+    # verify ssv_partner_ids
+    cs_lst = sd_cs.get_segmentation_object(cs_ids)
+    vxl_iter_lst = []
+    vx_cnt = 0
+    for cs in cs_lst:
+        vx_store = VoxelStorageDyn(cs.voxel_path, read_only=True,
+                                   disable_locking=True)
+        vxl_iter_lst.append(vx_store.iter_voxelmask_offset(cs.id, overlap=1))
+        vx_cnt += vx_store.object_size(cs.id)
+    if mesh_min_obj_vx > vx_cnt:
+        ccs = []
+    else:
+        # generate connected component meshes; vertices are in nm
+        ccs = gen_mesh_voxelmask(chain(*vxl_iter_lst), scale=scaling, **meshing_kws)
+
+    for mesh_cc in ccs:
+        cs_ssv = sd_cs_ssv.get_segmentation_object(cs_ssv_id, create=True)
+        csssv_attr_dc = dict(neuron_partners=ssv_ids)
+        # don't store normals
+        cs_ssv._mesh = [mesh_cc[0], mesh_cc[1], np.zeros((0,), dtype=np.float32)]
+        csssv_attr_dc["mesh_bb"] = cs_ssv.mesh_bb
+        csssv_attr_dc["mesh_area"] = cs_ssv.mesh_area
+        csssv_attr_dc["bounding_box"] = (cs_ssv.mesh_bb // scaling).astype(np.int32)
+        csssv_attr_dc["rep_coord"] = (seghelp.calc_center_of_mass(mesh_cc[1].reshape((-1, 3))) // scaling).astype(
+            np.int64)
+        csssv_attr_dc["cs_ids"] = list(cs_ids)
+        csssv_attr_dc["size"] = 0
+
+        # add cs_ssv dict to AttributeStorage
+        attr_dc[cs_ssv_id] = csssv_attr_dc
+        if cs_ids[0] == test_cs_id:
+            print(cs_ssv_id)
+            print(attr_dc[cs_ssv_id])
+            print(base_dir)
+        if use_new_subfold:
+            cs_ssv_id += np.uint(1)
+            if cs_ssv_id - base_id >= div_base:
+                # next ID chunk mapped to this storage
+                id_chunk_cnt += 1
+                old_base_id = base_id
+                base_id += np.uint(sd_cs_ssv.n_folders_fs * div_base) * id_chunk_cnt
+                assert subfold_from_ix(base_id, sd_cs_ssv.n_folders_fs, old_version=False) == \
+                       subfold_from_ix(old_base_id, sd_cs_ssv.n_folders_fs, old_version=False)
+                cs_ssv_id = base_id
+        else:
+            cs_ssv_id += np.uint(sd_cs.n_folders_fs)
+
+    if n_items_for_path > n_per_voxel_path:
+        cur_path_id += 1
+        if len(voxel_rel_paths) == cur_path_id:
+            raise ValueError(f'Worker ran out of possible storage paths for storing {sd_cs_ssv.type}.')
+        n_items_for_path = 0
+        id_chunk_cnt = 0
+        base_id = ix_from_subfold(voxel_rel_paths[cur_path_id], sd_cs.n_folders_fs)
+        cs_ssv_id = base_id
+        base_dir = path2dir + voxel_rel_paths[cur_path_id]
+        # base_dir = sd_cs_ssv.so_storage_path + voxel_rel_paths[cur_path_id]
+        print("new base_dir = %s" % base_dir)
+
+

@@ -37,6 +37,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
     m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")[m]
     m_sizes = sd_synssv.load_numpy_data("mesh_area")[m] / 2
     m_spiness = sd_synssv.load_numpy_data("partner_spiness")[m]
+    m_rep_coord = sd_synssv.load_numpy_data("rep_coord") [m]
 
     # select only those of given_celltypes
     # if post and pre not specified both celltypes can be on both sides
@@ -49,6 +50,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
             m_ssv_partners = m_ssv_partners[ct_inds]
             m_sizes = m_sizes[ct_inds]
             m_spiness = m_spiness[ct_inds]
+            m_rep_coord = m_rep_coord[ct_inds]
     else:
         #make sure to exclude pre and postsynaptic cells from wrong celltypes
         #exclude synapses without precelltypes
@@ -59,6 +61,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_ssv_partners = m_ssv_partners[ct_inds]
         m_sizes = m_sizes[ct_inds]
         m_spiness = m_spiness[ct_inds]
+        m_rep_coord = m_rep_coord[ct_inds]
         #filter those where prects are not where axon is, only if axo_den_so
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, pre_cts).reshape(len(m_cts), 2)
@@ -70,6 +73,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
             m_ssv_partners = m_ssv_partners[pre_ct_inds]
             m_sizes = m_sizes[pre_ct_inds]
             m_spiness = m_spiness[pre_ct_inds]
+            m_rep_coord = m_rep_coord[pre_ct_inds]
         # exclude synapses without postcelltypes
         ct_inds = np.any(np.in1d(m_cts, post_cts).reshape(len(m_cts), 2), axis=1)
         m_cts = m_cts[ct_inds]
@@ -78,6 +82,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_ssv_partners = m_ssv_partners[ct_inds]
         m_sizes = m_sizes[ct_inds]
         m_spiness = m_spiness[ct_inds]
+        m_rep_coord = m_rep_coord[ct_inds]
         #filter those where postcts are where axon is, only if axo_den_so
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, post_cts).reshape(len(m_cts), 2)
@@ -89,6 +94,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
             m_ssv_partners = m_ssv_partners[post_ct_inds]
             m_sizes = m_sizes[post_ct_inds]
             m_spiness = m_spiness[post_ct_inds]
+            m_rep_coord = m_rep_coord[post_ct_inds]
     # filter those with size below min_syn_size
     size_inds = m_sizes > min_syn_size
     m_cts = m_cts[size_inds]
@@ -97,6 +103,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
     m_ssv_partners = m_ssv_partners[size_inds]
     m_sizes = m_sizes[size_inds]
     m_spiness = m_spiness[size_inds]
+    m_rep_coord = m_rep_coord[size_inds]
     # only axo-dendritic or axo-somatic synapses allowed
     if axo_den_so:
         axs_inds = np.any(m_axs == 1, axis=1)
@@ -106,6 +113,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_ssv_partners = m_ssv_partners[axs_inds]
         m_sizes = m_sizes[axs_inds]
         m_spiness = m_spiness[axs_inds]
+        m_rep_coord = m_rep_coord[axs_inds]
         den_so = np.array([0, 2])
         den_so_inds = np.any(np.in1d(m_axs, den_so).reshape(len(m_axs), 2), axis=1)
         m_cts = m_cts[den_so_inds]
@@ -114,7 +122,8 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         m_ssv_partners = m_ssv_partners[den_so_inds]
         m_sizes = m_sizes[den_so_inds]
         m_spiness = m_spiness[den_so_inds]
-    return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness
+        m_rep_coord = m_rep_coord[den_so_inds]
+    return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord
 
 def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, syn_cts, syn_ssv_partners, syn_sizes, syn_axs, seperate_soma_dens = False, fragments_pre = False):
     '''

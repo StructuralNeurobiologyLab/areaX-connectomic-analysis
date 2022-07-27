@@ -50,26 +50,6 @@ if __name__ == '__main__':
                10: "NGF"}
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [1,5], post_cts=None, syn_prob_thresh=0.8, min_syn_size=0.1,
                                  axo_den_so=False)
-    syn_prob = sd_synssv.load_cached_data("syn_prob")
-    syn_proba = 0.6
-    m = syn_prob > syn_proba
-    m_ids = sd_synssv.ids[m]
-    m_axs = sd_synssv.load_cached_data("partner_axoness")[m]
-    m_axs[m_axs == 3] = 1
-    m_axs[m_axs == 4] = 1
-    m_cts = sd_synssv.load_cached_data("partner_celltypes")[m]
-    m_sizes = sd_synssv.load_cached_data("mesh_area")[m] / 2
-    m_ssv_partners = sd_synssv.load_cached_data("neuron_partners")[m]
-    m_syn_sign = sd_synssv.load_cached_data("syn_sign")[m]
-    m_rep_coord = sd_synssv.load_cached_data("rep_coord")[m]
-    ct_inds = np.any(m_cts == celltype1, axis=1)
-    m_cts = m_cts[ct_inds]
-    m_sizes = m_sizes[ct_inds]
-    m_ids = m_ids[ct_inds]
-    m_axs = m_axs[ct_inds]
-    m_ssv_partners = m_ssv_partners[ct_inds]
-    m_syn_sign = m_syn_sign[ct_inds]
-    m_rep_coord = m_rep_coord[ct_inds]
     # make dictionary with da_ids as keys and tan_ids_amount and size
     #da_ax = {daid: {tanid: {"syn_amount": 0, "syn_size": 0} for tanid in tan_ids} for daid in da_ids}
     # make dictionary with da_ids as keys and tan_ids_amount and size
@@ -96,9 +76,9 @@ if __name__ == '__main__':
             continue
         if not np.any(np.in1d(m_ssv_partners[ix], tan_ids)):
             continue
-        m_size = m_sizes[ix]
-        if m_size < 0.1:
+        if not np.any(np.in1d(m_ssv_partners[ix], da_ids)):
             continue
+        m_size = m_sizes[ix]
         percentage = 100 * (ix / len(m_ids))
         if int(percentage) != int_percentage:
             print("%.2f percent" % percentage)
@@ -131,7 +111,7 @@ if __name__ == '__main__':
         da_syn_dict[da_id]["syn_id"][da_amount_ind] = id
         da_syn_dict[da_id]["syn_loc"][da_amount_ind] = syncoord
         #check if potential AIS: if closer than 100 µm to soma centre
-        TAN_soma_loc = TAN_soma_centres[tan_id]
+        TAN_soma_loc = TAN_dict[tan_id]["soma centre"]
         dist2soma = np.linalg.norm(TAN_soma_loc - syncoord*ssd.scaling) / 1000 #in µm
         if dist2soma < 100:
             da_syn_dict[da_id]["AIS"][da_amount_ind] = 1

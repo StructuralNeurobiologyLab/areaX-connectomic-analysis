@@ -26,7 +26,7 @@ if __name__ == '__main__':
     loadtime = time.time() - start
     print("%.2f min, %.2f sec for loading" % (loadtime // 60, loadtime % 60))
 
-    f_name = "wholebrain/scratch/aorther/bio_analysis_results/TAN_DA_axo_analysis/220727_tan_da_syn_all_allaxons"
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/TAN_DA_axo_analysis/220727_tan_da_syn_all_allaxons"
     log = initialize_logging('TAN DA axonic synapses', log_dir=f_name + '/logs/')
     time_stamps = [time.time()]
     step_idents = ['t-0']

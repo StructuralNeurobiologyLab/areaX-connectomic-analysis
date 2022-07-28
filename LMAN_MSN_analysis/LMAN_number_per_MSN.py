@@ -119,7 +119,7 @@ if __name__ == '__main__':
                                                                                                         min_syn_size=min_syn_size,
                                                                                                         axo_den_so=True)
     #filter synapses again to only include selected MSN, GPi ids (only use MSN ids that are keys in the dictionary above)
-    MSN_ids = list(x_dict.keys())
+    MSN_ids = list(MSN_rec_dict.keys())
     msnids_inds = np.any(np.in1d(m_ssv_partners, MSN_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_cts = m_cts[msnids_inds]
     m_ids = m_ids[msnids_inds]

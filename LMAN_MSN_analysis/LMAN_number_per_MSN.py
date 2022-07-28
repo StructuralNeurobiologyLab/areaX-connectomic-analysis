@@ -146,4 +146,13 @@ if __name__ == '__main__':
     #add GPis that are projected to via MSN to LMAN dictionary
     GPi_rec_dict = {id: {"MSN ids": [], "number of synapses": 0, "number MSN cells": 0, "sum size synapses": 0,
                          "number of synapses per MSN": 0, "sum size synapses per MSN": 0}}
+    time_stamps = [time.time()]
+    step_idents = ["created per cell dictionary for GPi"]
+
+    log.info("Step 8/X: Plot results of LMAN -> MSN -> GPi connection")
     #plot results
+
+    time_stamps = [time.time()]
+    step_idents = ["GPi results plotted"]
+
+    log.info("LMAN, MSN, GPi number estimate analysis done")

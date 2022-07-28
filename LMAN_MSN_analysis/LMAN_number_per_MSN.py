@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # 1st part of the analysis: get estimate on how many "complete" LMAN branches
     # project to one MSN and how many MSN one LMAN projects to
 
-    log.info("Step 1/X load suitable LMAN and MSN, filter for min_comp_len and max_path_len")
+    log.info("Step 1/8: load suitable LMAN and MSN, filter for min_comp_len and max_path_len")
     # load full MSN and filter for min_comp_len, also filter out if total_comp_len > 7500 mm (likely glia merger)
     LMAN_dict = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/ax_LMA_dict.pkl")
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["load and filter cells"]
 
-    log.info("Step 2/X: filter synapses from suitable LMAN and MSN")
+    log.info("Step 2/8: filter synapses from suitable LMAN and MSN")
     #prefilter synapse caches from LMAN onto MSN synapses
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [3],
                                                                                                         post_cts = [2], syn_prob_thresh = syn_prob,
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["filtered synapses"]
 
-    log.info("Step 3/X: Create per cell dictionary for LMAN and MSN")
+    log.info("Step 3/8: Create per cell dictionary for LMAN and MSN")
     #make per MSN dictionary of LMAN ids they are getting input from, number of LMAN
     #number of synapses, in total and per axon, sum of mesh area
     #create similar dictionary but with LMAN ids as key
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["created per cell dictionaries for LMAN and MSN"]
 
-    log.info("Step 4/X: Plot LMAN to MSN results")
+    log.info("Step 4/8: Plot LMAN to MSN results")
     #plot results and save dictionary
 
     time_stamps = [time.time()]
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     #2nd part of analysis: see how MSN from different LMANs project to GPi
 
-    log.info("Step 5/X: load and filter GPi cells for min_comp_len")
+    log.info("Step 5/8: load and filter GPi cells for min_comp_len")
     GPi_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
     GPi_dict = load_pkl2obj(
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["filtered GPi cells"]
 
-    log.info("Step 6/X: Filter MSN to GPi synapses")
+    log.info("Step 6/8: Filter MSN to GPi synapses")
     #prefilter synapses from MSN -> GP
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
                                                                                                         pre_cts=[2],
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["filtered synapses"]
 
-    log.info("Step 7/X: Create per cell dictionary for GPi, add GPi info to existing MSN, LMAN dicts")
+    log.info("Step 7/8: Create per cell dictionary for GPi, add GPi info to existing MSN, LMAN dicts")
     #create dictionary with GPi as keys to see how many MSNs they get input from and how many LMANs
     #also add different GPis that MSN project to MSN dictionary
     #add GPis that are projected to via MSN to LMAN dictionary
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ["created per cell dictionary for GPi"]
 
-    log.info("Step 8/X: Plot results of LMAN -> MSN -> GPi connection")
+    log.info("Step 8/8: Plot results of LMAN -> MSN -> GPi connection")
     #plot results
 
     time_stamps = [time.time()]

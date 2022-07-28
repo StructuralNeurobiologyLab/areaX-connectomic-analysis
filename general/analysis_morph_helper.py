@@ -254,7 +254,7 @@ def get_compartment_mesh_area(cell):
 
     return mesh_areas
 
-def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200, axon_only = False):
+def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200, axon_only = False, max_path_len = None):
     """
     iterates of cellids and checks if their compartment length (axon, dendrite) are
     over a certain threshold.
@@ -290,6 +290,13 @@ def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200, axon
             cell_den_length = get_compartment_length(cell, compartment=0, cell_graph=g)
             if cell_den_length < min_comp_len:
                 continue
+        if max_path_len is not None:
+            if axon_only == False:
+                full_path_length = g.size(weight="weight") / 1000  # in µm
+                if full_path_length > max_path_len:
+                    continue
+            else:
+                raise ValueError("max_path_length can only be set for full cells")
         checked_cells[i] = cellid
 
     checked_cells = checked_cells[checked_cells > 0].astype(int)

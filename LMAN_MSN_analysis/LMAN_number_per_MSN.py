@@ -4,6 +4,7 @@ if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
     from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
         axon_den_arborization_ct, compare_compartment_volume_ct_multiple
+    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -28,20 +29,26 @@ if __name__ == '__main__':
     min_comp_len, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
-    log.info("MSN percentile comparison starts")
+    log = initialize_logging('LMAN MSN connectivity estimate', log_dir=f_name + '/logs/')
+    log.info("min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %i, min_syn_size = %i" % (min_comp_len, max_MSN_path_len, syn_prob, min_syn_size))
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    f_name_saving = "/wholebrain/scratch/arother/j0251v4_prep"
 
     # 1st part of the analysis: get estimate on how many "complete" LMAN branches
     # project to one MSN and how many MSN one LMAN projects to
 
-    #analysis to see how many of the selected LMAN axons go onto same MSN
-    #serves as lower boundary for LMAN -> MSN
+    log.info("Steo 1/X load suitable LMAN and MSN, filter for min_comp_len and max_path_len")
+    # load full MSN and filter for min_comp_len, also filter out if total_comp_len > 7500 mm (likely glia merger)
+    LMAN_dict = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/ax_LMA_dict.pkl")
+    LMAN_ids = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/LMAN_handpicked_arr.pkl")
+    MSN_ids  = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_arr.pkl")
+    MSN_dict = load_pkl2obj(
+        "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_dict.pkl")
+    MSN_ids = che
 
-    #load suitable LMAN axons
-    #load full MSN and filter for min_comp_len, also filter out if total_comp_len > 7500 mm (likely glia merger)
+
 
     #prefilter synapse caches from LMAN onto MSN synapses
     #filter out synapses that are not from LMAN or MSN ids

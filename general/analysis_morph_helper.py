@@ -292,9 +292,13 @@ def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200, axon
                 continue
         if max_path_len is not None:
             if axon_only == False:
-                full_path_length = g.size(weight="weight") / 1000  # in µm
-                if full_path_length > max_path_len:
-                    continue
+                if fullcelldict is not None:
+                    cell = SuperSegmentationObject(cellid)
+                    cell.load_skeleton()
+                    g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
+                    full_path_length = g.size(weight="weight") / 1000  # in µm
+                    if full_path_length > max_path_len:
+                        continue
             else:
                 raise ValueError("max_path_length can only be set for full cells")
         checked_cells[i] = cellid

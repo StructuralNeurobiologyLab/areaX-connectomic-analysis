@@ -42,15 +42,15 @@ class ResultsForPlotting():
             else:
                 param_label = "%s density per µm" % subcell
         else:
-            if "amount" in key:
+            if "number" in key:
                 if "percentage" in key:
                     param_label = "percentage of %ss" % subcell
                 elif "pathlength" in key:
-                    param_label = "amount %s per µm" % subcell
+                    param_label = "number %s per µm" % subcell
                 elif "surface" in key:
-                    param_label = "amount %s per surface area [1/µm²]" % subcell
+                    param_label = "number %s per surface area [1/µm²]" % subcell
                 else:
-                    param_label = "amount of %ss" % subcell
+                    param_label = "number of %ss" % subcell
             elif "size" in key:
                 if "percentage" in key:
                     param_label = "percentage of %s size" % subcell
@@ -92,7 +92,7 @@ class ResultsForPlotting():
         :param cells: True: cells are plotted, False: subcellular structures are plotted
         :param color: color for plotting
         :param norm_hist: if true: histogram will be normed
-        :param bins: amount of bins
+        :param bins: number of bins
         :param xlabel: label of x axis, not needed if clear from key
         :param celltype2: second celltype, if connectivty towards another celltype is tested
         :param outgoing: if connectivity is analysed, if True then self.celltype is presynaptic
@@ -255,7 +255,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
                  :param subcell: compartment or subcellular structure that will be plotted
                  :param cells: True: cells are plotted, False: subcellular structures are plotted
                  :param norm_hist: if true: histogram will be normed
-                 :param bins: amount of bins
+                 :param bins: number of bins
                  :param xlabel: label of x axis, not needed if clear from key
                  :param conn_celltype: third celltype if connectivity to other celltype is tested
                  :param outgoing: if connectivity is analysed, if True then self.celltype1 and self.celltype2 are presynaptic
@@ -378,7 +378,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
     def result_df_categories(self, label_category):
         """
         creates da dataframe for comparison across keys and two parameters, one category will be a celltype comparison.
-        keys should be organized in the way: column label - label e.g. amount synapses - spine head
+        keys should be organized in the way: column label - label e.g. number synapses - spine head
         :param: keys: list that includes one label
         :param label_category = in column_labels, category corresponding to labels
         :param key_split: if given, where key will be split into columns and labels
@@ -587,11 +587,11 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         super().__init__(ct_list[0], filename, dictionary_list[0])
         if len(ct_list) < 2:
             raise ValueError("this class needs at least two celltypes")
-        self.amount_celltypes = len(ct_list)
-        self.celltypes = {i: ct_list[i] for i in range(self.amount_celltypes)}
+        self.number_celltypes = len(ct_list)
+        self.celltypes = {i: ct_list[i] for i in range(self.number_celltypes)}
         self.celltype_labels = ct_list
-        self.dictionaries = {i: dictionary_list[i] for i in range(self.amount_celltypes)}
-        self.color_palette= {ct_list[i]: colour_list[i] for i in range(self.amount_celltypes)}
+        self.dictionaries = {i: dictionary_list[i] for i in range(self.number_celltypes)}
+        self.color_palette= {ct_list[i]: colour_list[i] for i in range(self.number_celltypes)}
 
     def plot_box(self, key, result_df, subcell, x=None, stripplot = True, outgoing = False):
         """
@@ -663,7 +663,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
                  :param subcell: compartment or subcellular structure that will be plotted
                  :param cells: True: cells are plotted, False: subcellular structures are plotted
                  :param norm_hist: if true: histogram will be normed
-                 :param bins: amount of bins
+                 :param bins: number of bins
                  :param xlabel: label of x axis, not needed if clear from key
                  :return: None
                  """
@@ -716,7 +716,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
     def result_df_categories(self, label_category):
         """
         creates da dataframe for comparison across keys and two parameters, one category will be a celltype comparison.
-        keys should be organized in the way: column label - label e.g. amount synapses - spine head
+        keys should be organized in the way: column label - label e.g. number synapses - spine head
         :param: keys: list that includes one label
         :param label_category = in column_labels, category corresponding to labels
         :param key_split: if given, where key will be split into columns and labels
@@ -731,11 +731,11 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
                 labels.append(key_split[1])
         if len(column_labels) == 0:
             raise ValueError("keys in dictionary not labelled correctly")
-        celltypes = [self.celltypes[i] for i in range(self.amount_celltypes)]
+        celltypes = [self.celltypes[i] for i in range(self.number_celltypes)]
         columns = np.hstack([np.unique(column_labels), "celltype", label_category])
         labels = np.unique(labels)
         key_example = column_labels[0] + " - " + labels[0]
-        dict_lengths = np.array([len(self.dictionaries[i][key_example]) for i in range(self.amount_celltypes)])
+        dict_lengths = np.array([len(self.dictionaries[i][key_example]) for i in range(self.number_celltypes)])
         sum_length = np.sum(dict_lengths)
         result_df = pd.DataFrame(
             columns=columns, index=range(sum_length * len(labels)))
@@ -743,7 +743,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         for i, label in enumerate(labels):
             result_df.loc[sum_length * i: sum_length * (i + 1) - 1, label_category] = label
             start_length_ct = 0
-            for j in range(self.amount_celltypes):
+            for j in range(self.number_celltypes):
                 end_length_ct = dict_lengths[j] + start_length_ct
                 result_df.loc[sum_length * i + start_length_ct: sum_length * i + end_length_ct -1 , "celltype"] = self.celltypes[j]
                 for ci in range(len(column_labels) - 2):
@@ -761,10 +761,10 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         :param column_labels: different column labels than celltypes when more than two groups
         :return: result_df
         """
-        dict_lengths = np.array([len(self.dictionaries[i][key]) for i in range(self.amount_celltypes)])
+        dict_lengths = np.array([len(self.dictionaries[i][key]) for i in range(self.number_celltypes)])
         max_length = np.max(dict_lengths)
         results_for_plotting = pd.DataFrame(columns=self.celltype_labels, index=range(max_length))
-        for i in range(self.amount_celltypes):
+        for i in range(self.number_celltypes):
             results_for_plotting.loc[0:len(self.dictionaries[i][key]) - 1, self.celltypes[i]] = self.dictionaries[i][key]
         return results_for_plotting
 

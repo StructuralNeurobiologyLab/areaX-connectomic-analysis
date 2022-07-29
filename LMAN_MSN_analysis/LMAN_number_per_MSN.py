@@ -28,7 +28,10 @@ if __name__ == '__main__':
     max_MSN_path_len = 7500
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220728_j0251v4_LMAN_MSN_GP_est_mcl_%i_synprob_%.2f" % (
+    msn_ct = 2
+    lman_ct = 3
+    gpi_ct = 7
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220729_j0251v4_LMAN_MSN_GP_est_mcl_%i_synprob_%.2f" % (
     min_comp_len, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -56,8 +59,8 @@ if __name__ == '__main__':
 
     log.info("Step 2/8: filter synapses from suitable LMAN and MSN")
     #prefilter synapse caches from LMAN onto MSN synapses
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [3],
-                                                                                                        post_cts = [2], syn_prob_thresh = syn_prob,
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [lman_ct],
+                                                                                                        post_cts = [msn_ct], syn_prob_thresh = syn_prob,
                                                                                                         min_syn_size = min_syn_size, axo_den_so = True)
     #filter out synapses that are not from LMAN or MSN ids
     msnids_inds = np.any(np.in1d(m_ssv_partners, MSN_ids).reshape(len(m_ssv_partners), 2), axis=1)
@@ -84,10 +87,25 @@ if __name__ == '__main__':
     #make per MSN dictionary of LMAN ids they are getting input from, number of LMAN
     #number of synapses, in total and per axon, sum of mesh area
     #create similar dictionary but with LMAN ids as key
-    LMAN_proj_dict = {id: {"MSN ids": [], "number of synapses": 0, "number MSN cells": 0, "sum size synapses": 0,
-                           "number of synapses per MSN": 0, "sum size synapses per MSN": 0}}
-    MSN_rec_dict = {id: {"LMAN ids": [], "number of synapses": 0, "number LMAN cells": 0, "sum size synapses": 0,
-                           "number of synapses per LMAN": 0, "sum size synapses per MSN": 0}}
+    msn_inds = np.where(m_cts == msn_ct)
+    msn_ssvsids = m_ssv_partners[msn_inds]
+    msn_ssv_inds, unique_msn_ssvs = pd.factorize(msn_ssvsids)
+    msn_syn_sumsizes = np.bincount(msn_ssv_inds, m_sizes)
+    msn_syn_number = np.bincount(msn_ssv_inds)
+
+    lman_inds = np.where(m_cts == lman_ct)
+    lman_ssvsids = m_ssv_partners[lman_inds]
+    lman_ssv_inds, unique_lman_ssvs = pd.factorize(lman_ssvsids)
+    lman_syn_sumsizes = np.bincount(lman_ssv_inds, m_sizes)
+    lman_syn_number = np.bincount(lman_ssv_inds)
+
+    LMAN_proj_dict = {id: {"MSN ids": [], "number of synapses": lman_syn_number[i], "number MSN cells": 0, "sum size synapses": lman_syn_sumsizes[i],
+                           "number of synapses per MSN": 0, "sum size synapses per MSN": 0} for i, id in enumerate(unique_lman_ssvs)}
+    MSN_rec_dict = {id: {"LMAN ids": [], "number of synapses": msn_syn_number[i], "number LMAN cells": 0, "sum size synapses": msn_syn_sumsizes[i],
+                         "number of synapses per LMAN": 0, "sum size synapses per MSN": 0} for i, id in enumerate(unique_msn_ssvs)}
+
+    raise ValueError
+
 
     time_stamps = [time.time()]
     step_idents = ["created per cell dictionaries for LMAN and MSN"]
@@ -113,8 +131,8 @@ if __name__ == '__main__':
     log.info("Step 6/8: Filter MSN to GPi synapses")
     #prefilter synapses from MSN -> GP
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
-                                                                                                        pre_cts=[2],
-                                                                                                        post_cts=[7],
+                                                                                                        pre_cts=[msn_ct],
+                                                                                                        post_cts=[gpi_ct],
                                                                                                         syn_prob_thresh=syn_prob,
                                                                                                         min_syn_size=min_syn_size,
                                                                                                         axo_den_so=True)
@@ -144,8 +162,20 @@ if __name__ == '__main__':
     #create dictionary with GPi as keys to see how many MSNs they get input from and how many LMANs
     #also add different GPis that MSN project to MSN dictionary
     #add GPis that are projected to via MSN to LMAN dictionary
-    GPi_rec_dict = {id: {"MSN ids": [], "number of synapses": 0, "number MSN cells": 0, "sum size synapses": 0,
-                         "number of synapses per MSN": 0, "sum size synapses per MSN": 0}}
+    msn_inds = np.where(m_cts == msn_ct)
+    msn_ssvsids = m_ssv_partners[msn_inds]
+    msn_ssv_inds, unique_msn_ssvs = pd.factorize(msn_ssvsids)
+    msn_syn_sumsizes = np.bincount(msn_ssv_inds, m_sizes)
+    msn_syn_amounts = np.bincount(msn_ssv_inds)
+
+    gpi_inds = np.where(m_cts == gpi_ct)
+    gpi_ssvsids = m_ssv_partners[gpi_inds]
+    gpi_ssv_inds, unique_gpi_ssvs = pd.factorize(gpi_ssvsids)
+    gpi_syn_sumsizes = np.bincount(gpi_ssv_inds, m_sizes)
+    gpi_syn_number = np.bincount(gpi_ssv_inds)
+
+    GPi_rec_dict = {id: {"MSN ids": [], "number of synapses": gpi_syn_amounts[i], "number MSN cells": 0, "sum size synapses": gpi_syn_sumsizes[i],
+                         "number of synapses per MSN": 0, "sum size synapses per MSN": 0} for i,id in enumerate(unique_gpi_ssvs)}
     time_stamps = [time.time()]
     step_idents = ["created per cell dictionary for GPi"]
 

@@ -1,21 +1,15 @@
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
-        axon_den_arborization_ct, compare_compartment_volume_ct_multiple
     from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from syconn.reps.super_segmentation import SuperSegmentationDataset
     from syconn.reps.segmentation import SegmentationDataset
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import plot_nx_graph
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
-    from tqdm import tqdm
     import numpy as np
 
 
@@ -66,19 +60,13 @@ if __name__ == '__main__':
     msnids_inds = np.any(np.in1d(m_ssv_partners, MSN_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_cts = m_cts[msnids_inds]
     m_ids = m_ids[msnids_inds]
-    m_axs = m_axs[msnids_inds]
     m_ssv_partners = m_ssv_partners[msnids_inds]
     m_sizes  = m_sizes[msnids_inds]
-    m_spiness = m_spiness[msnids_inds]
-    m_rep_coord = m_rep_coord[msnids_inds]
     lmanids_inds = np.any(np.in1d(m_ssv_partners, LMAN_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_cts = m_cts[lmanids_inds]
     m_ids = m_ids[lmanids_inds]
-    m_axs = m_axs[lmanids_inds]
     m_ssv_partners = m_ssv_partners[lmanids_inds]
     m_sizes = m_sizes[lmanids_inds]
-    m_spiness = m_spiness[lmanids_inds]
-    m_rep_coord = m_rep_coord[lmanids_inds]
 
     time_stamps = [time.time()]
     step_idents = ["filtered synapses"]
@@ -99,19 +87,53 @@ if __name__ == '__main__':
     lman_syn_sumsizes = np.bincount(lman_ssv_inds, m_sizes)
     lman_syn_number = np.bincount(lman_ssv_inds)
 
-    LMAN_proj_dict = {id: {"MSN ids": [], "number of synapses": lman_syn_number[i], "number MSN cells": 0, "sum size synapses": lman_syn_sumsizes[i],
-                           "number of synapses per MSN": 0, "sum size synapses per MSN": 0} for i, id in enumerate(unique_lman_ssvs)}
-    MSN_rec_dict = {id: {"LMAN ids": [], "number of synapses": msn_syn_number[i], "number LMAN cells": 0, "sum size synapses": msn_syn_sumsizes[i],
-                         "number of synapses per LMAN": 0, "sum size synapses per MSN": 0} for i, id in enumerate(unique_msn_ssvs)}
+    lman_ssv_pd = pd.DataFrame(lman_ssvsids)
+    permsn_lman_ids_grouped = lman_ssv_pd.groupby(by = msn_ssv_inds)
+    permsn_lman_groups = permsn_lman_ids_grouped.groups
 
-    raise ValueError
+    msn_ssv_pd = pd.DataFrame(msn_ssvsids)
+    perlman_msn_ids_grouped = msn_ssv_pd.groupby(by=lman_ssv_inds)
+    perlman_msn_groups = perlman_msn_ids_grouped.groups
 
+    LMAN_proj_dict_percell = {id: {"MSN ids": np.unique(msn_ssvsids[perlman_msn_groups[i]]),
+                           "number MSN cells": len(np.unique(msn_ssvsids[perlman_msn_groups[i]]))} for i, id in enumerate(unique_lman_ssvs)}
+    number_msn_perlman = np.array([LMAN_proj_dict_percell[lman]["number MSN cells"] for lman in LMAN_proj_dict_percell])
+    LMAN_proj_dict = {"number of synapses to MSN": lman_syn_number, "sum size synapses to MSN": lman_syn_sumsizes, "number MSN cells": number_msn_perlman,
+                      "number of synapses per MSN": lman_syn_number/number_msn_perlman, "sum size synapses per MSM": lman_syn_sumsizes/number_msn_perlman}
+
+    MSN_dict_percell = {id: {"LMAN ids": np.unique(lman_ssvsids[permsn_lman_groups[i]]),
+                                   "number MSN cells": len(np.unique(lman_ssvsids[permsn_lman_groups[i]]))} for
+                              i, id in enumerate(unique_msn_ssvs)}
+    number_lman_permsn = np.array([MSN_dict_percell[msn]["number LMAN cells"] for msn in MSN_dict_percell])
+    MSN_dict = {"number of synapses from LMAN": msn_syn_number, "sum size synapses from LMAN": msn_syn_sumsizes,
+                      "number LMAN cells": number_lman_permsn,
+                      "number of synapses per LMAN": msn_syn_number / number_lman_permsn,
+                      "sum size synapses per LMAN": msn_syn_sumsizes / number_lman_permsn}
+
+    write_obj2pkl("%s/lman_dict_percell.pkl" % f_name, LMAN_proj_dict_percell)
+    write_obj2pkl("%s/lman_dict.pkl" % f_name, LMAN_proj_dict)
+    write_obj2pkl("%s/msn_dict_percell" % f_name, MSN_dict_percell)
+    write_obj2pkl("%s/msn_dict.pkl" % f_name, MSN_dict)
+
+    lman_proj_pd = pd.DataFrame(LMAN_proj_dict)
+    lman_proj_pd.to_csv("%s/lman_dict.csv" % f_name)
+
+    msn_pd = pd.DataFrame(MSN_dict)
+    msn_pd.to_csv("%s/msn_dict.csv" % f_name)
+
+    log.info("Average amount of MSNs per LMAN = %.2f" % np.mean(number_msn_perlman))
+    log.info("Average amount of LMAN per MSN = %.2f" % np.mean(number_lman_permsn))
 
     time_stamps = [time.time()]
     step_idents = ["created per cell dictionaries for LMAN and MSN"]
 
     log.info("Step 4/8: Plot LMAN to MSN results")
-    #plot results and save dictionary
+    msn_results = ResultsForPlotting(celltype = ct_dict[msn_ct], filename = f_name, dictionary = MSN_dict)
+    lman_results = ResultsForPlotting(celltype=ct_dict[lman_ct], filename=f_name, dictionary=LMAN_proj_dict)
+
+    for key in MSN_dict:
+        msn_results.plot_hist(key, subcell="synapse", cells=False)
+        lman_results.plot_hist(key, subcell="synapse", cells=False)
 
     time_stamps = [time.time()]
     step_idents = ["plotted results for LMAN and MSN"]
@@ -137,23 +159,17 @@ if __name__ == '__main__':
                                                                                                         min_syn_size=min_syn_size,
                                                                                                         axo_den_so=True)
     #filter synapses again to only include selected MSN, GPi ids (only use MSN ids that are keys in the dictionary above)
-    MSN_ids = list(MSN_rec_dict.keys())
+    MSN_ids = list(MSN_dict_percell.keys())
     msnids_inds = np.any(np.in1d(m_ssv_partners, MSN_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_cts = m_cts[msnids_inds]
     m_ids = m_ids[msnids_inds]
-    m_axs = m_axs[msnids_inds]
     m_ssv_partners = m_ssv_partners[msnids_inds]
     m_sizes = m_sizes[msnids_inds]
-    m_spiness = m_spiness[msnids_inds]
-    m_rep_coord = m_rep_coord[msnids_inds]
     gpiids_inds = np.any(np.in1d(m_ssv_partners, GPi_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_cts = m_cts[gpiids_inds]
     m_ids = m_ids[gpiids_inds]
-    m_axs = m_axs[gpiids_inds]
     m_ssv_partners = m_ssv_partners[gpiids_inds]
     m_sizes = m_sizes[gpiids_inds]
-    m_spiness = m_spiness[gpiids_inds]
-    m_rep_coord = m_rep_coord[gpiids_inds]
 
     time_stamps = [time.time()]
     step_idents = ["filtered synapses"]
@@ -166,7 +182,7 @@ if __name__ == '__main__':
     msn_ssvsids = m_ssv_partners[msn_inds]
     msn_ssv_inds, unique_msn_ssvs = pd.factorize(msn_ssvsids)
     msn_syn_sumsizes = np.bincount(msn_ssv_inds, m_sizes)
-    msn_syn_amounts = np.bincount(msn_ssv_inds)
+    msn_syn_number = np.bincount(msn_ssv_inds)
 
     gpi_inds = np.where(m_cts == gpi_ct)
     gpi_ssvsids = m_ssv_partners[gpi_inds]
@@ -174,13 +190,57 @@ if __name__ == '__main__':
     gpi_syn_sumsizes = np.bincount(gpi_ssv_inds, m_sizes)
     gpi_syn_number = np.bincount(gpi_ssv_inds)
 
-    GPi_rec_dict = {id: {"MSN ids": [], "number of synapses": gpi_syn_amounts[i], "number MSN cells": 0, "sum size synapses": gpi_syn_sumsizes[i],
-                         "number of synapses per MSN": 0, "sum size synapses per MSN": 0} for i,id in enumerate(unique_gpi_ssvs)}
+    gpi_ssv_pd = pd.DataFrame(gpi_ssvsids)
+    permsn_gpi_ids_grouped = gpi_ssv_pd.groupby(by=msn_ssv_inds)
+    permsn_gpi_groups = permsn_gpi_ids_grouped.groups
+
+    msn_ssv_pd = pd.DataFrame(msn_ssvsids)
+    pergpi_msn_ids_grouped = msn_ssv_pd.groupby(by=gpi_ssv_inds)
+    pergpi_msn_groups = pergpi_msn_ids_grouped.groups
+
+    GPi_rec_dict_percell = {id: {"MSN ids": np.unique(msn_ssvsids[pergpi_msn_groups[i]]),
+                                   "number MSN cells": len(np.unique(msn_ssvsids[pergpi_msn_groups[i]]))} for
+                              i, id in enumerate(unique_gpi_ssvs)}
+    number_msn_pergpi = np.array([GPi_rec_dict_percell[gpi]["number MSN cells"] for gpi in GPi_rec_dict_percell])
+    GPi_rec_dict = {"number of synapses from MSN": gpi_syn_number, "sum size synapses from MSN": gpi_syn_sumsizes,
+                      "number MSN cells": number_msn_pergpi,
+                      "number of synapses per MSN": gpi_syn_number / number_msn_pergpi,
+                      "sum size synapses per MSM": gpi_syn_sumsizes / number_msn_pergpi}
+
+    number_gpi_permsn = np.array([len(np.unique(gpi_ssvsids[permsn_gpi_ids_grouped[i]])) for i in range(len(unique_msn_ssvs))])
+    MSN_dict["number of synapses to GPi"] = msn_syn_number
+    MSN_dict["sum size synapses to GPi"] = msn_syn_sumsizes
+    MSN_dict["number GPi cells"] = number_gpi_permsn
+    MSN_dict["number of synapses per GPi"] = msn_syn_number / number_gpi_permsn
+    MSN_dict["sum size synapses per GPi"] = msn_syn_number / number_gpi_permsn
+
+    log.info("Average amount of MSNs per GPi = %.2f" % np.mean(number_msn_pergpi))
+    log.info("Average amount of GPi per MSN = %.2f" % np.mean(number_gpi_permsn))
+
+    #TO DO: add parameter in dictionary to compare LMAN -> MSN -> GP loops
+
+    write_obj2pkl("%s/gpi_dict_percell.pkl" % f_name, GPi_rec_dict_percell)
+    write_obj2pkl("%s/gpi_dict.pkl" % f_name, GPi_rec_dict)
+    write_obj2pkl("%s/msn_dict.pkl" % f_name, MSN_dict)
+
+    gpi_rec_pd = pd.DataFrame(GPi_rec_dict)
+    gpi_rec_pd.to_csv("%s/gpi_dict.csv" % f_name)
+
+    msn_pd = pd.DataFrame(MSN_dict)
+    msn_pd.to_csv("%s/msn_dict.csv" % f_name)
+
+
     time_stamps = [time.time()]
     step_idents = ["created per cell dictionary for GPi"]
 
     log.info("Step 8/8: Plot results of LMAN -> MSN -> GPi connection")
-    #plot results
+    msn_results = ResultsForPlotting(celltype=ct_dict[msn_ct], filename=f_name, dictionary=MSN_dict)
+    gpi_results = ResultsForPlotting(celltype=ct_dict[gpi_ct], filename=f_name, dictionary=GPi_rec_dict)
+
+    for key in MSN_dict:
+        if not "LMAN" in key:
+            msn_results.plot_hist(key, subcell="synapse", cells=False)
+            gpi_results.plot_hist(key, subcell="synapse", cells=False)
 
     time_stamps = [time.time()]
     step_idents = ["GPi results plotted"]

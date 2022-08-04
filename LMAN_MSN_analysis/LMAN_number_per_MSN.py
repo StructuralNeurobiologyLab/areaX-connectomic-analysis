@@ -12,6 +12,7 @@ if __name__ == '__main__':
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
+    import scipy
 
 
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -99,8 +100,19 @@ if __name__ == '__main__':
     LMAN_proj_dict_percell = {id: {"MSN ids": np.unique(msn_ssvsids[perlman_msn_groups[i]]),
                            "number MSN cells": len(np.unique(msn_ssvsids[perlman_msn_groups[i]]))} for i, id in enumerate(unique_lman_ssvs)}
     number_msn_perlman = np.array([LMAN_proj_dict_percell[lman]["number MSN cells"] for lman in LMAN_proj_dict_percell])
+    #calculate average soma distance between MSN targeted by same LMAN
+    avg_soma_dist_msn = np.zeros(len(unique_lman_ssvs))
+    for i,lman_id in enumerate(tqdm(unique_lman_ssvs)):
+        lman_msn_ids = LMAN_proj_dict_percell[lman_id]["MSN ids"]
+        soma_centres = np.zeros(len(lman_msn_ids))
+        for mi, msn_id in enumerate(lman_msn_ids):
+            soma_centres[mi] = MSN_dict[msn_id]["soma centre"]
+        pairwise_soma_distances = scipy.spatial.distance.pdist(soma_centres, metric="euclidean") / 1000
+        avg_soma_dist_msn[i] = np.mean(pairwise_soma_distances)
+
     LMAN_proj_dict = {"number of synapses to MSN": lman_syn_number, "sum size synapses to MSN": lman_syn_sumsizes, "number MSN cells": number_msn_perlman,
-                      "number of synapses per MSN": lman_syn_number/number_msn_perlman, "sum size synapses per MSM": lman_syn_sumsizes/number_msn_perlman}
+                      "number of synapses per MSN": lman_syn_number/number_msn_perlman, "sum size synapses per MSM": lman_syn_sumsizes/number_msn_perlman,
+                      "average soma distance MSN per LMAN": avg_soma_dist_msn}
 
     MSN_dict_percell = {id: {"LMAN ids": np.unique(lman_ssvsids[permsn_lman_groups[i]]),
                                    "number LMAN cells": len(np.unique(lman_ssvsids[permsn_lman_groups[i]]))} for
@@ -124,8 +136,10 @@ if __name__ == '__main__':
 
     log.info("Average number of MSNs per LMAN = %.2f" % np.mean(number_msn_perlman))
     log.info("Average number of LMAN per MSN = %.2f" % np.mean(number_lman_permsn))
+    log.info("Average soma distance of MSN per LMAN = %.2f" % np.mean(avg_soma_dist_msn))
     log.info("Median number of MSNs per LMAN = %.2f" % np.median(number_msn_perlman))
     log.info("Median number of LMAN per MSN = %.2f" % np.median(number_lman_permsn))
+
 
     time_stamps = [time.time()]
     step_idents = ["created per cell dictionaries for LMAN and MSN"]
@@ -220,7 +234,7 @@ if __name__ == '__main__':
 
     MSN_proj_dict_percell = {id: {"GPi ids": np.unique(gpi_ssvsids[permsn_gpi_groups[i]]),
                                    "number MSN cells": len(np.unique(gpi_ssvsids[permsn_gpi_groups[i]]))} for
-                              i, id in enumerate(unique_gpi_ssvs)}
+                              i, id in enumerate(unique_msn_ssvs)}
     number_gpi_permsn = np.array([len(np.unique(gpi_ssvsids[permsn_gpi_groups[i]])) for i in range(len(unique_msn_ssvs))])
     MSN_proj_dict = {"number of synapses to GPi": msn_syn_number, "sum size synapses to GPi": msn_syn_sumsizes,
                      "number of GPi cells": number_gpi_permsn, "number of synapses per GPi": msn_syn_number/ number_gpi_permsn,
@@ -231,21 +245,32 @@ if __name__ == '__main__':
     log.info("Median number of MSNs per GPi = %.2f" % np.median(number_msn_pergpi))
     log.info("Median number of GPi per MSN = %.2f" % np.median(number_gpi_permsn))
 
-    # TO DO: add parameter in dictionary to compare LMAN -> MSN -> GP loops
     #compute highest percentage of MSN that go to one GP
     # compute number of GPi per LMAN
+    # compute average soma distance between gpi of same lman
     number_gpi_perlman = np.zeros(len(LMAN_proj_dict_percell.keys()))
     hperc_samegpi_msn_lman = np.zeros(len(LMAN_proj_dict_percell.keys()))
+    avg_soma_dist_gpi = np.zeros(len(LMAN_proj_dict_percell.keys()))
     for i, lman_id in enumerate(tqdm(LMAN_proj_dict_percell)):
         lman = LMAN_proj_dict_percell[lman_id]
         gpi_percell = []
         for msn_id in lman["MSN ids"]:
             gpi_percell.append(MSN_proj_dict_percell[msn_id]["GPi ids"])
         gpi_percell = np.concatenate(np.array(gpi_percell))
-        number_gpi_perlman[i] = len(np.unique(gpi_percell))
+        unique_gpi_percell = np.unique(gpi_percell)
+        number_gpi_perlman[i] = len(unique_gpi_percell)
+        lman["indirect GPi ids"] = unique_gpi_percell
         count_gpis = np.bincount(gpi_percell)
         max_count_gpis = np.max(count_gpis)
         hperc_samegpi_msn_lman[i] = max_count_gpis/len(gpi_percell)
+        if len(unique_gpi_percell) > 0:
+            soma_centres = np.zeros(len(unique_gpi_percell))
+            for gi, gpi_id in enumerate(unique_gpi_percell):
+                soma_centres[gi] = GPi_dict[gpi_id]["soma centre"]
+            pairwise_soma_distances = scipy.spatial.distance.pdist(soma_centres, metric = "euclidean") / 1000
+            avg_soma_dist_gpi[i] = np.mean(pairwise_soma_distances)
+        else:
+            avg_soma_dist_gpi[i] = 0
 
     # compute number of LMAN per GPi
     # compute highest percentage of MSN that receive input from one LMAN
@@ -257,21 +282,27 @@ if __name__ == '__main__':
         for msn_id in gpi["MSN ids"]:
             lman_percell.append(MSN_dict_percell[msn_id]["LMAN ids"])
         lman_percell = np.concatenate(np.array(lman_percell))
-        number_lman_pergpi[i] = len(np.unique(lman_percell))
+        unique_lman_percell = np.unique(lman_percell)
+        number_lman_pergpi[i] = len(unique_lman_percell)
+        gpi["indirect LMAN ids"] = unique_lman_percell
         count_lmans = np.bincount(lman_percell)
         max_count_lmans = np.max(count_lmans)
         hperc_samelman_msn_gpi[i] = max_count_lmans / len(lman_percell)
 
+    # TO DO: save lman and gpi ids to check later
+    #compute distance between GPi somata targeted by same LMAN
 
     LMAN_proj_dict["number of GPi"] = number_gpi_perlman
     GPi_rec_dict["number of LMAN"] = number_lman_pergpi
     LMAN_proj_dict["percentage of largest MSN group to same GPi"] = hperc_samegpi_msn_lman
     GPi_rec_dict["percentage of largest MSN group from same LMAN"] = hperc_samelman_msn_gpi
+    LMAN_proj_dict["average soma distance GPi"] = avg_soma_dist_gpi
 
     log.info("Average number of GPi from same LMAN via MSN = %.2f" % np.mean(number_gpi_perlman))
     log.info("Average number of LMAN from same GPi via MSN = %.2f" % np.mean(number_lman_pergpi))
     log.info("Average percentage of largest MSN group from LMAN to same GPi = %.2f" % np.mean(hperc_samegpi_msn_lman))
     log.info("Average percentage of largest MSN group to GPi from same LMAN = %.2f" % np.mean(hperc_samelman_msn_gpi))
+    log.info("Average soma distance of GPi per LMAN = %.2f" % np.mean(avg_soma_dist_gpi))
     log.info("Median number of GPi from same LMAN via MSN = %.2f" % np.median(number_gpi_perlman))
     log.info("Median number of LMAN from same GPi via MSN = %.2f" % np.median(number_lman_pergpi))
     log.info("Median percentage of largest MSN group from LMAN to same GPi = %.2f" % np.median(hperc_samegpi_msn_lman))
@@ -282,6 +313,7 @@ if __name__ == '__main__':
     write_obj2pkl("%s/msn_proj_dict.pkl" % f_name, MSN_proj_dict)
     write_obj2pkl("%s/msn_proj_dict_percell.pkl" % f_name, MSN_proj_dict_percell)
     write_obj2pkl("%s/lman_dict.pkl" % f_name, LMAN_proj_dict)
+    write_obj2pkl("%s/lman_dict_percell.pkl" % f_name, LMAN_proj_dict_percell)
 
     gpi_rec_pd = pd.DataFrame(GPi_rec_dict)
     gpi_rec_pd.to_csv("%s/gpi_dict.csv" % f_name)

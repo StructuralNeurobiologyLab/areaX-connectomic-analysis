@@ -29,6 +29,7 @@ def get_per_cell_morphology_params(cellid):
     g = cell.weighted_graph()
     axon_length_cell = get_compartment_length(cell, compartment=1, cell_graph=g)
     dendrite_length_cell = get_compartment_length(cell, compartment=0, cell_graph=g)
+    complete_pathlength_cell = g.size(weight="weight") / 1000  # in µm
     # calculate mesh surface areas per compartment
     mesh_surface_areas_cell = get_compartment_mesh_area(cell)
     axon_mesh_surface_area= mesh_surface_areas_cell["axon"]
@@ -39,7 +40,8 @@ def get_per_cell_morphology_params(cellid):
     positions = cell.skeleton["nodes"][soma_inds] * cell.scaling  # transform to nm
     soma_centre_coord = np.mean(positions, axis=0)
     params_dict = {"axon length": axon_length_cell, "dendrite length": dendrite_length_cell, "soma centre": soma_centre_coord,
-                   "axon mesh surface area": axon_mesh_surface_area, "dendrite mesh surface area": dendrite_mesh_surface_area, "soma mesh surface area": soma_mesh_surface_area}
+                   "axon mesh surface area": axon_mesh_surface_area, "dendrite mesh surface area": dendrite_mesh_surface_area, "soma mesh surface area": soma_mesh_surface_area,
+                   "complete pathlength": complete_pathlength_cell}
     return [cellid,params_dict]
     
 

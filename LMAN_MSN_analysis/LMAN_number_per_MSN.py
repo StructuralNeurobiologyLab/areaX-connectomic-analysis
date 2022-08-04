@@ -122,8 +122,10 @@ if __name__ == '__main__':
     msn_pd = pd.DataFrame(MSN_dict)
     msn_pd.to_csv("%s/msn_rec_dict.csv" % f_name)
 
-    log.info("Average amount of MSNs per LMAN = %.2f" % np.mean(number_msn_perlman))
-    log.info("Average amount of LMAN per MSN = %.2f" % np.mean(number_lman_permsn))
+    log.info("Average number of MSNs per LMAN = %.2f" % np.mean(number_msn_perlman))
+    log.info("Average number of LMAN per MSN = %.2f" % np.mean(number_lman_permsn))
+    log.info("Median number of MSNs per LMAN = %.2f" % np.median(number_msn_perlman))
+    log.info("Median number of LMAN per MSN = %.2f" % np.median(number_lman_permsn))
 
     time_stamps = [time.time()]
     step_idents = ["created per cell dictionaries for LMAN and MSN"]
@@ -224,8 +226,10 @@ if __name__ == '__main__':
                      "number of GPi cells": number_gpi_permsn, "number of synapses per GPi": msn_syn_number/ number_gpi_permsn,
                      "sum size synapses per GPi": msn_syn_sumsizes/ number_gpi_permsn}
 
-    log.info("Average amount of MSNs per GPi = %.2f" % np.mean(number_msn_pergpi))
-    log.info("Average amount of GPi per MSN = %.2f" % np.mean(number_gpi_permsn))
+    log.info("Average number of MSNs per GPi = %.2f" % np.mean(number_msn_pergpi))
+    log.info("Average number of GPi per MSN = %.2f" % np.mean(number_gpi_permsn))
+    log.info("Median number of MSNs per GPi = %.2f" % np.median(number_msn_pergpi))
+    log.info("Median number of GPi per MSN = %.2f" % np.median(number_gpi_permsn))
 
     # TO DO: add parameter in dictionary to compare LMAN -> MSN -> GP loops
     #compute highest percentage of MSN that go to one GP
@@ -258,11 +262,20 @@ if __name__ == '__main__':
         max_count_lmans = np.max(count_lmans)
         hperc_samelman_msn_gpi[i] = max_count_lmans / len(lman_percell)
 
+
     LMAN_proj_dict["number of GPi"] = number_gpi_perlman
     GPi_rec_dict["number of LMAN"] = number_lman_pergpi
-    LMAN_proj_dict["highest percentage of MSN to same GPi"] = hperc_samegpi_msn_lman
-    GPi_rec_dict["highest percentage of MSN from same LMAN"] = hperc_samelman_msn_gpi
+    LMAN_proj_dict["percentage of largest MSN group to same GPi"] = hperc_samegpi_msn_lman
+    GPi_rec_dict["percentage of largest MSN group from same LMAN"] = hperc_samelman_msn_gpi
 
+    log.info("Average number of GPi from same LMAN via MSN = %.2f" % np.mean(number_gpi_perlman))
+    log.info("Average number of LMAN from same GPi via MSN = %.2f" % np.mean(number_lman_pergpi))
+    log.info("Average percentage of largest MSN group from LMAN to same GPi = %.2f" % np.mean(hperc_samegpi_msn_lman))
+    log.info("Average percentage of largest MSN group to GPi from same LMAN = %.2f" % np.mean(hperc_samelman_msn_gpi))
+    log.info("Median number of GPi from same LMAN via MSN = %.2f" % np.median(number_gpi_perlman))
+    log.info("Median number of LMAN from same GPi via MSN = %.2f" % np.median(number_lman_pergpi))
+    log.info("Median percentage of largest MSN group from LMAN to same GPi = %.2f" % np.median(hperc_samegpi_msn_lman))
+    log.info("Median percentage of largest MSN group to GPi from same LMAN = %.2f" % np.median(hperc_samelman_msn_gpi))
 
     write_obj2pkl("%s/gpi_dict_percell.pkl" % f_name, GPi_rec_dict_percell)
     write_obj2pkl("%s/gpi_dict.pkl" % f_name, GPi_rec_dict)

@@ -263,11 +263,10 @@ if __name__ == '__main__':
             except KeyError:
                 continue
         gpi_percell = np.concatenate(np.array(gpi_percell))
-        raise ValueError
-        unique_gpi_percell = np.unique(gpi_percell)
+        gpi_inds, unique_gpi_percell = pd.factorize(gpi_percell)
         number_gpi_perlman[i] = len(unique_gpi_percell)
         lman["indirect GPi ids"] = unique_gpi_percell
-        count_gpis = np.bincount(gpi_percell)
+        count_gpis = np.bincount(gpi_inds)
         max_count_gpis = np.max(count_gpis)
         hperc_samegpi_msn_lman[i] = max_count_gpis/len(gpi_percell)
         if len(unique_gpi_percell) > 0:
@@ -291,10 +290,10 @@ if __name__ == '__main__':
         for msn_id in gpi["MSN ids"]:
             lman_percell.append(MSN_dict_percell[msn_id]["LMAN ids"])
         lman_percell = np.concatenate(np.array(lman_percell))
-        unique_lman_percell = np.unique(lman_percell)
+        lman_inds, unique_lman_percell = pd.factorize(lman_percell)
         number_lman_pergpi[i] = len(unique_lman_percell)
         gpi["indirect LMAN ids"] = unique_lman_percell
-        count_lmans = np.bincount(lman_percell)
+        count_lmans = np.bincount(lman_inds)
         max_count_lmans = np.max(count_lmans)
         hperc_samelman_msn_gpi[i] = max_count_lmans / len(lman_percell)
 

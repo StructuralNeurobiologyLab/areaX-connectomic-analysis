@@ -3,7 +3,6 @@ if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import remove_myelinated_part_axon
     from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
     from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting
-    from syconn.
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -28,7 +27,7 @@ if __name__ == '__main__':
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('LMAN overlap analysis', log_dir=f_name + '/logs/')
-    log.info("overlap threshold = %.2f, non-overlap threshold = %.2f, kdtree raidus = %i" % (overlap_threshold, non_overlap_threshold, kdtree_radius))
+    log.info("overlap threshold = %.2f, non-overlap threshold = %.2f, kdtree radius = %i" % (overlap_threshold, non_overlap_threshold, kdtree_radius))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -40,9 +39,9 @@ if __name__ == '__main__':
     LMAN_dict = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/ax_LMA_dict.pkl")
     LMAN_ids = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/LMAN_handpicked_arr.pkl")
-    #iterate over lmans to remove unbranched part of axon
-    #remove myleinated parts and then select largest connected component
+    #iterate over lmans to remove myelinated parts of axon
     LMAN_skel_dict = {}
+    #TO DO: add mutliprocessing once it works
     for lman_id in LMAN_ids:
         branched_node_positions = remove_myelinated_part_axon(lman_id)
 

@@ -340,8 +340,7 @@ def get_cell_nodes_ax(ssoid):
 def remove_myelinated_part_axon(axonid):
     """
     removes part of axon which is myleniated and unbranched to get terminal branching part.
-    Uses skeleton nodes and removes myelinated ones first and then selects the largest
-    remaining connected component. Returns remaining skeleton node positions.
+    Uses skeleton nodes and removes myelinated ones.
     :param axonid: id of axon
     :return: skeleton node positions of branched axon part
     """
@@ -350,18 +349,8 @@ def remove_myelinated_part_axon(axonid):
     myelin_inds = np.nonzero(axon.skeleton["myelin"] == 1)[0]
     g = axon.weighted_graph()
     g.remove_nodes_from(myelin_inds)
-    conn_comps = len(list(nx.connected_component_subgraphs(g)))
-    raise ValueError
-    if len(conn_comps) > 1:
-        conn_comps_length = np.zeros(len(conn_comps))
-        for i,comp in enumerate(conn_comps):
-            comp_length = comp.size(weight="weight") / 1000  # in µm
-            conn_comps_length[i] = comp_length
-        max_comp_len_ind = np.argmax(conn_comps_length)
-        branch_comp = conn_comps[max_comp_len_ind]
-    else:
-        branch_comp = conn_comps
-    node_positions = branch_comp.nodes() * axon.scaling
+    node_positions = [g.nodes[node]["position"] for node in g.nodes()]
+    node_positions = np.array(node_positions) * axon.scaling
     return node_positions
 
 

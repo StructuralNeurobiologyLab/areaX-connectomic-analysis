@@ -13,6 +13,7 @@ if __name__ == '__main__':
     import numpy as np
     from tqdm import tqdm
     import scipy
+    from multiprocessing import pool
 
 
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     overlap_threshold = 0.8
     non_overlap_threshold = 0.2
     kdtree_radius = 20 #µm
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220805_j0251v4_LMAN_overlap_analysis_ot_%.1f_not_%.1f_kdtr_%i" % (
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220808_j0251v4_LMAN_overlap_analysis_ot_%.1f_not_%.1f_kdtr_%i" % (
     overlap_threshold, non_overlap_threshold, kdtree_radius)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -41,9 +42,14 @@ if __name__ == '__main__':
     LMAN_ids = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/LMAN_handpicked_arr.pkl")
     #iterate over lmans to remove myelinated parts of axon
     LMAN_skel_dict = {}
-    #TO DO: add mutliprocessing once it works
-    for lman_id in LMAN_ids:
-        branched_node_positions = remove_myelinated_part_axon(lman_id)
+    p = pool.Pool()
+    rem_myelin_results = p.map(remove_myelinated_part_axon, tqdm(LMAN_ids))
+    lman_ids = rem_myelin_results[:, 0]
+    node_positions = rem_myelin_results[:, 1]
+    raise ValueError
+    #get overlapp between all LMAN axons, from both sides
+    #calculate overlap of one axon with all others with kdtree of nodes
+    #for lman_id in lman_ids:
 
 #1: divide LMAN axons into overlapping and non-overlapping
 #get rid of myelinated part: remove nodes with attr myelin
@@ -61,4 +67,4 @@ if __name__ == '__main__':
 #also look at soma distance of MSN
 #also check if there is differences going to the GPi
 #same via MSN targeted GPi between overlapping LMANs, difference to ones far apart?
-#distance of GPi soma?
+#distance of GPi soma

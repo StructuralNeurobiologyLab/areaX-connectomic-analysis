@@ -80,8 +80,7 @@ class ResultsForPlotting():
             elif "fraction" in key:
                 param_label = "fraction of %s" % subcell
             else:
-                raise ValueError("unknown key description")
-                param_label = 0
+                param_label = key
         return param_label
 
     def plot_hist(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False):

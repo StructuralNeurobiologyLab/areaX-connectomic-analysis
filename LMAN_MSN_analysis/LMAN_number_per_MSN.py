@@ -27,7 +27,7 @@ if __name__ == '__main__':
     msn_ct = 2
     lman_ct = 3
     gpi_ct = 7
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220805_j0251v4_LMAN_MSN_GP_est_mcl_%i_synprob_%.2f" % (
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220809_j0251v4_LMAN_MSN_GP_est_mcl_%i_synprob_%.2f" % (
     min_comp_len, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     for key in LMAN_proj_dict:
         if not "GPi" in key:
             continue
-        gpi_results.plot_hist(key, subcell=None, cells=True)
+        lman_results.plot_hist(key, subcell=None, cells=True)
 
     time_stamps = [time.time()]
     step_idents = ["GPi results plotted"]

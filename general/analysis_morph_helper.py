@@ -345,13 +345,46 @@ def remove_myelinated_part_axon(axonid):
     :return: skeleton node positions of branched axon part
     """
     axon = SuperSegmentationObject(axonid)
-    axon.load_skeleton()
+    try:
+        axon.load_skeleton()
+    except FileNotFoundError:
+        raise ValueError
     myelin_inds = np.nonzero(axon.skeleton["myelin"] == 1)[0]
     g = axon.weighted_graph()
     g.remove_nodes_from(myelin_inds)
     node_positions = [g.nodes[node]["position"] for node in g.nodes()]
     node_positions = np.array(node_positions) * axon.scaling
-    return node_positions
+    return [axonid, node_positions]
+
+def compute_overlap_skeleton(sso_id, sso_ids, all_node_positions, kdtree_radius = 10):
+    '''
+    Compare the overlap between skeelton nodes of one cell and a list of other cells.
+    Uses kdrtee with given radius in µm. Returns percentage of overlap for one cell with other cells.
+    :param sso_id: id of cell that other cells should be compared to
+    :param sso_ids: ids the voerlap should be computed for, includes the sso_id
+    :param all_node_positions: skeleton nodes of all ssoids, including sso_id given in first argument, in nm
+    :param kdtree_radius: radius around which overlap will be computed for each skeleton node, in µm
+    :return: overlapp between sso_id and other sso_ids
+    '''
+
+    sso_ind = np.where(sso_ids == sso_id)[0]
+    sso_nodes = all_node_positions[sso_ind]
+    overlap = np.zeros(len(sso_ids))
+    kdtree_radius = kdtree_radius * 1000 #in nm
+    #set overlap with itself to 1
+    overlap[sso_ind] = 1
+    #iterate over sso ids to get overlap of each of them
+    for i, id in sso_ids:
+        if id == sso_id:
+            continue
+        nodes_2_compare = all_node_positions[i]
+        kdtree = scipy.spatial.cKDTree(nodes_2_compare)
+        overlapping_inds = kdtree.query_ball_point(sso_nodes, kdtree_radius)
+        unique_overlapping_nodes = np.unique(overlapping_inds)
+        overlap_cell = len(unique_overlapping_nodes)/ len(nodes_2_compare)
+        raise ValueError
+        overlap[i] = overlap_cell
+    return [sso_id, overlap_cell]
 
 
 

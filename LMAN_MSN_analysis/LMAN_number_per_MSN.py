@@ -112,7 +112,7 @@ if __name__ == '__main__':
         avg_soma_dist_msn[i] = np.mean(pairwise_soma_distances)
         max_soma_dist_msn[i] = np.max(pairwise_soma_distances)
 
-    LMAN_proj_dict = {"number of synapses to MSN": lman_syn_number, "sum size synapses to MSN": lman_syn_sumsizes, "number MSN cells": number_msn_perlman,
+    LMAN_proj_dict = {"LMAN ids": unique_lman_ssvs, "number of synapses to MSN": lman_syn_number, "sum size synapses to MSN": lman_syn_sumsizes, "number MSN cells": number_msn_perlman,
                       "number of synapses per MSN": lman_syn_number/number_msn_perlman, "sum size synapses per MSM": lman_syn_sumsizes/number_msn_perlman,
                       "average soma distance MSN per LMAN": avg_soma_dist_msn, "maximum soma distance MSN per LMAN": max_soma_dist_msn}
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
                                    "number LMAN cells": len(np.unique(lman_ssvsids[permsn_lman_groups[i]]))} for
                               i, id in enumerate(unique_msn_ssvs)}
     number_lman_permsn = np.array([MSN_dict_percell[msn]["number LMAN cells"] for msn in MSN_dict_percell])
-    MSN_rec_dict = {"number of synapses from LMAN": msn_syn_number, "sum size synapses from LMAN": msn_syn_sumsizes,
+    MSN_rec_dict = {"MSN ids": unique_msn_ssvs, "number of synapses from LMAN": msn_syn_number, "sum size synapses from LMAN": msn_syn_sumsizes,
                       "number LMAN cells": number_lman_permsn,
                       "number of synapses per LMAN": msn_syn_number / number_lman_permsn,
                       "sum size synapses per LMAN": msn_syn_sumsizes / number_lman_permsn}
@@ -151,16 +151,20 @@ if __name__ == '__main__':
     lman_results = ResultsForPlotting(celltype=ct_dict[lman_ct], filename=f_name, dictionary=LMAN_proj_dict)
 
     for key in MSN_rec_dict:
+        if "ids" in key:
+            continue
         if "synapse" in key:
             msn_results.plot_hist(key, subcell="synapse", cells=False)
         else:
-            msn_results.plot_hist(key, subcell=None, cells=True)
+            msn_results.plot_hist(key, subcell="cell", cells=True)
 
     for key in LMAN_proj_dict:
+        if "ids" in key:
+            continue
         if "synapse" in key:
             lman_results.plot_hist(key, subcell="synapse", cells=False)
         else:
-            lman_results.plot_hist(key, subcell=None, cells=True)
+            lman_results.plot_hist(key, subcell="cell", cells=True)
 
     time_stamps = [time.time()]
     step_idents = ["plotted results for LMAN and MSN"]
@@ -229,7 +233,7 @@ if __name__ == '__main__':
                                    "number MSN cells": len(np.unique(msn_ssvsids[pergpi_msn_groups[i]]))} for
                               i, id in enumerate(unique_gpi_ssvs)}
     number_msn_pergpi = np.array([GPi_rec_dict_percell[gpi]["number MSN cells"] for gpi in GPi_rec_dict_percell])
-    GPi_rec_dict = {"number of synapses from MSN": gpi_syn_number, "sum size synapses from MSN": gpi_syn_sumsizes,
+    GPi_rec_dict = {"GPi ids": unique_gpi_ssvs, "number of synapses from MSN": gpi_syn_number, "sum size synapses from MSN": gpi_syn_sumsizes,
                       "number MSN cells": number_msn_pergpi,
                       "number of synapses per MSN": gpi_syn_number / number_msn_pergpi,
                       "sum size synapses per MSM": gpi_syn_sumsizes / number_msn_pergpi}
@@ -238,7 +242,7 @@ if __name__ == '__main__':
                                    "number MSN cells": len(np.unique(gpi_ssvsids[permsn_gpi_groups[i]]))} for
                               i, id in enumerate(unique_msn_ssvs)}
     number_gpi_permsn = np.array([len(np.unique(gpi_ssvsids[permsn_gpi_groups[i]])) for i in range(len(unique_msn_ssvs))])
-    MSN_proj_dict = {"number of synapses to GPi": msn_syn_number, "sum size synapses to GPi": msn_syn_sumsizes,
+    MSN_proj_dict = {"MSN ids": unique_msn_ssvs, "number of synapses to GPi": msn_syn_number, "sum size synapses to GPi": msn_syn_sumsizes,
                      "number of GPi cells": number_gpi_permsn, "number of synapses per GPi": msn_syn_number/ number_gpi_permsn,
                      "sum size synapses per GPi": msn_syn_sumsizes/ number_gpi_permsn}
 
@@ -246,6 +250,7 @@ if __name__ == '__main__':
     log.info("Average number of GPi per MSN = %.2f" % np.mean(number_gpi_permsn))
     log.info("Median number of MSNs per GPi = %.2f" % np.median(number_msn_pergpi))
     log.info("Median number of GPi per MSN = %.2f" % np.median(number_gpi_permsn))
+
 
     #compute highest percentage of MSN that go to one GP
     # compute number of GPi per LMAN
@@ -316,6 +321,9 @@ if __name__ == '__main__':
     log.info("Median number of LMAN from same GPi via MSN = %.2f" % np.median(number_lman_pergpi))
     log.info("Median percentage of largest MSN group from LMAN to same GPi = %.2f" % np.median(hperc_samegpi_msn_lman))
     log.info("Median percentage of largest MSN group to GPi from same LMAN = %.2f" % np.median(hperc_samelman_msn_gpi))
+    log.info("Number of GPi cells = %i" % len(unique_gpi_ssvs))
+    log.info("Number of MSN cells = %i" % len(unique_msn_ssvs))
+    log.info("Number of LMAN cells = %i" % len(unique_lman_ssvs))
 
     write_obj2pkl("%s/gpi_dict_percell.pkl" % f_name, GPi_rec_dict_percell)
     write_obj2pkl("%s/gpi_dict.pkl" % f_name, GPi_rec_dict)
@@ -343,20 +351,26 @@ if __name__ == '__main__':
     lman_results = ResultsForPlotting(celltype=ct_dict[lman_ct], filename=f_name, dictionary=LMAN_proj_dict)
 
     for key in MSN_proj_dict:
+        if "MSN ids" in key:
+            continue
         if "synapse" in key:
             msn_results.plot_hist(key, subcell="synapse", cells=False)
         else:
-            msn_results.plot_hist(key, subcell=None, cells=True)
+            msn_results.plot_hist(key, subcell="cells", cells=True)
     for key in GPi_rec_dict:
+        if " GPi ids" in key:
+            continue
         if "synapse" in key:
             gpi_results.plot_hist(key, subcell="synapse", cells=False)
         else:
-            gpi_results.plot_hist(key, subcell=None, cells=True)
+            gpi_results.plot_hist(key, subcell="cells", cells=True)
 
     for key in LMAN_proj_dict:
+        if "LMAN ids" in key:
+            continue
         if not "GPi" in key:
             continue
-        lman_results.plot_hist(key, subcell=None, cells=True)
+        lman_results.plot_hist(key, subcell="cells", cells=True)
 
     time_stamps = [time.time()]
     step_idents = ["GPi results plotted"]

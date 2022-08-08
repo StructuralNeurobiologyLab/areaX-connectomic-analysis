@@ -345,16 +345,13 @@ def remove_myelinated_part_axon(axonid):
     :return: skeleton node positions of branched axon part
     """
     axon = SuperSegmentationObject(axonid)
-    try:
-        axon.load_skeleton()
-    except FileNotFoundError:
-        raise ValueError
+    axon.load_skeleton()
     myelin_inds = np.nonzero(axon.skeleton["myelin"] == 1)[0]
     g = axon.weighted_graph()
     g.remove_nodes_from(myelin_inds)
     node_positions = [g.nodes[node]["position"] for node in g.nodes()]
     node_positions = np.array(node_positions) * axon.scaling
-    return [axonid, node_positions]
+    return node_positions
 
 def compute_overlap_skeleton(sso_id, sso_ids, all_node_positions, kdtree_radius = 10):
     '''
@@ -367,24 +364,23 @@ def compute_overlap_skeleton(sso_id, sso_ids, all_node_positions, kdtree_radius 
     :return: overlapp between sso_id and other sso_ids
     '''
 
-    sso_ind = np.where(sso_ids == sso_id)[0]
+    sso_ind = int(np.where(sso_ids == sso_id)[0])
     sso_nodes = all_node_positions[sso_ind]
     overlap = np.zeros(len(sso_ids))
     kdtree_radius = kdtree_radius * 1000 #in nm
     #set overlap with itself to 1
     overlap[sso_ind] = 1
     #iterate over sso ids to get overlap of each of them
-    for i, id in sso_ids:
+    for i, id in enumerate(sso_ids):
         if id == sso_id:
             continue
         nodes_2_compare = all_node_positions[i]
         kdtree = scipy.spatial.cKDTree(nodes_2_compare)
         overlapping_inds = kdtree.query_ball_point(sso_nodes, kdtree_radius)
-        unique_overlapping_nodes = np.unique(overlapping_inds)
+        unique_overlapping_nodes = np.unique(np.hstack(overlapping_inds))
         overlap_cell = len(unique_overlapping_nodes)/ len(nodes_2_compare)
-        raise ValueError
         overlap[i] = overlap_cell
-    return [sso_id, overlap_cell]
+    return overlap
 
 
 

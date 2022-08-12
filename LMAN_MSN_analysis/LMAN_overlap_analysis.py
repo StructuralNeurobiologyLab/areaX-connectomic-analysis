@@ -1,7 +1,8 @@
 
 if __name__ == '__main__':
     from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import remove_myelinated_part_axon, compute_overlap_skeleton
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting
+    from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
+
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -21,9 +22,9 @@ if __name__ == '__main__':
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
-    overlap_threshold = 0.5
+    overlap_threshold = 0.75
     non_overlap_threshold = 0.001
-    kdtree_radius = 20 #µm
+    kdtree_radius = 50 #µm
     f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220808_j0251v4_LMAN_overlap_analysis_ot_%.2f_not_%.3f_kdtr_%i" % (
     overlap_threshold, non_overlap_threshold, kdtree_radius)
     if not os.path.exists(f_name):
@@ -157,6 +158,10 @@ if __name__ == '__main__':
     log.info("Median number of MSN shared between overlapping LMAN = %.2f" % np.median(shared_msn_number_overlap))
     log.info("Median percentage of MSN shared between non-overlapping LMAN = %.2f" % np.median(shared_msn_perc_non))
     log.info("Median number of MSN shared between non-overlapping LMAN = %.2f" % np.median(shared_msn_number_non))
+    log.info("Median percentage of GPi shared between overlapping LMAN = %.2f" % np.median(shared_gpi_perc_overlap))
+    log.info("Median number of GPi shared between overlapping LMAN = %.2f" % np.median(shared_gpi_number_overlap))
+    log.info("Median percentage of GPi shared between non-overlapping LMAN = %.2f" % np.median(shared_gpi_perc_non))
+    log.info("Median number of GPi shared between non-overlapping LMAN = %.2f" % np.median(shared_gpi_number_non))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -167,25 +172,43 @@ if __name__ == '__main__':
 
     log.info("Step 3/3: compute statistics and plot results")
     keys = list(overlap_dict.keys())
+    results_for_plotting = ComparingResultsForPLotting(celltype1 = "overlapping pairs", celltype2 = "non-overlapping pairs", dictionary1 = overlap_dict,
+                                                       dictionary2 = non_overlap_dict, color1 = '#60A6A6', color2 = '#051A26', filename = f_name)
     ranksum_results = pd.DataFrame(columns=keys[1:], index = ["stats", "p value"])
     for key in keys:
         if "pair" in key:
             continue
-        p_value, stats = ranksums(overlap_dict[key], non_overlap_dict[key])
+        stats, p_value = ranksums(overlap_dict[key], non_overlap_dict[key])
         ranksum_results.loc["stats", key] = stats
         ranksum_results.loc["p value", key] = p_value
         sns.distplot(overlap_pd[key],
-                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "dark turquoise"},
-                     kde=False, norm_hist=False, bins=10, label = "overlapping pairs")
-        sns.distplot(overlap_pd[key],
-                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "black"},
-                     kde=False, norm_hist=False, bins=10, label = "non-overlapping pairs")
+                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
+                     kde=False, norm_hist=False, bins=10, label = "overlapping pairs", color='#60A6A6')
+        sns.distplot(non_overlap_pd[key],
+                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
+                     kde=False, norm_hist=False, bins=10, label = "non-overlapping pairs", color = '#051A26')
         plt.legend()
         plt.xlabel(key)
         plt.ylabel("count of cell pairs")
-        plt.savefig("%s/%s_comparison.svg" % (f_name, key))
-        plt.savefig("%s/%s_comparison.png" % (f_name, key))
+        plt.savefig("%s/%s_hist_comparison.svg" % (f_name, key))
+        plt.savefig("%s/%s_hist_comparison.png" % (f_name, key))
         plt.close()
+        sns.distplot(overlap_pd[key],
+                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
+                     kde=False, norm_hist=True, bins=10, label="overlapping pairs", color='#60A6A6')
+        sns.distplot(non_overlap_pd[key],
+                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
+                     kde=False, norm_hist=True, bins=10, label="non-overlapping pairs", color='#051A26')
+        plt.legend()
+        plt.xlabel(key)
+        plt.ylabel("count of cell pairs")
+        plt.savefig("%s/%s_hist_comparison_norm.svg" % (f_name, key))
+        plt.savefig("%s/%s_hist_comparison_norm.png" % (f_name, key))
+        plt.close()
+        result_df = results_for_plotting.result_df_per_param(key)
+        results_for_plotting.plot_violin(result_df=result_df, key = key, subcell = "cell pairs")
+
+    ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 
     log.info("Comparison of overlapping and non-overlapping LMAN done")
 

@@ -133,7 +133,7 @@ if __name__ == '__main__':
     lman_proj_pd = pd.DataFrame(LMAN_proj_dict)
     lman_proj_pd.to_csv("%s/lman_dict.csv" % f_name)
 
-    msn_pd = pd.DataFrame(MSN_dict)
+    msn_pd = pd.DataFrame(MSN_rec_dict)
     msn_pd.to_csv("%s/msn_rec_dict.csv" % f_name)
 
     log.info("Average number of MSNs per LMAN = %.2f" % np.mean(number_msn_perlman))

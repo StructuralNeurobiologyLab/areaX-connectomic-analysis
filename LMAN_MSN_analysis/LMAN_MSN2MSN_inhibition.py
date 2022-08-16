@@ -278,46 +278,56 @@ if __name__ == '__main__':
             lman_plotting.plot_hist(key, subcell="cells", cells=True)
 
     #compare results of pairs in both directions and pairs only in one direction
-    keys = list(msn_pair_both_directions_dict.keys())
-    pair_results_for_plotting = ComparingResultsForPLotting(celltype1="pairs inhibiting each other", celltype2="pairs one direction",
-                                                      dictionary1=msn_pair_both_directions_dict,
-                                                      dictionary2=msn_pair_oneway_dict, color1='#60A6A6', color2='#051A26',
-                                                      filename=f_name)
-    ranksum_results = pd.DataFrame(columns=keys[1:], index=["stats", "p value"])
-    for key in keys:
-        if "id" in key:
-            continue
-        stats, p_value = ranksums(msn_pair_both_directions_dict[key], msn_pair_oneway_dict[key])
-        ranksum_results.loc["stats", key] = stats
-        ranksum_results.loc["p value", key] = p_value
-        sns.distplot(both_dir_pd[key],
-                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
-                     kde=False, norm_hist=False, bins=10, label="overlapping pairs", color='#60A6A6')
-        sns.distplot(ow_pd[key],
-                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
-                     kde=False, norm_hist=False, bins=10, label="non-overlapping pairs", color='#051A26')
-        plt.legend()
-        plt.xlabel(key)
-        plt.ylabel("count of cell pairs")
-        plt.savefig("%s/%s_hist_comparison.svg" % (f_name, key))
-        plt.savefig("%s/%s_hist_comparison.png" % (f_name, key))
-        plt.close()
-        sns.distplot(both_dir_pd[key],
-                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
-                     kde=False, norm_hist=True, bins=10, label="overlapping pairs", color='#60A6A6')
-        sns.distplot(ow_pd[key],
-                     hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
-                     kde=False, norm_hist=True, bins=10, label="non-overlapping pairs", color='#051A26')
-        plt.legend()
-        plt.xlabel(key)
-        plt.ylabel("count of cell pairs")
-        plt.savefig("%s/%s_hist_comparison_norm.svg" % (f_name, key))
-        plt.savefig("%s/%s_hist_comparison_norm.png" % (f_name, key))
-        plt.close()
-        result_df = pair_results_for_plotting.result_df_per_param(key)
-        pair_results_for_plotting.plot_violin(result_df=result_df, key=key, subcell="cell pairs")
+    #only if actually pairs that inhibit each other
+    keys = list(msn_pair_oneway_dict.keys())
+    if len(number_pairs_both_dir) > 0:
+        pair_results_for_plotting = ComparingResultsForPLotting(celltype1="pairs inhibiting each other", celltype2="pairs one direction",
+                                                          dictionary1=msn_pair_both_directions_dict,
+                                                          dictionary2=msn_pair_oneway_dict, color1='#60A6A6', color2='#051A26',
+                                                          filename=f_name)
+        ranksum_results = pd.DataFrame(columns=keys[1:], index=["stats", "p value"])
+        for key in keys:
+            if "id" in key:
+                continue
+            stats, p_value = ranksums(msn_pair_both_directions_dict[key], msn_pair_oneway_dict[key])
+            ranksum_results.loc["stats", key] = stats
+            ranksum_results.loc["p value", key] = p_value
+            sns.distplot(both_dir_pd[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
+                         kde=False, norm_hist=False, bins=10, label="pairs inhibiting each other", color='#60A6A6')
+            sns.distplot(ow_pd[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
+                         kde=False, norm_hist=False, bins=10, label="pairs one direction", color='#051A26')
+            plt.legend()
+            plt.xlabel(key)
+            plt.ylabel("count of cell pairs")
+            plt.savefig("%s/%s_hist_comparison.svg" % (f_name, key))
+            plt.savefig("%s/%s_hist_comparison.png" % (f_name, key))
+            plt.close()
+            sns.distplot(both_dir_pd[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
+                         kde=False, norm_hist=True, bins=10, label="pairs inhibiting each other", color='#60A6A6')
+            sns.distplot(ow_pd[key],
+                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1},
+                         kde=False, norm_hist=True, bins=10, label="pairs one direction", color='#051A26')
+            plt.legend()
+            plt.xlabel(key)
+            plt.ylabel("count of cell pairs")
+            plt.savefig("%s/%s_hist_comparison_norm.svg" % (f_name, key))
+            plt.savefig("%s/%s_hist_comparison_norm.png" % (f_name, key))
+            plt.close()
+            result_df = pair_results_for_plotting.result_df_per_param(key)
+            pair_results_for_plotting.plot_violin(result_df=result_df, key=key, subcell="cell pairs")
 
-    ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
+        ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
+    else:
+        ow_results_for_plotting = ResultsForPlotting(celltype = ct_dict[lman_ct], dictionary = msn_pair_oneway_dict, filename = f_name)
+        for key in keys:
+            if "id" in key:
+                continue
+            lman_plotting.plot_hist(key, subcell="cell pairs", cells=False)
+
+    log.info("MSN to MSN inhibition analysis per LMAN axon finished")
 
 
 

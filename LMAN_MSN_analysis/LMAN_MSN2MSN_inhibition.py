@@ -53,7 +53,7 @@ if __name__ == '__main__':
     lman_ids = list(LMAN_proj_dict.keys())
 
     #1st step: get synapses between MSN cells from MSN proj dict
-    log.info("Step 1/X: get MSN-MSN inhibition information from synapses")
+    log.info("Step 1/3: get MSN-MSN inhibition information from synapses")
     #prefilter for only MSN to MSN axo-dendritic synapses
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
                                                                                                         pre_cts=[
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     step_idents = ['get MSN to MSN synapses']
 
     #2nd step: iterate over all LMANs to see if there is inhibition among MSNs and if it is targeting the same GPs
-    log.info("Step 2/X: Iterate over LMAN to see inhibition within MSNs targeted by same LMAN")
+    log.info("Step 2/3: Iterate over LMAN to see inhibition within MSNs targeted by same LMAN")
     number_msn_inhibitions_per_lman = np.zeros(len(lman_ids))
     number_msns_inhibiting_per_lman = np.zeros(len(lman_ids))
     number_msn_inhibiton_pairs_bothdirections_per_lman = np.zeros(len(lman_ids))
@@ -161,14 +161,12 @@ if __name__ == '__main__':
                 else:
                     inh_pair_diff_GPi += 1
                 msn_pairs.append([msn_id, inh_msn])
-                if [inh_msn, msn_id] in msn_pairs:
+                if [lman_id, inh_msn, msn_id] in msn_pairs:
                     msn_pair_oneway_dict.pop([msn_id, inh_msn])
-                    msn_pair_both_directions_dict[[msn_id, inh_msn]] = {"number same GPi": number_same_GPis,
+                    msn_pair_both_directions_dict[(lman_id, msn_id, inh_msn)] = {"number same GPi": number_same_GPis,
                                                                          "number different GPi": number_diff_GPis}
                 else:
-                    msn_pair_oneway_dict[[msn_id, inh_msn]] = {"number same GPi": number_same_GPis,
-
-                                                                   "number different GPi": number_diff_GPis}
+                    msn_pair_oneway_dict[(lman_id, msn_id, inh_msn)] = {"number same GPi": number_same_GPis, "number different GPi": number_diff_GPis}
         #get results per LMAN
         number_msn_inhibitions_per_lman[li] = inhibited_msns
         number_msns_inhibiting_per_lman[li] = inhibiting_msns
@@ -199,6 +197,7 @@ if __name__ == '__main__':
 
     #also get results pairwise to compare pairs of MSN that inhibit each other and that only inhibit one direction
     msn_pairs_both_dir = list(msn_pair_both_directions_dict.keys())
+    lman_bd = np.zeros(len(msn_pairs_both_dir))
     number_pairs_both_dir = len(msn_pairs_both_dir)
     both_dir_msn1 = np.zeros(number_pairs_both_dir)
     both_dir_msn2 = np.zeros(number_pairs_both_dir)
@@ -206,12 +205,13 @@ if __name__ == '__main__':
     both_dir_number_diff_GPi = np.zeros(number_pairs_both_dir)
 
     for i, pair in enumerate(tqdm(msn_pairs_both_dir)):
-        both_dir_msn1[i] = pair[0]
-        both_dir_msn2[i] = pair[1]
+        lman_bd[i] = pair[0]
+        both_dir_msn1[i] = pair[1]
+        both_dir_msn2[i] = pair[2]
         both_dir_number_diff_GPi[i] = msn_pair_both_directions_dict[pair]["number different GPi"]
         both_dir_number_same_GPi[i] = msn_pair_both_directions_dict[pair]["number same GPi"]
 
-    both_dir_pairwise_results = {"MSN 1 id": both_dir_msn1, "MSN 2 id": both_dir_msn2,
+    both_dir_pairwise_results = {"LMAN id": lman_bd, "MSN 1 id": both_dir_msn1, "MSN 2 id": both_dir_msn2,
                                  "number same GPi": both_dir_number_same_GPi, "number different GPi": both_dir_number_diff_GPi}
     write_obj2pkl("%s/pairwise_both_directions_samelman.pkl" % f_name, both_dir_pairwise_results)
     both_dir_pd = pd.DataFrame(both_dir_pairwise_results)
@@ -219,18 +219,20 @@ if __name__ == '__main__':
 
     msn_pairs_oneway = list(msn_pair_oneway_dict.keys())
     number_pairs_oneway = len(msn_pairs_oneway)
+    lman_ow = np.zeros(len(msn_pairs_oneway))
     ow_dir_msn1 = np.zeros(number_pairs_oneway)
     ow_dir_msn2 = np.zeros(number_pairs_oneway)
     ow_dir_number_same_GPi = np.zeros(number_pairs_oneway)
     ow_dir_number_diff_GPi = np.zeros(number_pairs_oneway)
 
     for i, pair in enumerate(tqdm(msn_pairs_oneway)):
-        ow_dir_msn1[i] = pair[0]
-        ow_dir_msn2[i] = pair[1]
+        lman_ow[i] = pair[0]
+        ow_dir_msn1[i] = pair[1]
+        ow_dir_msn2[i] = pair[2]
         ow_dir_number_diff_GPi[i] = msn_pair_oneway_dict[pair]["number different GPi"]
         ow_dir_number_same_GPi[i] = msn_pair_oneway_dict[pair]["number same GPi"]
 
-    ow_pairwise_results = {"MSN 1 id": ow_dir_msn1, "MSN 2 id": ow_dir_msn2,
+    ow_pairwise_results = {"LMAN id": lman_ow, "MSN 1 id": ow_dir_msn1, "MSN 2 id": ow_dir_msn2,
                                  "number same GPi": ow_dir_number_same_GPi,
                                  "number different GPi": ow_dir_number_diff_GPi}
     write_obj2pkl("%s/pairwise_one_way_samelman.pkl" % f_name, ow_pairwise_results)
@@ -267,7 +269,7 @@ if __name__ == '__main__':
     log.info("Step 3/3: Plot results, pairwise and per LMAN axon")
     #plot results per LMAN as histograms
     lman_plotting = ResultsForPlotting(celltype=ct_dict[lman_ct], dictionary=per_LMAN_result_dict, filename=f_name)
-    for key in per_LMAN_result_dict:
+    for key in per_LMAN_result_dict.keys():
         if "ids" in key:
             continue
         if "MSN pairs" in key or "MSN inhibition pairs" in key:

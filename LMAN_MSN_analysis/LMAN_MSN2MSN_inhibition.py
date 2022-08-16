@@ -273,9 +273,9 @@ if __name__ == '__main__':
         if "ids" in key:
             continue
         if "MSN pairs" in key or "MSN inhibition pairs" in key:
-            msn_plotting.plot_hist(key, subcell="pairs", cells=False)
+            lman_plotting.plot_hist(key, subcell="pairs", cells=False)
         else:
-            msn_plotting.plot_hist(key, subcell="cells", cells=True)
+            lman_plotting.plot_hist(key, subcell="cells", cells=True)
 
     #compare results of pairs in both directions and pairs only in one direction
     keys = list(msn_pair_both_directions_dict.keys())

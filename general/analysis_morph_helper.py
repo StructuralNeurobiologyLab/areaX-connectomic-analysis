@@ -15,7 +15,10 @@ def get_compartment_length(sso, compartment, cell_graph):
             :param cell_graph: sso.weighted graph
             :return: comp_len in µm
             """
-    non_comp_inds = np.nonzero(sso.skeleton["axoness_avg10000"] != compartment)[0]
+    axoness = sso.skeleton["axoness_avg10000"]
+    axoness[axoness == 3] = 1
+    axoness[axoness == 4] = 1
+    non_comp_inds = np.nonzero(axoness != compartment)[0]
     comp_graph = cell_graph.copy()
     comp_graph.remove_nodes_from(non_comp_inds)
     comp_length = comp_graph.size(weight="weight") / 1000  # in µm
@@ -167,7 +170,10 @@ def get_myelin_fraction(cellid, cell = None, min_comp_len = 100, load_skeleton =
         cell = SuperSegmentationObject(cellid)
     if load_skeleton:
         cell.load_skeleton()
-    non_axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] != 1)[0]
+    axoness = cell.skeleton["axoness_avg10000"]
+    axoness[axoness == 3] = 1
+    axoness[axoness == 4] = 1
+    non_axon_inds = np.nonzero(axoness != 1)[0]
     non_myelin_inds = np.nonzero(cell.skeleton["myelin"] == 0)[0]
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000', "myelin"))
     axon_graph = g.copy()

@@ -279,17 +279,17 @@ if __name__ == '__main__':
 
     #compare results of pairs in both directions and pairs only in one direction
     #only if actually pairs that inhibit each other
-    keys = list(msn_pair_oneway_dict.keys())
-    if len(number_pairs_both_dir) > 0:
+    keys = list(ow_pairwise_results.keys())
+    if number_pairs_both_dir > 0:
         pair_results_for_plotting = ComparingResultsForPLotting(celltype1="pairs inhibiting each other", celltype2="pairs one direction",
-                                                          dictionary1=msn_pair_both_directions_dict,
-                                                          dictionary2=msn_pair_oneway_dict, color1='#60A6A6', color2='#051A26',
+                                                          dictionary1=both_dir_pairwise_results,
+                                                          dictionary2=ow_pairwise_results, color1='#60A6A6', color2='#051A26',
                                                           filename=f_name)
         ranksum_results = pd.DataFrame(columns=keys[1:], index=["stats", "p value"])
         for key in keys:
             if "id" in key:
                 continue
-            stats, p_value = ranksums(msn_pair_both_directions_dict[key], msn_pair_oneway_dict[key])
+            stats, p_value = ranksums(both_dir_pairwise_results[key], ow_pairwise_results[key])
             ranksum_results.loc["stats", key] = stats
             ranksum_results.loc["p value", key] = p_value
             sns.distplot(both_dir_pd[key],
@@ -321,11 +321,11 @@ if __name__ == '__main__':
 
         ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
     else:
-        ow_results_for_plotting = ResultsForPlotting(celltype = ct_dict[lman_ct], dictionary = msn_pair_oneway_dict, filename = f_name)
+        ow_results_for_plotting = ResultsForPlotting(celltype = ct_dict[lman_ct], dictionary = ow_pairwise_results, filename = f_name)
         for key in keys:
             if "id" in key:
                 continue
-            lman_plotting.plot_hist(key, subcell="cell pairs", cells=False)
+            ow_results_for_plotting.plot_hist(key, subcell="cell pairs", cells=False)
 
     log.info("MSN to MSN inhibition analysis per LMAN axon finished")
 

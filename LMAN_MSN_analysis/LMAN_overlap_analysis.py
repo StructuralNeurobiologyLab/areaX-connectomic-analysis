@@ -148,7 +148,7 @@ if __name__ == '__main__':
                     "percentage of same indirectly targeted GPis": shared_gpi_perc_non, "number of same indirectly targeted GPi": shared_gpi_number_non}
     non_overlap_pd = pd.DataFrame(non_overlap_dict)
     write_obj2pkl("%s/non_overlap_dict.pkl" % f_name, non_overlap_dict)
-    overlap_pd.to_csv("%s/non_overlap_dict.csv" % f_name)
+    non_overlap_pd.to_csv("%s/non_overlap_dict.csv" % f_name)
 
     log.info("Average percentage of MSN shared between overlapping LMAN = %.2f" % np.mean(shared_msn_perc_overlap))
     log.info("Average number of MSN shared between overlapping LMAN = %.2f" % np.mean(shared_msn_number_overlap))

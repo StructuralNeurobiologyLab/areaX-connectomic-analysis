@@ -25,7 +25,7 @@ if __name__ == '__main__':
     overlap_threshold = 0.75
     non_overlap_threshold = 0.001
     kdtree_radius = 50 #µm
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220808_j0251v4_LMAN_overlap_analysis_ot_%.2f_not_%.3f_kdtr_%i" % (
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220817_j0251v4_LMAN_overlap_analysis_ot_%.2f_not_%.3f_kdtr_%i" % (
     overlap_threshold, non_overlap_threshold, kdtree_radius)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

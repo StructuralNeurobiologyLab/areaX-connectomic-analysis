@@ -32,7 +32,7 @@ if __name__ == '__main__':
     cells_per_celltype = 10
     skel_length = 20 #µm
     dist2soma = 50 #µm
-    f_name = "wholebrain/scratch/arother/rm_vesicle_project/220831_j0251v4_rndm_ax_samples_noseed2_ctn_%i_skel_%i" % (
+    f_name = "cajal/nvmescratch/users/arother/rm_vesicle_project/220831_j0251v4_rndm_ax_samples_noseed2_ctn_%i_skel_%i" % (
         cells_per_celltype, skel_length)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -54,16 +54,16 @@ if __name__ == '__main__':
         #only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         if ct in ax_ct:
             cell_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/ax_%.3s_dict.pkl" % (ct_dict[ct]))
+                "/cajal/nvmescratch/users/arother/j0251v4_prep/ax_%.3s_dict.pkl" % (ct_dict[ct]))
             cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
             cellids = check_comp_lengths_ct(cellids = cellids, fullcelldict=cell_dict, min_comp_len=min_ax_len, axon_only=True, max_path_len=None)
         else:
             cell_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % (ct_dict[ct]))
+                "/cajal/nvmescratch/users/j0251v4_prep/full_%.3s_dict.pkl" % (ct_dict[ct]))
             cellids = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[ct])
+                "/cajal/nvmescratch/users/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[ct])
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
             if ct == 2:

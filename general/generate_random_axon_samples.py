@@ -43,7 +43,7 @@ if __name__ == '__main__':
     log.info("use cells form ground truth is set to %s" % use_gt)
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    known_mergers = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/merger_arr.pkl")
+    known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
     if use_gt:
         v6_gt = pd.read_csv("wholebrain/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv", names = ["cellids", "celltype"])
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
         #only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         if ct in ax_ct:
             cell_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/ax_%.3s_dict.pkl" % (ct_dict[ct]))
+                "/cajal/nvmescratch/users/arother/j0251v4_prep/ax_%.3s_dict.pkl" % (ct_dict[ct]))
             if use_gt:
                 cellids = np.array(v6_gt["cellids"][v6_gt["celltype"] == ct_dict[ct]])
             else:
@@ -69,12 +69,13 @@ if __name__ == '__main__':
                                                 axon_only=True, max_path_len=None)
         else:
             cell_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % (ct_dict[ct]))
+                "/cajal/nvmescratch/users/arother/j0251v4_prep/full_%.3s_dict.pkl" % (ct_dict[ct]))
             if use_gt:
                 cellids = np.array(v6_gt["cellids"][v6_gt["celltype"] == ct_dict[ct]])
+                raise ValueError
             else:
                 cellids = load_pkl2obj(
-                    "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[ct])
+                    "/cajal/nvmescratch/users/arother/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[ct])
                 merger_inds = np.in1d(cellids, known_mergers) == False
                 cellids = cellids[merger_inds]
                 if ct == 2:

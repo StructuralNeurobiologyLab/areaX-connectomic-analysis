@@ -61,6 +61,8 @@ if __name__ == '__main__':
                 "/cajal/nvmescratch/users/arother/j0251v4_prep/ax_%.3s_dict.pkl" % (ct_dict[ct]))
             if use_gt:
                 cellids = np.array(v6_gt["cellids"][v6_gt["celltype"] == ct_dict[ct]])
+                cell_dict_ids = list(cell_dict.keys)
+                cellids = cellids[np.in1d(cellids, cell_dict_ids)]
             else:
                 cellids = np.array(list(cell_dict.keys()))
                 merger_inds = np.in1d(cellids, known_mergers) == False
@@ -72,7 +74,8 @@ if __name__ == '__main__':
                 "/cajal/nvmescratch/users/arother/j0251v4_prep/full_%.3s_dict.pkl" % (ct_dict[ct]))
             if use_gt:
                 cellids = np.array(v6_gt["cellids"][v6_gt["celltype"] == ct_dict[ct]])
-                raise ValueError
+                cell_dict_ids = list(cell_dict.keys)
+                cellids = cellids[np.in1d(cellids, cell_dict_ids)]
             else:
                 cellids = load_pkl2obj(
                     "/cajal/nvmescratch/users/arother/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[ct])

@@ -58,12 +58,13 @@ def get_cKDtrees_pkl(cellid):
     '''
     hc = load_pkl2obj("%s/%i_hc.pkl" % (filename, cellid))
     ckdtree = cKDTree(hc.nodes)
-    write_obj2pkl("%s/%i_hc.pkl" % (filename, cellid), ckdtree)
+    write_obj2pkl("%s/%i_kdtree.pkl" % (filename, cellid), ckdtree)
 
 p = pool.Pool()
 #p.map(partial(get_hybrid_clouds, use_myelin = use_myelin, use_syntype = use_syntype,
-#                       cellshape_only = cellshape_only, filename = filename), tqdm(cellids))
+ #                    cellshape_only = cellshape_only, filename = filename), tqdm(cellids))
+
 
 p.map(get_cKDtrees_pkl, tqdm(cellids))
 
-raise ValueError
+

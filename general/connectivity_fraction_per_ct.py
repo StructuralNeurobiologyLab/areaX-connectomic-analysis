@@ -153,8 +153,10 @@ if __name__ == '__main__':
                                                                                       synapse_dict_perct[ct]['incoming total synapse number']
             synapse_dict_perct[ct]['incoming percentage full cells synapse sum size'] = in_syn_sizes / \
                                                                                         synapse_dict_perct[ct]['incoming total synapse sum size']
-            synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse number'] = np.mean(in_syn_numbers)
-            synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse sum size'] = np.mean(in_syn_sizes)
+            synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse number'] = np.mean(
+                synapse_pd_perct[ct]['incoming percentage full cells synapse number'])
+            synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse sum size'] = np.mean(
+                synapse_pd_perct[ct]['incoming percentage full cells synapse sum size'])
         #outgoing synapses
         # calculate total number of outgoing synapses and sum size (see also similar in analysis_prep_func)
         out_ids, out_sizes, out_ssv_partners, out_axs, out_cts, unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
@@ -165,11 +167,11 @@ if __name__ == '__main__':
             ct=ct, cellids=suitable_ids_dict[ct],
             filter_ax=[1],
             filter_ids=None, return_syn_arrays=True)
-        synapse_dict_perct[ct]['in cellids'] = unique_out_ssvs
-        synapse_dict_perct[ct]['incoming total synapse number'] = out_syn_numbers
-        synapse_dict_perct[ct]['incoming total synapse sum size'] = out_syn_sizes
-        synapse_pd_perct.loc[ct_str, 'mean incoming total synapse number'] = np.mean(out_syn_numbers)
-        synapse_pd_perct.loc[ct_str, 'mean incoming total synapse sum size'] = np.mean(out_syn_sizes)
+        synapse_dict_perct[ct]['out cellids'] = unique_out_ssvs
+        synapse_dict_perct[ct]['outgoing total synapse number'] = out_syn_numbers
+        synapse_dict_perct[ct]['outgoing total synapse sum size'] = out_syn_sizes
+        synapse_pd_perct.loc[ct_str, 'mean outgoing total synapse number'] = np.mean(out_syn_numbers)
+        synapse_pd_perct.loc[ct_str, 'mean outgoing total synapse sum size'] = np.mean(out_syn_sizes)
         # get only synapses that are with other suitable ids from every cts
         out_ids, out_sizes, out_ssv_partners, out_axs, out_cts, unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
             syn_ids=out_ids,
@@ -179,23 +181,22 @@ if __name__ == '__main__':
             ct=ct, cellids=suitable_ids_dict[ct],
             filter_ax=[1],
             filter_ids=all_suitable_ids, return_syn_arrays=True)
-        synapse_dict_perct[ct]['in full cellids'] = unique_out_ssvs
-        synapse_dict_perct[ct]['incoming full cell synapse number'] = out_syn_numbers
-        synapse_dict_perct[ct]['incoming full cell synapse sum size'] = out_syn_sizes
-        synapse_pd_perct.loc[ct_str, 'mean incoming full cell synapse number'] = np.mean(out_syn_numbers)
-        synapse_pd_perct.loc[ct_str, 'mean incoming full cell synapse sum size'] = np.mean(out_syn_sizes)
+        synapse_dict_perct[ct]['out full cellids'] = unique_out_ssvs
+        synapse_dict_perct[ct]['outgoing full cell synapse number'] = out_syn_numbers
+        synapse_dict_perct[ct]['outgoing full cell synapse sum size'] = out_syn_sizes
+        synapse_pd_perct.loc[ct_str, 'mean outgoing full cell synapse number'] = np.mean(out_syn_numbers)
+        synapse_pd_perct.loc[ct_str, 'mean outgoing full cell synapse sum size'] = np.mean(out_syn_sizes)
         # calculate percentage of full cells
-        synapse_dict_perct[ct]['incoming percentage full cells synapse number'] = out_syn_numbers / \
+        synapse_dict_perct[ct]['outgoing percentage full cells synapse number'] = out_syn_numbers / \
                                                                                   synapse_dict_perct[ct][
                                                                                       'incoming total synapse number']
-        synapse_dict_perct[ct]['incoming percentage full cells synapse sum size'] = out_syn_sizes / \
+        synapse_dict_perct[ct]['outgoing percentage full cells synapse sum size'] = out_syn_sizes / \
                                                                                     synapse_dict_perct[ct][
                                                                                         'incoming total synapse sum size']
-        synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse number'] = np.mean(out_syn_numbers)
-        synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse sum size'] = np.mean(out_syn_sizes)
-        #now use only synapses to cells that are in suitable cellids
-        #calculate total number and sum of synapse size again
-        #calculate percentage of synapses to full cells
+        synapse_pd_perct.loc[ct_str, 'mean outgoing percentage full cell synapse number'] = np.mean(
+            synapse_pd_perct[ct]['outgoing percentage full cells synapse number'])
+        synapse_pd_perct.loc[ct_str, 'mean outgoing percentage full cell synapse sum size'] = np.mean(
+            synapse_pd_perct[ct]['outgoing percentage full cells synapse sum size'])
         raise ValueError
 
 

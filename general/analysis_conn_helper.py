@@ -251,4 +251,54 @@ def get_contact_site_axoness_percell(cs_dict, compartment):
     cs_dict["cs ids"] = cs_ids[close_node_comp_inds]
     return cs_dict
 
+def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, ct, cellids, filter_ax = None, filter_ids = None, return_syn_arrays = True):
+    '''
+    Get number of synapses and sum of synapses sizes for each cell in array. If filter_ax then only the compartment wanted;
+    if filter_ids then only from specific cellids.
+    :param syn_ids: array of synapse ids
+    :param syn_sizes: array with synapse sizes
+    :param syn_ssv_partners: synaptic partner cellids
+    :param syn_axs: synaptic axoness parameters, 0 = dendrite, 1 = axon, 2 = soma
+    :param syn_cts: celltypes of synaptic partners
+    :param ct: celltype that should be filtered with
+    :param cellids: cellids for cells looked for
+    :param filter_ax: if given, filters for given compartments, give list or array
+    :param filter_ids: if given only uses synapses between given ids
+    :param return_syn_arrays: if True returns id, sizes, ssv_partners, syn_ax arrays
+    :return: number of synapses, sum size of synapses, filtered synaptic parameter arrays
+    '''
+    if filter_ax is not None:
+        ct_inds = np.in1d(syn_ssv_partners, cellids).reshape(len(syn_ssv_partners), 2)
+        comp_inds = np.in1d(syn_axs, filter_ax).reshape(len(syn_cts), 2)
+        filtered_inds = np.any(ct_inds == comp_inds, axis=1)
+        syn_cts = syn_cts[filtered_inds]
+        syn_ids = syn_ids[filtered_inds]
+        syn_axs = syn_axs[filtered_inds]
+        syn_ssv_partners = syn_ssv_partners[filtered_inds]
+        syn_sizes = syn_sizes[filtered_inds]
+    if filter_ids is not None:
+        id_inds = np.all(np.in1d(syn_ssv_partners, filter_ids).reshape(len(syn_ssv_partners), 2),
+                              axis=1)
+        syn_cts = syn_cts[id_inds]
+        syn_ids = syn_ids[id_inds]
+        syn_ssv_partners = syn_ssv_partners[id_inds]
+        syn_sizes = syn_sizes[id_inds]
+        syn_axs = syn_axs[id_inds]
+    if filter_ax is not None:
+        #uses position of compartment to identify cells to group by
+        if filter_ax[0] == 1:
+            sort_inds =np.where(syn_axs == 1)
+        else:
+            sort_inds = np.where(syn_axs != 1)
+    else:
+        #uses celltype to identify cells to group by
+        sort_inds = np.where(syn_cts == ct)
+    ssvs = syn_ssv_partners[sort_inds]
+    ssv_inds, unique_ssvs = pd.factorize(ssvs)
+    syn_sizes = np.bincount(ssv_inds, syn_sizes)
+    syn_numbers = np.bincount(ssv_inds)
+    if return_syn_arrays:
+        return syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, unique_ssvs, syn_sizes, syn_numbers
+    else:
+        return unique_ssvs, syn_sizes, syn_numbers
 

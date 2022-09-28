@@ -295,10 +295,10 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
         sort_inds = np.where(syn_cts == ct)
     ssvs = syn_ssv_partners[sort_inds]
     ssv_inds, unique_ssvs = pd.factorize(ssvs)
-    syn_sizes = np.bincount(ssv_inds, syn_sizes)
+    syn_ssv_sizes = np.bincount(ssv_inds, syn_sizes)
     syn_numbers = np.bincount(ssv_inds)
     if return_syn_arrays:
-        return syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, unique_ssvs, syn_sizes, syn_numbers
+        return syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, unique_ssvs, syn_ssv_sizes, syn_numbers
     else:
-        return unique_ssvs, syn_sizes, syn_numbers
+        return unique_ssvs, syn_ssv_sizes, syn_numbers
 

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     min_comp_len = 200
-    max_MSN_path_len = 7500
+    max_MSN_path_len = 11000
     syn_prob = 0.8
     min_syn_size = 0.1
     msn_ct = 2
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     step_idents = ['Suitable cellids loaded']
 
     log.info("Step 2/X: Get synapse number and sum of synapse size fractions for each celltype")
-    synapse_dict_perct = {i: {} for i in celltypes}
+    synapse_dict_perct = {i: {} for i in range(num_cts)}
     synapse_pd_perct = cts_numbers_perct = pd.DataFrame(index=celltypes)
     for ct in tqdm(range(num_cts)):
         ct_str = ct_dict[ct]
@@ -199,11 +199,15 @@ if __name__ == '__main__':
             synapse_pd_perct[ct]['outgoing percentage full cells synapse sum size'])
         raise ValueError
 
+        #make first plots with fragments vs full cells incoming/ outgoing (pie chart)
+        #get sum size and sum of synapses for each celltype seperate (only full cells)
 
-
-
-        #get ids only from suitable cellids
-        #make first plots with fragments vs full cells incoming/ outgoing
+    #Step 3/X plotting
+    #Plots:
+    #individual celltypes: varying pie charts
+    #all celltypes: bar plot with fragments vs full cells (incoming, outgoing), normalised
+    #all celltypes: bar plot full cells (incoming, outgoing), normalised
+    #matrix, incoming, outgoing, normalised (heatmap?), syn number, sum synapse size
 
 
 

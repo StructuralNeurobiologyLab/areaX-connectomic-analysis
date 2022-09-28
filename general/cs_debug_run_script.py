@@ -6,6 +6,7 @@ from syconn.reps.segmentation import SegmentationDataset, SegmentationObject
 from syconn.handler.config import initialize_logging
 from syconn.extraction.cs_processing_steps import combine_and_split_cs
 
+
 global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
 sd_cs_ssv = SegmentationDataset("cs_ssv", working_dir=global_params.config.working_dir)
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)

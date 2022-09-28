@@ -10,8 +10,8 @@ from syconn.extraction.cs_processing_steps import combine_and_split_cs
 global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
 sd_cs_ssv = SegmentationDataset("cs_ssv", working_dir=global_params.config.working_dir)
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-f_name = "cajal/nvmescratch/users/arother/cs_debugging/220913_cs_run/"
-log = initialize_logging('220912 cs run', log_dir=f_name + '/logs/')
+f_name = "cajal/nvmescratch/users/arother/cs_debugging/220927_cs_run/"
+log = initialize_logging('220927 cs run with excluded astrocytes', log_dir=f_name + '/logs/')
 log.info("loading the filtered cs")
 filtered_cs = load_pkl2obj("cajal/nvmescratch/users/arother/cs_debugging/filtered_cs.pkl")
 

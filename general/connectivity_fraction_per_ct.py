@@ -41,18 +41,24 @@ if __name__ == '__main__':
     msn_ct = 2
     lman_ct = 3
     gpi_ct = 7
+    exclude_known_mergers = True
     f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/220927_j0251v4_cts_percentages_mcl_%i_synprob_%.2f" % (
     min_comp_len, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Celltypes input output percentages', log_dir=f_name + '/logs/')
-    log.info("min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %.1f, min_syn_size = %.1f" % (min_comp_len, max_MSN_path_len, syn_prob, min_syn_size))
+    log.info(
+        "min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s" % (
+        min_comp_len,
+        max_MSN_path_len, syn_prob, min_syn_size, exclude_known_mergers))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
     #this script should iterate over all celltypes
     axon_cts = [1, 3, 4]
     log.info("Step 1/X: Load cell dicts and get suitable cellids")
+    if exclude_known_mergers:
+        known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
     celltypes = [ct_dict[ct] for ct in ct_dict]
     num_cts = len(celltypes)
     full_cell_dicts = {}
@@ -66,6 +72,8 @@ if __name__ == '__main__':
             "/cajal/nvmescratch/users/arother/j0251v4_prep/ax_%.3s_dict.pkl" % ct_str)
             #get ids with min compartment length
             cellids = list(cell_dict.keys())
+            merger_inds = np.in1d(cellids, known_mergers) == False
+            cellids = cellids[merger_inds]
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len, axon_only=True,
                               max_path_len=None)
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(cellids)
@@ -73,6 +81,9 @@ if __name__ == '__main__':
             cell_dict = load_pkl2obj(
                 "/cajal/nvmescratch/users/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_str)
             cellids = list(cell_dict.keys())
+            if exclude_known_mergers:
+                merger_inds = np.in1d(cellids, known_mergers) == False
+                cellids = cellids[merger_inds]
             if ct == 2:
                 cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                                 axon_only=False,
@@ -87,11 +98,12 @@ if __name__ == '__main__':
         full_cell_dicts[ct] = cell_dict
         suitable_ids_dict[ct] = cellids_checked
         cts_numbers_perct.loc[ct_str, 'number of suitable cells'] = len(cellids_checked)
-        cts_numbers_perct.loc[ct_str,'percentage of suitable cells'] = cts_numbers_perct.loc[ct_str, 'total number of cells']/\
-                                                                   cts_numbers_perct.loc[ct_str, 'number of suitable cells']
+        cts_numbers_perct.loc[ct_str,'percentage of suitable cells'] = cts_numbers_perct.loc[ct_str, 'number of suitable cells'] / \
+                                                                       cts_numbers_perct.loc[ct_str, 'total number of cells']
+
         all_suitable_ids.append(cellids_checked)
 
-    all_suitable_ids = np.hstack(np.array(all_suitable_ids))
+    all_suitable_ids = np.concatenate(all_suitable_ids)
     write_obj2pkl("%s/suitable_ids_allct.pkl" % f_name, suitable_ids_dict)
     cts_numbers_perct.to_csv("%s/numbers_perct.csv" % f_name)
     time_stamps = [time.time()]
@@ -154,9 +166,9 @@ if __name__ == '__main__':
             synapse_dict_perct[ct]['incoming percentage full cells synapse sum size'] = in_syn_sizes / \
                                                                                         synapse_dict_perct[ct]['incoming total synapse sum size']
             synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse number'] = np.mean(
-                synapse_pd_perct[ct]['incoming percentage full cells synapse number'])
+                synapse_dict_perct[ct]['incoming percentage full cells synapse number'])
             synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse sum size'] = np.mean(
-                synapse_pd_perct[ct]['incoming percentage full cells synapse sum size'])
+                synapse_dict_perct[ct]['incoming percentage full cells synapse sum size'])
         #outgoing synapses
         # calculate total number of outgoing synapses and sum size (see also similar in analysis_prep_func)
         out_ids, out_sizes, out_ssv_partners, out_axs, out_cts, unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
@@ -194,9 +206,9 @@ if __name__ == '__main__':
                                                                                     synapse_dict_perct[ct][
                                                                                         'incoming total synapse sum size']
         synapse_pd_perct.loc[ct_str, 'mean outgoing percentage full cell synapse number'] = np.mean(
-            synapse_pd_perct[ct]['outgoing percentage full cells synapse number'])
+            synapse_dict_perct[ct]['outgoing percentage full cells synapse number'])
         synapse_pd_perct.loc[ct_str, 'mean outgoing percentage full cell synapse sum size'] = np.mean(
-            synapse_pd_perct[ct]['outgoing percentage full cells synapse sum size'])
+            synapse_dict_perct[ct]['outgoing percentage full cells synapse sum size'])
         raise ValueError
 
         #make first plots with fragments vs full cells incoming/ outgoing (pie chart)

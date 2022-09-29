@@ -71,7 +71,7 @@ if __name__ == '__main__':
             cell_dict = load_pkl2obj(
             "/cajal/nvmescratch/users/arother/j0251v4_prep/ax_%.3s_dict.pkl" % ct_str)
             #get ids with min compartment length
-            cellids = list(cell_dict.keys())
+            cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len, axon_only=True,
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         else:
             cell_dict = load_pkl2obj(
                 "/cajal/nvmescratch/users/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_str)
-            cellids = list(cell_dict.keys())
+            cellids = np.array(list(cell_dict.keys()))
             if exclude_known_mergers:
                 merger_inds = np.in1d(cellids, known_mergers) == False
                 cellids = cellids[merger_inds]
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         suitable_ids_dict[ct] = cellids_checked
         cts_numbers_perct.loc[ct_str, 'number of suitable cells'] = len(cellids_checked)
         cts_numbers_perct.loc[ct_str,'percentage of suitable cells'] = cts_numbers_perct.loc[ct_str, 'number of suitable cells'] / \
-                                                                       cts_numbers_perct.loc[ct_str, 'total number of cells']
+                                                                       cts_numbers_perct.loc[ct_str, 'total number of cells'] * 100
 
         all_suitable_ids.append(cellids_checked)
 

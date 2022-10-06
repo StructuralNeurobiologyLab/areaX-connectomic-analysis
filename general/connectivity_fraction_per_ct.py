@@ -59,6 +59,7 @@ if __name__ == '__main__':
     log.info("Step 1/X: Load cell dicts and get suitable cellids")
     if exclude_known_mergers:
         known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
+    #To Do: also exlclude MSNs from list
     celltypes = [ct_dict[ct] for ct in ct_dict]
     num_cts = len(celltypes)
     full_cell_dicts = {}

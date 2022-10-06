@@ -1,16 +1,17 @@
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
+    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
+    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
+    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
         axon_den_arborization_ct, compare_compartment_volume_ct_multiple
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     from syconn.reps.segmentation import SegmentationDataset
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_nx_graph
     import os as os
     import pandas as pd
+    import numpy as np
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -24,24 +25,37 @@ if __name__ == '__main__':
     cl = 200
     syn_prob = 0.8
     min_syn_size = 0.1
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220522_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f_ranksums" % (cl, syn_prob)
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221005_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f_ranksums" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('MSN percentile comparison connectivity', log_dir=f_name + '/logs/')
+    log = initialize_logging('MSN percentile comparison connectivity, mergers excluded', log_dir=f_name + '/logs/')
     log.info("MSN percentile comparison starts")
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    f_name_saving = "/wholebrain/scratch/arother/j0251v4_prep"
+    f_name_saving = "cajal/nvmescratch/users/arother/j0251v4_prep"
+
+    known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
 
     GPe_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
-    GPi_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
-    MSN_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_arr.pkl")
+        "cajal/nvmescratch/users/arother/j0251v4_prep/full_GPe_arr.pkl")
+    merger_inds = np.in1d(GPe_ids, known_mergers) == False
+    GPe_ids = GPe_ids[merger_inds]
 
-    log.info("Step 1/X: sort MSN based on connectivity to GPe and GPi")
-    msn2gpe_ids, msn2gpi_ids, msn2gpei_ids, msn_nogp_ids = sort_by_connectivity(sd_synssv, sd_csssv = sd_csssv, ct1 = 2, ct2 = 6, ct3 = 7, cellids1 = MSN_ids, cellids2 = GPe_ids, cellids3 = GPi_ids,
+    GPi_ids = load_pkl2obj(
+        "cajal/nvmescratch/users/arother/j0251v4_prep/full_GPi_arr.pkl")
+    merger_inds = np.in1d(GPi_ids, known_mergers) == False
+    GPi_ids = GPi_ids[merger_inds]
+
+    MSN_ids = load_pkl2obj(
+        "cajal/nvmescratch/users/arother/j0251v4_prep/full_MSN_arr.pkl")
+    merger_inds = np.in1d(MSN_ids, known_mergers) == False
+    MSN_ids = MSN_ids[merger_inds]
+    misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
+    astro_inds = np.in1d(MSN_ids, misclassified_asto_ids) == False
+    MSN_ids = MSN_ids[astro_inds]
+
+    log.info("Step 1/11: sort MSN based on connectivity to GPe and GPi")
+    msn2gpe_ids, msn2gpi_ids, msn2gpei_ids, msn_nogp_ids = sort_by_connectivity(sd_synssv, sd_csssv = None, ct1 = 2, ct2 = 6, ct3 = 7, cellids1 = MSN_ids, cellids2 = GPe_ids, cellids3 = GPi_ids,
                          f_name = f_name, f_name_saving = f_name_saving, min_comp_len = cl, syn_prob_thresh = syn_prob, min_syn_size = min_syn_size)
 
     time_stamps = [time.time()]
@@ -50,8 +64,6 @@ if __name__ == '__main__':
     labels_cts = ["MSN only GPe", "MSN only GPi", "MSN both GPs", "MSN no GPs"]
     msn_cts = [2, 2, 2, 2]
     msn_colors = ["#EAAE34", '#2F86A8', "#707070", "black"]
-
-    raise ValueError
 
 
     log.info("Step 2/11: Compare new MSN groups based on morphology")
@@ -73,8 +85,6 @@ if __name__ == '__main__':
     #also compare spiness
     time_stamps = [time.time()]
     step_idents = ['compare MSN groups finished']
-
-    raise ValueError
 
 
     log.info("Step 3/11: Compare connectivity between MSN groups")
@@ -167,7 +177,7 @@ if __name__ == '__main__':
                                                    min_comp_len=cl)
     time_stamps = [time.time()]
     step_idents = ['compare MSN connectivity to GPi finsihed']
-    raise ValueError
+
 
     labels_cts = ["MSN only GPe", "MSN only GPi", "MSN both GPs", "MSN no GPs"]
     msn_cts = [2, 2, 2, 2]

@@ -12,11 +12,11 @@ sd_cs_ssv = SegmentationDataset("cs_ssv", working_dir=global_params.config.worki
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 f_name = "cajal/scratch/users/arother/cs_debugging/221006_cs_exampleworker/"
 log = initialize_logging('221006 cs run with excluded astrocytes, only worker with example cs', log_dir=f_name + '/logs/')
-log.info("Memory set to 33 000, 30000, 1 CPU per task, counter for loop for loading voxels in gen_mesh_voxelmask added")
+log.info("Memory set to 15 000, 100000 workers, 1 CPU per task")
 log.info("loading the filtered cs")
 filtered_cs = load_pkl2obj("cajal/nvmescratch/users/arother/cs_debugging/filtered_cs.pkl")
 
 log.info("generating attr_dicts for cs_ssv")
 combine_and_split_cs(wd = global_params.wd, ssd_version = ssd.version,
-                     cs_version = sd_cs_ssv.version, n_folders_fs=30000, overwrite = True,
+                     cs_version = sd_cs_ssv.version, n_folders_fs=100000, overwrite = True,
                      rel_ssv_with_cs_ids = filtered_cs, save_dir= f_name)

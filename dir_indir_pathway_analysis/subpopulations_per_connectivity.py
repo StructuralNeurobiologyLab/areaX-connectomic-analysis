@@ -59,7 +59,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     cellids3 = check_comp_lengths_ct(cellids3, fullcelldict=full_celldict3, min_comp_len=min_comp_len)
 
     log.info("Step 2/4: Prefilter synapses for synapses between these celltypes")
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv,
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
                                                                                            pre_cts=[ct1], post_cts = [ct2, ct3],
                                                                                            syn_prob_thresh=syn_prob_thresh,
                                                                                            min_syn_size=min_syn_size,
@@ -99,8 +99,8 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
         cs_ids_post = []
         for ci, cellid in enumerate(tqdm(post_cellids)):
             cs_ids_post.append(cs_result_dicts_post[ci]["cs ids"])
-        cs_ids_ct1 = np.hstack(np.array(cs_ids_ct1))
-        cs_ids_post = np.hstack(np.array(cs_ids_post))
+        cs_ids_ct1 = np.hstack(np.array(cs_ids_ct1, dtype=object))
+        cs_ids_post = np.hstack(np.array(cs_ids_post, dtype=object))
         if len(cs_ids_ct1) > len(cs_ids_post):
             suitable_cs_inds_ct = np.in1d(cs_ids_ct1, cs_ids_post)
             suitable_cs_ids = cs_ids_ct1[suitable_cs_inds_ct]
@@ -281,7 +281,6 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
                 except ZeroDivisionError:
                     not_conn_dict[cellid]["average contact sites %s per cell" % ct_dict[ct3]] = 0
 
-    raise ValueError
     time_stamps = [time.time()]
     step_idents = ['t-0']
 

@@ -27,30 +27,27 @@ if __name__ == '__main__':
     from tqdm import tqdm
     import scipy
 
-
     global_params.wd = "ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
-    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
+    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     min_comp_len = 200
-    max_MSN_path_len = 11000
     syn_prob = 0.8
     min_syn_size = 0.1
     msn_ct = 2
     lman_ct = 3
     gpi_ct = 7
     exclude_known_mergers = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/220927_j0251v4_cts_percentages_mcl_%i_synprob_%.2f" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221006_j0251v4_cts_percentages_mcl_%i_synprob_%.2f" % (
     min_comp_len, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Celltypes input output percentages', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s" % (
-        min_comp_len,
-        max_MSN_path_len, syn_prob, min_syn_size, exclude_known_mergers))
+        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s" % (
+        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -86,11 +83,10 @@ if __name__ == '__main__':
                 merger_inds = np.in1d(cellids, known_mergers) == False
                 cellids = cellids[merger_inds]
             if ct == 2:
-                cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
-                                                axon_only=False,
-                                                max_path_len=max_MSN_path_len)
-            else:
-                cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
+                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+                cellids = cellids[astro_inds]
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                                 axon_only=False,
                                                 max_path_len=None)
             all_cellids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == ct]
@@ -162,10 +158,13 @@ if __name__ == '__main__':
             synapse_pd_perct.loc[ct_str, 'mean incoming full cell synapse number'] = np.mean(in_syn_numbers)
             synapse_pd_perct.loc[ct_str, 'mean incoming full cell synapse sum size'] = np.mean(in_syn_sizes)
             #calculate percentage of full cells
+            full_inds = np.in1d(synapse_dict_perct[ct]['in cellids'], unique_in_ssvs)
+            in_total_syn_number = synapse_dict_perct[ct]['incoming total synapse number'][full_inds]
+            in_total_syn_size = synapse_dict_perct[ct]['incoming total synapse sum size'][full_inds]
             synapse_dict_perct[ct]['incoming percentage full cells synapse number'] = in_syn_numbers / \
-                                                                                      synapse_dict_perct[ct]['incoming total synapse number']
+                                                                                      in_total_syn_number
             synapse_dict_perct[ct]['incoming percentage full cells synapse sum size'] = in_syn_sizes / \
-                                                                                        synapse_dict_perct[ct]['incoming total synapse sum size']
+                                                                                        in_total_syn_size
             synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse number'] = np.mean(
                 synapse_dict_perct[ct]['incoming percentage full cells synapse number'])
             synapse_pd_perct.loc[ct_str, 'mean incoming percentage full cell synapse sum size'] = np.mean(
@@ -200,12 +199,13 @@ if __name__ == '__main__':
         synapse_pd_perct.loc[ct_str, 'mean outgoing full cell synapse number'] = np.mean(out_syn_numbers)
         synapse_pd_perct.loc[ct_str, 'mean outgoing full cell synapse sum size'] = np.mean(out_syn_sizes)
         # calculate percentage of full cells
+        full_inds = np.in1d(synapse_dict_perct[ct]['out cellids'], unique_out_ssvs)
+        out_total_syn_number = synapse_dict_perct[ct]['outgoing total synapse number'][full_inds]
+        out_total_syn_size = synapse_dict_perct[ct]['outgoing total synapse sum size'][full_inds]
         synapse_dict_perct[ct]['outgoing percentage full cells synapse number'] = out_syn_numbers / \
-                                                                                  synapse_dict_perct[ct][
-                                                                                      'incoming total synapse number']
+                                                                                  out_total_syn_number
         synapse_dict_perct[ct]['outgoing percentage full cells synapse sum size'] = out_syn_sizes / \
-                                                                                    synapse_dict_perct[ct][
-                                                                                        'incoming total synapse sum size']
+                                                                                    out_total_syn_size
         synapse_pd_perct.loc[ct_str, 'mean outgoing percentage full cell synapse number'] = np.mean(
             synapse_dict_perct[ct]['outgoing percentage full cells synapse number'])
         synapse_pd_perct.loc[ct_str, 'mean outgoing percentage full cell synapse sum size'] = np.mean(

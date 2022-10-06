@@ -15,8 +15,8 @@ from functools import partial
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, ComparingMultipleForPLotting
-from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, get_compartment_bbvolume, \
+from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, ComparingMultipleForPLotting
+from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, get_compartment_bbvolume, \
     get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled, get_spine_density
 from syconn.reps.super_segmentation import SuperSegmentationObject
 

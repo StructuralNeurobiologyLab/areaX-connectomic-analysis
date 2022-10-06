@@ -12,10 +12,10 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes, get_cell_nodes_ax
-from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids, get_contact_site_axoness_percell
-from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
-from wholebrain.scratch.arother.bio_analysis.general.analysis_prep_func import synapse_amount_percell
+from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes, get_cell_nodes_ax
+from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids, get_contact_site_axoness_percell
+from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
+from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_prep_func import synapse_amount_percell
 from multiprocessing import pool
 from functools import partial
 from syconn.reps.super_segmentation import SuperSegmentationObject
@@ -417,7 +417,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 
-    if sd_cssv is not None:
+    if sd_csssv is not None:
         log.info("Step 4b/4: Compute statistics for contact sites and plot results")
         cs_columnns = ["cellids", "connection to cts", "sum contact sites", "sum contact sites %s" % ct_dict[ct2], "average contact sites %s per cell" % ct_dict[ct2],
                        "sum contact sites %s" % ct_dict[ct3], "average contact sites %s per cell" % ct_dict[ct3], "percentage synapse amount to contact sites",

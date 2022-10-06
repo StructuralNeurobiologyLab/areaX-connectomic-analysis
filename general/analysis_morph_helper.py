@@ -69,7 +69,8 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
     no_spine_dendrite_length = nospine_graph.size(weight="weight") / 1000
     spine_graph = g.copy()
     spine_graph.remove_nodes_from(nonspine_inds)
-    spine_amount = len(list(nx.connected_component_subgraphs(spine_graph)))
+    subgraphs = (spine_graph.subgraph(c) for c in nx.connected_components(spine_graph))
+    spine_amount = len(list(subgraphs))
     spine_density = spine_amount/no_spine_dendrite_length
     return spine_density
 

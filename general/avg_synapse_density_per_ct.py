@@ -1,9 +1,10 @@
 #get an estimate about the average synapse density per celltype per axon
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -23,17 +24,20 @@ if __name__ == '__main__':
     max_MSN_path_len = 7500
     min_syn_size = 0.1
     syn_prob = 0.8
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/general/220902_j0251v4_avg_syn_den_sb_%.2f_mcl_%i" % (
-        syn_prob, min_comp_len)
+    cls = CelltypeColors()
+    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
+    color_key = 'MudGrays'
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221014_j0251v4_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
+        syn_prob, min_comp_len, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('get average synapse density of axon per celltype', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %.2f, min_syn_size = %.i" % (
-            min_comp_len, max_MSN_path_len, syn_prob, min_syn_size))
+        "min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %.2f, min_syn_size = %.i, colors = %s" % (
+            min_comp_len, max_MSN_path_len, syn_prob, min_syn_size, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    known_mergers = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/merger_arr.pkl")
+    known_mergers = load_pkl2obj("cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
     log.info("Iterate over celltypes to get eachs estimate of synapse density")
     cts = list(ct_dict.keys())
     ax_ct = [1, 3, 4]
@@ -59,10 +63,10 @@ if __name__ == '__main__':
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
             if ct == 2:
-                cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
-                                                axon_only=False, max_path_len=max_MSN_path_len)
-            else:
-                cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
+                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+                cellids = cellids[astro_inds]
+            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                                 axon_only=False, max_path_len=None)
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
         log.info("Get axon pathlength per cell %s" % ct_dict[ct])
@@ -137,8 +141,8 @@ if __name__ == '__main__':
     log.info("Plot results")
     #make violinplot for values of all cells
     ct_dict_list = [res_ct_dict[ct] for ct in res_ct_dict]
-    colours = ["#010440", "#010326", "#D98977", "#BF0404", "#D9D9D9", "#8C8C8C", "#404040", "#0D0D0D", "#010440", "#010326", "#D98977"]
-    multiple_ct_for_plotting = ComparingMultipleForPLotting(ct_list = cts, dictionary_list = ct_dict_list, colour_list = colours, filename = f_name)
+    ct_colours = cls.colors[color_key]
+    multiple_ct_for_plotting = ComparingMultipleForPLotting(ct_list = cts, dictionary_list = ct_dict_list, colour_list = ct_colours, filename = f_name)
     for key in res_ct_dict[ct].keys():
         result_df = multiple_ct_for_plotting.result_df_per_param(key)
         multiple_ct_for_plotting.plot_violin(key = key, result_df = result_df, subcell = "synapse", x=None, stripplot = True, outgoing = False)

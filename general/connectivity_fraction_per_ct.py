@@ -15,6 +15,7 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses
     from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -42,14 +43,17 @@ if __name__ == '__main__':
     lman_ct = 3
     gpi_ct = 7
     exclude_known_mergers = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221006_j0251v4_cts_percentages_mcl_%i_synprob_%.2f" % (
-    min_comp_len, syn_prob)
+    cls = CelltypeColors()
+    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
+    color_key = 'MudGrays'
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221014_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s" % (
+    min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Celltypes input output percentages', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s" % (
-        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers))
+        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
+        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -112,8 +116,8 @@ if __name__ == '__main__':
     synapse_dict_perct = {i: {} for i in range(num_cts)}
     synapse_pd_perct = pd.DataFrame(index=celltypes)
     non_ax_celltypes = celltypes[np.in1d(np.arange(0, num_cts), axon_cts) == False]
-    ct_colours = ["#010440", "#010326", "#D98977", "#BF0404", "#D9D9D9", "#8C8C8C", "#404040", "#0D0D0D", "#010440", "#010326", "#D98977"]
-    ct_palette = {celltypes[i]: ct_colours[i] for i in range(num_cts)}
+    ct_colours = cls.colors[color_key]
+    ct_palette = cls.ct_palette(color_key, num = False)
     #index = postsynapse, column is post-synapse
     outgoing_synapse_matrix_synnumbers_rel = pd.DataFrame(columns=celltypes, index=celltypes)
     outgoing_synapse_matrix_synsizes_rel = pd.DataFrame(columns=celltypes, index=celltypes)
@@ -287,39 +291,54 @@ if __name__ == '__main__':
                 outgoing_synapse_matrix_synnumbers_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_numbers)
                 outgoing_synapse_matrix_synsizes_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_sizes)
 
-            # make plots per celltype, pie chart, violinplot
-            synapse_dict_ct = synapse_dict_perct[ct]
-            for key in synapse_dict_ct:
-                if 'ids' in key or 'full cell' in key or 'total' in key:
-                    continue
-                if ct_dict[0] in key:
-                    key_split = key.split()
-                    key_name = key_split[:-1]
-                    lengths = [len(synapse_dict_ct[key_name + '' + c]) for c in celltypes]
-                    max_length = np.max(lengths)
-                    result_df = pd.DataFrame(columns=celltypes, index=range(max_length))
-                    for i, c in np.enumerate(celltypes):
-                        result_df.loc[0:lengths[i], c] = synapse_dict_ct[key_name + '' + c]
-                    sns.stripplot(data=result_df, color="black", alpha=0.2,
-                                  dodge=True, size=2)
-                    sns.violinplot(data=result_df.reset_index(), inner="box",
-                                        palette=ct_palette)
-                    plt.title(key_name + ' of ' + ct_str)
-                    if 'percentage' in key:
-                        plt.ylabel('%')
+        # make plots per celltype, pie chart, violinplot
+        synapse_dict_ct = synapse_dict_perct[ct]
+        f_name_ct = f'{f_name}/{ct_str}'
+        if not os.path.exists(f_name_ct):
+            os.mkdir(f_name_ct)
+        for key in synapse_dict_ct:
+            if 'ids' in key or 'full cell' in key or 'total' in key:
+                continue
+            if ct_dict[0] in key:
+                key_name = key[:-3]
+                key_name_gen = key_name[:-6]
+                if 'incoming' in key:
+                    plt_celltypes = celltypes
+                else:
+                    plt_celltypes = non_ax_celltypes
+                lengths = [len(synapse_dict_ct[key_name + c]) for c in plt_celltypes]
+                max_length = np.max(lengths)
+                result_df = pd.DataFrame(columns=plt_celltypes, index=range(max_length))
+                for i, c in enumerate(plt_celltypes):
+                    result_df.loc[0:lengths[i] - 1, c] = synapse_dict_ct[key_name + c]
+                #fill up with zeros so that each cell that makes at least one synapse with another suitable cell is included in analysis
+                result_df.fillna(0)
+                if 'percentage' in key:
+                    ylabel = '%'
+                else:
+                    if 'number' in key:
+                        ylabel = 'synapse number'
                     else:
-                        if 'number' in key:
-                            plt.ylabel('synapse number')
-                        else:
-                            plt.ylabel('sum of synapse size [µm²]')
-                    plt.savefig('%s/%s_%s_violin.png' % (f_name, key_name, ct_str))
-                    plt.close()
-                    if 'percentage' in key:
-                        result_df.plot.pie(autopc = '%.1f%%', colors=ct_colours)
-                    else:
-                        result_df.plot.pie(colors=ct_colours)
-                    plt.title(key_name + ' of ' + ct_str)
-                    plt.savefig('%s/%s_%s_pie.png' % (f_name, key_name, ct_str))
+                        ylabel = 'sum of synapse size [µm²]'
+                sns.stripplot(data=result_df, color="black", alpha=0.2,
+                              dodge=True, size=2)
+                sns.violinplot(data=result_df, inner="box",
+                                    palette=ct_palette)
+                plt.title(key_name_gen + ' of ' + ct_str)
+                plt.ylabel(ylabel)
+                plt.savefig('%s/%s_%s_violin.png' % (f_name_ct, key_name_gen, ct_str))
+                plt.close()
+                sns.boxplot(data=result_df,
+                               palette=ct_palette)
+                plt.title(key_name_gen + ' of ' + ct_str)
+                plt.ylabel(ylabel)
+                plt.savefig('%s/%s_%s_violin.png' % (f_name_ct, key_name_gen, ct_str))
+                plt.close()
+                median_results = np.median(result_df, axis = 0)
+                if 'percentage' in key:
+                    plt.pie(median_results, labels = plt_celltypes, autopct='%.2f%%', colors=ct_colours)
+                    plt.title(key_name_gen + ' of ' + ct_str + ', median values')
+                    plt.savefig('%s/%s_%s_pie.png' % (f_name_ct, key_name_gen, ct_str))
                     plt.close()
 
     #save results as pkl and .csv

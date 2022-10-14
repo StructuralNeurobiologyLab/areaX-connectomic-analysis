@@ -111,7 +111,7 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1, celltype2],
                                                                                                syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
     else:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv,
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_coords = filter_synapse_caches_for_ct(sd_synssv,
                                                                                                pre_cts=[celltype1],
                                                                                                syn_prob_thresh=syn_prob_thresh,
                                                                                                min_syn_size=min_syn_size,
@@ -409,15 +409,17 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
             key2 = key_split[0] + "- " + comp_labels[1]
             key3 = key_split[0] + "- " + comp_labels[2]
             key4 = key_split[0] + "- " + comp_labels[3]
-            param_list_ct2= [ct1_2_ct2_pd[key], ct1_2_ct2_pd[key2], ct1_2_ct2_pd[key3], ct1_2_ct2_pd[key4]]
-            ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = ct1_str, outgoing = False)
-            ct1_2_ct2_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct2, subcell="synapse",
-                                                     stripplot=False, celltype2= ct1_str, outgoing = False)
-            param_list_ct1 = [ct2_2_ct1_pd[key], ct2_2_ct1_pd[key2], ct2_2_ct1_pd[key3], ct2_2_ct1_pd[key4]]
-            ct2_2_ct1_resultsdict.plot_violin_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
-                                                     stripplot=True, celltype2=ct2_str, outgoing=False)
-            ct2_2_ct1_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
-                                                  stripplot=False, celltype2=ct2_str, outgoing=False)
+            if np.any(len(param_list_ct2) > 0):
+                param_list_ct2= [ct1_2_ct2_pd[key], ct1_2_ct2_pd[key2], ct1_2_ct2_pd[key3], ct1_2_ct2_pd[key4]]
+                ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = ct1_str, outgoing = False)
+                ct1_2_ct2_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct2, subcell="synapse",
+                                                         stripplot=False, celltype2= ct1_str, outgoing = False)
+            if np.any(len(param_list_ct2) > 0):
+                param_list_ct1 = [ct2_2_ct1_pd[key], ct2_2_ct1_pd[key2], ct2_2_ct1_pd[key3], ct2_2_ct1_pd[key4]]
+                ct2_2_ct1_resultsdict.plot_violin_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
+                                                         stripplot=True, celltype2=ct2_str, outgoing=False)
+                ct2_2_ct1_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
+                                                      stripplot=False, celltype2=ct2_str, outgoing=False)
 
     plottime = time.time() - syntime
     print("%.2f sec for calculating parameters, plotting" % plottime)

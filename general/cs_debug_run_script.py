@@ -10,13 +10,13 @@ from syconn.extraction.cs_processing_steps import combine_and_split_cs
 global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
 sd_cs_ssv = SegmentationDataset("cs_ssv", working_dir=global_params.config.working_dir)
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-f_name = "cajal/scratch/users/arother/cs_debugging/221006_cs_exampleworker/"
-log = initialize_logging('221006 cs run with excluded astrocytes, only worker with example cs', log_dir=f_name + '/logs/')
-log.info("Memory set to 15 000, 100000 workers, 1 CPU per task")
+f_name = "cajal/scratch/users/arother/cs_debugging/221014_excl_by_size/"
+log = initialize_logging('221014 cs run', log_dir=f_name + '/logs/')
+log.info("10000 workers, 1 CPU per task, memory per default, excluded cs ids with size larger than 10**6")
 log.info("loading the filtered cs")
 filtered_cs = load_pkl2obj("cajal/nvmescratch/users/arother/cs_debugging/filtered_cs.pkl")
 
 log.info("generating attr_dicts for cs_ssv")
 combine_and_split_cs(wd = global_params.wd, ssd_version = ssd.version,
-                     cs_version = sd_cs_ssv.version, n_folders_fs=100000, overwrite = True,
+                     cs_version = sd_cs_ssv.version, n_folders_fs=10000, overwrite = True,
                      rel_ssv_with_cs_ids = filtered_cs, save_dir= f_name)

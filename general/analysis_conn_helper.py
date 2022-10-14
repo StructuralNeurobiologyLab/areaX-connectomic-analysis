@@ -251,7 +251,8 @@ def get_contact_site_axoness_percell(cs_dict, compartment):
     cs_dict["cs ids"] = cs_ids[close_node_comp_inds]
     return cs_dict
 
-def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, ct, cellids, filter_ax = None, filter_ids = None, return_syn_arrays = True):
+def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, ct, cellids, filter_ax = None,
+                                 filter_ids = None, return_syn_arrays = True, filter_pre_ids = None, filter_post_ids = None):
     '''
     Get number of synapses and sum of synapses sizes for each cell in array. If filter_ax then only the compartment wanted;
     if filter_ids then only from specific cellids.
@@ -265,6 +266,8 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
     :param filter_ax: if given, filters for given compartments, give list or array
     :param filter_ids: if given only uses synapses between given ids
     :param return_syn_arrays: if True returns id, sizes, ssv_partners, syn_ax arrays
+    :param filter_pre_ids: if True, makes sure only certain ids are presynaptic
+    :param filter_post_ids: if True: makes sure only certain ids are postsynaptic
     :return: number of synapses, sum size of synapses, filtered synaptic parameter arrays
     '''
     if filter_ax is not None:
@@ -284,6 +287,24 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
         syn_ssv_partners = syn_ssv_partners[id_inds]
         syn_sizes = syn_sizes[id_inds]
         syn_axs = syn_axs[id_inds]
+    if filter_pre_ids is not None:
+        ct_inds = np.in1d(syn_ssv_partners, filter_pre_ids).reshape(len(syn_ssv_partners), 2)
+        comp_inds = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
+        filtered_inds = np.all(ct_inds == comp_inds, axis=1)
+        syn_cts = syn_cts[filtered_inds]
+        syn_ids = syn_ids[filtered_inds]
+        syn_axs = syn_axs[filtered_inds]
+        syn_ssv_partners = syn_ssv_partners[filtered_inds]
+        syn_sizes = syn_sizes[filtered_inds]
+    if filter_post_ids is not None:
+        ct_inds = np.in1d(syn_ssv_partners, filter_post_ids).reshape(len(syn_ssv_partners), 2)
+        comp_inds = np.in1d(syn_axs, [0,2]).reshape(len(syn_ssv_partners), 2)
+        filtered_inds = np.all(ct_inds == comp_inds, axis=1)
+        syn_cts = syn_cts[filtered_inds]
+        syn_ids = syn_ids[filtered_inds]
+        syn_axs = syn_axs[filtered_inds]
+        syn_ssv_partners = syn_ssv_partners[filtered_inds]
+        syn_sizes = syn_sizes[filtered_inds]
     if filter_ax is not None:
         #uses position of compartment to identify cells to group by
         if filter_ax[0] == 1:

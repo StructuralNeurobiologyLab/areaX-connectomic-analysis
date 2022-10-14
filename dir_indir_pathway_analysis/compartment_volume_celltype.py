@@ -468,7 +468,6 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
 
 
     ranksum_results.to_csv("%s/ranksum_%s_%s.csv" % (f_name,label_cts[0], label_cts[1]))
-    raise ValueError
 
     plottime = time.time() - start
     print("%.2f sec for statistics and plotting" % plottime)

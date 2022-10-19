@@ -46,7 +46,7 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'MudGrays'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221014_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221019_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -275,21 +275,21 @@ if __name__ == '__main__':
                     syn_axs=out_axs, syn_cts=out_cts, ct=ct, cellids=suitable_ids_dict[ct],
                     filter_ax=None, filter_ids=None, return_syn_arrays=False,
                     filter_pre_ids=suitable_ids_dict[ct], filter_post_ids=suitable_ids_dict[other_ct])
-                synapse_dict_perct[ct][f'outgoing synapse ids with {other_ct_str}'] = unique_out_ssvs
-                synapse_dict_perct[ct][f'outgoing synapse number to {other_ct_str}'] = out_syn_numbers
-                synapse_dict_perct[ct][f'outgoing synapse sum size to {other_ct_str}'] = out_syn_sizes
-                # column is pre, index = postsynapse
-                outgoing_synapse_matrix_synnumbers_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(out_syn_numbers)
-                outgoing_synapse_matrix_synsizes_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(out_syn_sizes)
-                full_inds = np.in1d(total_full_out_ssvs, unique_out_ssvs)
-                adj_outgoing_full_number = synapse_dict_perct[ct]['outgoing full cell synapse number'][full_inds]
-                adj_outgoing_full_sizes = synapse_dict_perct[ct]['outgoing full cell synapse sum size'][full_inds]
-                perc_syn_numbers = 100 * out_syn_numbers / adj_outgoing_full_number
-                perc_syn_sizes = 100 * out_syn_sizes / adj_outgoing_full_sizes
-                synapse_dict_perct[ct][f'outgoing synapse number percentage of {other_ct_str}'] = perc_syn_numbers
-                synapse_dict_perct[ct][f'outgoing synapse sum size percentage of {other_ct_str}'] = perc_syn_sizes
-                outgoing_synapse_matrix_synnumbers_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_numbers)
-                outgoing_synapse_matrix_synsizes_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_sizes)
+            synapse_dict_perct[ct][f'outgoing synapse ids with {other_ct_str}'] = unique_out_ssvs
+            synapse_dict_perct[ct][f'outgoing synapse number to {other_ct_str}'] = out_syn_numbers
+            synapse_dict_perct[ct][f'outgoing synapse sum size to {other_ct_str}'] = out_syn_sizes
+            # column is pre, index = postsynapse
+            outgoing_synapse_matrix_synnumbers_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(out_syn_numbers)
+            outgoing_synapse_matrix_synsizes_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(out_syn_sizes)
+            full_inds = np.in1d(total_full_out_ssvs, unique_out_ssvs)
+            adj_outgoing_full_number = synapse_dict_perct[ct]['outgoing full cell synapse number'][full_inds]
+            adj_outgoing_full_sizes = synapse_dict_perct[ct]['outgoing full cell synapse sum size'][full_inds]
+            perc_syn_numbers = 100 * out_syn_numbers / adj_outgoing_full_number
+            perc_syn_sizes = 100 * out_syn_sizes / adj_outgoing_full_sizes
+            synapse_dict_perct[ct][f'outgoing synapse number percentage of {other_ct_str}'] = perc_syn_numbers
+            synapse_dict_perct[ct][f'outgoing synapse sum size percentage of {other_ct_str}'] = perc_syn_sizes
+            outgoing_synapse_matrix_synnumbers_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_numbers)
+            outgoing_synapse_matrix_synsizes_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_sizes)
 
         # make plots per celltype, pie chart, violinplot
         synapse_dict_ct = synapse_dict_perct[ct]
@@ -312,7 +312,7 @@ if __name__ == '__main__':
                 for i, c in enumerate(plt_celltypes):
                     result_df.loc[0:lengths[i] - 1, c] = synapse_dict_ct[key_name + c]
                 #fill up with zeros so that each cell that makes at least one synapse with another suitable cell is included in analysis
-                result_df.fillna(0)
+                result_df = result_df.fillna(0)
                 if 'percentage' in key:
                     ylabel = '%'
                 else:
@@ -328,13 +328,17 @@ if __name__ == '__main__':
                 plt.ylabel(ylabel)
                 plt.savefig('%s/%s_%s_violin.png' % (f_name_ct, key_name_gen, ct_str))
                 plt.close()
-                sns.boxplot(data=result_df,
-                               palette=ct_palette)
+                sns.boxplot(data=result_df, palette=ct_palette)
                 plt.title(key_name_gen + ' of ' + ct_str)
                 plt.ylabel(ylabel)
                 plt.savefig('%s/%s_%s_violin.png' % (f_name_ct, key_name_gen, ct_str))
                 plt.close()
-                median_results = np.median(result_df, axis = 0)
+                sns.barplot(data = result_df, palette=ct_palette)
+                plt.title(key_name_gen + ' of ' + ct_str)
+                plt.ylabel(ylabel)
+                plt.savefig('%s/%s_%s_bar.png' % (f_name_ct, key_name_gen, ct_str))
+                plt.close()
+                median_results = np.median(result_df, axis=0)
                 if 'percentage' in key:
                     plt.pie(median_results, labels = plt_celltypes, autopct='%.2f%%', colors=ct_colours)
                     plt.title(key_name_gen + ' of ' + ct_str + ', median values')
@@ -355,24 +359,24 @@ if __name__ == '__main__':
 
     log.info('Step 3/3 Plot results')
     # column is pre, index = postsynapse
-    inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs, title = 'Numbers of incoming synapses', filename = f_name)
+    inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs.astype(float), title = 'Numbers of incoming synapses', filename = f_name)
     inc_numbers_abs.get_heatmap()
-    inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synsizes_rel, titel = 'Percentage of incoming synapse numbers', filename = f_name)
+    inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synsizes_rel.astype(float), title = 'Percentage of incoming synapse numbers', filename = f_name)
     inc_numbers_rel.get_heatmap()
-    inc_sizes_abs = ConnMatrix(data = incoming_synapse_matrix_synsizes_abs, title = 'Summed sizes of incoming synapses', filename = f_name)
+    inc_sizes_abs = ConnMatrix(data = incoming_synapse_matrix_synsizes_abs.astype(float), title = 'Summed sizes of incoming synapses', filename = f_name)
     inc_sizes_abs.get_heatmap()
-    inc_sizes_rel = ConnMatrix(data = incoming_synapse_matrix_synsizes_rel, title = 'Percentage of incoming synapses summed sizes', filename = f_name)
+    inc_sizes_rel = ConnMatrix(data = incoming_synapse_matrix_synsizes_rel.astype(float), title = 'Percentage of incoming synapses summed sizes', filename = f_name)
     inc_sizes_rel.get_heatmap()
-    out_numbers_abs = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_abs, title='Numbers of outgoing synapses',
+    out_numbers_abs = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_abs.astype(float), title='Numbers of outgoing synapses',
                                  filename=f_name)
     out_numbers_abs.get_heatmap()
-    out_numbers_rel = ConnMatrix(data=outgoing_synapse_matrix_synsizes_rel,
-                                 titel='Percentage of outgoing synapse numbers', filename=f_name)
+    out_numbers_rel = ConnMatrix(data=outgoing_synapse_matrix_synsizes_rel.astype(float),
+                                 title='Percentage of outgoing synapse numbers', filename=f_name)
     out_numbers_rel.get_heatmap()
-    out_sizes_abs = ConnMatrix(data=outgoing_synapse_matrix_synsizes_abs, title='Summed sizes of outgoing synapses',
+    out_sizes_abs = ConnMatrix(data=outgoing_synapse_matrix_synsizes_abs.astype(float), title='Summed sizes of outgoing synapses',
                                filename=f_name)
     out_sizes_abs.get_heatmap()
-    out_sizes_rel = ConnMatrix(data=outgoing_synapse_matrix_synsizes_rel,
+    out_sizes_rel = ConnMatrix(data=outgoing_synapse_matrix_synsizes_rel.astype(float),
                                title='Percentage of outgoing synapses summed sizes', filename=f_name)
     out_sizes_rel.get_heatmap()
 

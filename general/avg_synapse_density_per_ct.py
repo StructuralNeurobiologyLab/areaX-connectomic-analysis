@@ -26,7 +26,7 @@ if __name__ == '__main__':
     syn_prob = 0.8
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'MudGrays'
+    color_key = 'BlYw'
     f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221014_j0251v4_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
         syn_prob, min_comp_len, color_key)
     if not os.path.exists(f_name):

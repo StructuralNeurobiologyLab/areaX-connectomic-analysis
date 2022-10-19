@@ -75,6 +75,7 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
     post_ids = outputs[:, 0]
     distances = outputs[:, 1]
     median_distances_per_ids = np.median(distances, axis = 0)
+    #add min and max distances per ids as well
     return post_ids, median_distances_per_ids
 
 

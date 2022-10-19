@@ -1,0 +1,111 @@
+#write script that shows the distance of synaptic inputs to the soma for GPi
+#script gets distance of different synaptic inputs to GPi soma and plots differences between different celltypes
+
+if __name__ == '__main__':
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    import time
+    from syconn.handler.config import initialize_logging
+    from syconn import global_params
+    from syconn.reps.segmentation import SegmentationDataset
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
+    import os as os
+    import pandas as pd
+    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
+    import numpy as np
+    from tqdm import tqdm
+    import scipy
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    global_params.wd = "ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
+    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
+    start = time.time()
+    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               10: "NGF"}
+    min_comp_len = 200
+    syn_prob = 0.8
+    min_syn_size = 0.1
+    msn_ct = 2
+    lman_ct = 3
+    gpi_ct = 7
+    exclude_known_mergers = True
+    cls = CelltypeColors()
+    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
+    color_key = 'BlYw'
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221019_j0251v4_GPi_syn_distances_mcl_%i_synprob_%.2f_%s" % (
+    min_comp_len, syn_prob, color_key)
+    if not os.path.exists(f_name):
+        os.mkdir(f_name)
+    log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
+    cts_for_loading = [0, 2, 3, 6, 7, 8]
+    cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
+    num_cts = len(cts_for_loading)
+    dist2ct = 7
+    log.info(
+        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
+        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key))
+    log.info(f'Distance of synapses for celltypes {cts_str_analysis} will be compared to {ct_dict[dist2ct]}')
+    time_stamps = [time.time()]
+    step_idents = ['t-0']
+
+    log.info("Step 1/X: Load celltypes and check suitability")
+
+    axon_cts = [1, 3, 4]
+    if exclude_known_mergers:
+        known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
+        misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
+    suitable_ids_dict = {}
+    for ct in tqdm(cts_for_loading):
+        ct_str = ct_dict[ct]
+        if ct in axon_cts:
+            cell_dict = load_pkl2obj(
+            "/cajal/nvmescratch/users/arother/j0251v4_prep/ax_%.3s_dict.pkl" % ct_str)
+            #get ids with min compartment length
+            cellids = np.array(list(cell_dict.keys()))
+            if exclude_known_mergers:
+                merger_inds = np.in1d(cellids, known_mergers) == False
+                cellids = cellids[merger_inds]
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len, axon_only=True,
+                              max_path_len=None)
+            suitable_ids_dict[ct] = cellids
+        else:
+            cell_dict = load_pkl2obj(
+                "/cajal/nvmescratch/users/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_str)
+            cellids = np.array(list(cell_dict.keys()))
+            if exclude_known_mergers:
+                merger_inds = np.in1d(cellids, known_mergers) == False
+                cellids = cellids[merger_inds]
+                if ct == 2:
+                    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+                    cellids = cellids[astro_inds]
+            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                                                axon_only=False,
+                                                max_path_len=None)
+            suitable_ids_dict[ct] = cellids
+
+    number_ids = [len(suitable_ids_dict[ct]) for ct in cts_for_loading]
+    log.info(f"Suitable ids from celltypes {cts_str_analysis} were selected: {number_ids}")
+
+    log.info("Step 2/X: Get synapse distance to soma from different celltypes to %s" % ct_dict[dist2ct])
+    for ct in cts_for_loading:
+        ct_str = ct_dict[ct]
+        #call function here that calculates distance between to celltpes
+
+
+
+
+
+
+
+#here write script that iterates over different celltypes, get synaptic coordinates and calculates the distance between them to the soma
+
+#for ct in cts:
+#now call function that calculates the distance of synaptic inputs per soma; ideally mutliprocessing the distance per cell
+#within function can plot distance to soma for celltype
+#here make plots for comparing different celltypes
+#either distplot for distributions or violinplot for mean
+

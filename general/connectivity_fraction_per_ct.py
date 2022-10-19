@@ -361,7 +361,7 @@ if __name__ == '__main__':
     # column is pre, index = postsynapse
     inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs.astype(float), title = 'Numbers of incoming synapses', filename = f_name)
     inc_numbers_abs.get_heatmap()
-    inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synsizes_rel.astype(float), title = 'Percentage of incoming synapse numbers', filename = f_name)
+    inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synnumbers_rel.astype(float), title = 'Percentage of incoming synapse numbers', filename = f_name)
     inc_numbers_rel.get_heatmap()
     inc_sizes_abs = ConnMatrix(data = incoming_synapse_matrix_synsizes_abs.astype(float), title = 'Summed sizes of incoming synapses', filename = f_name)
     inc_sizes_abs.get_heatmap()
@@ -370,7 +370,7 @@ if __name__ == '__main__':
     out_numbers_abs = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_abs.astype(float), title='Numbers of outgoing synapses',
                                  filename=f_name)
     out_numbers_abs.get_heatmap()
-    out_numbers_rel = ConnMatrix(data=outgoing_synapse_matrix_synsizes_rel.astype(float),
+    out_numbers_rel = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_rel.astype(float),
                                  title='Percentage of outgoing synapse numbers', filename=f_name)
     out_numbers_rel.get_heatmap()
     out_sizes_abs = ConnMatrix(data=outgoing_synapse_matrix_synsizes_abs.astype(float), title='Summed sizes of outgoing synapses',

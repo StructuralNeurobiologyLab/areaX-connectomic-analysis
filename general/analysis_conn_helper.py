@@ -323,3 +323,10 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
     else:
         return unique_ssvs, syn_ssv_sizes, syn_numbers
 
+    def get_syn_input_distance_percell(args):
+        cellid = args[0]
+        coords = args[1]
+        cell = SuperSegmentationObject(cellid)
+        distance2soma = cell.shortestpath2soma(coordinates=coords)
+        return [cellid, distance2soma]
+

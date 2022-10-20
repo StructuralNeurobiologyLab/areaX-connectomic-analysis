@@ -122,7 +122,7 @@ if __name__ == '__main__':
         min_dist_df.loc[0:len(post_ids) - 1, ct_str] = min_distances_per_ids
         max_dist_df.loc[0:len(post_ids) - 1, ct_str] = max_distances_per_ids
 
-    write_obj2pkl('%s/distances_result_dict.pkl' % f_name)
+    write_obj2pkl('%s/distances_result_dict.pkl' % f_name, distances_dict)
     median_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)
     max_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)
     min_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)

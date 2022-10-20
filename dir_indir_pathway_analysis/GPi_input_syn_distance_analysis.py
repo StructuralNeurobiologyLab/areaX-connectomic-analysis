@@ -6,6 +6,7 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses
     from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.synapse_input_distance import get_syn_distances
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -35,8 +36,8 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     cls = CelltypeColors()
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'BlYw'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221019_j0251v4_GPi_syn_distances_mcl_%i_synprob_%.2f_%s" % (
+    color_key = 'TePkBr'
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221020_j0251v4_GPi_syn_distances_mcl_%i_synprob_%.2f_%s" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -91,21 +92,30 @@ if __name__ == '__main__':
     log.info(f"Suitable ids from celltypes {cts_str_analysis} were selected: {number_ids}")
 
     log.info("Step 2/X: Get synapse distance to soma from different celltypes to %s" % ct_dict[dist2ct])
-    for ct in cts_for_loading:
+    median_dist_df = pd.DataFrame(columns = cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
+    min_dist_df = pd.DataFrame(columns=cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
+    max_dist_df = pd.DataFrame(columns=cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
+    for ct in tqdm(cts_for_loading):
         ct_str = ct_dict[ct]
-        #call function here that calculates distance between to celltpes
+        #get median, min, max synapse distance to soma per cell
+        #function uses multiprocessing
+        if ct == dist2ct:
+            cellids, median_dist, min_dist, max_dist = get_syn_distances(ct_post = dist2ct, cellids_post = suitable_ids_dict[dist2ct],
+                                                                         sd_synssv = sd_synssv, syn_prob=syn_prob,
+                                                                         min_syn_size=min_syn_size, ct_pre=None,
+                                                                         cellids_pre=None)
+        else:
+            cellids, median_dist, min_dist, max_dist = get_syn_distances(ct_post=dist2ct,
+                                                                         cellids_post=suitable_ids_dict[dist2ct],
+                                                                         sd_synssv=sd_synssv, syn_prob=syn_prob,
+                                                                         min_syn_size=min_syn_size, ct_pre=ct,
+                                                                         cellids_pre=suitable_ids_dict[ct])
+        median_dist_df.loc[0:len(cellids) - 1, ct_str] = median_dist
+        min_dist_df.loc[0:len(cellids) - 1, ct_str] = min_dist
+        max_dist_df.loc[0:len(cellids) - 1, ct_str] = max_dist
 
-
-
-
-
-
-
-#here write script that iterates over different celltypes, get synaptic coordinates and calculates the distance between them to the soma
-
-#for ct in cts:
-#now call function that calculates the distance of synaptic inputs per soma; ideally mutliprocessing the distance per cell
-#within function can plot distance to soma for celltype
+    #save dataframes
+    #make plots
 #here make plots for comparing different celltypes
 #either distplot for distributions or violinplot for mean
 

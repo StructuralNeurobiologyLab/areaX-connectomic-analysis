@@ -10,7 +10,7 @@ from syconn.extraction.cs_processing_steps import combine_and_split_cs
 global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
 sd_cs_ssv = SegmentationDataset("cs_ssv", working_dir=global_params.config.working_dir)
 ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-f_name = "cajal/scratch/users/arother/cs_debugging/221017_excl_by_size_nomem/"
+f_name = "cajal/scratch/users/arother/cs_debugging/221020_excl_by_size_nomem/"
 log = initialize_logging('221017 cs run', log_dir=f_name + '/logs/')
 log.info("10000 workers, 1 CPU per task, memory per default, excluded cs ids with size larger than 10**6, no memory tracking")
 log.info("loading the filtered cs")

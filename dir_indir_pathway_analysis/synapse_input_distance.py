@@ -68,15 +68,17 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
     per_postid_coords_grouped = post_coords_pd.groupby(by=ssv_inds)
     postid_coord_groups = per_postid_coords_grouped.groups
     #get distance of synapses per post id
-    id_group_pair = [[unique_post_ssvs[i], postid_coord_groups[i]] for i in range(len(unique_post_ssvs))]
+    id_group_pair = [[unique_post_ssvs[i], m_rep_coord[postid_coord_groups[i]]] for i in range(len(unique_post_ssvs))]
     p = pool.Pool()
     outputs = p.map(get_syn_input_distance_percell, id_group_pair)
-    outputs = np.array(outputs)
+    raise ValueError
+    outputs = np.array(outputs, dtype = object)
     post_ids = outputs[:, 0]
     distances = outputs[:, 1]
     median_distances_per_ids = np.median(distances, axis = 0)
-    #add min and max distances per ids as well
-    return post_ids, median_distances_per_ids
+    min_distances_per_ids = np.min(distances, axis = 0)
+    max_distances_per_ids = np.max(distances, axis = 0)
+    return post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids
 
 
 

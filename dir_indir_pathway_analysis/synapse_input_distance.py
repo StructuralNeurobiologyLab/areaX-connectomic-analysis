@@ -22,15 +22,13 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
     #filter synapses between celltypes
     if ct_pre is None:
         ct_pre = ct_post
-        if cellids_pre is None:
-            cellids_pre = cellids_post
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
                                                                                                         pre_cts=[ct_pre],
                                                                                                         post_cts=None,
                                                                                                         syn_prob_thresh=syn_prob,
                                                                                                         min_syn_size=min_syn_size,
                                                                                                         axo_den_so=True)
-        suit_ct_inds = np.any(np.in1d(m_ssv_partners, cellids_post).reshape(len(m_ssv_partners), 2), axis=1)
+        suit_ct_inds = np.all(np.in1d(m_ssv_partners, cellids_post).reshape(len(m_ssv_partners), 2), axis=1)
         m_ssv_partners = m_ssv_partners[suit_ct_inds]
         m_sizes = m_sizes[suit_ct_inds]
         m_axs = m_axs[suit_ct_inds]

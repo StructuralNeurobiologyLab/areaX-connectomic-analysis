@@ -114,13 +114,13 @@ if __name__ == '__main__':
                                                                          sd_synssv=sd_synssv, syn_prob=syn_prob,
                                                                          min_syn_size=min_syn_size, ct_pre=ct,
                                                                          cellids_pre=suitable_ids_dict[ct])
-        distances_dict[[ct_str, dist2ct_str]] = {'ids': post_ids, 'median synapse distance to soma': median_distances_per_ids,
+        distances_dict[(ct_str, dist2ct_str)] = {'ids': post_ids, 'median synapse distance to soma': median_distances_per_ids,
                                                  'min synapse distance to soma': min_distances_per_ids,
                                                  'max synapse distance to soma': max_distances_per_ids,
                                                  'synapse number': syn_numbers, 'syn ssv sizes': syn_ssv_sizes}
-        median_dist_df.loc[0:len(cellids) - 1, ct_str] = median_distances_per_ids
-        min_dist_df.loc[0:len(cellids) - 1, ct_str] = min_distances_per_ids
-        max_dist_df.loc[0:len(cellids) - 1, ct_str] = max_distances_per_ids
+        median_dist_df.loc[0:len(post_ids) - 1, ct_str] = median_distances_per_ids
+        min_dist_df.loc[0:len(post_ids) - 1, ct_str] = min_distances_per_ids
+        max_dist_df.loc[0:len(post_ids) - 1, ct_str] = max_distances_per_ids
 
     write_obj2pkl('%s/distances_result_dict.pkl' % f_name)
     median_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)

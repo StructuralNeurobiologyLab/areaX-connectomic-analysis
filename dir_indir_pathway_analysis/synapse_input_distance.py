@@ -19,12 +19,11 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
     :return: array with cellids, median distances to soma per cell
     '''
 
-    if ct_pre is None:
-        ct_pre = ct_post
-    if cellids_pre is None:
-        cellids_pre = cellids_post
     #filter synapses between celltypes
     if ct_pre is None:
+        ct_pre = ct_post
+        if cellids_pre is None:
+            cellids_pre = cellids_post
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
                                                                                                         pre_cts=[ct_pre],
                                                                                                         post_cts=None,
@@ -38,8 +37,7 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
         m_rep_coord = m_rep_coord[suit_ct_inds]
     else:
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
-                                                                                                            pre_cts=[
-                                                                                                                ct_pre],
+                                                                                                            pre_cts=[ct_pre],
                                                                                                             post_cts=[ct_post],
                                                                                                             syn_prob_thresh=syn_prob,
                                                                                                             min_syn_size=min_syn_size,

@@ -324,11 +324,20 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
         return unique_ssvs, syn_ssv_sizes, syn_numbers
 
 def get_syn_input_distance_percell(args):
+    '''
+    Get median, min and max distance to soma per cell for a given set of coordinates.
+    Use shortestpath2soma. This function returns values in µm
+    :param args: cellid, coordinates
+    :return: cellid, median distance, min distance, max distance per cell
+    '''
     cellid = args[0]
     coords = args[1]
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
     distance2soma = cell.shortestpath2soma(coordinates=coords)
-    distance2soma = np.array(distance2soma)
-    return [cellid, distance2soma]
+    distance2soma = np.array(distance2soma) / 1000 #in µm
+    median_distance = np.median(distance2soma)
+    min_distance = np.min(distance2soma)
+    max_distance = np.max(distance2soma)
+    return [cellid, median_distance, min_distance, max_distance]
 

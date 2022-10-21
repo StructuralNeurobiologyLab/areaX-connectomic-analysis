@@ -45,8 +45,8 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     cls = CelltypeColors()
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'MudGrays'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221019_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s" % (
+    color_key = 'TePkBr'
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221021_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -119,10 +119,10 @@ if __name__ == '__main__':
     ct_colours = cls.colors[color_key]
     ct_palette = cls.ct_palette(color_key, num = False)
     #index = postsynapse, column is post-synapse
-    outgoing_synapse_matrix_synnumbers_rel = pd.DataFrame(columns=celltypes, index=celltypes)
-    outgoing_synapse_matrix_synsizes_rel = pd.DataFrame(columns=celltypes, index=celltypes)
-    outgoing_synapse_matrix_synnumbers_abs = pd.DataFrame(columns=celltypes, index=celltypes)
-    outgoing_synapse_matrix_synsizes_abs = pd.DataFrame(columns=celltypes, index=celltypes)
+    outgoing_synapse_matrix_synnumbers_rel = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
+    outgoing_synapse_matrix_synsizes_rel = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
+    outgoing_synapse_matrix_synnumbers_abs = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
+    outgoing_synapse_matrix_synsizes_abs = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     incoming_synapse_matrix_synnumbers_rel = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     incoming_synapse_matrix_synsizes_rel = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     incoming_synapse_matrix_synnumbers_abs = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
@@ -170,11 +170,15 @@ if __name__ == '__main__':
                 ct=ct, cellids=suitable_ids_dict[ct],
                 filter_ax=[0,2],
                 filter_ids=all_suitable_ids, return_syn_arrays=True)
-            synapse_dict_perct[ct]['in full cellids'] = unique_in_ssvs
-            synapse_dict_perct[ct]['incoming full cell synapse number'] = in_syn_numbers
-            synapse_dict_perct[ct]['incoming full cell synapse sum size'] = in_syn_sizes
-            synapse_pd_perct.loc[ct_str, 'median incoming full cell synapse number'] = np.median(in_syn_numbers)
-            synapse_pd_perct.loc[ct_str, 'median incoming full cell synapse sum size'] = np.median(in_syn_sizes)
+            sorted_full_in_inds = np.argsort(unique_in_ssvs)
+            sorted_full_in_ssvs = unique_in_ssvs[sorted_full_in_inds]
+            sorted_full_in_numbers = out_in_numbers[sorted_full_in_inds]
+            sorted_full_in_sizes = out_in_sizes[sorted_full_in_inds]
+            synapse_dict_perct[ct]['in full cellids'] = sorted_full_in_ssvs
+            synapse_dict_perct[ct]['incoming full cell synapse number'] = sorted_full_in_numbers
+            synapse_dict_perct[ct]['incoming full cell synapse sum size'] = sorted_full_in_sizes
+            synapse_pd_perct.loc[ct_str, 'median incoming full cell synapse number'] = np.median(sorted_full_in_numbers)
+            synapse_pd_perct.loc[ct_str, 'median incoming full cell synapse sum size'] = np.median(sorted_full_in_sizes)
             #calculate percentage of full cells
             full_inds = np.in1d(synapse_dict_perct[ct]['in cellids'], unique_in_ssvs)
             in_total_syn_number = synapse_dict_perct[ct]['incoming total synapse number'][full_inds]
@@ -187,7 +191,6 @@ if __name__ == '__main__':
                 synapse_dict_perct[ct]['incoming percentage full cells synapse number'])
             synapse_pd_perct.loc[ct_str, 'median incoming percentage full cell synapse sum size'] = np.median(
                 synapse_dict_perct[ct]['incoming percentage full cells synapse sum size'])
-            total_full_in_ssvs = unique_in_ssvs
         #outgoing synapses
         # calculate total number of outgoing synapses and sum size (see also similar in analysis_prep_func)
         out_ids, out_sizes, out_ssv_partners, out_axs, out_cts, unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
@@ -212,11 +215,15 @@ if __name__ == '__main__':
             ct=ct, cellids=suitable_ids_dict[ct],
             filter_ax=[1],
             filter_ids=all_suitable_ids, return_syn_arrays=True)
-        synapse_dict_perct[ct]['out full cellids'] = unique_out_ssvs
-        synapse_dict_perct[ct]['outgoing full cell synapse number'] = out_syn_numbers
-        synapse_dict_perct[ct]['outgoing full cell synapse sum size'] = out_syn_sizes
-        synapse_pd_perct.loc[ct_str, 'median outgoing full cell synapse number'] = np.median(out_syn_numbers)
-        synapse_pd_perct.loc[ct_str, 'median outgoing full cell synapse sum size'] = np.median(out_syn_sizes)
+        sorted_full_out_inds = np.argsort(unique_out_ssvs)
+        sorted_full_out_ssvs = unique_out_ssvs[sorted_full_out_inds]
+        sorted_full_out_numbers = out_syn_numbers[sorted_full_out_inds]
+        sorted_full_out_sizes = out_syn_sizes[sorted_full_out_inds]
+        synapse_dict_perct[ct]['out full cellids'] = sorted_full_out_ssvs
+        synapse_dict_perct[ct]['outgoing full cell synapse number'] = sorted_full_out_numbers
+        synapse_dict_perct[ct]['outgoing full cell synapse sum size'] = sorted_full_out_sizes
+        synapse_pd_perct.loc[ct_str, 'median outgoing full cell synapse number'] = np.median(sorted_full_out_numbers)
+        synapse_pd_perct.loc[ct_str, 'median outgoing full cell synapse sum size'] = np.median(sorted_full_out_sizes)
         # calculate percentage of full cells
         full_inds = np.in1d(synapse_dict_perct[ct]['out cellids'], unique_out_ssvs)
         out_total_syn_number = synapse_dict_perct[ct]['outgoing total synapse number'][full_inds]
@@ -229,7 +236,6 @@ if __name__ == '__main__':
             synapse_dict_perct[ct]['outgoing percentage full cells synapse number'])
         synapse_pd_perct.loc[ct_str, 'median outgoing percentage full cell synapse sum size'] = np.median(
             synapse_dict_perct[ct]['outgoing percentage full cells synapse sum size'])
-        total_full_out_ssvs = unique_out_ssvs
         #get sum size and sum of synapses for each celltype seperate (only full cells)
         for other_ct in range(num_cts):
             other_ct_str = ct_dict[other_ct]
@@ -247,22 +253,33 @@ if __name__ == '__main__':
                         syn_axs=in_axs, syn_cts=in_cts, ct=ct, cellids=suitable_ids_dict[ct],
                         filter_ax=None, filter_ids=None, return_syn_arrays=False,
                         filter_pre_ids=suitable_ids_dict[other_ct], filter_post_ids=suitable_ids_dict[ct])
-                synapse_dict_perct[ct][f'incoming synapse ids with {other_ct_str}'] = unique_in_ssvs
-                synapse_dict_perct[ct][f'incoming synapse number from {other_ct_str}'] = in_syn_numbers
-                synapse_dict_perct[ct][f'incoming synapse sum size from {other_ct_str}'] = in_syn_sizes
+                #add zeros for cells that have no synapses to this celltype, re-order arrays to full ssv ids
+                #sort array for this
+                sorted_in_ssv_ind = np.argsort(unique_in_ssvs)
+                sorted_in_ssvs = unique_in_ssvs[sorted_in_ssv_ind]
+                sorted_in_numbers = in_syn_numbers[sorted_in_ssv_ind]
+                sorted_in_sizes = in_syn_sizes[sorted_in_ssv_ind]
+                full_inds = np.in1d(sorted_full_in_ssvs, sorted_in_ssvs)
+                filled_in_syn_numbers = np.zeros(len(sorted_full_in_ssvs))
+                filled_in_syn_sizes = np.zeros(len(sorted_full_in_ssvs))
+                filled_in_syn_numbers[full_inds == True] = sorted_in_numbers
+                filled_in_syn_sizes[full_inds == True] = sorted_in_sizes
+                raise ValueError
+                synapse_dict_perct[ct][f'incoming synapse ids with {other_ct_str}'] = sorted_full_in_ssvs
+                synapse_dict_perct[ct][f'incoming synapse number from {other_ct_str}'] = filled_in_syn_numbers
+                synapse_dict_perct[ct][f'incoming synapse sum size from {other_ct_str}'] = filled_in_syn_sizes
                 # column is pre, index = postsynapse
-                incoming_synapse_matrix_synnumbers_abs.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(in_syn_numbers)
-                incoming_synapse_matrix_synsizes_abs.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(in_syn_sizes)
-                full_inds = np.in1d(total_full_in_ssvs, unique_in_ssvs)
-                adj_incoming_full_number = synapse_dict_perct[ct]['incoming full cell synapse number'][full_inds]
-                adj_incoming_full_sizes = synapse_dict_perct[ct]['incoming full cell synapse sum size'][full_inds]
-                perc_syn_numbers = 100 * in_syn_numbers / adj_incoming_full_number
-                perc_syn_sizes = 100 * in_syn_sizes/ adj_incoming_full_sizes
+                incoming_synapse_matrix_synnumbers_abs.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(filled_in_syn_numbers)
+                incoming_synapse_matrix_synsizes_abs.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(filled_in_syn_sizes)
+                perc_syn_numbers = 100 * filled_in_syn_numbers / sorted_full_in_numbers
+                perc_syn_sizes = 100 * filled_in_syn_sizes/ sorted_full_in_sizes
                 synapse_dict_perct[ct][f'incoming synapse number percentage of {other_ct_str}'] = perc_syn_numbers
                 synapse_dict_perct[ct][f'incoming synapse sum size percentage of {other_ct_str}'] = perc_syn_sizes
                 incoming_synapse_matrix_synnumbers_rel.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(perc_syn_numbers)
                 incoming_synapse_matrix_synsizes_rel.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(perc_syn_sizes)
             #outgoing
+            if other_ct in axon_cts:
+                continue
             if other_ct == ct:
                 unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
                     syn_ids=out_ids, syn_sizes=out_sizes, syn_ssv_partners=out_ssv_partners,
@@ -275,17 +292,23 @@ if __name__ == '__main__':
                     syn_axs=out_axs, syn_cts=out_cts, ct=ct, cellids=suitable_ids_dict[ct],
                     filter_ax=None, filter_ids=None, return_syn_arrays=False,
                     filter_pre_ids=suitable_ids_dict[ct], filter_post_ids=suitable_ids_dict[other_ct])
-            synapse_dict_perct[ct][f'outgoing synapse ids with {other_ct_str}'] = unique_out_ssvs
-            synapse_dict_perct[ct][f'outgoing synapse number to {other_ct_str}'] = out_syn_numbers
-            synapse_dict_perct[ct][f'outgoing synapse sum size to {other_ct_str}'] = out_syn_sizes
+            sorted_out_ssv_ind = np.argsort(unique_out_ssvs)
+            sorted_out_ssvs = unique_out_ssvs[sorted_out_ssv_ind]
+            sorted_out_numbers = out_syn_numbers[sorted_out_ssv_ind]
+            sorted_out_sizes = out_syn_sizes[sorted_out_ssv_ind]
+            full_inds = np.in1d(sorted_full_out_ssvs, sorted_out_ssvs)
+            filled_out_syn_numbers = np.zeros(len(sorted_full_out_ssvs))
+            filled_out_syn_sizes = np.zeros(len(sorted_full_out_ssvs))
+            filled_out_syn_numbers[full_inds == True] = sorted_out_numbers
+            filled_out_syn_sizes[full_inds == True] = sorted_out_sizes
+            synapse_dict_perct[ct][f'outgoing synapse ids with {other_ct_str}'] = sorted_full_out_ssvs
+            synapse_dict_perct[ct][f'outgoing synapse number to {other_ct_str}'] = filled_out_syn_numbers
+            synapse_dict_perct[ct][f'outgoing synapse sum size to {other_ct_str}'] = filled_out_syn_sizes
             # column is pre, index = postsynapse
-            outgoing_synapse_matrix_synnumbers_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(out_syn_numbers)
-            outgoing_synapse_matrix_synsizes_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(out_syn_sizes)
-            full_inds = np.in1d(total_full_out_ssvs, unique_out_ssvs)
-            adj_outgoing_full_number = synapse_dict_perct[ct]['outgoing full cell synapse number'][full_inds]
-            adj_outgoing_full_sizes = synapse_dict_perct[ct]['outgoing full cell synapse sum size'][full_inds]
-            perc_syn_numbers = 100 * out_syn_numbers / adj_outgoing_full_number
-            perc_syn_sizes = 100 * out_syn_sizes / adj_outgoing_full_sizes
+            outgoing_synapse_matrix_synnumbers_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(filled_out_syn_numbers)
+            outgoing_synapse_matrix_synsizes_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(filled_out_syn_sizes)
+            perc_syn_numbers = 100 * filled_out_syn_numbers / sorted_full_out_numbers
+            perc_syn_sizes = 100 * filled_out_syn_sizes / sorted_full_out_sizes
             synapse_dict_perct[ct][f'outgoing synapse number percentage of {other_ct_str}'] = perc_syn_numbers
             synapse_dict_perct[ct][f'outgoing synapse sum size percentage of {other_ct_str}'] = perc_syn_sizes
             outgoing_synapse_matrix_synnumbers_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_numbers)
@@ -331,9 +354,10 @@ if __name__ == '__main__':
                 sns.boxplot(data=result_df, palette=ct_palette)
                 plt.title(key_name_gen + ' of ' + ct_str)
                 plt.ylabel(ylabel)
-                plt.savefig('%s/%s_%s_violin.png' % (f_name_ct, key_name_gen, ct_str))
+                plt.savefig('%s/%s_%s_box.png' % (f_name_ct, key_name_gen, ct_str))
                 plt.close()
-                sns.barplot(data = result_df, palette=ct_palette)
+                #show standard deviation as error bar
+                sns.barplot(data = result_df, palette=ct_palette, errorbar="sd")
                 plt.title(key_name_gen + ' of ' + ct_str)
                 plt.ylabel(ylabel)
                 plt.savefig('%s/%s_%s_bar.png' % (f_name_ct, key_name_gen, ct_str))

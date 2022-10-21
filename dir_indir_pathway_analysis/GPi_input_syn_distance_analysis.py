@@ -124,8 +124,8 @@ if __name__ == '__main__':
 
     write_obj2pkl('%s/distances_result_dict.pkl' % f_name, distances_dict)
     median_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)
-    max_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)
-    min_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)
+    max_dist_df.to_csv('%s/max_syn_distance2soma.csv' % f_name)
+    min_dist_df.to_csv('%s/min_syn_distance2soma.csv' % f_name)
     time_stamps = [time.time()]
     step_idents = ['get synapse distances to soma']
 
@@ -141,7 +141,7 @@ if __name__ == '__main__':
             for c2 in cts_for_loading:
                 if c2 >= c1:
                     continue
-                stats, p_value = ranksums(param[c1], param[c2])
+                stats, p_value = ranksums(param[ct_dict[c1]], param[ct_dict[c2]])
                 ranksum_results.loc["stats " + str_params[i] + ' of ' + dist2ct_str, ct_dict[c1] + " vs " + ct_dict[c2]] = stats
                 ranksum_results.loc["p value " + str_params[i] + ' of ' + dist2ct_str, ct_dict[c1] + " vs " + ct_dict[c2]] = p_value
         #make violinplot, boxplot, histplot
@@ -159,12 +159,14 @@ if __name__ == '__main__':
         plt.ylabel(ylabel)
         plt.savefig('%s/%s_syn_dst2soma_box.png' % (f_name, str_params[i].split()[0]))
         plt.close()
-        sns.histplot(data=param, palette=ct_palette, legend= True)
+        sns.histplot(data=param, palette=ct_palette, legend= True, fill=False, element="step")
         plt.title(str_params[i] + ' of ' + dist2ct_str)
         plt.xlabel(ylabel)
         plt.ylabel('count of cells')
         plt.savefig('%s/%s_syn_dst2soma_dist.png' % (f_name, str_params[i].split()[0]))
         plt.close()
+
+    ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 
     log.info('Distance to synapse analysis done')
     time_stamps = time.time()

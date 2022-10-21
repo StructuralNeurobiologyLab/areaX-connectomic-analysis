@@ -172,8 +172,8 @@ if __name__ == '__main__':
                 filter_ids=all_suitable_ids, return_syn_arrays=True)
             sorted_full_in_inds = np.argsort(unique_in_ssvs)
             sorted_full_in_ssvs = unique_in_ssvs[sorted_full_in_inds]
-            sorted_full_in_numbers = out_in_numbers[sorted_full_in_inds]
-            sorted_full_in_sizes = out_in_sizes[sorted_full_in_inds]
+            sorted_full_in_numbers = in_syn_numbers[sorted_full_in_inds]
+            sorted_full_in_sizes = in_syn_sizes[sorted_full_in_inds]
             synapse_dict_perct[ct]['in full cellids'] = sorted_full_in_ssvs
             synapse_dict_perct[ct]['incoming full cell synapse number'] = sorted_full_in_numbers
             synapse_dict_perct[ct]['incoming full cell synapse sum size'] = sorted_full_in_sizes

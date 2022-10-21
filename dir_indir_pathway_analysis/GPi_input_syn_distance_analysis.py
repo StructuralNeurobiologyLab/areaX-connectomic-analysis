@@ -57,6 +57,8 @@ if __name__ == '__main__':
     log.info("Step 1/3: Load celltypes and check suitability")
 
     axon_cts = [1, 3, 4]
+    cls = CelltypeColors()
+    ct_palette = cls.ct_palette(color_key, num=False)
     if exclude_known_mergers:
         known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
         misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
@@ -121,6 +123,31 @@ if __name__ == '__main__':
         median_dist_df.loc[0:len(post_ids) - 1, ct_str] = median_distances_per_ids
         min_dist_df.loc[0:len(post_ids) - 1, ct_str] = min_distances_per_ids
         max_dist_df.loc[0:len(post_ids) - 1, ct_str] = max_distances_per_ids
+        f_name_ct = f'{f_name}/{ct_str}'
+        if not os.path.exists(f_name_ct):
+            os.mkdir(f_name_ct)
+        xlabel = "distance in µm"
+        ylabel = "count of cells"
+        sns.histplot(data=median_distances_per_ids, palette=ct_palette, legend=True, fill=True, element="step")
+        plt.title('Median distance to soma' + ' of ' + dist2ct_str)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.savefig('%s/median_syn_dst2soma_dist_%s.png' % (f_name, ct_str))
+        plt.close()
+        sns.histplot(data=min_distances_per_ids, palette=ct_palette, legend=True, fill=True, element="step")
+        plt.title('Min distance to soma' + ' of ' + dist2ct_str)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.savefig('%s/min_syn_dst2soma_dist_%s.png' % (f_name, ct_str))
+        plt.close()
+        sns.histplot(data=max_distances_per_ids, palette=ct_palette, legend=True, fill=True, element="step")
+        plt.title('Max distance to soma' + ' of ' + dist2ct_str)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.savefig('%s/ax_syn_dst2soma_dist_%s.png' % (f_name, ct_str))
+        plt.close()
+
+
 
     write_obj2pkl('%s/distances_result_dict.pkl' % f_name, distances_dict)
     median_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)
@@ -132,14 +159,12 @@ if __name__ == '__main__':
     log.info("Step 3/3 Plot results and calculate statistics")
     str_params = ['median synapse distance to soma', 'min synapse distance to soma', 'max synapse distance to soma']
     param_dfs = [median_dist_df, min_dist_df, max_dist_df]
-    cls = CelltypeColors()
-    ct_palette = cls.ct_palette(color_key, num=False)
     ranksum_results = pd.DataFrame()
     for i, param in enumerate(tqdm(param_dfs)):
         #use ranksum test (non-parametric) to calculate results
         for c1 in cts_for_loading:
             for c2 in cts_for_loading:
-                if c2 >= c1:
+                if c1 >= c2:
                     continue
                 stats, p_value = ranksums(param[ct_dict[c1]], param[ct_dict[c2]])
                 ranksum_results.loc["stats " + str_params[i] + ' of ' + dist2ct_str, ct_dict[c1] + " vs " + ct_dict[c2]] = stats
@@ -159,7 +184,7 @@ if __name__ == '__main__':
         plt.ylabel(ylabel)
         plt.savefig('%s/%s_syn_dst2soma_box.png' % (f_name, str_params[i].split()[0]))
         plt.close()
-        sns.histplot(data=param, palette=ct_palette, legend= True, fill=False, element="step")
+        sns.histplot(data=param, palette=ct_palette, legend= True, fill=True, element="step")
         plt.title(str_params[i] + ' of ' + dist2ct_str)
         plt.xlabel(ylabel)
         plt.ylabel('count of cells')

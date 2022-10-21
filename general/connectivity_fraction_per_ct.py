@@ -264,7 +264,6 @@ if __name__ == '__main__':
                 filled_in_syn_sizes = np.zeros(len(sorted_full_in_ssvs))
                 filled_in_syn_numbers[full_inds == True] = sorted_in_numbers
                 filled_in_syn_sizes[full_inds == True] = sorted_in_sizes
-                raise ValueError
                 synapse_dict_perct[ct][f'incoming synapse ids with {other_ct_str}'] = sorted_full_in_ssvs
                 synapse_dict_perct[ct][f'incoming synapse number from {other_ct_str}'] = filled_in_syn_numbers
                 synapse_dict_perct[ct][f'incoming synapse sum size from {other_ct_str}'] = filled_in_syn_sizes

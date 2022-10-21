@@ -128,23 +128,24 @@ if __name__ == '__main__':
             os.mkdir(f_name_ct)
         xlabel = "distance in µm"
         ylabel = "count of cells"
-        sns.histplot(data=median_distances_per_ids, palette=ct_palette, legend=True, fill=True, element="step")
+        ct_color = ct_palette[ct_str]
+        sns.histplot(data=median_distances_per_ids, color=ct_color, legend=True, fill=True, element="step", bins = 15)
         plt.title('Median distance to soma' + ' of ' + dist2ct_str)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.savefig('%s/median_syn_dst2soma_dist_%s.png' % (f_name, ct_str))
+        plt.savefig('%s/median_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
         plt.close()
-        sns.histplot(data=min_distances_per_ids, palette=ct_palette, legend=True, fill=True, element="step")
+        sns.histplot(data=min_distances_per_ids, color=ct_color, legend=True, fill=True, element="step", bins = 15)
         plt.title('Min distance to soma' + ' of ' + dist2ct_str)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.savefig('%s/min_syn_dst2soma_dist_%s.png' % (f_name, ct_str))
+        plt.savefig('%s/min_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
         plt.close()
-        sns.histplot(data=max_distances_per_ids, palette=ct_palette, legend=True, fill=True, element="step")
+        sns.histplot(data=max_distances_per_ids, color=ct_color, legend=True, fill=True, element="step", bins = 15)
         plt.title('Max distance to soma' + ' of ' + dist2ct_str)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.savefig('%s/ax_syn_dst2soma_dist_%s.png' % (f_name, ct_str))
+        plt.savefig('%s/max_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
         plt.close()
 
 
@@ -166,7 +167,9 @@ if __name__ == '__main__':
             for c2 in cts_for_loading:
                 if c1 >= c2:
                     continue
-                stats, p_value = ranksums(param[ct_dict[c1]], param[ct_dict[c2]])
+                p_c1 = np.array(param[ct_dict[c1]]).astype(float)
+                p_c2 = np.array(param[ct_dict[c2]]).astype(float)
+                stats, p_value = ranksums(p_c1, p_c2, nan_policy = 'omit')
                 ranksum_results.loc["stats " + str_params[i] + ' of ' + dist2ct_str, ct_dict[c1] + " vs " + ct_dict[c2]] = stats
                 ranksum_results.loc["p value " + str_params[i] + ' of ' + dist2ct_str, ct_dict[c1] + " vs " + ct_dict[c2]] = p_value
         #make violinplot, boxplot, histplot

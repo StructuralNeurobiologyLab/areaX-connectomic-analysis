@@ -52,7 +52,7 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
         m_axs = m_axs[suit_ct_inds]
         m_rep_coord = m_rep_coord[suit_ct_inds]
     if dendrite_only:
-        den_only_inds = np.any(m_cts == 0, axis=1)
+        den_only_inds = np.any(m_axs == 0, axis=1)
         m_ssv_partners = m_ssv_partners[den_only_inds]
         m_sizes = m_sizes[den_only_inds]
         m_axs = m_axs[den_only_inds]
@@ -75,7 +75,9 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
     median_distances_per_ids = outputs[:, 1]
     min_distances_per_ids = outputs[:, 2]
     max_distances_per_ids = outputs[:, 3]
-    return post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, syn_numbers, syn_ssv_sizes
+    distances = outputs[:, 4]
+    distances = np.hstack(distances)
+    return post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, distances, syn_numbers, syn_ssv_sizes
 
 
 

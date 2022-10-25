@@ -101,18 +101,19 @@ if __name__ == '__main__':
     median_dist_df = pd.DataFrame(columns = cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
     min_dist_df = pd.DataFrame(columns=cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
     max_dist_df = pd.DataFrame(columns=cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
+    distances_df = pd.DataFrame(columns=cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])*5000))
     distances_dict = {}
     for ct in tqdm(cts_for_loading):
         ct_str = ct_dict[ct]
         #get median, min, max synapse distance to soma per cell
         #function uses multiprocessing
         if ct == dist2ct:
-            post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, syn_numbers, syn_ssv_sizes = get_syn_distances(ct_post = dist2ct, cellids_post = suitable_ids_dict[dist2ct],
+            post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, distances_per_cell, syn_numbers, syn_ssv_sizes = get_syn_distances(ct_post = dist2ct, cellids_post = suitable_ids_dict[dist2ct],
                                                                          sd_synssv = sd_synssv, syn_prob=syn_prob,
                                                                          min_syn_size=min_syn_size, ct_pre=None,
                                                                          cellids_pre=None, dendrite_only = only_dendrite)
         else:
-            post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, syn_numbers, syn_ssv_sizes = get_syn_distances(ct_post=dist2ct,
+            post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, distances_per_cell, syn_numbers, syn_ssv_sizes = get_syn_distances(ct_post=dist2ct,
                                                                          cellids_post=suitable_ids_dict[dist2ct],
                                                                          sd_synssv=sd_synssv, syn_prob=syn_prob,
                                                                          min_syn_size=min_syn_size, ct_pre=ct,
@@ -124,6 +125,7 @@ if __name__ == '__main__':
         median_dist_df.loc[0:len(post_ids) - 1, ct_str] = median_distances_per_ids
         min_dist_df.loc[0:len(post_ids) - 1, ct_str] = min_distances_per_ids
         max_dist_df.loc[0:len(post_ids) - 1, ct_str] = max_distances_per_ids
+        distances_df.loc[0:len(distances_per_cell) - 1, ct_str] = distances_per_cell
         f_name_ct = f'{f_name}/{ct_str}'
         if not os.path.exists(f_name_ct):
             os.mkdir(f_name_ct)
@@ -148,6 +150,12 @@ if __name__ == '__main__':
         plt.ylabel(ylabel)
         plt.savefig('%s/max_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
         plt.close()
+        sns.histplot(data=distances_per_cell, color=ct_color, legend=True, fill=True, element="step", bins=30)
+        plt.title('Distance to soma of all synapses' + ' of ' + dist2ct_str)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.savefig('%s/all_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
+        plt.close()
 
 
 
@@ -155,12 +163,13 @@ if __name__ == '__main__':
     median_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)
     max_dist_df.to_csv('%s/max_syn_distance2soma.csv' % f_name)
     min_dist_df.to_csv('%s/min_syn_distance2soma.csv' % f_name)
+    distances_df.to_csv('%s/all_syn_distances.csv' % f_name)
     time_stamps = [time.time()]
     step_idents = ['get synapse distances to soma']
 
     log.info("Step 3/3 Plot results and calculate statistics")
-    str_params = ['median synapse distance to soma', 'min synapse distance to soma', 'max synapse distance to soma']
-    param_dfs = [median_dist_df, min_dist_df, max_dist_df]
+    str_params = ['median synapse distance to soma', 'min synapse distance to soma', 'max synapse distance to soma', 'synapse distances to soma']
+    param_dfs = [median_dist_df, min_dist_df, max_dist_df, distances_df]
     ranksum_results = pd.DataFrame()
     for i, param in enumerate(tqdm(param_dfs)):
         #use ranksum test (non-parametric) to calculate results

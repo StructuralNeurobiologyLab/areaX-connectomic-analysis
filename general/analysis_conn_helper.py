@@ -339,5 +339,5 @@ def get_syn_input_distance_percell(args):
     median_distance = np.median(distance2soma)
     min_distance = np.min(distance2soma)
     max_distance = np.max(distance2soma)
-    return [cellid, median_distance, min_distance, max_distance]
+    return [cellid, median_distance, min_distance, max_distance, distance2soma]
 

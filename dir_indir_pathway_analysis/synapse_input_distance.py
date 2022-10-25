@@ -6,7 +6,7 @@ from syconn.reps.super_segmentation import SuperSegmentationObject
 import pandas as pd
 from multiprocessing import pool
 
-def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_size = 0.1, ct_pre = None, cellids_pre = None):
+def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_size = 0.1, ct_pre = None, cellids_pre = None, dendrite_only = False):
     '''
     Calculates distance of synapses to soma for two celltypes. Uses distance2soma
     :param ct_post: Celltype that receives synapses. distance2soma computed for this one.
@@ -16,6 +16,7 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
     :param min_syn_size: minimum synapse size
     :param ct_pre: Presynaptic celltype, if none then same as ct_post
     :param cellids_pre: Filtered cellids from ct_pre, if none then cellids_post
+    :param dendrite_only: if True only calculate for axo-dendritic synapses, not axo-somatic ones
     :return: array with cellids, median distances to soma per cell
     '''
 
@@ -50,6 +51,12 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
         m_sizes = m_sizes[suit_ct_inds]
         m_axs = m_axs[suit_ct_inds]
         m_rep_coord = m_rep_coord[suit_ct_inds]
+    if dendrite_only:
+        den_only_inds = np.any(m_cts == 0, axis=1)
+        m_ssv_partners = m_ssv_partners[den_only_inds]
+        m_sizes = m_sizes[den_only_inds]
+        m_axs = m_axs[den_only_inds]
+        m_rep_coord = m_rep_coord[den_only_inds]
     # get synaptic coordinates grouped per cellid_post
     sort_inds = np.where(m_axs != 1)
     post_ssvs = m_ssv_partners[sort_inds]

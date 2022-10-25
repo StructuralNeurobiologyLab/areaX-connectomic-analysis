@@ -37,7 +37,8 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221020_j0251v4_GPi_syn_distances_mcl_%i_synprob_%.2f_%s" % (
+    only_dendrite = True
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221025_j0251v4_GPi_syn_distances_mcl_%i_synprob_%.2f_%s_den_only" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -48,8 +49,8 @@ if __name__ == '__main__':
     dist2ct = 7
     dist2ct_str = ct_dict[dist2ct]
     log.info(
-        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
-        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key))
+        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s, only from dendrite = %s" % (
+        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key, only_dendrite))
     log.info(f'Distance of synapses for celltypes {cts_str_analysis} will be compared to {dist2ct_str}')
     time_stamps = [time.time()]
     step_idents = ['t-0']
@@ -109,13 +110,13 @@ if __name__ == '__main__':
             post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, syn_numbers, syn_ssv_sizes = get_syn_distances(ct_post = dist2ct, cellids_post = suitable_ids_dict[dist2ct],
                                                                          sd_synssv = sd_synssv, syn_prob=syn_prob,
                                                                          min_syn_size=min_syn_size, ct_pre=None,
-                                                                         cellids_pre=None)
+                                                                         cellids_pre=None, dendrite_only = only_dendrite)
         else:
             post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, syn_numbers, syn_ssv_sizes = get_syn_distances(ct_post=dist2ct,
                                                                          cellids_post=suitable_ids_dict[dist2ct],
                                                                          sd_synssv=sd_synssv, syn_prob=syn_prob,
                                                                          min_syn_size=min_syn_size, ct_pre=ct,
-                                                                         cellids_pre=suitable_ids_dict[ct])
+                                                                         cellids_pre=suitable_ids_dict[ct], dendrite_only = only_dendrite)
         distances_dict[(ct_str, dist2ct_str)] = {'ids': post_ids, 'median synapse distance to soma': median_distances_per_ids,
                                                  'min synapse distance to soma': min_distances_per_ids,
                                                  'max synapse distance to soma': max_distances_per_ids,

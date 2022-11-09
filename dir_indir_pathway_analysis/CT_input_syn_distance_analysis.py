@@ -38,15 +38,15 @@ if __name__ == '__main__':
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
     only_dendrite = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221025_j0251v4_GPi_syn_distances_mcl_%i_synprob_%.2f_%s_den_only" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221102_j0251v4_GPe_syn_distances_mcl_%i_synprob_%.2f_%s_only_den" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
-    cts_for_loading = [0, 2, 3, 6, 7, 8]
+    cts_for_loading = [0, 2, 3, 6, 8]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
-    dist2ct = 7
+    dist2ct = 6
     dist2ct_str = ct_dict[dist2ct]
     log.info(
         "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s, only from dendrite = %s" % (

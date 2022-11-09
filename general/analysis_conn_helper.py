@@ -251,6 +251,7 @@ def get_contact_site_axoness_percell(cs_dict, compartment):
     cs_dict["cs ids"] = cs_ids[close_node_comp_inds]
     return cs_dict
 
+
 def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, ct, cellids, filter_ax = None,
                                  filter_ids = None, return_syn_arrays = True, filter_pre_ids = None, filter_post_ids = None):
     '''
@@ -341,3 +342,43 @@ def get_syn_input_distance_percell(args):
     max_distance = np.max(distance2soma)
     return [cellid, median_distance, min_distance, max_distance, distance2soma]
 
+def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn_spiness = None, ax_comp = None, spiness_comp = None):
+    '''
+    Get number of synapses and sum size per postsynaptic cell for a given compartment via ax_comp for axon, soma, dendrite or
+    with ax_comp = 0 and spiness for dendritic shaft, spine neck, spine head. If no compartment is gives, computes total amount.
+    :param syn_sizes: size of synapses
+    :param syn_ssv_partners: synaptic partner neuron ids
+    :param syn_axs: axoness values, 0 = dendrite, 1 = axon, 2 = soma
+    :param syn_spiness: spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+    :param ax_comp: which axoness compartment is wanted
+    :param spiness_comp: spiness compartment wanted, ax_comp has to be set to 0 for dendritic compartments
+    :return: number of synapses, sum of synapse sizes per cell, cellids
+    '''
+    if ax_comp is not None:
+        sort_inds = np.where(syn_axs != 1)
+        post_ssvs = syn_ssv_partners[sort_inds]
+        ssv_inds, unique_post_ssvs = pd.factorize(post_ssvs)
+        syn_ssv_sizes = np.bincount(ssv_inds, syn_sizes)
+        syn_numbers = np.bincount(ssv_inds)
+    else:
+        comp_inds = np.any(np.in1d(syn_axs, ax_comp).reshape(len(syn_axs), 2), axis=1)
+        comp_ssv_partners = syn_ssv_partners[comp_inds]
+        comp_sizes = syn_sizes[comp_inds]
+        comp_axs = syn_axs[comp_inds]
+        if syn_spiness is not None:
+            comp_spiness = syn_spiness[comp_inds]
+        if spiness_comp is not None:
+            if syn_spiness is None:
+                raise ValueError('Synaptic spiness info must be given to filter for spiness values')
+            if ax_comp != 0:
+                raise ValueError('When filter for spiness information, ax_comp must be set to 0')
+            comp_inds = np.any(np.in1d(comp_spiness, spiness_comp).reshape(len(comp_spiness), 2), axis=1)
+            comp_ssv_partners = comp_ssv_partners[comp_inds]
+            comp_sizes = comp_sizes[comp_inds]
+            comp_axs = comp_axs[comp_inds]
+        sort_inds = np.where(comp_axs == ax_comp)
+        post_ssvs = comp_ssv_partners[sort_inds]
+        ssv_inds, unique_post_ssvs = pd.factorize(post_ssvs)
+        syn_ssv_sizes = np.bincount(ssv_inds, comp_sizes)
+        syn_numbers = np.bincount(ssv_inds)
+    return syn_ssv_sizes, syn_numbers, unique_post_ssvs

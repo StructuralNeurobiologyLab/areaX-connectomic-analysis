@@ -9,7 +9,7 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct
-from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_compartment_syn_number_sumsize
 from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph, ComparingMultipleForPLotting
 
 
@@ -1234,6 +1234,106 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
 
     return summed_synapse_sizes
 
+def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_size = 0.1, ct_pre = None, cellids_pre = None):
+    '''
+    Get compartment information between two celltypes. Use axo-somatic or axo-dendritic synapses to give percentage of compartments. This information is also a part of
+    connectivitybetween2cts.
+    # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+    axoness values: 0 = dendrite, 1 = axon, 2 = soma
+    :param ct_post: postsynaptic celltype
+    :param cellids_post: cellids of postsynaptic celltype
+    :param sd_synssv: synaptic segmentation dataset
+    :param syn_prob: synapse probability
+    :param min_syn_size: minimum synapse size
+    :param ct_pre: presynaptic celltype, if None same as post
+    :param cellids_pre: cellids for presynaptic celltype, if None same as postsynaptic
+    :return: total synapse number and sum of synapses, also for each compartment
+    '''
+    #first filter synapses between two celltypes
+    if ct_pre is None:
+        ct_pre = ct_post
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
+                                                                                                        pre_cts=[ct_pre],
+                                                                                                        post_cts=None,
+                                                                                                        syn_prob_thresh=syn_prob,
+                                                                                                        min_syn_size=min_syn_size,
+                                                                                                        axo_den_so=True)
+        suit_ct_inds = np.all(np.in1d(m_ssv_partners, cellids_post).reshape(len(m_ssv_partners), 2), axis=1)
+        m_ssv_partners = m_ssv_partners[suit_ct_inds]
+        m_sizes = m_sizes[suit_ct_inds]
+        m_axs = m_axs[suit_ct_inds]
+        m_rep_coord = m_rep_coord[suit_ct_inds]
+        m_spiness = m_spiness[suit_ct_inds]
+    else:
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
+                                                                                                            pre_cts=[ct_pre],
+                                                                                                            post_cts=[ct_post],
+                                                                                                            syn_prob_thresh=syn_prob,
+                                                                                                            min_syn_size=min_syn_size,
+                                                                                                            axo_den_so=True)
+        suit_ct_inds = np.any(np.in1d(m_ssv_partners, cellids_post).reshape(len(m_ssv_partners), 2), axis=1)
+        m_ssv_partners = m_ssv_partners[suit_ct_inds]
+        m_sizes = m_sizes[suit_ct_inds]
+        m_axs = m_axs[suit_ct_inds]
+        m_rep_coord = m_rep_coord[suit_ct_inds]
+        m_spiness = m_spiness[suit_ct_inds]
+        suit_ct_inds = np.any(np.in1d(m_ssv_partners, cellids_pre).reshape(len(m_ssv_partners), 2), axis=1)
+        m_ssv_partners = m_ssv_partners[suit_ct_inds]
+        m_sizes = m_sizes[suit_ct_inds]
+        m_axs = m_axs[suit_ct_inds]
+        m_rep_coord = m_rep_coord[suit_ct_inds]
+        m_spiness = m_spiness[suit_ct_inds]
+    # get total synapse number and sum of synapses per cellids_post
+    total_syn_numbers, total_sum_sizes, total_cellids = get_compartment_syn_number_sumsize(syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
+                                                                                           syn_axs = m_axs, syn_spiness=None,
+                                                                                           ax_comp=None,
+                                                                                           spiness_comp=None)
+    sort_inds = np.argsort(total_cellids)
+    total_syn_numbers = total_syn_numbers[sort_inds]
+    total_sum_sizes = total_sum_sizes[sort_inds]
+    total_cellids = total_cellids[sort_inds]
+    #get number and sum size of synapses for soma, dendritic shaft, dendritic spine and neck
+    syn_numbers_dict = {}
+    sum_sizes_dict = {}
+    cellids_dict = {}
+    soma_numbers, soma_syn_sizes, soma_ids = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
+                                                                                           syn_ssv_partners=m_ssv_partners,
+                                                                                           syn_axs=m_axs,
+                                                                                           syn_spiness=None,
+                                                                                           ax_comp=2,
+                                                                                           spiness_comp=None)
+    sort_inds = np.argsort(soma_ids)
+    syn_numbers_dict['soma'] = soma_numbers[sort_inds]
+    sum_sizes_dict['soma'] = soma_syn_sizes[sort_inds]
+    cellids_dict['soma'] = soma_ids[sort_inds]
+    spiness_dict = {0: 'spine neck', 1:'spine head', 2: 'dendritic shaft'}
+    for spiness_comp in range(2):
+        spiness_str = spiness_dict[spiness_comp]
+        comp_numbers, comp_sizes, comp_ids = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
+                                                                                           syn_ssv_partners=m_ssv_partners,
+                                                                                           syn_axs=m_axs,
+                                                                                           syn_spiness=m_spiness,
+                                                                                           ax_comp=0,
+                                                                                           spiness_comp=spiness_comp)
+        sort_inds = np.argsort(comp_ids)
+        syn_numbers_dict[spiness_str] = comp_numbers[sort_inds]
+        sum_sizes_dict[spiness_str] = comp_sizes[sort_inds]
+        cellids_dict[spiness_str] = comp_sizes[sort_inds]
+    syn_percentages_dict = {}
+    size_percentages_dict = {}
+    for key in syn_numbers_dict.keys():
+        comp_ids = cellids_dict[key]
+        if len(comp_ids)  == 0:
+            syn_percentages_dict[key] = 0
+            size_percentages_dict[key] = 0
+        elif len(comp_ids) != len(total_cellids):
+            cellids_ind = np.in1d(total_cellids, comp_ids)
+            syn_percentages_dict[key] = syn_numbers_dict[key] / total_syn_numbers[cellids_ind]
+            size_percentages_dict[key] = syn_percentages_dict[key] / total_sum_sizes[cellids_ind]
+        else:
+            syn_percentages_dict[key] = syn_numbers_dict[key] / total_syn_numbers
+            size_percentages_dict[key] = sum_sizes_dict[key] / total_sum_sizes
+    return syn_numbers_dict, sum_sizes_dict, syn_percentages_dict, size_percentages_dict, cellids_dict
 
 
 

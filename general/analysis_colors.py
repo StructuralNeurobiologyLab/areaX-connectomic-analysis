@@ -19,6 +19,8 @@ class CelltypeColors():
         c4 = ['#0E7C7B', '#139D9B', '#15AEAB', '#17BEBB', '#D4F4DD', '#D5C0B8', '#D58B92', '#D62246', '#912043', '#4B1D3F', '#232121']
         # blue, red, oranges
         c5 = ['#002C42', '#003049', '#1B2F45', '#362E41', '#6B2C39', '#D62828', '#E75414', '#F77F00', '#FCBF49', '#EAE2B7', '#0C0B0B']
+        #celltype specific colors
+        c6 = []
         self.colors = {'BlRdGy': c1, 'MudGrays': c2, 'BlGrTe': c3, 'TePkBr': c4, 'BlYw': c5}
         self.palettes = list(self.colors.keys())
 
@@ -34,3 +36,4 @@ class CelltypeColors():
         else:
             palette = {self.ct_dict[i]: self.colors[key][i] for i in range(self.num_cts)}
         return palette
+

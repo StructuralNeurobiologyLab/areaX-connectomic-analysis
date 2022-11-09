@@ -1,10 +1,8 @@
-#write script that shows the distance of synaptic inputs to the soma for GPi
-#script gets distance of different synaptic inputs to GPi soma and plots differences between different celltypes
-
+#get information about compartment specific connectivity between different cells
+#similar to CT_input_syn_distance_analysis
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
+    form cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connecivity_between2cts import get_compartment_specific_connectivity
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
     from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.synapse_input_distance import get_syn_distances
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import analysis_params
@@ -27,38 +25,35 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
+    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               10: "NGF"}
 
     bio_params = analysis_params
     ct_dict = bio_params.ct_dict()
     min_comp_len = bio_params.min_comp_length()
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    msn_ct = 2
-    lman_ct = 3
-    gpi_ct = 7
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    only_dendrite = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221102_j0251v4_GPe_syn_distances_mcl_%i_synprob_%.2f_%s_only_den" % (
-    min_comp_len, syn_prob, color_key)
+    post_ct = 6
+    post_ct_str = ct_dict[post_ct]
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221109_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s" % (
+    post_ct_str, min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
-    cts_for_loading = [0, 2, 3, 6, 8]
+    log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
+    cts_for_loading = [0, 2, 3, 6, 7, 8]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
-    dist2ct = 6
-    dist2ct_str = ct_dict[dist2ct]
     log.info(
-        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s, only from dendrite = %s" % (
-        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key, only_dendrite))
-    log.info(f'Distance of synapses for celltypes {cts_str_analysis} will be compared to {dist2ct_str}')
+        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
+        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key))
+    log.info(f'Distance of synapses for celltypes {cts_str_analysis} will be compared to {post_ct_str}')
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
     log.info("Step 1/3: Load celltypes and check suitability")
-
     axon_cts = bio_params.axon_cts()
     cls = CelltypeColors()
     ct_palette = cls.ct_palette(color_key, num=False)
@@ -209,4 +204,3 @@ if __name__ == '__main__':
     log.info('Distance to synapse analysis done')
     time_stamps = time.time()
     step_idents = ['Plotting finished']
-

@@ -342,7 +342,7 @@ def get_syn_input_distance_percell(args):
     max_distance = np.max(distance2soma)
     return [cellid, median_distance, min_distance, max_distance, distance2soma]
 
-def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn_spiness = None, ax_comp = None, spiness_comp = None):
+def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn_spiness = None, ax_comp = None, spiness_comp = None, return_syn_sizes = False):
     '''
     Get number of synapses and sum size per postsynaptic cell for a given compartment via ax_comp for axon, soma, dendrite or
     with ax_comp = 0 and spiness for dendritic shaft, spine neck, spine head. If no compartment is gives, computes total amount.
@@ -352,6 +352,7 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
     :param syn_spiness: spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
     :param ax_comp: which axoness compartment is wanted
     :param spiness_comp: spiness compartment wanted, ax_comp has to be set to 0 for dendritic compartments
+    :param return_syn_sizes: if true, return filtered sizes array
     :return: number of synapses, sum of synapse sizes per cell, cellids
     '''
     if ax_comp is not None:
@@ -360,6 +361,7 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
         ssv_inds, unique_post_ssvs = pd.factorize(post_ssvs)
         syn_ssv_sizes = np.bincount(ssv_inds, syn_sizes)
         syn_numbers = np.bincount(ssv_inds)
+        comp_sizes = syn_ssv_sizes
     else:
         comp_inds = np.any(np.in1d(syn_axs, ax_comp).reshape(len(syn_axs), 2), axis=1)
         comp_ssv_partners = syn_ssv_partners[comp_inds]
@@ -381,4 +383,7 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
         ssv_inds, unique_post_ssvs = pd.factorize(post_ssvs)
         syn_ssv_sizes = np.bincount(ssv_inds, comp_sizes)
         syn_numbers = np.bincount(ssv_inds)
-    return syn_ssv_sizes, syn_numbers, unique_post_ssvs
+    if return_syn_sizes:
+        return syn_ssv_sizes, syn_numbers, unique_post_ssvs, comp_sizes
+    else:
+        return syn_ssv_sizes, syn_numbers, unique_post_ssvs

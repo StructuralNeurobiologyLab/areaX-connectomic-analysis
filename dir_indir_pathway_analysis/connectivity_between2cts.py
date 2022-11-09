@@ -1292,37 +1292,49 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     total_syn_numbers = total_syn_numbers[sort_inds]
     total_sum_sizes = total_sum_sizes[sort_inds]
     total_cellids = total_cellids[sort_inds]
+    overall_syn_number = len(m_sizes)
+    overall_sum_size = np.sum(m_sizes)
     #get number and sum size of synapses for soma, dendritic shaft, dendritic spine and neck
     syn_numbers_dict = {}
     sum_sizes_dict = {}
     cellids_dict = {}
-    soma_numbers, soma_syn_sizes, soma_ids = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
+    all_comp_syn_numbers = {}
+    all_comp_syn_sum_sizes = {}
+    soma_numbers, soma_syn_sizes, soma_ids, all_soma_syn_sizes = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
                                                                                            syn_ssv_partners=m_ssv_partners,
                                                                                            syn_axs=m_axs,
                                                                                            syn_spiness=None,
                                                                                            ax_comp=2,
-                                                                                           spiness_comp=None)
+                                                                                           spiness_comp=None, return_syn_sizes = True)
     sort_inds = np.argsort(soma_ids)
     syn_numbers_dict['soma'] = soma_numbers[sort_inds]
     sum_sizes_dict['soma'] = soma_syn_sizes[sort_inds]
     cellids_dict['soma'] = soma_ids[sort_inds]
+    all_comp_syn_numbers['soma'] = len(all_soma_syn_sizes)
+    all_comp_syn_sum_sizes['soma'] = np.sum(all_soma_syn_sizes)
     spiness_dict = {0: 'spine neck', 1:'spine head', 2: 'dendritic shaft'}
     for spiness_comp in range(2):
         spiness_str = spiness_dict[spiness_comp]
-        comp_numbers, comp_sizes, comp_ids = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
+        comp_numbers, comp_sizes, comp_ids, all_comp_syn_sizes = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
                                                                                            syn_ssv_partners=m_ssv_partners,
                                                                                            syn_axs=m_axs,
                                                                                            syn_spiness=m_spiness,
                                                                                            ax_comp=0,
-                                                                                           spiness_comp=spiness_comp)
+                                                                                           spiness_comp=spiness_comp, return_syn_sizes = True)
         sort_inds = np.argsort(comp_ids)
         syn_numbers_dict[spiness_str] = comp_numbers[sort_inds]
         sum_sizes_dict[spiness_str] = comp_sizes[sort_inds]
         cellids_dict[spiness_str] = comp_sizes[sort_inds]
+        all_comp_syn_numbers[spiness_str] = len(all_comp_syn_sizes)
+        all_comp_syn_sum_sizes[spiness_str] = np.sum(all_comp_syn_sizes)
     syn_percentages_dict = {}
     size_percentages_dict = {}
+    all_syn_number_percentage = {}
+    all_syn_size_percentage = {}
     for key in syn_numbers_dict.keys():
         comp_ids = cellids_dict[key]
+        all_syn_number_percentage[key] = all_comp_syn_numbers[key] / overall_syn_number
+        all_syn_size_percentage[key] = all_comp_syn_sum_sizes[key] / overall_sum_size
         if len(comp_ids)  == 0:
             syn_percentages_dict[key] = 0
             size_percentages_dict[key] = 0
@@ -1333,7 +1345,9 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
         else:
             syn_percentages_dict[key] = syn_numbers_dict[key] / total_syn_numbers
             size_percentages_dict[key] = sum_sizes_dict[key] / total_sum_sizes
-    return syn_numbers_dict, sum_sizes_dict, syn_percentages_dict, size_percentages_dict, cellids_dict
+    per_cell_params = [syn_numbers_dict, sum_sizes_dict, syn_percentages_dict, size_percentages_dict, cellids_dict]
+    all_syn_params = [all_comp_syn_numbers, all_comp_syn_sizes, all_syn_number_percentage, all_syn_size_percentage]
+    return per_cell_params, all_syn_params
 
 
 

@@ -1262,7 +1262,6 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
         m_ssv_partners = m_ssv_partners[suit_ct_inds]
         m_sizes = m_sizes[suit_ct_inds]
         m_axs = m_axs[suit_ct_inds]
-        m_rep_coord = m_rep_coord[suit_ct_inds]
         m_spiness = m_spiness[suit_ct_inds]
     else:
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
@@ -1281,7 +1280,6 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
         m_ssv_partners = m_ssv_partners[suit_ct_inds]
         m_sizes = m_sizes[suit_ct_inds]
         m_axs = m_axs[suit_ct_inds]
-        m_rep_coord = m_rep_coord[suit_ct_inds]
         m_spiness = m_spiness[suit_ct_inds]
     # get total synapse number and sum of synapses per cellids_post
     total_syn_numbers, total_sum_sizes, total_cellids = get_compartment_syn_number_sumsize(syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,

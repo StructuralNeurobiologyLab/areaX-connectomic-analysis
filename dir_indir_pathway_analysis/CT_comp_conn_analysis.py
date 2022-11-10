@@ -25,9 +25,6 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
-
     bio_params = analysis_params
     ct_dict = bio_params.ct_dict()
     min_comp_len = bio_params.min_comp_length()
@@ -54,119 +51,142 @@ if __name__ == '__main__':
     step_idents = ['t-0']
 
     log.info("Step 1/3: Load celltypes and check suitability")
+
     axon_cts = bio_params.axon_cts()
     cls = CelltypeColors()
     ct_palette = cls.ct_palette(color_key, num=False)
     if exclude_known_mergers:
         known_mergers = bio_params.load_known_mergers()
-        misclassified_asto_ids = bio_params.load_potential_astros()
     suitable_ids_dict = {}
     for ct in tqdm(cts_for_loading):
         ct_str = ct_dict[ct]
+        cell_dict = bio_params.load_cell_dict(ct)
+        # get ids with min compartment length
+        cellids = np.array(list(cell_dict.keys()))
+        if exclude_known_mergers:
+            merger_inds = np.in1d(cellids, known_mergers) == False
+            cellids = cellids[merger_inds]
+            if ct == 2:
+                misclassified_asto_ids = bio_params.load_potential_astros()
+                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+                cellids = cellids[astro_inds]
         if ct in axon_cts:
-            cell_dict = bio_params.load_cell_dict(ct)
-            #get ids with min compartment length
-            cellids = np.array(list(cell_dict.keys()))
-            if exclude_known_mergers:
-                merger_inds = np.in1d(cellids, known_mergers) == False
-                cellids = cellids[merger_inds]
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len, axon_only=True,
-                              max_path_len=None)
-            suitable_ids_dict[ct] = cellids
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                                                    axon_only=True,
+                                                    max_path_len=None)
         else:
-            cell_dict = bio_params.load_cell_dict(ct)
-            cellids = np.array(list(cell_dict.keys()))
-            if exclude_known_mergers:
-                merger_inds = np.in1d(cellids, known_mergers) == False
-                cellids = cellids[merger_inds]
-                if ct == 2:
-                    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-                    cellids = cellids[astro_inds]
-            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
-                                                axon_only=False,
-                                                max_path_len=None)
-            suitable_ids_dict[ct] = cellids
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                                                    axon_only=False,
+                                                    max_path_len=None)
+        suitable_ids_dict[ct] = cellids
 
     number_ids = [len(suitable_ids_dict[ct]) for ct in cts_for_loading]
     log.info(f"Suitable ids from celltypes {cts_str_analysis} were selected: {number_ids}")
     time_stamps = [time.time()]
     step_idents = ['loading cells']
 
-    log.info("Step 2/3: Get synapse distance to soma from different celltypes to %s" % dist2ct_str)
-    median_dist_df = pd.DataFrame(columns = cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
-    min_dist_df = pd.DataFrame(columns=cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
-    max_dist_df = pd.DataFrame(columns=cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])))
-    distances_df = pd.DataFrame(columns=cts_str_analysis, index=range(len(suitable_ids_dict[dist2ct])*5000))
-    distances_dict = {}
+    log.info("Step 2/3: Get compartments for synapses to %s" % post_ct_str)
+    compartments = ['soma', 'spine neck', 'spine head', 'dendritic shaft']
+    syn_numbers_percell_cts = {}
+    syn_sum_sizes_percell_cts = {}
+    syn_number_perc_percell_cts = {}
+    syn_sum_sizes_perc_percell_cts = {}
+    for compartment in compartments:
+        syn_numbers_percell_cts[compartment] = pd.DataFrame(columns=cts_str_analysis)
+        syn_sum_sizes_percell_cts[compartment] = pd.DataFrame(columns=cts_str_analysis)
+        syn_number_perc_percell_cts[compartment] = pd.DataFrame(columns=cts_str_analysis)
+        syn_sum_sizes_perc_percell_cts[compartment] = pd.DataFrame(columns=cts_str_analysis)
+    syn_numbers_cts = pd.DataFrame(columns=cts_str_analysis, index=compartments)
+    syn_sum_sizes_cts = pd.DataFrame(columns=cts_str_analysis, index=compartments)
+    syn_numbers_perc_cts = pd.DataFrame(columns=cts_str_analysis, index=compartments)
+    syn_sum_sizes_perc_cts = pd.DataFrame(columns=cts_str_analysis, index=compartments)
     for ct in tqdm(cts_for_loading):
         ct_str = ct_dict[ct]
         #get median, min, max synapse distance to soma per cell
         #function uses multiprocessing
-        if ct == dist2ct:
-            post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, distances_per_cell, syn_numbers, syn_ssv_sizes = get_syn_distances(ct_post = dist2ct, cellids_post = suitable_ids_dict[dist2ct],
-                                                                         sd_synssv = sd_synssv, syn_prob=syn_prob,
-                                                                         min_syn_size=min_syn_size, ct_pre=None,
-                                                                         cellids_pre=None, dendrite_only = only_dendrite)
+        if ct == post_ct_str:
+            percell_params, syn_params = get_compartment_specific_connectivity(ct_post=post_ct,
+                                                                               cellids_post=suitable_ids_dict[post_ct],
+                                                                               sd_synssv=sd_synssv,
+                                                                               syn_prob=syn_prob,
+                                                                               min_syn_size=min_syn_size,
+                                                                               ct_pre=None, cellids_pre=None)
         else:
-            post_ids, median_distances_per_ids, min_distances_per_ids, max_distances_per_ids, distances_per_cell, syn_numbers, syn_ssv_sizes = get_syn_distances(ct_post=dist2ct,
-                                                                         cellids_post=suitable_ids_dict[dist2ct],
-                                                                         sd_synssv=sd_synssv, syn_prob=syn_prob,
-                                                                         min_syn_size=min_syn_size, ct_pre=ct,
-                                                                         cellids_pre=suitable_ids_dict[ct], dendrite_only = only_dendrite)
-        distances_dict[(ct_str, dist2ct_str)] = {'ids': post_ids, 'median synapse distance to soma': median_distances_per_ids,
-                                                 'min synapse distance to soma': min_distances_per_ids,
-                                                 'max synapse distance to soma': max_distances_per_ids,
-                                                 'synapse number': syn_numbers, 'syn ssv sizes': syn_ssv_sizes}
-        median_dist_df.loc[0:len(post_ids) - 1, ct_str] = median_distances_per_ids
-        min_dist_df.loc[0:len(post_ids) - 1, ct_str] = min_distances_per_ids
-        max_dist_df.loc[0:len(post_ids) - 1, ct_str] = max_distances_per_ids
-        distances_df.loc[0:len(distances_per_cell) - 1, ct_str] = distances_per_cell
+            percell_params, syn_params = get_compartment_specific_connectivity(ct_post=post_ct,
+                                                                               cellids_post=suitable_ids_dict[post_ct],
+                                                                               sd_synssv=sd_synssv,
+                                                                               syn_prob=syn_prob,
+                                                                               min_syn_size=min_syn_size,
+                                                                               ct_pre=ct, cellids_pre=suitable_ids_dict[ct])
+        #parameters per postsynaptic cell
+        syn_numbers_ct, sum_sizes_ct, syn_number_perc_ct, sum_sizes_perc_ct, ids_ct = percell_params
+        #parameters for all synapses independent of cell
+        all_syn_numbers, all_sum_sizes, all_syn_nums_perc, all_syn_sizes_perc = syn_params
+        results_dict = {f'Number of synapses from {ct} to {post_ct_str} per {post_ct_str} cell': syn_numbers_ct,
+                        f'Summed synapse size from {ct} to {post_ct_str} per {post_ct_str} cell': sum_sizes_ct,
+                        f'Percentage of synapses from {ct} to {post_ct_str} per {post_ct_str} cell': syn_number_perc_ct,
+                        f'Percentage of synapse sizes from {ct} to {post_ct_str} per {post_ct_str} cell': sum_sizes_perc_ct,
+                        f'Number of synapses from {ct} to {post_ct_str}': all_syn_numbers,
+                        f'Summed synapse size from {ct} to {post_ct_str}': all_sum_sizes,
+                        f'Percentage of synapses from {ct} to {post_ct_str}': all_syn_nums_perc,
+                        f'Percentage of synapse sizes from {ct} to {post_ct_str}': all_syn_sizes_perc}
+        for compartment in compartments:
+            syn_numbers_percell_cts[compartment][ct] = syn_numbers_ct[compartment]
+            syn_sum_sizes_percell_cts[compartment][ct] = sum_sizes_ct[compartment]
+            syn_number_perc_percell_cts[compartment][ct] = syn_number_perc_ct[compartment]
+            syn_sum_sizes_perc_percell_cts[compartment][ct] = sum_sizes_perc_ct[compartment]
+            syn_numbers_cts.loc[compartment, ct] = all_syn_numbers[compartment]
+            syn_sum_sizes_cts.loc[compartment, ct] = all_sum_sizes[compartment]
+            syn_numbers_perc_cts.loc[compartment, ct] = all_syn_nums_perc[compartment]
+            syn_sum_sizes_perc_cts.loc[compartment, ct] = all_syn_sizes_perc[compartment]
+
         f_name_ct = f'{f_name}/{ct_str}'
         if not os.path.exists(f_name_ct):
             os.mkdir(f_name_ct)
-        xlabel = "distance in µm"
-        ylabel = "count of cells"
         ct_color = ct_palette[ct_str]
-        sns.histplot(data=median_distances_per_ids, color=ct_color, legend=True, fill=True, element="step", bins = 15)
-        plt.title('Median distance to soma' + ' of ' + dist2ct_str)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.savefig('%s/median_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
-        plt.close()
-        sns.histplot(data=min_distances_per_ids, color=ct_color, legend=True, fill=True, element="step", bins = 15)
-        plt.title('Min distance to soma' + ' of ' + dist2ct_str)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.savefig('%s/min_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
-        plt.close()
-        sns.histplot(data=max_distances_per_ids, color=ct_color, legend=True, fill=True, element="step", bins = 15)
-        plt.title('Max distance to soma' + ' of ' + dist2ct_str)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.savefig('%s/max_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
-        plt.close()
-        sns.histplot(data=distances_per_cell, color=ct_color, legend=True, fill=True, element="step", bins=30)
-        plt.title('Distance to soma of all synapses' + ' of ' + dist2ct_str)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.savefig('%s/all_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
-        plt.close()
+        for key in results_dict:
+            results_dict[key] = pd.DataFrame(results_dict[key])
+            if 'cell' in key:
+                sns.boxplot(data = results_dict[key], color=ct_color)
+                param_title = key.split(' from ')[0]
+                plt.ylabel(param_title)
+                plt.title(key)
+                plt.savefig(f'{f_name_ct}/param_title_per_cell_box.png')
+                plt.close()
+                sns.stripplot(data=results_dict[key], color="black", alpha=0.2,
+                              dodge=True, size=2)
+                sns.violinplot(data=results_dict[key], color=ct_color)
+                plt.ylabel(param_title)
+                plt.title(key)
+                plt.savefig(f'{f_name_ct}/param_title_per_cell_box.png')
+                plt.close()
+            else:
+                sns.barplot(data=results_dict[key], color=ct_color)
+                param_title = key.split(' from ')[0]
+                plt.ylabel(param_title)
+                plt.title(key)
+                plt.savefig(f'{f_name_ct}/param_title_per_cell_box.png')
+                plt.close()
 
-
-
-    write_obj2pkl('%s/distances_result_dict.pkl' % f_name, distances_dict)
-    median_dist_df.to_csv('%s/median_syn_distance2soma.csv' % f_name)
-    max_dist_df.to_csv('%s/max_syn_distance2soma.csv' % f_name)
-    min_dist_df.to_csv('%s/min_syn_distance2soma.csv' % f_name)
-    distances_df.to_csv('%s/all_syn_distances.csv' % f_name)
+    cts_results_dict = {f'Number of synapses per {post_ct_str} cell': syn_numbers_percell_cts,
+                    f'Summed synapse size per {post_ct_str} cell': syn_sum_sizes_percell_cts,
+                    f'Percentage of synapses per {post_ct_str} cell': syn_number_perc_percell_cts,
+                    f'Percentage of synapse sizes per {post_ct_str} cell': syn_sum_sizes_perc_percell_cts,
+                    f'Number of synapses to {post_ct_str}': syn_numbers_cts,
+                    f'Summed synapse size to {post_ct_str}': syn_sum_sizes_cts,
+                    f'Percentage of synapses to {post_ct_str}': syn_numbers_perc_cts,
+                    f'Percentage of synapse sizes to {post_ct_str}': syn_sum_sizes_perc_cts}
+    write_obj2pkl('%s/comp_result_dict.pkl' % f_name, cts_results_dict)
+    for key in cts_results_dict:
+        if 'cell' in key:
+            continue
+        cts_results_dict[key].to_csv(f'{f_name}/{key}.csv')
     time_stamps = [time.time()]
-    step_idents = ['get synapse distances to soma']
+    step_idents = ['get compartment specific synapse information']
 
-    log.info("Step 3/3 Plot results and calculate statistics")
-    str_params = ['median synapse distance to soma', 'min synapse distance to soma', 'max synapse distance to soma', 'synapse distances to soma']
-    param_dfs = [median_dist_df, min_dist_df, max_dist_df, distances_df]
+    log.info("Step 3/3 Plot results for comparison between celltypes and calculate statistics")
     ranksum_results = pd.DataFrame()
-    for i, param in enumerate(tqdm(param_dfs)):
+    for key in cts_results_dict.keys():
         #use ranksum test (non-parametric) to calculate results
         for c1 in cts_for_loading:
             for c2 in cts_for_loading:

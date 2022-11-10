@@ -40,16 +40,16 @@ if __name__ == '__main__':
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
     only_dendrite = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221102_j0251v4_GPe_syn_distances_mcl_%i_synprob_%.2f_%s_only_den" % (
-    min_comp_len, syn_prob, color_key)
+    dist2ct = 6
+    dist2ct_str = ct_dict[dist2ct]
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221102_j0251v4_%s_syn_distances_mcl_%i_synprob_%.2f_%s_only_den" % (
+    dist2ct_str, min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
     cts_for_loading = [0, 2, 3, 6, 8]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
-    dist2ct = 6
-    dist2ct_str = ct_dict[dist2ct]
     log.info(
         "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s, only from dendrite = %s" % (
         min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key, only_dendrite))
@@ -64,33 +64,28 @@ if __name__ == '__main__':
     ct_palette = cls.ct_palette(color_key, num=False)
     if exclude_known_mergers:
         known_mergers = bio_params.load_known_mergers()
-        misclassified_asto_ids = bio_params.load_potential_astros()
     suitable_ids_dict = {}
     for ct in tqdm(cts_for_loading):
         ct_str = ct_dict[ct]
+        cell_dict = bio_params.load_cell_dict(ct)
+        # get ids with min compartment length
+        cellids = np.array(list(cell_dict.keys()))
+        if exclude_known_mergers:
+            merger_inds = np.in1d(cellids, known_mergers) == False
+            cellids = cellids[merger_inds]
+            if ct == 2:
+                misclassified_asto_ids = bio_params.load_potential_astros()
+                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+                cellids = cellids[astro_inds]
         if ct in axon_cts:
-            cell_dict = bio_params.load_cell_dict(ct)
-            #get ids with min compartment length
-            cellids = np.array(list(cell_dict.keys()))
-            if exclude_known_mergers:
-                merger_inds = np.in1d(cellids, known_mergers) == False
-                cellids = cellids[merger_inds]
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len, axon_only=True,
-                              max_path_len=None)
-            suitable_ids_dict[ct] = cellids
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                                                    axon_only=True,
+                                                    max_path_len=None)
         else:
-            cell_dict = bio_params.load_cell_dict(ct)
-            cellids = np.array(list(cell_dict.keys()))
-            if exclude_known_mergers:
-                merger_inds = np.in1d(cellids, known_mergers) == False
-                cellids = cellids[merger_inds]
-                if ct == 2:
-                    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-                    cellids = cellids[astro_inds]
-            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
-                                                axon_only=False,
-                                                max_path_len=None)
-            suitable_ids_dict[ct] = cellids
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                                                    axon_only=False,
+                                                    max_path_len=None)
+        suitable_ids_dict[ct] = cellids
 
     number_ids = [len(suitable_ids_dict[ct]) for ct in cts_for_loading]
     log.info(f"Suitable ids from celltypes {cts_str_analysis} were selected: {number_ids}")

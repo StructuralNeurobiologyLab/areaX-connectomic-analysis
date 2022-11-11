@@ -86,21 +86,24 @@ if __name__ == '__main__':
     step_idents = ['loading cells']
 
     log.info("Step 2/3: Get compartments for synapses to %s" % post_ct_str)
+    #set uo to dataframes, one with results summarised per celltype (float) and another
+    #with results summarised per postsynaptic cell (np.array)
     compartments = ['soma', 'spine neck', 'spine head', 'dendritic shaft']
-    syn_numbers_percell_cts = {}
-    syn_sum_sizes_percell_cts = {}
-    syn_number_perc_percell_cts = {}
-    syn_sum_sizes_perc_percell_cts = {}
-    for compartment in compartments:
-        syn_numbers_percell_cts[compartment] = pd.DataFrame(columns=cts_str_analysis)
-        syn_sum_sizes_percell_cts[compartment] = pd.DataFrame(columns=cts_str_analysis)
-        syn_number_perc_percell_cts[compartment] = pd.DataFrame(columns=cts_str_analysis)
-        syn_sum_sizes_perc_percell_cts[compartment] = pd.DataFrame(columns=cts_str_analysis)
-    syn_numbers_cts = pd.DataFrame(columns=cts_str_analysis, index=compartments)
-    syn_sum_sizes_cts = pd.DataFrame(columns=cts_str_analysis, index=compartments)
-    syn_numbers_perc_cts = pd.DataFrame(columns=cts_str_analysis, index=compartments)
-    syn_sum_sizes_perc_cts = pd.DataFrame(columns=cts_str_analysis, index=compartments)
-    for ct in tqdm(cts_for_loading):
+    num_comps = len(compartments)
+    complete_param_titles = [f'Number of synapses from {ct} to {post_ct_str} per {post_ct_str} cell',
+                        f'Summed synapse size from {ct} to {post_ct_str} per {post_ct_str} cell',
+                        f'Percentage of synapses from {ct} to {post_ct_str} per {post_ct_str} cell',
+                        f'Percentage of synapse sizes from {ct} to {post_ct_str} per {post_ct_str} cell',
+                        f'Number of synapses from {ct} to {post_ct_str}',
+                        f'Summed synapse size from {ct} to {post_ct_str}',
+                        f'Percentage of synapses from {ct} to {post_ct_str}',
+                        f'Percentage of synapse sizes from {ct} to {post_ct_str}']
+    param_titles = [pt.split('from')[0] for pt in complete_param_titles]
+    columns = np.hstack([np.array(param_titles), np.array(['celltype', 'compartment'])])
+    all_comps_results_dict_percell = pd.DataFrame(columns=columns)
+    all_comps_results_dict = pd.DataFrame(columns)
+    num_postcellids = len(suitable_ids_dict[post_ct])
+    for ic, ct in enumerate(tqdm(cts_for_loading)):
         ct_str = ct_dict[ct]
         #get median, min, max synapse distance to soma per cell
         #function uses multiprocessing
@@ -119,105 +122,116 @@ if __name__ == '__main__':
                                                                                min_syn_size=min_syn_size,
                                                                                ct_pre=ct, cellids_pre=suitable_ids_dict[ct])
         #parameters per postsynaptic cell
-        syn_numbers_ct, sum_sizes_ct, syn_number_perc_ct, sum_sizes_perc_ct, ids_ct = percell_params
+        #syn_numbers_ct, sum_sizes_ct, syn_number_perc_ct, sum_sizes_perc_ct, ids_ct = percell_params
         #parameters for all synapses independent of cell
-        all_syn_numbers, all_sum_sizes, all_syn_nums_perc, all_syn_sizes_perc = syn_params
-        results_dict = {f'Number of synapses from {ct} to {post_ct_str} per {post_ct_str} cell': syn_numbers_ct,
-                        f'Summed synapse size from {ct} to {post_ct_str} per {post_ct_str} cell': sum_sizes_ct,
-                        f'Percentage of synapses from {ct} to {post_ct_str} per {post_ct_str} cell': syn_number_perc_ct,
-                        f'Percentage of synapse sizes from {ct} to {post_ct_str} per {post_ct_str} cell': sum_sizes_perc_ct,
-                        f'Number of synapses from {ct} to {post_ct_str}': all_syn_numbers,
-                        f'Summed synapse size from {ct} to {post_ct_str}': all_sum_sizes,
-                        f'Percentage of synapses from {ct} to {post_ct_str}': all_syn_nums_perc,
-                        f'Percentage of synapse sizes from {ct} to {post_ct_str}': all_syn_sizes_perc}
-        for compartment in compartments:
-            syn_numbers_percell_cts[compartment][ct] = syn_numbers_ct[compartment]
-            syn_sum_sizes_percell_cts[compartment][ct] = sum_sizes_ct[compartment]
-            syn_number_perc_percell_cts[compartment][ct] = syn_number_perc_ct[compartment]
-            syn_sum_sizes_perc_percell_cts[compartment][ct] = sum_sizes_perc_ct[compartment]
-            syn_numbers_cts.loc[compartment, ct] = all_syn_numbers[compartment]
-            syn_sum_sizes_cts.loc[compartment, ct] = all_sum_sizes[compartment]
-            syn_numbers_perc_cts.loc[compartment, ct] = all_syn_nums_perc[compartment]
-            syn_sum_sizes_perc_cts.loc[compartment, ct] = all_syn_sizes_perc[compartment]
+        #all_syn_numbers, all_sum_sizes, all_syn_nums_perc, all_syn_sizes_perc = syn_params
+        for i_comp, compartment in enumerate(compartments):
+            #fill in numbers that summarise all synapses per compartment per celltype
+            ind_all_syns = ic*num_comps + i_comp
+            all_comps_results_dict.loc[ind_all_syns, 'compartment'] = compartment
+            all_comps_results_dict.loc[ind_all_syns, 'celltype'] = ct_str
+            # fill in data per postsynaptic cell per compartment per celltype
+            len_comp_percell = len(percell_params[0][compartment])
+            start_ind = ic * num_comps * num_postcellids + i_comp * num_postcellids
+            end_ind = start_ind + len_comp_percell - 1
+            all_comps_results_dict_percell.loc[start_ind: end_ind, 'compartment'] = compartment
+            all_comps_results_dict_percell.loc[start_ind: end_ind, 'celltype'] = ct_str
+            for iy in range(len(syn_params)):
+                all_comps_results_dict.loc[ind_all_syns, param_titles[iy]] = syn_params[iy][compartment]
+                all_comps_results_dict_percell.loc[start_ind: end_ind, param_titles[iy]] = percell_params[iy][compartment]
 
+        raise ValueError
         f_name_ct = f'{f_name}/{ct_str}'
         if not os.path.exists(f_name_ct):
             os.mkdir(f_name_ct)
         ct_color = ct_palette[ct_str]
-        for key in results_dict:
-            results_dict[key] = pd.DataFrame(results_dict[key])
+        for ik, key in enumerate(complete_param_titles):
+            param_title = param_titles[ik]
             if 'cell' in key:
-                sns.boxplot(data = results_dict[key], color=ct_color)
-                param_title = key.split(' from ')[0]
+                results = all_comps_results_dict_percell[all_comps_results_dict_percell['celltype'] == ct_str]
+                sns.boxplot(x = 'compartment', y = param_title, data = results, color=ct_color)
                 plt.ylabel(param_title)
                 plt.title(key)
-                plt.savefig(f'{f_name_ct}/param_title_per_cell_box.png')
+                plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.png')
                 plt.close()
-                sns.stripplot(data=results_dict[key], color="black", alpha=0.2,
+                sns.stripplot(x = 'compartment', y = param_title, data = results, color="black", alpha=0.2,
                               dodge=True, size=2)
-                sns.violinplot(data=results_dict[key], color=ct_color)
+                sns.violinplot(x = 'compartment', y = param_title, data = results, color=ct_color)
                 plt.ylabel(param_title)
                 plt.title(key)
-                plt.savefig(f'{f_name_ct}/param_title_per_cell_box.png')
+                plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.png')
                 plt.close()
             else:
-                sns.barplot(data=results_dict[key], color=ct_color)
-                param_title = key.split(' from ')[0]
+                results = all_comps_results_dict[all_comps_results_dict['celltype'] == ct_str]
+                sns.barplot(x = 'compartment', y = param_title, data = results, color=ct_color)
                 plt.ylabel(param_title)
                 plt.title(key)
-                plt.savefig(f'{f_name_ct}/param_title_per_cell_box.png')
+                plt.savefig(f'{f_name_ct}/{param_title}_allsyns_bar.png')
                 plt.close()
 
-    cts_results_dict = {f'Number of synapses per {post_ct_str} cell': syn_numbers_percell_cts,
-                    f'Summed synapse size per {post_ct_str} cell': syn_sum_sizes_percell_cts,
-                    f'Percentage of synapses per {post_ct_str} cell': syn_number_perc_percell_cts,
-                    f'Percentage of synapse sizes per {post_ct_str} cell': syn_sum_sizes_perc_percell_cts,
-                    f'Number of synapses to {post_ct_str}': syn_numbers_cts,
-                    f'Summed synapse size to {post_ct_str}': syn_sum_sizes_cts,
-                    f'Percentage of synapses to {post_ct_str}': syn_numbers_perc_cts,
-                    f'Percentage of synapse sizes to {post_ct_str}': syn_sum_sizes_perc_cts}
-    write_obj2pkl('%s/comp_result_dict.pkl' % f_name, cts_results_dict)
-    for key in cts_results_dict:
-        if 'cell' in key:
-            continue
-        cts_results_dict[key].to_csv(f'{f_name}/{key}.csv')
+    all_comps_results_dict_percell.to_csv(f'{f_name}/all_comps_results_per_{post_ct_str}_cell.csv')
+    all_comps_results_dict.to_csv(f'{f_name}/all_comps_results_cts.csv')
     time_stamps = [time.time()]
     step_idents = ['get compartment specific synapse information']
 
     log.info("Step 3/3 Plot results for comparison between celltypes and calculate statistics")
-    ranksum_results = pd.DataFrame()
-    for key in cts_results_dict.keys():
+    for ik, key in complete_param_titles:
         #use ranksum test (non-parametric) to calculate results
-        for c1 in cts_for_loading:
-            for c2 in cts_for_loading:
-                if c1 >= c2:
-                    continue
-                p_c1 = np.array(param[ct_dict[c1]]).astype(float)
-                p_c2 = np.array(param[ct_dict[c2]]).astype(float)
-                stats, p_value = ranksums(p_c1, p_c2, nan_policy = 'omit')
-                ranksum_results.loc["stats " + str_params[i] + ' of ' + dist2ct_str, ct_dict[c1] + " vs " + ct_dict[c2]] = stats
-                ranksum_results.loc["p value " + str_params[i] + ' of ' + dist2ct_str, ct_dict[c1] + " vs " + ct_dict[c2]] = p_value
-        #make violinplot, boxplot, histplot
-        ylabel = 'distance in µm'
-        sns.stripplot(data=param, color="black", alpha=0.2,
-                      dodge=True, size=2)
-        sns.violinplot(data=param, inner="box",
-                       palette=ct_palette)
-        plt.title(str_params[i] + ' of ' + dist2ct_str)
-        plt.ylabel(ylabel)
-        plt.savefig('%s/%s_syn_dst2soma_violin.png' % (f_name, str_params[i].split()[0]))
-        plt.close()
-        sns.boxplot(data=param, palette=ct_palette)
-        plt.title(str_params[i] + ' of ' + dist2ct_str)
-        plt.ylabel(ylabel)
-        plt.savefig('%s/%s_syn_dst2soma_box.png' % (f_name, str_params[i].split()[0]))
-        plt.close()
-        sns.histplot(data=param, palette=ct_palette, legend= True, fill=True, element="step")
-        plt.title(str_params[i] + ' of ' + dist2ct_str)
-        plt.xlabel(ylabel)
-        plt.ylabel('count of cells')
-        plt.savefig('%s/%s_syn_dst2soma_dist.png' % (f_name, str_params[i].split()[0]))
-        plt.close()
+        param_title = param_titles[ik]
+        if 'cell' in key:
+            #make plots for data which is summarised per postsynaptic cell
+            ranksum_results = pd.DataFrame()
+            for comp in compartments:
+                for c1 in cts_for_loading:
+                    for c2 in cts_for_loading:
+                        if c1 >= c2:
+                            continue
+                        c1_str = ct_dict[c1]
+                        c2_str = ct_dict[c2]
+                        p_c1 = np.array(all_comps_results_dict_percell[]).astype(float)
+                        p_c2 = np.array(cts_results_dict[key][comp][c2]).astype(float)
+                        stats, p_value = ranksums(p_c1, p_c2, nan_policy = 'omit')
+                        ranksum_results.loc["stats " + comp + ' of ' + post_ct_str, c1_str + " vs " + c2_str] = stats
+                        ranksum_results.loc["p value " + comp + ' of ' + post_ct_str, c1_str + " vs " + c2_str] = p_value
+                # make violinplot, boxplot per compartment with all celltypes
+                plot_data = cts_results_dict[key][comp]
+                ylabel = param_title
+                sns.stripplot(data=plot_data, color="black", alpha=0.2,
+                              dodge=True, size=2)
+                sns.violinplot(data=plot_data, inner="box",
+                               palette=ct_palette)
+                plt.title(param_title + ' to ' + comp + ' of ' + post_ct_str)
+                plt.ylabel(ylabel)
+                plt.savefig('%s/%s_syn_comps_%s_percell_violin.png' % (f_name, param_title, comp))
+                plt.close()
+                sns.boxplot(data=plot_data,
+                               palette=ct_palette)
+                plt.title(param_title + ' to ' + comp + ' of ' + post_ct_str)
+                plt.ylabel(ylabel)
+                plt.savefig('%s/%s_syn_comps_%s_percell_box.png' % (f_name, param_title, comp))
+                plt.close()
+            ranksum_results.to_csv(f'{f_name}/{param_title}_ranksum_results.csv')
+            #make plot with all compartments
+            plot_dict = cts_results_dict[key]
+
+            ylabel = param_title
+            sns.stripplot(data=plot_data, color="black", alpha=0.2,
+                          dodge=True, size=2)
+            sns.violinplot(data=plot_data, inner="box",
+                           palette=ct_palette)
+            plt.title(param_title + ' to ' + comp + ' of ' + post_ct_str)
+            plt.ylabel(ylabel)
+            plt.savefig('%s/%s_syn_comps_%s_percell_violin.png' % (f_name, param_title, comp))
+            plt.close()
+            sns.boxplot(data=plot_data,
+                        palette=ct_palette)
+            plt.title(param_title + ' to ' + comp + ' of ' + post_ct_str)
+            plt.ylabel(ylabel)
+            plt.savefig('%s/%s_syn_comps_%s_percell_box.png' % (f_name, param_title, comp))
+            plt.close()
+        else:
+            #make plots for summary with all synapses together
+
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 

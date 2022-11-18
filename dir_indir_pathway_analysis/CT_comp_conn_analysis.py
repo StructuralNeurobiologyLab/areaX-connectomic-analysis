@@ -35,7 +35,7 @@ if __name__ == '__main__':
     post_ct = 7
     post_ct_str = ct_dict[post_ct]
     #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd'}
-    comp_color_key = 'TeYw'
+    comp_color_key = 'MudGrays'
     f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221118_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s" % (
     post_ct_str, min_comp_len, syn_prob, comp_color_key)
     if not os.path.exists(f_name):
@@ -146,7 +146,6 @@ if __name__ == '__main__':
         f_name_ct = f'{f_name}/{ct_str}'
         if not os.path.exists(f_name_ct):
             os.mkdir(f_name_ct)
-        ct_color = ct_palette[ct_str]
         df_percell = all_comps_results_dict_percell[all_comps_results_dict_percell['celltype'] == ct_str]
         df_percell = df_percell.convert_dtypes()
         df = all_comps_results_dict[all_comps_results_dict['celltype'] == ct_str]
@@ -154,20 +153,20 @@ if __name__ == '__main__':
             param_title = param_titles[ik]
             if 'cell' in key:
                 df_percell[param_title] = df_percell[param_title].astype(float)
-                sns.boxplot(x = 'compartment', y = param_title, data = df_percell, color=ct_color)
+                sns.boxplot(x = 'compartment', y = param_title, data = df_percell, palette=comp_palette)
                 plt.ylabel(param_title)
                 plt.title(key)
                 plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.png')
                 plt.close()
                 sns.stripplot(x = 'compartment', y = param_title, data = df_percell, color="black", alpha=0.2,
                               dodge=True, size=2)
-                sns.violinplot(x = 'compartment', y = param_title, data = df_percell, color=ct_color)
+                sns.violinplot(x = 'compartment', y = param_title, data = df_percell, palette=comp_palette)
                 plt.ylabel(param_title)
                 plt.title(key)
-                plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.png')
+                plt.savefig(f'{f_name_ct}/{param_title}_per_cell_violin.png')
                 plt.close()
             else:
-                sns.barplot(x = 'compartment', y = param_title, data = df, color=ct_color)
+                sns.barplot(x = 'compartment', y = param_title, data = df, palette=comp_palette)
                 plt.ylabel(param_title)
                 plt.title(key)
                 plt.savefig(f'{f_name_ct}/{param_title}_allsyns_bar.png')
@@ -224,7 +223,7 @@ if __name__ == '__main__':
             all_comps_results_dict_percell[param_title] = all_comps_results_dict_percell[param_title].astype(float)
             ylabel = param_title
             sns.stripplot(x = 'celltype', y = param_title, hue= 'compartment', data=all_comps_results_dict_percell, color="black", alpha=0.2,
-                          dodge=True, size=2)
+                          dodge=True, size=2, legend=False)
             sns.violinplot(x = 'celltype', y = param_title, hue= 'compartment', data=all_comps_results_dict_percell, inner="box",
                            palette=comp_palette)
             plt.title(param_title + ' to '+ post_ct_str)
@@ -241,7 +240,7 @@ if __name__ == '__main__':
             #make plots for summary with all synapses together
             sns.barplot(x='celltype', y=param_title, hue='compartment', data=all_comps_results_dict,
                         palette=comp_palette)
-            plt.title(param_title + ' to ' + post_ct_str)
+            plt.title(param_title + ' to ' + post_ct_str + ' for all synapses per ct')
             plt.ylabel(ylabel)
             plt.savefig('%s/%s_syn_cts_box.png' % (f_name, param_title))
             plt.close()

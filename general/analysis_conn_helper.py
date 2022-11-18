@@ -350,12 +350,12 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
     :param syn_ssv_partners: synaptic partner neuron ids
     :param syn_axs: axoness values, 0 = dendrite, 1 = axon, 2 = soma
     :param syn_spiness: spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
-    :param ax_comp: which axoness compartment is wanted
+    :param ax_comp: which axoness compartment is wanted, if None uses dendrite and soma
     :param spiness_comp: spiness compartment wanted, ax_comp has to be set to 0 for dendritic compartments
     :param return_syn_sizes: if true, return filtered sizes array
     :return: number of synapses, sum of synapse sizes per cell, cellids
     '''
-    if ax_comp is not None:
+    if ax_comp is None:
         sort_inds = np.where(syn_axs != 1)
         post_ssvs = syn_ssv_partners[sort_inds]
         ssv_inds, unique_post_ssvs = pd.factorize(post_ssvs)

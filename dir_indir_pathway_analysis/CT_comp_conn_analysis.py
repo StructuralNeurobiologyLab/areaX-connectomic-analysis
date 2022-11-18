@@ -2,10 +2,9 @@
 #similar to CT_input_syn_distance_analysis
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    form cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connecivity_between2cts import get_compartment_specific_connectivity
+    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import get_compartment_specific_connectivity
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.synapse_input_distance import get_syn_distances
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import analysis_params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -25,7 +24,7 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
-    bio_params = analysis_params
+    bio_params = Analysis_Params(global_params.wd)
     ct_dict = bio_params.ct_dict()
     min_comp_len = bio_params.min_comp_length()
     syn_prob = bio_params.syn_prob_thresh()
@@ -35,7 +34,7 @@ if __name__ == '__main__':
     color_key = 'TePkBr'
     post_ct = 6
     post_ct_str = ct_dict[post_ct]
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221109_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221118_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s" % (
     post_ct_str, min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -99,9 +98,9 @@ if __name__ == '__main__':
                         f'Percentage of synapses from {ct} to {post_ct_str}',
                         f'Percentage of synapse sizes from {ct} to {post_ct_str}']
     param_titles = [pt.split('from')[0] for pt in complete_param_titles]
-    columns = np.hstack([np.array(param_titles), np.array(['celltype', 'compartment'])])
-    all_comps_results_dict_percell = pd.DataFrame(columns=columns)
-    all_comps_results_dict = pd.DataFrame(columns)
+    columns = np.hstack([np.array(param_titles[:int(len(param_titles)/2)]), np.array(['celltype', 'compartment'])])
+    all_comps_results_dict_percell = pd.DataFrame(columns=columns, index=range(num_comps * num_cts * len(suitable_ids_dict[post_ct])))
+    all_comps_results_dict = pd.DataFrame(columns = columns, index=range(num_comps * num_cts))
     num_postcellids = len(suitable_ids_dict[post_ct])
     for ic, ct in enumerate(tqdm(cts_for_loading)):
         ct_str = ct_dict[ct]
@@ -188,7 +187,7 @@ if __name__ == '__main__':
                             continue
                         c1_str = ct_dict[c1]
                         c2_str = ct_dict[c2]
-                        p_c1 = np.array(all_comps_results_dict_percell[]).astype(float)
+                        #p_c1 = np.array(all_comps_results_dict_percell[]).astype(float)
                         p_c2 = np.array(cts_results_dict[key][comp][c2]).astype(float)
                         stats, p_value = ranksums(p_c1, p_c2, nan_policy = 'omit')
                         ranksum_results.loc["stats " + comp + ' of ' + post_ct_str, c1_str + " vs " + c2_str] = stats
@@ -231,6 +230,7 @@ if __name__ == '__main__':
             plt.close()
         else:
             #make plots for summary with all synapses together
+            sns.scatterplot()
 
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)

@@ -7,7 +7,7 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
     from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.synapse_input_distance import get_syn_distances
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import analysis_params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
 
-    bio_params = analysis_params
+    bio_params = Analysis_Params(global_params.wd)
     ct_dict = bio_params.ct_dict()
     min_comp_len = bio_params.min_comp_length()
     syn_prob = bio_params.syn_prob_thresh()

@@ -1,7 +1,7 @@
 #this file sets general analysis values
 from syconn.handler.basics import load_pkl2obj
 
-class analysis_params(object):
+class Analysis_Params(object):
     '''
     Config object for setting general analysis parameters
     TO DO: base on file
@@ -20,31 +20,24 @@ class analysis_params(object):
         self._pot_astros_file_location = 'cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl'
         self._cell_dicts_location = '/cajal/nvmescratch/users/arother/j0251v4_prep/'
 
-    @property
     def working_dir(self):
         return self._working_dir
-        
-    @property
+
     def ct_dict(self):
         return self._ct_dict
 
-    @property
     def axoness_dict(self):
         return self.axoness_dict
 
-    @property
     def axon_cts(self):
         return self._axon_cts
 
-    @property
     def syn_prob_thresh(self):
         return self._syn_prob_tresh
 
-    @property
     def min_syn_size(self):
         return self._min_syn_size
 
-    @property
     def min_comp_length(self):
         return self._min_comp_length
 

@@ -248,6 +248,6 @@ if __name__ == '__main__':
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 
-    log.info('Distance to synapse analysis done')
+    log.info('Compartment synapse analysis done')
     time_stamps = time.time()
     step_idents = ['Plotting finished']

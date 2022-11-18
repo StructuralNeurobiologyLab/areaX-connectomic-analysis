@@ -46,7 +46,7 @@ class CompColors():
         self.num_comp = len(self.compartments)
         self.nump_comp_denso = len(self.compartments_deso)
         #MudGrays as above
-        c1 = ["#010440", "#010326", "#D98977", "#BF0404"]
+        c1 = ['#D0CCD0', '#DBD8DC', '#E6E4E8', '#F1F0F4']
         #Gray/Greens
         c2 = ["#C5C5C5", "#4C5B61", "#829191", "#949B96"]
         #turqoise/yellow

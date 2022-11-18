@@ -384,6 +384,6 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
         syn_ssv_sizes = np.bincount(ssv_inds, comp_sizes)
         syn_numbers = np.bincount(ssv_inds)
     if return_syn_sizes:
-        return syn_ssv_sizes, syn_numbers, unique_post_ssvs, comp_sizes
+        return syn_numbers, syn_ssv_sizes, unique_post_ssvs, comp_sizes
     else:
-        return syn_ssv_sizes, syn_numbers, unique_post_ssvs
+        return syn_numbers, syn_ssv_sizes, unique_post_ssvs

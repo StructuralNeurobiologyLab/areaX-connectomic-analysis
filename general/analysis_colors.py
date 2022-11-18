@@ -37,3 +37,45 @@ class CelltypeColors():
             palette = {self.ct_dict[i]: self.colors[key][i] for i in range(self.num_cts)}
         return palette
 
+class CompColors():
+    '''Colors to use for different compartment visualizations'''
+
+    def __init__(self):
+        self.compartments = ['dendrite', 'axon', 'soma']
+        self.compartments_deso = ['soma', 'spine neck', 'spine head', 'dendritic shaft']
+        self.num_comp = len(self.compartments)
+        self.nump_comp_denso = len(self.compartments_deso)
+        #MudGrays as above
+        c1 = ["#010440", "#010326", "#D98977", "#BF0404"]
+        #Gray/Greens
+        c2 = ["#C5C5C5", "#4C5B61", "#829191", "#949B96"]
+        #turqoise/yellow
+        c3 = ["#F0F3BD", "#028090", "#1A5E63", "#00BFB2"]
+        #nude/faint with rose
+        c4 = ["#C2847A", "#848586", "#BAA898", "#EEE0CB"]
+        #blue/gray and red (similar to c1 above)
+        c5 = ["#EF233C", "#EDF2F4", "#8D99AE", "#2B2D42"]
+        self.colors = {'MudGrays': c1, 'GreenGrays': c2, 'TeYw': c3, 'NeRe': c4, 'BeRd': c5}
+        self.palettes = list(self.colors.keys())
+
+    def comp_palette(self, key, num = False, denso = False):
+        '''
+        Creates color palette with celltypes, either str or number as keys.
+        :param key: Desired colors
+        :param num: if True, use numbers as keys, else str
+        :return: color palette
+        '''
+        if denso:
+            num_cats = self.nump_comp_denso
+            cats = self.compartments_deso
+        else:
+            num_cats = self.num_comp
+            cats = self.compartments
+        if num:
+            palette = {i: cats[i] for i in range(num_cats)}
+        else:
+            palette = {cats[i]: self.colors[key][i] for i in range(num_cats)}
+        return palette
+
+
+

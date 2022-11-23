@@ -37,17 +37,18 @@ if __name__ == '__main__':
     lman_ct = 3
     gpi_ct = 7
     exclude_known_mergers = True
-    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
+    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'TePkBr'
-    only_dendrite = True
-    dist2ct = 6
+    only_dendrite = False
+    dist2ct = 7
     dist2ct_str = ct_dict[dist2ct]
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221102_j0251v4_%s_syn_distances_mcl_%i_synprob_%.2f_%s_only_den" % (
+    save_svg = True
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221123_j0251v4_%s_syn_distances_mcl_%i_synprob_%.2f_%s" % (
     dist2ct_str, min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
-    cts_for_loading = [0, 2, 3, 6, 8]
+    cts_for_loading = [0, 2, 3, 6, 7, 8]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -132,24 +133,32 @@ if __name__ == '__main__':
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.savefig('%s/median_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
+        if save_svg:
+            plt.savefig('%s/median_syn_dst2soma_dist_%s.svg' % (f_name_ct, ct_str))
         plt.close()
         sns.histplot(data=min_distances_per_ids, color=ct_color, legend=True, fill=True, element="step", bins = 15)
         plt.title('Min distance to soma' + ' of ' + dist2ct_str)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.savefig('%s/min_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
+        if save_svg:
+            plt.savefig('%s/min_syn_dst2soma_dist_%s.svg' % (f_name_ct, ct_str))
         plt.close()
         sns.histplot(data=max_distances_per_ids, color=ct_color, legend=True, fill=True, element="step", bins = 15)
         plt.title('Max distance to soma' + ' of ' + dist2ct_str)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.savefig('%s/max_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
+        if save_svg:
+            plt.savefig('%s/max_syn_dst2soma_dist_%s.svg' % (f_name_ct, ct_str))
         plt.close()
         sns.histplot(data=distances_per_cell, color=ct_color, legend=True, fill=True, element="step", bins=30)
         plt.title('Distance to soma of all synapses' + ' of ' + dist2ct_str)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.savefig('%s/all_syn_dst2soma_dist_%s.png' % (f_name_ct, ct_str))
+        if save_svg:
+            plt.savefig('%s/all_syn_dst2soma_dist_%s.svg' % (f_name_ct, ct_str))
         plt.close()
 
 
@@ -186,17 +195,23 @@ if __name__ == '__main__':
         plt.title(str_params[i] + ' of ' + dist2ct_str)
         plt.ylabel(ylabel)
         plt.savefig('%s/%s_syn_dst2soma_violin.png' % (f_name, str_params[i].split()[0]))
+        if save_svg:
+            plt.savefig('%s/%s_syn_dst2soma_violin.svg' % (f_name, str_params[i].split()[0]))
         plt.close()
         sns.boxplot(data=param, palette=ct_palette)
         plt.title(str_params[i] + ' of ' + dist2ct_str)
         plt.ylabel(ylabel)
         plt.savefig('%s/%s_syn_dst2soma_box.png' % (f_name, str_params[i].split()[0]))
+        if save_svg:
+            plt.savefig('%s/%s_syn_dst2soma_box.svg' % (f_name, str_params[i].split()[0]))
         plt.close()
         sns.histplot(data=param, palette=ct_palette, legend= True, fill=True, element="step")
         plt.title(str_params[i] + ' of ' + dist2ct_str)
         plt.xlabel(ylabel)
         plt.ylabel('count of cells')
         plt.savefig('%s/%s_syn_dst2soma_dist.png' % (f_name, str_params[i].split()[0]))
+        if save_svg:
+            plt.savefig('%s/%s_syn_dst2soma_dist.svg' % (f_name, str_params[i].split()[0]))
         plt.close()
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)

@@ -877,18 +877,20 @@ class ConnMatrix():
     '''
     This class can be used for plotting connectivty matrixes. Presynaptic partners are on the y, postsynaptic partners on the x-axis.
     '''
-    def __init__(self, data, title, filename, cmap = sns.color_palette('flare', as_cmap='True')):
+    def __init__(self, data, title, filename, cmap = sns.color_palette('flare', as_cmap=True)):
         self.data = data
         self.title = title
         self.cmap = cmap
         self.filename = filename
 
-    def get_heatmap(self):
-        sns.heatmap(self.data, cbar=True, cmap=self.cmap)
+    def get_heatmap(self, save_svg = False, annot = False):
+        sns.heatmap(self.data, cbar=True, cmap=self.cmap, annot = annot)
         plt.xlabel('Postsynaptic partners')
         plt.ylabel('Presynaptic partners')
         plt.title(self.title)
         plt.savefig('%s/%s.png' % (self.filename, self.title))
+        if save_svg:
+            plt.savefig('%s/%s.svg' % (self.filename, self.title))
         plt.close()
 
 

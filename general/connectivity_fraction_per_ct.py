@@ -44,12 +44,14 @@ if __name__ == '__main__':
     gpi_ct = 7
     exclude_known_mergers = True
     cls = CelltypeColors()
-    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
+    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'TePkBr'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221021_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s" % (
+    plot_connmatrix_only = True
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221123_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_no_annot_hm_only" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
+    save_svg = True
     log = initialize_logging('Celltypes input output percentages', log_dir=f_name + '/logs/')
     log.info(
         "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
@@ -335,38 +337,45 @@ if __name__ == '__main__':
                     result_df.loc[0:lengths[i] - 1, c] = synapse_dict_ct[key_name + c]
                 #fill up with zeros so that each cell that makes at least one synapse with another suitable cell is included in analysis
                 result_df = result_df.fillna(0)
-                if 'percentage' in key:
-                    ylabel = '%'
-                else:
-                    if 'number' in key:
-                        ylabel = 'synapse number'
+                if not plot_connmatrix_only:
+                    if 'percentage' in key:
+                        ylabel = '%'
                     else:
-                        ylabel = 'sum of synapse size [µm²]'
-                sns.stripplot(data=result_df, color="black", alpha=0.2,
-                              dodge=True, size=2)
-                sns.violinplot(data=result_df, inner="box",
-                                    palette=ct_palette)
-                plt.title(key_name_gen + ' of ' + ct_str)
-                plt.ylabel(ylabel)
-                plt.savefig('%s/%s_%s_violin.png' % (f_name_ct, key_name_gen, ct_str))
-                plt.close()
-                sns.boxplot(data=result_df, palette=ct_palette)
-                plt.title(key_name_gen + ' of ' + ct_str)
-                plt.ylabel(ylabel)
-                plt.savefig('%s/%s_%s_box.png' % (f_name_ct, key_name_gen, ct_str))
-                plt.close()
-                #show standard deviation as error bar
-                sns.barplot(data = result_df, palette=ct_palette, errorbar="sd")
-                plt.title(key_name_gen + ' of ' + ct_str)
-                plt.ylabel(ylabel)
-                plt.savefig('%s/%s_%s_bar.png' % (f_name_ct, key_name_gen, ct_str))
-                plt.close()
-                median_results = np.median(result_df, axis=0)
-                if 'percentage' in key:
-                    plt.pie(median_results, labels = plt_celltypes, autopct='%.2f%%', colors=ct_colours)
-                    plt.title(key_name_gen + ' of ' + ct_str + ', median values')
-                    plt.savefig('%s/%s_%s_pie.png' % (f_name_ct, key_name_gen, ct_str))
+                        if 'number' in key:
+                            ylabel = 'synapse number'
+                        else:
+                            ylabel = 'sum of synapse size [µm²]'
+                    sns.stripplot(data=result_df, color="black", alpha=0.2,
+                                  dodge=True, size=2)
+                    sns.violinplot(data=result_df, inner="box",
+                                        palette=ct_palette)
+                    plt.title(key_name_gen + ' of ' + ct_str)
+                    plt.ylabel(ylabel)
+                    plt.savefig('%s/%s_%s_violin.png' % (f_name_ct, key_name_gen, ct_str))
+                    if save_svg:
+                        plt.savefig('%s/%s_%s_violin.svg' % (f_name_ct, key_name_gen, ct_str))
                     plt.close()
+                    sns.boxplot(data=result_df, palette=ct_palette)
+                    plt.title(key_name_gen + ' of ' + ct_str)
+                    plt.ylabel(ylabel)
+                    plt.savefig('%s/%s_%s_box.png' % (f_name_ct, key_name_gen, ct_str))
+                    if save_svg:
+                        plt.savefig('%s/%s_%s_box.svg' % (f_name_ct, key_name_gen, ct_str))
+                    plt.close()
+                    #show standard deviation as error bar
+                    sns.barplot(data = result_df, palette=ct_palette, errorbar="sd")
+                    plt.title(key_name_gen + ' of ' + ct_str)
+                    plt.ylabel(ylabel)
+                    plt.savefig('%s/%s_%s_bar.png' % (f_name_ct, key_name_gen, ct_str))
+                    if save_svg:
+                        plt.savefig('%s/%s_%s_bar.svg' % (f_name_ct, key_name_gen, ct_str))
+                    plt.close()
+                    median_results = np.median(result_df, axis=0)
+                    if 'percentage' in key:
+                        plt.pie(median_results, labels = plt_celltypes, autopct='%.2f%%', colors=ct_colours)
+                        plt.title(key_name_gen + ' of ' + ct_str + ', median values')
+                        plt.savefig('%s/%s_%s_pie.png' % (f_name_ct, key_name_gen, ct_str))
+                        plt.close()
 
     #save results as pkl and .csv
     write_obj2pkl('%s/synapse_dict_per_ct.pkl' % f_name, synapse_dict_perct)
@@ -382,26 +391,29 @@ if __name__ == '__main__':
 
     log.info('Step 3/3 Plot results')
     # column is pre, index = postsynapse
-    inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs.astype(float), title = 'Numbers of incoming synapses', filename = f_name)
-    inc_numbers_abs.get_heatmap()
-    inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synnumbers_rel.astype(float), title = 'Percentage of incoming synapse numbers', filename = f_name)
-    inc_numbers_rel.get_heatmap()
-    inc_sizes_abs = ConnMatrix(data = incoming_synapse_matrix_synsizes_abs.astype(float), title = 'Summed sizes of incoming synapses', filename = f_name)
-    inc_sizes_abs.get_heatmap()
-    inc_sizes_rel = ConnMatrix(data = incoming_synapse_matrix_synsizes_rel.astype(float), title = 'Percentage of incoming synapses summed sizes', filename = f_name)
-    inc_sizes_rel.get_heatmap()
+    cmap_heatmap = sns.color_palette('crest', as_cmap=True)
+    #cmap_heatmap = sns.light_palette('black', as_cmap=True)
+    annot = False
+    inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs.astype(float), title = 'Numbers of incoming synapses', filename = f_name, cmap = cmap_heatmap)
+    inc_numbers_abs.get_heatmap(save_svg=save_svg, annot=annot)
+    inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synnumbers_rel.astype(float), title = 'Percentage of incoming synapse numbers', filename = f_name, cmap = cmap_heatmap)
+    inc_numbers_rel.get_heatmap(save_svg=save_svg, annot=annot)
+    inc_sizes_abs = ConnMatrix(data = incoming_synapse_matrix_synsizes_abs.astype(float), title = 'Summed sizes of incoming synapses', filename = f_name, cmap = cmap_heatmap)
+    inc_sizes_abs.get_heatmap(save_svg=save_svg, annot=annot)
+    inc_sizes_rel = ConnMatrix(data = incoming_synapse_matrix_synsizes_rel.astype(float), title = 'Percentage of incoming synapses summed sizes', filename = f_name, cmap = cmap_heatmap)
+    inc_sizes_rel.get_heatmap(save_svg=save_svg, annot=annot)
     out_numbers_abs = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_abs.astype(float), title='Numbers of outgoing synapses',
-                                 filename=f_name)
-    out_numbers_abs.get_heatmap()
+                                 filename=f_name, cmap = cmap_heatmap)
+    out_numbers_abs.get_heatmap(save_svg=save_svg, annot=annot)
     out_numbers_rel = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_rel.astype(float),
-                                 title='Percentage of outgoing synapse numbers', filename=f_name)
-    out_numbers_rel.get_heatmap()
+                                 title='Percentage of outgoing synapse numbers', filename=f_name, cmap = cmap_heatmap)
+    out_numbers_rel.get_heatmap(save_svg=save_svg, annot=annot)
     out_sizes_abs = ConnMatrix(data=outgoing_synapse_matrix_synsizes_abs.astype(float), title='Summed sizes of outgoing synapses',
-                               filename=f_name)
-    out_sizes_abs.get_heatmap()
+                               filename=f_name, cmap = cmap_heatmap)
+    out_sizes_abs.get_heatmap(save_svg=save_svg, annot=annot)
     out_sizes_rel = ConnMatrix(data=outgoing_synapse_matrix_synsizes_rel.astype(float),
-                               title='Percentage of outgoing synapses summed sizes', filename=f_name)
-    out_sizes_rel.get_heatmap()
+                               title='Percentage of outgoing synapses summed sizes', filename=f_name, cmap = cmap_heatmap)
+    out_sizes_rel.get_heatmap(save_svg=save_svg, annot=annot)
 
 
 

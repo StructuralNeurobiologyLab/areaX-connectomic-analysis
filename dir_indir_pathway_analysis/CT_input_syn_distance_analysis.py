@@ -40,7 +40,7 @@ if __name__ == '__main__':
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'TePkBr'
     only_dendrite = False
-    dist2ct = 7
+    dist2ct = 2
     dist2ct_str = ct_dict[dist2ct]
     save_svg = True
     f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221123_j0251v4_%s_syn_distances_mcl_%i_synprob_%.2f_%s" % (
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
-    cts_for_loading = [0, 2, 3, 6, 7, 8]
+    cts_for_loading = [1, 2, 3, 4, 5, 8, 10]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(

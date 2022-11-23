@@ -30,14 +30,15 @@ if __name__ == '__main__':
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
     exclude_known_mergers = True
-    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'TePkBr'
-    post_ct = 7
+    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
+    color_key = 'STNGP'
+    post_ct = 6
     post_ct_str = ct_dict[post_ct]
     #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd'}
-    comp_color_key = 'MudGrays'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221118_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s" % (
-    post_ct_str, min_comp_len, syn_prob, comp_color_key)
+    comp_color_key = 'TeYw'
+    save_svg = True
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221123_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s_%s" % (
+    post_ct_str, min_comp_len, syn_prob, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
@@ -110,7 +111,7 @@ if __name__ == '__main__':
         ct_str = ct_dict[ct]
         #get median, min, max synapse distance to soma per cell
         #function uses multiprocessing
-        if ct == post_ct_str:
+        if ct == post_ct:
             percell_params, syn_params = get_compartment_specific_connectivity(ct_post=post_ct,
                                                                                cellids_post=suitable_ids_dict[post_ct],
                                                                                sd_synssv=sd_synssv,
@@ -134,8 +135,8 @@ if __name__ == '__main__':
             all_comps_results_dict.loc[ind_all_syns, 'compartment'] = compartment
             all_comps_results_dict.loc[ind_all_syns, 'celltype'] = ct_str
             # fill in data per postsynaptic cell per compartment per celltype
-            len_comp_percell = len(percell_params[0][compartment])
             start_ind = ic * num_comps * num_postcellids + i_comp * num_postcellids
+            len_comp_percell = len(percell_params[0][compartment])
             end_ind = start_ind + len_comp_percell - 1
             all_comps_results_dict_percell.loc[start_ind: end_ind, 'compartment'] = compartment
             all_comps_results_dict_percell.loc[start_ind: end_ind, 'celltype'] = ct_str
@@ -157,6 +158,8 @@ if __name__ == '__main__':
                 plt.ylabel(param_title)
                 plt.title(key)
                 plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.png')
+                if save_svg:
+                    plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.svg')
                 plt.close()
                 sns.stripplot(x = 'compartment', y = param_title, data = df_percell, color="black", alpha=0.2,
                               dodge=True, size=2)
@@ -164,12 +167,16 @@ if __name__ == '__main__':
                 plt.ylabel(param_title)
                 plt.title(key)
                 plt.savefig(f'{f_name_ct}/{param_title}_per_cell_violin.png')
+                if save_svg:
+                    plt.savefig(f'{f_name_ct}/{param_title}_per_cell_violin.svg')
                 plt.close()
             else:
                 sns.barplot(x = 'compartment', y = param_title, data = df, palette=comp_palette)
                 plt.ylabel(param_title)
                 plt.title(key)
                 plt.savefig(f'{f_name_ct}/{param_title}_allsyns_bar.png')
+                if save_svg:
+                    plt.savefig(f'{f_name_ct}/{param_title}_allsyns_bar.svg')
                 plt.close()
 
     #remove empty rows
@@ -211,12 +218,16 @@ if __name__ == '__main__':
                 plt.title(param_title + ' to ' + comp + ' of ' + post_ct_str)
                 plt.ylabel(ylabel)
                 plt.savefig('%s/%s_syn_comps_%s_percell_violin.png' % (f_name, param_title, comp))
+                if save_svg:
+                    plt.savefig('%s/%s_syn_comps_%s_percell_violin.svg' % (f_name, param_title, comp))
                 plt.close()
                 sns.boxplot(x = 'celltype', y = param_title, data=comp_res_pc,
                                palette=ct_palette)
                 plt.title(param_title + ' to ' + comp + ' of ' + post_ct_str)
                 plt.ylabel(ylabel)
                 plt.savefig('%s/%s_syn_comps_%s_percell_box.png' % (f_name, param_title, comp))
+                if save_svg:
+                    plt.savefig('%s/%s_syn_comps_%s_percell_box.png' % (f_name, param_title, comp))
                 plt.close()
             ranksum_results.to_csv(f'{f_name}/{param_title}_ranksum_results.csv')
             #make plot with all compartments
@@ -229,12 +240,16 @@ if __name__ == '__main__':
             plt.title(param_title + ' to '+ post_ct_str)
             plt.ylabel(ylabel)
             plt.savefig('%s/%s_syn_percell_violin.png' % (f_name, param_title))
+            if save_svg:
+                plt.savefig('%s/%s_syn_percell_violin.svg' % (f_name, param_title))
             plt.close()
             sns.boxplot(x = 'celltype', y = param_title, hue= 'compartment', data=all_comps_results_dict_percell,
                         palette=comp_palette)
             plt.title(param_title + ' to ' + post_ct_str)
             plt.ylabel(ylabel)
             plt.savefig('%s/%s_syn_percell_box.png' % (f_name, param_title))
+            if save_svg:
+                plt.savefig('%s/%s_syn_percell_box.svg' % (f_name, param_title))
             plt.close()
         else:
             #make plots for summary with all synapses together
@@ -243,6 +258,8 @@ if __name__ == '__main__':
             plt.title(param_title + ' to ' + post_ct_str + ' for all synapses per ct')
             plt.ylabel(ylabel)
             plt.savefig('%s/%s_syn_cts_box.png' % (f_name, param_title))
+            if save_svg:
+                plt.savefig('%s/%s_syn_cts_box.svg' % (f_name, param_title))
             plt.close()
 
 

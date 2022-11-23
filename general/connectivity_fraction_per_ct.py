@@ -47,7 +47,7 @@ if __name__ == '__main__':
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'TePkBr'
     plot_connmatrix_only = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221123_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_no_annot_hm_only" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221123_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_hm_only_bw" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -316,28 +316,28 @@ if __name__ == '__main__':
             outgoing_synapse_matrix_synsizes_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_sizes)
 
         # make plots per celltype, pie chart, violinplot
-        synapse_dict_ct = synapse_dict_perct[ct]
-        f_name_ct = f'{f_name}/{ct_str}'
-        if not os.path.exists(f_name_ct):
-            os.mkdir(f_name_ct)
-        for key in synapse_dict_ct:
-            if 'ids' in key or 'full cell' in key or 'total' in key:
-                continue
-            if ct_dict[0] in key:
-                key_name = key[:-3]
-                key_name_gen = key_name[:-6]
-                if 'incoming' in key:
-                    plt_celltypes = celltypes
-                else:
-                    plt_celltypes = non_ax_celltypes
-                lengths = [len(synapse_dict_ct[key_name + c]) for c in plt_celltypes]
-                max_length = np.max(lengths)
-                result_df = pd.DataFrame(columns=plt_celltypes, index=range(max_length))
-                for i, c in enumerate(plt_celltypes):
-                    result_df.loc[0:lengths[i] - 1, c] = synapse_dict_ct[key_name + c]
-                #fill up with zeros so that each cell that makes at least one synapse with another suitable cell is included in analysis
-                result_df = result_df.fillna(0)
-                if not plot_connmatrix_only:
+        if not plot_connmatrix_only:
+            synapse_dict_ct = synapse_dict_perct[ct]
+            f_name_ct = f'{f_name}/{ct_str}'
+            if not os.path.exists(f_name_ct):
+                os.mkdir(f_name_ct)
+            for key in synapse_dict_ct:
+                if 'ids' in key or 'full cell' in key or 'total' in key:
+                    continue
+                if ct_dict[0] in key:
+                    key_name = key[:-3]
+                    key_name_gen = key_name[:-6]
+                    if 'incoming' in key:
+                        plt_celltypes = celltypes
+                    else:
+                        plt_celltypes = non_ax_celltypes
+                    lengths = [len(synapse_dict_ct[key_name + c]) for c in plt_celltypes]
+                    max_length = np.max(lengths)
+                    result_df = pd.DataFrame(columns=plt_celltypes, index=range(max_length))
+                    for i, c in enumerate(plt_celltypes):
+                        result_df.loc[0:lengths[i] - 1, c] = synapse_dict_ct[key_name + c]
+                    #fill up with zeros so that each cell that makes at least one synapse with another suitable cell is included in analysis
+                    result_df = result_df.fillna(0)
                     if 'percentage' in key:
                         ylabel = '%'
                     else:
@@ -391,9 +391,9 @@ if __name__ == '__main__':
 
     log.info('Step 3/3 Plot results')
     # column is pre, index = postsynapse
-    cmap_heatmap = sns.color_palette('crest', as_cmap=True)
-    #cmap_heatmap = sns.light_palette('black', as_cmap=True)
-    annot = False
+    #cmap_heatmap = sns.color_palette('crest', as_cmap=True)
+    cmap_heatmap = sns.light_palette('black', as_cmap=True)
+    annot = True
     inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs.astype(float), title = 'Numbers of incoming synapses', filename = f_name, cmap = cmap_heatmap)
     inc_numbers_abs.get_heatmap(save_svg=save_svg, annot=annot)
     inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synnumbers_rel.astype(float), title = 'Percentage of incoming synapse numbers', filename = f_name, cmap = cmap_heatmap)

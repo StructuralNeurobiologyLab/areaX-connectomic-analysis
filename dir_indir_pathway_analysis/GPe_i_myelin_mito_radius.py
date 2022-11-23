@@ -1,8 +1,6 @@
 # get mitos, axon median radius, myelinasation of GPe/i and plot against each other
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -12,9 +10,10 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from scipy.stats import ranksums
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_myelin_fraction, get_compartment_radii, get_organell_volume_density
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_myelin_fraction, get_compartment_radii, get_organell_volume_density, check_comp_lengths_ct
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import  ComparingResultsForPLotting
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import  ComparingResultsForPLotting
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import itertools
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -28,8 +27,12 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
-    comp_length = 200
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220506_j0251v4_GPe_i_hpv3_myelin_mito_radius_%i_newcolors" % comp_length
+    bio_params = Analysis_Params(global_params.wd)
+    ct_dict = bio_params.ct_dict()
+    min_comp_len = bio_params.min_comp_length()
+    syn_prob = bio_params.syn_prob_thresh()
+    min_syn_size = bio_params.min_syn_size()
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221123_j0251v4_GPe_i_hpv3_myelin_mito_radius_%i_newcolors" % min_comp_len
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -38,38 +41,21 @@ if __name__ == '__main__':
     step_idents = ['t-0']
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    #10: "NGF"}
-
-    '''
-    GPe_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/handpicked_GPe_arr.pkl")
-    GPe_axon_length_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/full_GPe_axondict.pkl")
-    GPe_dendrite_length_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/full_GPe_dendritedict.pkl")
-    GPi_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/handpicked_GPi_arr.pkl")
-    GPi_axon_length_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/full_GPi_axondict.pkl")
-    GPi_dendrite_length_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v3_prep/full_GPi_dendritedict.pkl")
-    '''
-
-    GPi_full_cell_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_dict.pkl")
-    GPe_full_cell_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_dict.pkl")
-
-    GPe_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
-    GPi_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
-
-    # cellids handpicked from v3, via mapping dict and included in V4_full_cells of celltype
-    #GPe_ids = load_pkl2obj(
-    #    "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr_hp_v3.pkl")
-    #GPi_ids = load_pkl2obj(
-    #    "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr_hp_v3.pkl")
-
+    known_mergers = bio_params.load_known_mergers()
+    GPi_full_cell_dict = bio_params.load_cell_dict(7)
+    GPi_ids = np.array(list(GPi_full_cell_dict.keys()))
+    merger_inds = np.in1d(GPi_ids, known_mergers) == False
+    GPi_ids = GPi_ids[merger_inds]
+    GPi_ids = check_comp_lengths_ct(cellids=GPi_ids, fullcelldict=GPi_full_cell_dict, min_comp_len=min_comp_len,
+                                            axon_only=True,
+                                            max_path_len=None)
+    GPe_full_cell_dict = bio_params.load_cell_dict(6)
+    GPe_ids = np.array(list(GPe_full_cell_dict.keys()))
+    merger_inds = np.in1d(GPe_ids, known_mergers) == False
+    GPe_ids = GPe_ids[merger_inds]
+    GPe_ids = check_comp_lengths_ct(cellids=GPe_ids, fullcelldict=GPe_full_cell_dict, min_comp_len=min_comp_len,
+                                    axon_only=True,
+                                    max_path_len=None)
 
     axon_median_radius_gpe = np.zeros(len(GPe_ids))
     axon_mito_volume_density_gpe = np.zeros(len(GPe_ids))
@@ -88,7 +74,7 @@ if __name__ == '__main__':
     for i, cellid in enumerate(tqdm(GPe_ids)):
         cell = SuperSegmentationObject(cellid)
         cell.load_skeleton()
-        myelin_results= get_myelin_fraction(cellid = cellid, cell = cell, min_comp_len = comp_length, load_skeleton = False)
+        myelin_results= get_myelin_fraction(cellid = cellid, cell = cell, min_comp_len = min_comp_len, load_skeleton = False)
         abs_myelin_cell = myelin_results[0]
         rel_myelin_cell = myelin_results[1]
         if abs_myelin_cell == 0:
@@ -127,7 +113,7 @@ if __name__ == '__main__':
     for i, cellid in enumerate(tqdm(GPi_ids)):
         cell = SuperSegmentationObject(cellid)
         cell.load_skeleton()
-        myelin_results = get_myelin_fraction(cellid=cellid, cell=cell, min_comp_len=comp_length, load_skeleton=False)
+        myelin_results = get_myelin_fraction(cellid=cellid, cell=cell, min_comp_len=min_comp_len, load_skeleton=False)
         abs_myelin_cell = myelin_results[0]
         rel_myelin_cell = myelin_results[1]
         if abs_myelin_cell == 0:

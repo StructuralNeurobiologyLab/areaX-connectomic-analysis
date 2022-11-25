@@ -36,7 +36,7 @@ if __name__ == '__main__':
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
-    min_comp_len = 200
+    min_comp_len = 50
     syn_prob = 0.8
     min_syn_size = 0.1
     msn_ct = 2
@@ -46,8 +46,8 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'TePkBr'
-    plot_connmatrix_only = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221123_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_hm_only_bw" % (
+    plot_connmatrix_only = False
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221124_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

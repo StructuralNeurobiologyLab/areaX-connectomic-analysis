@@ -38,17 +38,17 @@ if __name__ == '__main__':
     gpi_ct = 7
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'TePkBr'
+    color_key = 'STNGP'
     only_dendrite = False
     dist2ct = 2
     dist2ct_str = ct_dict[dist2ct]
     save_svg = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221123_j0251v4_%s_syn_distances_mcl_%i_synprob_%.2f_%s" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221124_j0251v4_%s_syn_distances_mcl_%i_synprob_%.2f_%s" % (
     dist2ct_str, min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
-    cts_for_loading = [1, 2, 3, 4, 5, 8, 10]
+    cts_for_loading = [1, 2, 3, 4, 10]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -86,7 +86,7 @@ if __name__ == '__main__':
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                                     axon_only=False,
                                                     max_path_len=None)
-        suitable_ids_dict[ct] = cellids
+        suitable_ids_dict[ct] = cellids_checked
 
     number_ids = [len(suitable_ids_dict[ct]) for ct in cts_for_loading]
     log.info(f"Suitable ids from celltypes {cts_str_analysis} were selected: {number_ids}")

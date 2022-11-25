@@ -251,6 +251,18 @@ def get_contact_site_axoness_percell(cs_dict, compartment):
     cs_dict["cs ids"] = cs_ids[close_node_comp_inds]
     return cs_dict
 
+def get_percell_number_sumsize(ssvs, syn_sizes):
+    '''
+    get number of synapses per cell and sum synapse size
+    :param ssvs: arary of ssv ids
+    :param syn_sizes: array of synapse sizes
+    :return: syn_numbers, syn_sizes, unique_ssv_ids
+    '''
+    ssv_inds, unique_ssv_ids = pd.factorize(ssvs)
+    syn_ssv_sizes = np.bincount(ssv_inds, syn_sizes)
+    syn_numbers = np.bincount(ssv_inds)
+    return syn_numbers, syn_ssv_sizes, unique_ssv_ids
+
 
 def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, ct, cellids, filter_ax = None,
                                  filter_ids = None, return_syn_arrays = True, filter_pre_ids = None, filter_post_ids = None):
@@ -316,13 +328,11 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
         #uses celltype to identify cells to group by
         sort_inds = np.where(syn_cts == ct)
     ssvs = syn_ssv_partners[sort_inds]
-    ssv_inds, unique_ssvs = pd.factorize(ssvs)
-    syn_ssv_sizes = np.bincount(ssv_inds, syn_sizes)
-    syn_numbers = np.bincount(ssv_inds)
+    syn_numbers, syn_ssv_sizes, unique_ssv_ids = get_percell_number_sumsize(ssvs = ssvs, syn_sizes = syn_sizes)
     if return_syn_arrays:
-        return syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, unique_ssvs, syn_ssv_sizes, syn_numbers
+        return syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, unique_ssv_ids, syn_ssv_sizes, syn_numbers
     else:
-        return unique_ssvs, syn_ssv_sizes, syn_numbers
+        return unique_ssv_ids, syn_ssv_sizes, syn_numbers
 
 def get_syn_input_distance_percell(args):
     '''
@@ -380,10 +390,23 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
             comp_axs = comp_axs[comp_inds]
         sort_inds = np.where(comp_axs == ax_comp)
         post_ssvs = comp_ssv_partners[sort_inds]
-        ssv_inds, unique_post_ssvs = pd.factorize(post_ssvs)
-        syn_ssv_sizes = np.bincount(ssv_inds, comp_sizes)
-        syn_numbers = np.bincount(ssv_inds)
+        syn_numbers, syn_ssv_sizes, unique_post_ssvs = get_percell_number_sumsize(ssvs = post_ssvs, syn_sizes = comp_sizes)
     if return_syn_sizes:
         return syn_numbers, syn_ssv_sizes, unique_post_ssvs, comp_sizes
     else:
         return syn_numbers, syn_ssv_sizes, unique_post_ssvs
+
+def get_ct_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_cts, ct):
+    '''
+    Get number of synapses and sum size per postsynaptic cell for a given celltype that can be pre- or postsynaptic.
+    Assumes that incoming arrays are filtered and all synapses can be used.
+    :param syn_sizes: size of synapses
+    :param syn_ssv_partners: synaptic partner neuron ids
+    :param syn_cts: celltypes for synaptic partner neurons
+    :param ct: celltype that should summed for
+    :return: number of synapses, sum of synapse sizes per cell, cellids
+    '''
+    sort_inds = np.where(syn_cts == ct)
+    ssvs = syn_ssv_partners[sort_inds]
+    syn_numbers, syn_ssv_sizes, unique_post_ssvs = get_percell_number_sumsize(ssvs = ssvs, syn_sizes = syn_sizes)
+    return syn_numbers, syn_ssv_sizes, unique_post_ssvs

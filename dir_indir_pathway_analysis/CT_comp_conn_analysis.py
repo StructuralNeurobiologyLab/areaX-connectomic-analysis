@@ -26,23 +26,24 @@ if __name__ == '__main__':
     start = time.time()
     bio_params = Analysis_Params(global_params.wd)
     ct_dict = bio_params.ct_dict()
-    min_comp_len = bio_params.min_comp_length()
+    #min_comp_len = bio_params.min_comp_length()
+    min_comp_len = 50
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'STNGP'
-    post_ct = 6
+    color_key = 'TePkBr'
+    post_ct = 2
     post_ct_str = ct_dict[post_ct]
     #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd'}
     comp_color_key = 'TeYw'
-    save_svg = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221123_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s_%s" % (
+    save_svg = False
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221124_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s_%s" % (
     post_ct_str, min_comp_len, syn_prob, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
-    cts_for_loading = [0, 2, 3, 6, 7, 8]
+    cts_for_loading = [1, 2, 3, 4, 10]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -82,7 +83,7 @@ if __name__ == '__main__':
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                                     axon_only=False,
                                                     max_path_len=None)
-        suitable_ids_dict[ct] = cellids
+        suitable_ids_dict[ct] = cellids_checked
 
     number_ids = [len(suitable_ids_dict[ct]) for ct in cts_for_loading]
     log.info(f"Suitable ids from celltypes {cts_str_analysis} were selected: {number_ids}")

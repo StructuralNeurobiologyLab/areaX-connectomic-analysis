@@ -1,6 +1,8 @@
 #this file contains different coloour palettes made by Alexandra Rother
 #using either coolors.co or adobe color
 
+import seaborn as sns
+
 class CelltypeColors():
     '''
     Here are colour palettes made to visualize 11 different celltypes
@@ -36,6 +38,38 @@ class CelltypeColors():
         else:
             palette = {self.ct_dict[i]: self.colors[key][i] for i in range(self.num_cts)}
         return palette
+
+class SubCT_Colors(CelltypeColors):
+    '''
+    For subpopulations within celltypes from CelltypeColors
+    '''
+    def __init__(self, subct_labels):
+        super().__init__()
+        self.subct_labels = subct_labels
+        self.num_subct = len(subct_labels)
+        #colors for MSN subpopulations:, yellow, blues
+        c1 = ['#2F86A8', "#EAAE34", "#C86E29", '#707070']
+        #turqoise/yellow
+        c2 = ["#F0F3BD", "#028090", "#1A5E63", "#00BFB2"]
+        # MudGrays as above
+        c3 = ['#D0CCD0', '#DBD8DC', '#E6E4E8', '#F1F0F4']
+        self.subct_colors = {'MSN': c1, 'TeYw': c2, 'MudGrays': c3}
+        self.subct_palettes = self.subct_colors.keys()
+
+    def get_subct_palette_fromct(self, ct, ct_color_key, light = False):
+        ct_palette = self.ct_palette(ct_color_key)
+        color = ct_palette[ct]
+        if light == True:
+            colors = sns.light_palette(color, n_colors=self.num_subct)
+        else:
+            colors = sns.dark_palette(color, n_colors=self.num_subct)
+        palette = {self.subct_labels[i]: colors[i] for i in range(self.num_subct)}
+        return palette
+
+    def get_subct_palette(self, key):
+        palette = {self.subct_labels[i]: self.subct_colors[key][i] for i in range(self.num_subct)}
+        return palette
+
 
 class CompColors():
     '''Colors to use for different compartment visualizations'''

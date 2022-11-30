@@ -1332,10 +1332,10 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     all_syn_number_percentage = {i : 0 for i in compartments}
     all_syn_size_percentage = {i : 0 for i in compartments}
     for key in syn_numbers_dict.keys():
-        all_syn_number_percentage[key] = all_comp_syn_numbers[key] / overall_syn_number
-        all_syn_size_percentage[key] = all_comp_syn_sum_sizes[key] / overall_sum_size
-        syn_percentages_dict[key] = syn_numbers_dict[key] / total_syn_numbers
-        size_percentages_dict[key] = sum_sizes_dict[key] / total_sum_sizes
+        all_syn_number_percentage[key] = 100 * all_comp_syn_numbers[key] / overall_syn_number
+        all_syn_size_percentage[key] = 100 * all_comp_syn_sum_sizes[key] / overall_sum_size
+        syn_percentages_dict[key] = 100 * syn_numbers_dict[key] / total_syn_numbers
+        size_percentages_dict[key] = 100 * sum_sizes_dict[key] / total_sum_sizes
     per_cell_params = [syn_numbers_dict, sum_sizes_dict, syn_percentages_dict, size_percentages_dict, total_cellids]
     all_syn_params = [all_comp_syn_numbers, all_comp_syn_sum_sizes, all_syn_number_percentage, all_syn_size_percentage]
     return per_cell_params, all_syn_params

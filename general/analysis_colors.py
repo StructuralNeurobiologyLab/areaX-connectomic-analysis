@@ -89,7 +89,9 @@ class CompColors():
         c4 = ["#C2847A", "#848586", "#BAA898", "#EEE0CB"]
         #blue/gray and red (similar to c1 above)
         c5 = ["#EF233C", "#EDF2F4", "#8D99AE", "#2B2D42"]
-        self.colors = {'MudGrays': c1, 'GreenGrays': c2, 'TeYw': c3, 'NeRe': c4, 'BeRd': c5}
+        #different shades of turqiouse and black
+        c6 = ["#232121", "#1D307D", "#2F86A8" , "#2CBCBF"]
+        self.colors = {'MudGrays': c1, 'GreenGrays': c2, 'TeYw': c3, 'NeRe': c4, 'BeRd': c5, 'TeBk': c6}
         self.palettes = list(self.colors.keys())
 
     def comp_palette(self, key, num = False, denso = False):

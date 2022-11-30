@@ -104,14 +104,14 @@ if __name__ == '__main__':
     m_axs = m_axs[suit_ct_inds]
     m_spiness = m_spiness[suit_ct_inds]
     m_cts = m_cts[suit_ct_inds]
-    log.info(f'Total synaptic strength from GPe to NGF are {np.sum(m_sizes)} µm² from {len(m_sizes)} synapses')
+    log.info(f'Total synaptic strength from GPe to NGF are {np.sum(m_sizes):.2f} µm² from {len(m_sizes)} synapses')
     #get GPe ids that project to NGF
     gpe_syn_numbers, gpe_syn_ssv_sizes, gpe_proj_ssvs = get_ct_syn_number_sumsize(syn_sizes=m_sizes,
                                                                              syn_ssv_partners=m_ssv_partners,
                                                                              syn_cts=m_cts, ct=gpe_ct)
-    log.info(f'{len(gpe_proj_ssvs)} GPe project to NGF. These are {100 * len(gpe_proj_ssvs)/ len(suitable_ids_dict[gpe_ct])}'
-             f'percent of GPe cells')
-    log.info(f'The median number of synapses are {np.median(gpe_syn_numbers)}, sum size {np.median(gpe_syn_ssv_sizes)} per cell')
+    log.info(f'{len(gpe_proj_ssvs)} GPe project to NGF. These are {100 * len(gpe_proj_ssvs)/ len(suitable_ids_dict[gpe_ct]):.2f}'
+             f' percent of GPe cells')
+    log.info(f'The median number of synapses are {np.median(gpe_syn_numbers)}, sum size {np.median(gpe_syn_ssv_sizes):.2f} per cell')
     write_obj2pkl(f'{f_name}/GPe_proj_NGF_ids.pkl', gpe_proj_ssvs)
     #create lookup dictionary which GPe projects to which NGF to exclude ones projecting to NGF that do not project to MSN later
     gpe_proj_dict = {id: [] for id in gpe_proj_ssvs}
@@ -123,16 +123,16 @@ if __name__ == '__main__':
         ngf_ids = np.unique(id_partners[ind])
         gpe_proj_dict[gpe_id].append(ngf_ids)
         gpe_ngf_number[gi] = len(ngf_ids)
-    log.info(f'A median GPe projects to {np.median(gpe_ngf_number)} NGF cells, with {np.median(gpe_syn_numbers/gpe_ngf_number)}'
-             f'synapses and {np.median(gpe_syn_ssv_sizes/gpe_ngf_number)} synaptic area in µm²')
+    log.info(f'A median GPe projects to {np.median(gpe_ngf_number)} NGF cells, with {np.median(gpe_syn_numbers/gpe_ngf_number):.2f}'
+             f' synapses and {np.median(gpe_syn_ssv_sizes/gpe_ngf_number):.2f} synaptic area in µm²')
     #get NGF ids that GPe project to
     ngf_syn_numbers, ngf_syn_ssv_sizes, ngf_rec_ssvs = get_ct_syn_number_sumsize(syn_sizes=m_sizes,
                                                                                   syn_ssv_partners=m_ssv_partners,
                                                                                   syn_cts=m_cts, ct=ngf_ct)
-    log.info(f'{len(ngf_rec_ssvs)} NGF receive GPe projections. These are {100 * len(ngf_rec_ssvs) / len(suitable_ids_dict[ngf_ct])}'
+    log.info(f'{len(ngf_rec_ssvs)} NGF receive GPe projections. These are {100 * len(ngf_rec_ssvs) / len(suitable_ids_dict[ngf_ct]):.2f}'
              f'percent of NGF cells')
     log.info(
-        f'The median number of synapses are {np.median(ngf_syn_numbers)}, sum size {np.median(ngf_syn_ssv_sizes)} per cell')
+        f'The median number of synapses are {np.median(ngf_syn_numbers)}, sum size {np.median(ngf_syn_ssv_sizes):.2f} per cell')
     write_obj2pkl(f'{f_name}/NGF_rec_GPe_ids.pkl', ngf_rec_ssvs)
     ngf_gpe_number = np.zeros(len(ngf_rec_ssvs))
     for ni, ngf_id in enumerate(ngf_rec_ssvs):
@@ -142,8 +142,8 @@ if __name__ == '__main__':
         gpe_ids = np.unique(id_partners[ind])
         ngf_gpe_number[ni] = len(gpe_ids)
     log.info(
-        f'A median NGF receives syns from {np.median(ngf_gpe_number)} GPe cells, with {np.median(ngf_syn_numbers / ngf_gpe_number)}'
-        f'synapses and {np.median(ngf_syn_ssv_sizes / ngf_gpe_number)} synaptic area in µm²')
+        f'A median NGF receives syns from {np.median(ngf_gpe_number)} GPe cells, with {np.median(ngf_syn_numbers / ngf_gpe_number):.2f}'
+        f' synapses and {np.median(ngf_syn_ssv_sizes / ngf_gpe_number):.2f} synaptic area in µm²')
     time_stamps = [time.time()]
     step_idents = ['get GPe-NGF information']
 
@@ -170,15 +170,15 @@ if __name__ == '__main__':
     m_axs = m_axs[suit_ct_inds]
     m_spiness = m_spiness[suit_ct_inds]
     m_cts = m_cts[suit_ct_inds]
-    log.info(f'Total synaptic strength from NGF to MSN are {np.sum(m_sizes)} µm² from {len(m_sizes)} synapses')
+    log.info(f'Total synaptic strength from NGF to MSN are {np.sum(m_sizes):.2f} µm² from {len(m_sizes)} synapses')
     # get NGF ids that project to MSN
     ngfmsn_syn_numbers, ngfmsn_syn_ssv_sizes, ngf_proj_ssvs = get_ct_syn_number_sumsize(syn_sizes=m_sizes,
                                                                                   syn_ssv_partners=m_ssv_partners,
                                                                                   syn_cts=m_cts, ct=ngf_ct)
-    log.info(f'{len(ngf_proj_ssvs)} NGF project to MSN. These are {100 * len(ngf_proj_ssvs) / len(suitable_ids_dict[ngf_ct])}'
-             f'percent of NGF cells')
+    log.info(f'{len(ngf_proj_ssvs)} NGF project to MSN. These are {100 * len(ngf_proj_ssvs) / len(suitable_ids_dict[ngf_ct]):.2f}'
+             f' percent of NGF cells')
     log.info(
-        f'The median number of synapses are {np.median(gpe_syn_numbers)}, sum size {np.median(gpe_syn_ssv_sizes)} per cell')
+        f'The median number of synapses are {np.median(gpe_syn_numbers)}, sum size {np.median(gpe_syn_ssv_sizes):.2f} per cell')
     write_obj2pkl(f'{f_name}/NGF_proj_msn_ids.pkl', ngf_proj_ssvs)
     ngf_proj_dict = {id: [] for id in ngf_proj_ssvs}
     ngf_msn_number = np.zeros(len(ngf_proj_ssvs))
@@ -190,16 +190,16 @@ if __name__ == '__main__':
         ngf_proj_dict[ngf_id].append(msn_ids)
         ngf_msn_number[ni]= len(msn_ids)
     log.info(
-        f'A median NGF projects to {np.median(ngf_msn_number)} MSN cells, with {np.median(ngfmsn_syn_numbers / ngf_msn_number)}'
-        f'synapses and {np.median(ngfmsn_syn_ssv_sizes / ngf_msn_number)} synaptic area in µm²')
+        f'A median NGF projects to {np.median(ngf_msn_number)} MSN cells, with {np.median(ngfmsn_syn_numbers / ngf_msn_number):.2f}'
+        f' synapses and {np.median(ngfmsn_syn_ssv_sizes / ngf_msn_number):.2f} synaptic area in µm²')
     # get MSN ids that NGF project to
     msn_syn_numbers, msn_syn_ssv_sizes, msn_rec_ssvs = get_ct_syn_number_sumsize(syn_sizes=m_sizes,
                                                                                  syn_ssv_partners=m_ssv_partners,
                                                                                  syn_cts=m_cts, ct=msn_ct)
-    log.info(f'{len(msn_rec_ssvs)} MSN receive synapses from NGF. These are {100 *len(msn_rec_ssvs) / len(suitable_ids_dict[msn_ct])}'
+    log.info(f'{len(msn_rec_ssvs)} MSN receive synapses from NGF. These are {100 *len(msn_rec_ssvs) / len(suitable_ids_dict[msn_ct]):.2f}'
              f'percent of MSN cells')
     log.info(
-        f'The median number of synapses are {np.median(ngf_syn_numbers)}, sum size {np.median(ngf_syn_ssv_sizes)} per cell')
+        f'The median number of synapses are {np.median(ngf_syn_numbers)}, sum size {np.median(ngf_syn_ssv_sizes):.2f} per cell')
     write_obj2pkl(f'{f_name}/MSN_rec_NGF_ids.pkl', msn_rec_ssvs)
     msn_ngf_number = np.zeros(len(msn_rec_ssvs))
     for mi, msn_id in enumerate(msn_rec_ssvs):
@@ -209,17 +209,17 @@ if __name__ == '__main__':
         ngf_ids = np.unique(id_partners[ind])
         msn_ngf_number[ni] = len(ngf_ids)
     log.info(
-        f'A median MSN receives syns from {np.median(msn_ngf_number)} NGF cells, with {np.median(msn_syn_numbers / msn_ngf_number)}'
-        f'synapses and {np.median(msn_syn_ssv_sizes / msn_ngf_number)} synaptic area in µm²')
+        f'A median MSN receives syns from {np.median(msn_ngf_number)} NGF cells, with {np.median(msn_syn_numbers / msn_ngf_number):.2f}'
+        f' synapses and {np.median(msn_syn_ssv_sizes / msn_ngf_number):.2f} synaptic area in µm²')
     # create dataframe for results per cell
-    ct_nums = [len(suitable_ids_dict[ci]) for ci in range(len(cts_for_loading))]
+    ct_nums = [len(suitable_ids_dict[ci]) for ci in cts_for_loading]
     max_ct_id_length = np.max(ct_nums[:-1])
-    result_df = pd.DataFrame(index=max_ct_id_length)
+    result_df = pd.DataFrame(index=range(max_ct_id_length))
     # only put ngf, gpe that are part of loop
-    result_df['MSN ids'] = msn_rec_ssvs
-    result_df['MSN syn number from NGF'] = msn_syn_numbers
-    result_df['MSN sum syn size from NGF'] = msn_syn_ssv_sizes
-    result_df['MSN number of NGF cells'] = msn_ngf_number
+    result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN ids'] = msn_rec_ssvs
+    result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN syn number from NGF'] = msn_syn_numbers
+    result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN sum syn size from NGF'] = msn_syn_ssv_sizes
+    result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN number of NGF cells'] = msn_ngf_number
     sort_inds_proj = np.argsort(ngf_proj_ssvs)
     sort_inds_rec = np.argsort(ngf_rec_ssvs)
     ngfmsn_syn_numbers = ngfmsn_syn_numbers[sort_inds_proj]
@@ -240,14 +240,14 @@ if __name__ == '__main__':
         ngf_syn_numbers = ngf_syn_numbers[loop_inds_rec]
         ngf_syn_ssv_sizes = ngf_syn_ssv_sizes[loop_inds_rec]
         ngf_gpe_number = ngf_gpe_number[loop_inds_rec]
-        log.info(f'{100 * len(ngf_proj_ssvs)/ len(ngf_rec_ssvs)} percent of NGF that get GPe input project to MSN')
+        log.info(f'{100 * len(ngf_proj_ssvs)/ len(ngf_rec_ssvs):.2f} percent of NGF that get GPe input project to MSN')
         gpengf_proj_inds = []
         for gi, gpe_id in enumerate(gpe_proj_ssvs):
             ngf_ids = gpe_proj_dict[gpe_id]
             if not np.all(np.in1d(ngf_proj_ssvs, ngf_ids)) == False:
                 gpengf_proj_inds.append(gi)
         if len(gpengf_proj_inds) > 0:
-            log.info(f'{len(gpengf_proj_inds)} GPe project only to NGF that do not project to MSN, that is {100 * len(gpengf_proj_inds)/ len(gpe_proj_ssvs)} percent.')
+            log.info(f'{len(gpengf_proj_inds)} GPe project only to NGF that do not project to MSN, that is {100 * len(gpengf_proj_inds)/ len(gpe_proj_ssvs):.2f} percent.')
             gpe_proj_ssvs  = gpe_proj_ssvs[gpengf_proj_inds]
             gpe_syn_numbers = gpe_syn_numbers[gpengf_proj_inds]
             gpe_syn_ssv_sizes = gpe_syn_ssv_sizes[gpengf_proj_inds]
@@ -256,17 +256,17 @@ if __name__ == '__main__':
             log.info('All GPe project to NGF that then projct to MSN')
     else:
         log.info('All NGF that receive GPe input project to MSN')
-    result_df['NGF ids'] = ngf_proj_ssvs
-    result_df['NGF syn number from GPe'] = ngf_syn_numbers
-    result_df['NGF sum syn size from GPe'] = ngf_syn_ssv_sizes
-    result_df['NGF number of GPe cells'] = ngf_gpe_number
-    result_df['NGF syn number to MSN'] = ngfmsn_syn_numbers
-    result_df['NGF sum syn size to MSN'] = ngfmsn_syn_ssv_sizes
-    result_df['NGF number of MSN cells'] = ngf_msn_number
-    result_df['GPe ids'] = gpe_proj_ssvs
-    result_df['GPe syn number to NGF'] = gpe_syn_numbers
-    result_df['GPe sum syn size to NGF'] = gpe_syn_ssv_sizes
-    result_df['GPe number of NGF cells'] = gpe_ngf_number
+    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF ids'] = ngf_proj_ssvs
+    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF syn number from GPe'] = ngf_syn_numbers
+    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF sum syn size from GPe'] = ngf_syn_ssv_sizes
+    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF number of GPe cells'] = ngf_gpe_number
+    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF syn number to MSN'] = ngfmsn_syn_numbers
+    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF sum syn size to MSN'] = ngfmsn_syn_ssv_sizes
+    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF number of MSN cells'] = ngf_msn_number
+    result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe ids'] = gpe_proj_ssvs
+    result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe syn number to NGF'] = gpe_syn_numbers
+    result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe sum syn size to NGF'] = gpe_syn_ssv_sizes
+    result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe number of NGF cells'] = gpe_ngf_number
     #make histograms for each parameter
     for key in result_df:
         if 'ids' in key:
@@ -291,6 +291,7 @@ if __name__ == '__main__':
     msn_2_gpi_ids = load_pkl2obj(f'{saving_dir}/full_MSN_2_GPi_arr_{min_comp_len}.pkl')
     msn_2_gpe_ids = load_pkl2obj(f'{saving_dir}/full_MSN_2_GPe_arr_{min_comp_len}.pkl')
     msn_2_bothgp_ids = load_pkl2obj(f'{saving_dir}/full_MSN_2_GPeGPi_arr_{min_comp_len}.pkl')
+    msn_2_bothgp_ids = list(msn_2_bothgp_ids.keys())
     msn_2_nogp_ids = load_pkl2obj(f'{saving_dir}/full_MSN_no_conn_GPeGPi_arr_{min_comp_len}.pkl')
     ngf_msn2gpi_ids = msn_rec_ssvs[np.in1d(msn_rec_ssvs, msn_2_gpi_ids)]
     ngf_msn2gpe_ids = msn_rec_ssvs[np.in1d(msn_rec_ssvs, msn_2_gpe_ids)]
@@ -300,13 +301,15 @@ if __name__ == '__main__':
     perc_2gpe = 100 * len(ngf_msn2gpe_ids) / len(msn_rec_ssvs)
     perc_2both = 100 * len(ngf_msn2both_ids) / len(msn_rec_ssvs)
     perc_2none = 100 * len(ngf_msn2no_ids) / len(msn_rec_ssvs)
-    log.info(f' Out of {len(msn_rec_ssvs)} MSN cells that receive NGF input, {len(ngf_msn2gpi_ids)} cells ({perc_2gpi} %)'
-             f'project only to GPi, {len(ngf_msn2gpe_ids)} cells ({perc_2gpe} %) project only to GPe, '
-             f'{len(ngf_msn2both_ids)} cells ({perc_2both} %) to both and {len(ngf_msn2no_ids)} cells ({perc_2none} %) to none')
+    log.info(f' Out of {len(msn_rec_ssvs)} MSN cells that receive NGF input, {len(ngf_msn2gpi_ids)} cells ({perc_2gpi:.2f} %)'
+             f' project only to GPi, {len(ngf_msn2gpe_ids)} cells ({perc_2gpe:.2f} %) project only to GPe, '
+             f'{len(ngf_msn2both_ids)} cells ({perc_2both:.2f} %) to both and {len(ngf_msn2no_ids)} cells ({perc_2none:.2f} %) to none')
     labels = ['only GPi', 'only GPe', 'both GP', 'no GP']
-    subtype_ids = np.array([ngf_msn2gpi_ids, ngf_msn2gpe_ids, ngf_msn2both_ids, ngf_msn2no_ids])
-    for mi, msn_id in msn_rec_ssvs:
-        type_ind = np.where(subtype_ids == msn_id)[0]
+    subtype_ids = [ngf_msn2gpi_ids, ngf_msn2gpe_ids, ngf_msn2both_ids, ngf_msn2no_ids]
+    length = max(map(len, subtype_ids))
+    subtype_ids = np.array([np.hstack([xi,[None]*(length-len(xi))]) for xi in subtype_ids])
+    for mi, msn_id in enumerate(msn_rec_ssvs):
+        type_ind = int(np.where(subtype_ids == msn_id)[0])
         result_df.loc[mi, 'MSN GP connectivity type'] = labels[type_ind]
     result_df.to_csv(f'{f_name}/gpe_ngf_msn_loop_results.csv')
     #plot results comparing different MSN Groups
@@ -316,7 +319,7 @@ if __name__ == '__main__':
     except KeyError:
         msn_palette = cts.get_subct_palette_fromct(key = color_key, ct = msn_ct, light= False)
     for key in result_df:
-        if 'ids' in key or 'GPe' in key or not 'MSN' in key:
+        if 'ids' in key or 'GPe' in key or not 'MSN' in key or 'type' in key:
             continue
         if 'to MSN' in key or 'from MSN' in key:
             continue

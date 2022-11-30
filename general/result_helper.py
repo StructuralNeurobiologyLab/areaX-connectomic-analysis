@@ -883,11 +883,13 @@ class ConnMatrix():
         self.cmap = cmap
         self.filename = filename
 
-    def get_heatmap(self, save_svg = False, annot = False):
+    def get_heatmap(self, save_svg = False, annot = False, fontsize = 10):
         sns.heatmap(self.data, cbar=True, cmap=self.cmap, annot = annot)
         plt.xlabel('Postsynaptic partners')
         plt.ylabel('Presynaptic partners')
         plt.title(self.title)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig('%s/%s.png' % (self.filename, self.title))
         if save_svg:
             plt.savefig('%s/%s.svg' % (self.filename, self.title))

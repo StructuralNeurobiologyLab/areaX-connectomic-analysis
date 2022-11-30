@@ -27,23 +27,24 @@ if __name__ == '__main__':
     bio_params = Analysis_Params(global_params.wd)
     ct_dict = bio_params.ct_dict()
     #min_comp_len = bio_params.min_comp_length()
-    min_comp_len = 50
+    min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'TePkBr'
-    post_ct = 2
+    color_key = 'STNGP'
+    post_ct = 10
     post_ct_str = ct_dict[post_ct]
-    #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd'}
-    comp_color_key = 'TeYw'
-    save_svg = False
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221124_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s_%s" % (
+    #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd, TeBk'}
+    comp_color_key = 'TeBk'
+    save_svg = True
+    fontsize = 20
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221129_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s_%s" % (
     post_ct_str, min_comp_len, syn_prob, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
-    cts_for_loading = [1, 2, 3, 4, 10]
+    cts_for_loading = [2, 3, 4, 6, 7, 10]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -158,6 +159,10 @@ if __name__ == '__main__':
                 sns.boxplot(x = 'compartment', y = param_title, data = df_percell, palette=comp_palette)
                 plt.ylabel(param_title)
                 plt.title(key)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                if 'Percentage' in key:
+                    plt.ylim(0, 100)
                 plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.png')
                 if save_svg:
                     plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.svg')
@@ -167,6 +172,10 @@ if __name__ == '__main__':
                 sns.violinplot(x = 'compartment', y = param_title, data = df_percell, palette=comp_palette)
                 plt.ylabel(param_title)
                 plt.title(key)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                if 'Percentage' in key:
+                    plt.ylim(0, 100)
                 plt.savefig(f'{f_name_ct}/{param_title}_per_cell_violin.png')
                 if save_svg:
                     plt.savefig(f'{f_name_ct}/{param_title}_per_cell_violin.svg')
@@ -175,6 +184,10 @@ if __name__ == '__main__':
                 sns.barplot(x = 'compartment', y = param_title, data = df, palette=comp_palette)
                 plt.ylabel(param_title)
                 plt.title(key)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                if 'Percentage' in key:
+                    plt.ylim(0, 100)
                 plt.savefig(f'{f_name_ct}/{param_title}_allsyns_bar.png')
                 if save_svg:
                     plt.savefig(f'{f_name_ct}/{param_title}_allsyns_bar.svg')
@@ -218,6 +231,10 @@ if __name__ == '__main__':
                                palette=ct_palette)
                 plt.title(param_title + ' to ' + comp + ' of ' + post_ct_str)
                 plt.ylabel(ylabel)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                if 'Percentage' in key:
+                    plt.ylim(0, 100)
                 plt.savefig('%s/%s_syn_comps_%s_percell_violin.png' % (f_name, param_title, comp))
                 if save_svg:
                     plt.savefig('%s/%s_syn_comps_%s_percell_violin.svg' % (f_name, param_title, comp))
@@ -226,6 +243,10 @@ if __name__ == '__main__':
                                palette=ct_palette)
                 plt.title(param_title + ' to ' + comp + ' of ' + post_ct_str)
                 plt.ylabel(ylabel)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                if 'Percentage' in key:
+                    plt.ylim(0, 100)
                 plt.savefig('%s/%s_syn_comps_%s_percell_box.png' % (f_name, param_title, comp))
                 if save_svg:
                     plt.savefig('%s/%s_syn_comps_%s_percell_box.png' % (f_name, param_title, comp))
@@ -240,6 +261,10 @@ if __name__ == '__main__':
                            palette=comp_palette)
             plt.title(param_title + ' to '+ post_ct_str)
             plt.ylabel(ylabel)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            if 'Percentage' in key:
+                plt.ylim(0, 100)
             plt.savefig('%s/%s_syn_percell_violin.png' % (f_name, param_title))
             if save_svg:
                 plt.savefig('%s/%s_syn_percell_violin.svg' % (f_name, param_title))
@@ -248,6 +273,10 @@ if __name__ == '__main__':
                         palette=comp_palette)
             plt.title(param_title + ' to ' + post_ct_str)
             plt.ylabel(ylabel)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            if 'Percentage' in key:
+                plt.ylim(0, 100)
             plt.savefig('%s/%s_syn_percell_box.png' % (f_name, param_title))
             if save_svg:
                 plt.savefig('%s/%s_syn_percell_box.svg' % (f_name, param_title))
@@ -258,6 +287,10 @@ if __name__ == '__main__':
                         palette=comp_palette)
             plt.title(param_title + ' to ' + post_ct_str + ' for all synapses per ct')
             plt.ylabel(ylabel)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            if 'Percentage' in key:
+                plt.ylim(0, 100)
             plt.savefig('%s/%s_syn_cts_box.png' % (f_name, param_title))
             if save_svg:
                 plt.savefig('%s/%s_syn_cts_box.svg' % (f_name, param_title))

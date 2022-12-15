@@ -884,7 +884,7 @@ class ConnMatrix():
         self.filename = filename
 
     def get_heatmap(self, save_svg = False, annot = False, fontsize = 10):
-        sns.heatmap(self.data, cbar=True, cmap=self.cmap, annot = annot)
+        sns.heatmap(self.data, cbar=True, cmap=self.cmap, annot = annot, fmt='.2f')
         plt.xlabel('Postsynaptic partners')
         plt.ylabel('Presynaptic partners')
         plt.title(self.title)

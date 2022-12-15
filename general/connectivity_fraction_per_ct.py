@@ -48,7 +48,7 @@ if __name__ == '__main__':
     color_key = 'STNGP'
     plot_connmatrix_only = True
     fontsize = 20
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221130_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221130_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
     min_comp_len, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -409,6 +409,15 @@ if __name__ == '__main__':
     outgoing_synapse_matrix_synnumbers_abs.to_csv('%s/outgoing_syn_number_matrix_abs.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_med.to_csv('%s/outgoing_syn_sizes_matrix_abs_med.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_sum.to_csv('%s/outgoing_syn_sizes_matrix_abs_sum.csv' % f_name)
+    #create one matrix for incoming and outgoing each, which is sum size of synapses globalised to the dataset
+    #get total sum of synapses and divide by that
+    sum_incoming = np.sum(incoming_synapse_matrix_synsizes_abs_sum.sum())
+    sum_outgoing = np.sum(outgoing_synapse_matrix_synsizes_abs_sum.sum())
+    assert(sum_outgoing == sum_incoming)
+    incoming_synapse_matrix_synsizes_abs_sum_dn = 100 * incoming_synapse_matrix_synsizes_abs_sum/ sum_incoming
+    outgoing_synapse_matrix_synsizes_abs_sum_dn = 100 * outgoing_synapse_matrix_synsizes_abs_sum / sum_outgoing
+    incoming_synapse_matrix_synsizes_abs_sum_dn.to_csv('%s/incoming_syn_sizes_matrix_abs_sum_dataset_norm.csv' % f_name)
+    outgoing_synapse_matrix_synsizes_abs_sum_dn.to_csv('%s/outgoing_syn_sizes_matrix_abs_sum_datatset_norm.csv' % f_name)
     log.info("Created Matrix with median values for cellids, presynapse is index, post is columns")
 
     log.info('Step 3/3 Plot results')
@@ -444,6 +453,14 @@ if __name__ == '__main__':
     out_sizes_rel = ConnMatrix(data=outgoing_synapse_matrix_synsizes_rel.astype(float),
                                title='Percentage of outgoing synapses summed sizes', filename=f_name, cmap = cmap_heatmap)
     out_sizes_rel.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
+    in_sizes_abs_sum_dn = ConnMatrix(data=incoming_synapse_matrix_synsizes_abs_sum_dn.astype(float),
+                                   title='Summed sizes of incoming synapses globally normalised',
+                                   filename=f_name, cmap=cmap_heatmap)
+    in_sizes_abs_sum_dn.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
+    out_sizes_abs_sum_dn = ConnMatrix(data=outgoing_synapse_matrix_synsizes_abs_sum_dn.astype(float),
+                                     title='Summed sizes of outgoing synapses globally normalised',
+                                     filename=f_name, cmap=cmap_heatmap)
+    out_sizes_abs_sum_dn.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
 
 
 

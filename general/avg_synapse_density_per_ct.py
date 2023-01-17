@@ -23,11 +23,11 @@ if __name__ == '__main__':
     min_comp_len = 200
     max_MSN_path_len = 7500
     min_syn_size = 0.1
-    syn_prob = 0.8
+    syn_prob = 0.6
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'BlYw'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221014_j0251v4_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
+    color_key = 'TePkBr'
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221219_j0251v4_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
         syn_prob, min_comp_len, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

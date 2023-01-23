@@ -22,7 +22,7 @@ def get_ves_distance_per_cell(cell_input):
     cell_ves_coords = ves_coords[cell_ves_ind]
     cell_dist2matrix = ves_dist2matrix[cell_ves_ind]
     kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"] * cell.scaling)
-    close_node_ids = kdtree.query(cell_ves_coords, k=1)[1].astype(int)
+    close_node_ids = kdtree.query(cell_ves_coords * cell.scaling, k=1)[1].astype(int)
     axo = np.array(cell.skeleton["axoness_avg10000"][close_node_ids])
     axo[axo == 3] = 1
     axo[axo == 4] = 1
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230120_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%s" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230123_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%s" % (
         min_comp_len, dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -84,11 +84,13 @@ if __name__ == '__main__':
     log.info("Step 2/3: Iterate over celltypes to get suitable cellids, filter vesicles")
     cts = list(ct_dict.keys())
     ax_ct = [1, 3, 4]
-    cts_str = [ct_dict[ct] for ct in ct_dict]
+    num_cts = len(cts)
+    cts_str = [ct_dict[i] for i in range(num_cts)]
     ves_density_all = pd.DataFrame(columns=cts_str)
     ves_density_close = pd.DataFrame(columns=cts_str)
-    for i, ct in enumerate(tqdm(cts)):
+    for ct in tqdm(range(num_cts)):
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
+        ct_str = ct_dict[ct]
         if ct in ax_ct:
             cell_dict = load_pkl2obj(
                 "/wholebrain/scratch/arother/j0251v4_prep/ax_%.3s_dict.pkl" % (ct_dict[ct]))
@@ -131,8 +133,10 @@ if __name__ == '__main__':
         ct_ves_number_close = outputs[:, 1]
         ct_ves_density = outputs[:, 2]
         ct_ves_density_close = outputs[:, 3]
-        ves_density_all[ct_dict[ct]] = ct_ves_density
-        ves_density_close[ct_dict[ct]] = ct_ves_density_close
+        ves_density_all[ct_str] = ct_ves_density
+        ves_density_close[ct_str] = ct_ves_density_close
+
+        raise ValueError
 
     log.info('Step 3/3: Plot results')
     ves_density_all.to_csv(f'{f_name}/ves_density_all.csv')

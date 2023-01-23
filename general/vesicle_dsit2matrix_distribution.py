@@ -86,8 +86,8 @@ if __name__ == '__main__':
     ax_ct = [1, 3, 4]
     num_cts = len(cts)
     cts_str = [ct_dict[i] for i in range(num_cts)]
-    ves_density_all = pd.DataFrame(columns=cts_str)
-    ves_density_close = pd.DataFrame(columns=cts_str)
+    ves_density_all = pd.DataFrame(columns=cts_str, index = range(10500))
+    ves_density_close = pd.DataFrame(columns=cts_str, index = range(10500))
     for ct in tqdm(range(num_cts)):
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
@@ -135,8 +135,29 @@ if __name__ == '__main__':
         ct_ves_density_close = outputs[:, 3]
         ves_density_all[ct_str] = ct_ves_density
         ves_density_close[ct_str] = ct_ves_density_close
-
-        raise ValueError
+        '''
+        #plot data for one celltype for testing
+        sns.stripplot(ct_ves_density, alpha = 0.3, color = 'black')
+        plt.xlabel( 'STN')
+        plt.ylabel('vesicle density [1/µm')
+        plt.title(f'Vesicle density in {ct_str}')
+        plt.savefig(f'{f_name}/all_ves_den_{ct_str}.png')
+        plt.close()
+        sns.stripplot(ct_ves_density_close, alpha=0.3, color='black')
+        plt.xlabel('STN')
+        plt.ylabel('vesicle density [1/µm')
+        plt.title(f'Close-membrane vesicle density in {ct_str} (< {dist_threshold} nm)')
+        plt.savefig(f'{f_name}/close_ves_den_{ct_str}_{dist_threshold}nm.png')
+        plt.close()
+        comp_densities = pd.DataFrame(columns=['all vesicles', 'close-membrane vesicles'], index = range(len(cellids)))
+        comp_densities['all vesicles'] = ct_ves_density
+        comp_densities['close-membrane vesicles'] = ct_ves_density_close
+        sns.stripplot(comp_densities, alpha=0.3, color='black')
+        plt.ylabel('vesicle density [1/µm')
+        plt.title(f'Vesicle density in {ct_str}: all vs close-membrane (< {dist_threshold} nm)')
+        plt.savefig(f'{f_name}/comp_ves_den_{ct_str}_{dist_threshold}nm.png')
+        plt.close()
+        '''
 
     log.info('Step 3/3: Plot results')
     ves_density_all.to_csv(f'{f_name}/ves_density_all.csv')

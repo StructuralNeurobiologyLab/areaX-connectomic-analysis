@@ -164,11 +164,12 @@ if __name__ == '__main__':
     plt.title('Number of vesicles per axon pathlength with different thresholds in membrane distance')
     plt.savefig(f'{f_name}/all_ves_comb_box.svg')
     plt.close()
-    for i, dt in enumerate(dist_threshold):
+    for i, dt_str in enumerate(dist_str):
         if i == 0:
             continue
-        ves_density_close[dist_str[i]].to_csv(f'{f_name}/ves_density_close_{dt}nm.csv')
-        sns.boxplot(ves_density_close[dist_str[i]], palette=ct_palette)
+        dt = dist_threshold[i - 0]
+        ves_density_close[dt_str].to_csv(f'{f_name}/ves_density_close_{dt}nm.csv')
+        sns.boxplot(ves_density_close[dt_str], palette=ct_palette)
         plt.ylabel('vesicle density [1/µm]')
         plt.title(f'Number of vesicles closer than {dt} to membrane per axon pathlength')
         plt.savefig(f'{f_name}/close_ves_{dt}nm_box.svg')

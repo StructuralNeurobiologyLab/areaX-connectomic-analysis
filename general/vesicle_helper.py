@@ -35,7 +35,7 @@ def get_ves_distance_per_cell(cell_input):
     #calculate density
     vesicle_density = number_vesicles / axon_pathlength
     vesicle_density_close = number_vesicles_close / axon_pathlength
-    return [number_vesicles, number_vesicles_close, vesicle_density, vesicle_density_close]
+    return [vesicle_density, vesicle_density_close]
 
 def get_ves_distance_multiple_per_cell(cell_input):
     '''
@@ -68,14 +68,13 @@ def get_ves_distance_multiple_per_cell(cell_input):
     # calculate density
     vesicle_density = number_vesicles / axon_pathlength
     #now filter according to distance to matrix
-    close_numbers = np.zeros(len(distance_thresholds))
     close_densities = np.zeros(len(distance_thresholds))
     for i, dt in enumerate(distance_thresholds):
         cell_axo_ves_coords_thresh = cell_axo_ves_coords[cell_axo_dist2matrix < dt]
         number_vesicles_close = len(cell_axo_ves_coords_thresh)
-        close_numbers[i] = number_vesicles_close
         close_densities[i] = number_vesicles_close / axon_pathlength
-    return [number_vesicles, close_numbers, vesicle_density, close_densities]
+    output = np.hstack(np.array([vesicle_density, close_densities]))
+    return output
 
 def get_synapse_proximity_vesicle_percell(cell_input):
     '''

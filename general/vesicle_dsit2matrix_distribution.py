@@ -64,8 +64,6 @@ if __name__ == '__main__':
         dist_str = ['all']
         for dt in dist_threshold:
             dist_str.append(str(dt) + ' nm')
-        if len(dist_threshold) > len(comp_cls_list):
-
     else:
         dist_str = ['all', str(dist_threshold) + ' nm']
     ves_density_close = {dt: pd.DataFrame(columns=cts_str, index=range(10500)) for dt in dist_str}

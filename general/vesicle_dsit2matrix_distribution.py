@@ -2,54 +2,18 @@
 #filter cells for completeness
 #check distribution of dist2matrix
 
-def get_ves_distance_per_cell(cell_input):
-    '''
-    Function to filter single vesicles per cell according to coordinates and return the corresponding distances to matrix
-    in nm. Filters vesicles with certain distance to matrix if filtering parameter given.
-    :param cell_input: list of inputs including cellid, ves_coords, mapped_ssv_ids, ves_dist2matrix
-    :return: number of vesicles, vesicle number per pathlength
-    '''
-    cellid = cell_input[0]
-    ves_coords = cell_input[1]
-    mapped_ssv_ids = cell_input[2]
-    ves_dist2matrix = cell_input[3]
-    distance_threshold = cell_input[4]
-    axon_pathlength = cell_input[5]
-    #load cell skeleton, filter all vesicles not close to axon
-    cell = SuperSegmentationObject(cellid)
-    cell.load_skeleton()
-    cell_ves_ind = np.in1d(mapped_ssv_ids, cellid)
-    cell_ves_coords = ves_coords[cell_ves_ind]
-    cell_dist2matrix = ves_dist2matrix[cell_ves_ind]
-    kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"] * cell.scaling)
-    close_node_ids = kdtree.query(cell_ves_coords * cell.scaling, k=1)[1].astype(int)
-    axo = np.array(cell.skeleton["axoness_avg10000"][close_node_ids])
-    axo[axo == 3] = 1
-    axo[axo == 4] = 1
-    cell_axo_ves_coords = cell_ves_coords[axo == 1]
-    cell_axo_dist2matrix = cell_dist2matrix[axo == 1]
-    #now filter according to distance to matrix
-    cell_axo_ves_coords_thresh = cell_axo_ves_coords[cell_axo_dist2matrix < distance_threshold]
-    number_vesicles = len(cell_axo_ves_coords)
-    number_vesicles_close = len(cell_axo_ves_coords_thresh)
-    #calculate density
-    vesicle_density = number_vesicles / axon_pathlength
-    vesicle_density_close = number_vesicles_close / axon_pathlength
-    return [number_vesicles, number_vesicles_close, vesicle_density, vesicle_density_close]
-
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors, CompColors
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from syconn.reps.super_segmentation import SuperSegmentationObject
+    from vesicle_helper import get_ves_distance_per_cell, get_ves_distance_multiple_per_cell
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
-    import scipy.spatial
     from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -59,12 +23,18 @@ if __name__ == '__main__':
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     min_comp_len = 200
-    dist_threshold = 15 #nm
+    dist_threshold = [15, 10, 5] #nm
+    #dist_threshold = 15
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230123_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%s" % (
-        min_comp_len, dist_threshold, color_key)
+    comp_color_key = 'TeYw'
+    if type(dist_threshold) == list:
+        f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230130_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%i_%s_%s" % (
+            min_comp_len, dist_threshold[0], dist_threshold[1], color_key, comp_color_key)
+    else:
+        f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230130_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%s_%s" % (
+            min_comp_len, dist_threshold, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('get distribution of sit2matrxi for single vesicles', log_dir=f_name + '/logs/')
@@ -74,20 +44,46 @@ if __name__ == '__main__':
     time_stamps = [time.time()]
     step_idents = ['t-0']
     known_mergers = load_pkl2obj("cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
-    log.info("Step 1/3: Load single vesicle info")
+    log.info("Step 1/3: Load single vesicle info and prepare empty result DataFrames")
     ves_wd = 'cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811/single_vesicles'
     single_ves_ids = np.load(f'{ves_wd}/ids.npy')
     single_ves_coords = np.load(f'{ves_wd}/rep_coords.npy')
     ves_map2ssvids = np.load(f'{ves_wd}/mapping_ssv_ids.npy')
     ves_dist2matrix = np.load(f'{ves_wd}/dist2matrix.npy')
 
-    log.info("Step 2/3: Iterate over celltypes to get suitable cellids, filter vesicles")
+    ct_palette = cls.ct_palette(color_key, num=False)
+    comp_cls = CompColors()
+    comp_cls_list = comp_cls.colors[comp_color_key]
     cts = list(ct_dict.keys())
     ax_ct = [1, 3, 4]
     num_cts = len(cts)
     cts_str = [ct_dict[i] for i in range(num_cts)]
-    ves_density_all = pd.DataFrame(columns=cts_str, index = range(10500))
-    ves_density_close = pd.DataFrame(columns=cts_str, index = range(10500))
+    ves_density_all = pd.DataFrame(columns=cts_str, index=range(10500))
+    combined_columns = ['vesicle density', 'celltype', 'distance threshold']
+    if type(dist_threshold) == list:
+        ves_density_close = {dt: pd.DataFrame(columns=cts_str, index=range(10500)) for dt in dist_threshold}
+        combined_density_data = pd.DataFrame(columns=combined_columns,
+                                             index=range(num_cts * (len(dist_threshold) + 1) * 5000))
+        comb_median_data = pd.DataFrame(columns=combined_columns, index=range(num_cts * (len(dist_threshold) + 1)))
+        dist_str = ['all']
+        for dt in dist_threshold:
+            dist_str.append(str(dt) + ' nm')
+    else:
+        ves_density_close = pd.DataFrame(columns=cts_str, index=range(10500))
+        combined_density_data = pd.DataFrame(columns=combined_columns, index=range(num_cts * 2 * 5000))
+        comb_median_data = pd.DataFrame(columns=combined_columns, index=range(num_cts * 2))
+        dist_str = ['all', str(dist_threshold) + ' nm']
+    if type(dist_threshold) == list:
+        if len(dist_threshold) > len(comp_cls_list):
+            raise ValueError(
+                f'Choose Color Palette with more colors. This has {len(comp_cls_list)} but you need {len(dist_threshold)}')
+        else:
+            dist_palette = {dist_str[i]: comp_cls_list[i] for i in range(2)}
+    else:
+        dist_palette = {dist_str[i]: comp_cls_list[i] for i in range(2)}
+
+    log.info("Step 2/3: Iterate over celltypes to get suitable cellids, filter vesicles")
+    prev_len_cellids = 0
     for ct in tqdm(range(num_cts)):
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
@@ -119,7 +115,7 @@ if __name__ == '__main__':
         ct_ves_map2ssvids = ves_map2ssvids[ct_ind]
         ct_ves_dist2matrix = ves_dist2matrix[ct_ind]
         ct_ves_coords = single_ves_coords[ct_ind]
-        assert len(np.unique(ct_ves_map2ssvids)) == len(cellids)
+        assert len(np.unique(ct_ves_map2ssvids)) <= len(cellids)
         log.info('Iterate over cells to get vesicles associated to axon')
         #get axon_pathlength for corrensponding cellids
         axon_pathlengths = np.zeros(len(cellids))
@@ -127,52 +123,89 @@ if __name__ == '__main__':
             axon_pathlengths[c] = cell_dict[cellid]['axon length']
 
         cell_inputs = [[cellids[i], ct_ves_coords, ct_ves_map2ssvids, ct_ves_dist2matrix, dist_threshold, axon_pathlengths[i]] for i in range(len(cellids))]
-        outputs = start_multiprocess_imap(get_ves_distance_per_cell, cell_inputs)
+        if type(dist_threshold) == list:
+            outputs = start_multiprocess_imap(get_ves_distance_multiple_per_cell, cell_inputs)
+        else:
+            outputs = start_multiprocess_imap(get_ves_distance_per_cell, cell_inputs)
         outputs = np.array(outputs)
         ct_ves_number = outputs[:, 0]
         ct_ves_number_close = outputs[:, 1]
         ct_ves_density = outputs[:, 2]
         ct_ves_density_close = outputs[:, 3]
-        ves_density_all[ct_str] = ct_ves_density
-        ves_density_close[ct_str] = ct_ves_density_close
-        '''
-        #plot data for one celltype for testing
-        sns.stripplot(ct_ves_density, alpha = 0.3, color = 'black')
-        plt.xlabel( 'STN')
-        plt.ylabel('vesicle density [1/µm')
-        plt.title(f'Vesicle density in {ct_str}')
-        plt.savefig(f'{f_name}/all_ves_den_{ct_str}.png')
-        plt.close()
-        sns.stripplot(ct_ves_density_close, alpha=0.3, color='black')
-        plt.xlabel('STN')
-        plt.ylabel('vesicle density [1/µm')
-        plt.title(f'Close-membrane vesicle density in {ct_str} (< {dist_threshold} nm)')
-        plt.savefig(f'{f_name}/close_ves_den_{ct_str}_{dist_threshold}nm.png')
-        plt.close()
-        comp_densities = pd.DataFrame(columns=['all vesicles', 'close-membrane vesicles'], index = range(len(cellids)))
-        comp_densities['all vesicles'] = ct_ves_density
-        comp_densities['close-membrane vesicles'] = ct_ves_density_close
-        sns.stripplot(comp_densities, alpha=0.3, color='black')
-        plt.ylabel('vesicle density [1/µm')
-        plt.title(f'Vesicle density in {ct_str}: all vs close-membrane (< {dist_threshold} nm)')
-        plt.savefig(f'{f_name}/comp_ves_den_{ct_str}_{dist_threshold}nm.png')
-        plt.close()
-        '''
+        ves_density_all.loc[0:len(cellids) -1 , ct_str] = ct_ves_density
+        combined_density_data.loc[prev_len_cellids: prev_len_cellids + len(cellids) - 1, 'vesicle density'] = ct_ves_density
+        combined_density_data.loc[prev_len_cellids: prev_len_cellids + len(cellids) - 1,
+        'distance threshold'] = 'all'
+        median_den = np.median(ct_ves_density)
+        comb_median_data.loc[ct*4, 'vesicle density'] = median_den
+        comb_median_data.loc[ct * 4, 'distance threshold'] = 'all'
+        log.info(f'{ct_str} cells have a median vesicle density of {median_den:.2f} 1/µm')
+        if type(dist_threshold) == list:
+            comb_median_data.loc[ct * 4: ct * 4 + (len(dist_threshold) + 1) - 1, 'celltype'] = ct_str
+            combined_density_data.loc[prev_len_cellids: prev_len_cellids + (len(dist_threshold) + 1) * len(cellids) - 1,
+            'celltype'] = ct_str
+            for i, dt in enumerate(dist_threshold):
+                ves_density_close[dt].loc[0:len(cellids) -1 , ct_str] = ct_ves_density_close[i]
+                combined_density_data.loc[prev_len_cellids + (i+1)*len(cellids): prev_len_cellids + (i+2) * len(cellids) - 1,
+                'distance threshold'] = str(dt) + ' nm'
+                combined_density_data.loc[prev_len_cellids + (i+1)*len(cellids): prev_len_cellids + (i+2) * len(cellids) - 1,
+                'vesicle density'] = ct_ves_density_close
+                median_den_close = np.median(ct_ves_density_close[i])
+                comb_median_data.loc[ct * 4 + i + 1, 'vesicle density'] = median_den_close
+                comb_median_data.loc[ct * 4 + i + 1, 'distance threshold'] = str(dt) + ' nm'
+                log.info(f'{ct_str} cells have a median vesicle density of {median_den_close:.2f} 1/µm '
+                         f'for vesicles closer than {dt} nm')
+        else:
+            combined_density_data.loc[prev_len_cellids: prev_len_cellids + 2*len(cellids) - 1,
+            'celltype'] = ct_str
+            combined_density_data.loc[prev_len_cellids + len(cellids): prev_len_cellids + 2*len(cellids) - 1,
+            'distance threshold'] = str(dist_threshold) + ' nm'
+            combined_density_data.loc[prev_len_cellids + len(cellids): prev_len_cellids + 2 * len(cellids) - 1,
+            'vesicle density'] = ct_ves_density_close
+            ves_density_close.loc[0:len(cellids) -1 , ct_str] = ct_ves_density_close
+            median_den_close = np.median(ct_ves_density_close)
+            comb_median_data.loc[ct*4 + 1, 'vesicle density'] = median_den_close
+            comb_median_data.loc[ct * 4 + 1, 'distance threshold'] = str(dist_threshold) + ' nm'
+            comb_median_data.loc[ct * 4: ct*4 + 1, 'celltype'] = ct_str
+            log.info(f'{ct_str} cells have a median vesicle density of {median_den_close:.2f} 1/µm '
+                     f'for vesicles closer than {dist_threshold} nm')
+        prev_len_cellids += len(cellids)
+        raise ValueError
 
     log.info('Step 3/3: Plot results')
     ves_density_all.to_csv(f'{f_name}/ves_density_all.csv')
-    ves_density_close.to_csv(f'{f_name}/ves_density_close_{dist_threshold}nm.csv')
-    ct_palette = cls.ct_palette(color_key, num=False)
+    comb_median_data.to_csv(f'{f_name}/ves_density_median_comb_data.csv')
+    write_obj2pkl(f'{f_name}/comb_den_data.pkl', combined_density_data)
     sns.boxplot(ves_density_all, palette=ct_palette)
     plt.ylabel('vesicle density [1/µm]')
     plt.title('Number of vesicles per axon pathlength')
     plt.savefig(f'{f_name}/all_ves_box.svg')
     plt.close()
-    sns.boxplot(ves_density_close, palette=ct_palette)
-    plt.ylabel('vesicle density [1/µm]')
-    plt.title(f'Number of vesicles closer than {dist_threshold} to membrane per axon pathlength')
-    plt.savefig(f'{f_name}/close_ves_{dist_threshold}nm_box.svg')
+    sns.pointplot(x = 'celltype', y = 'vesicle density', data=comb_median_data, hue='distance threshold', palette=dist_palette)
+    plt.ylabel('median vesicle density [1/µm]')
+    plt.title('Median number of vesicles per axon pathlength with different thresholds in membrane distance')
+    plt.savefig(f'{f_name}/all_ves_comb_median_point.svg')
     plt.close()
+    sns.boxplot(x='celltype', y='vesicle density', data=combined_density_data, hue='distance threshold', palette=dist_palette)
+    plt.ylabel('vesicle density [1/µm]')
+    plt.title('Number of vesicles per axon pathlength with different thresholds in membrane distance')
+    plt.savefig(f'{f_name}/all_ves_comb_box.svg')
+    plt.close()
+    if type(dist_threshold) == list:
+        for dt in dist_threshold:
+            ves_density_close[dt].to_csv(f'{f_name}/ves_density_close_{dt}nm.csv')
+            sns.boxplot(ves_density_close[dt], palette=ct_palette)
+            plt.ylabel('vesicle density [1/µm]')
+            plt.title(f'Number of vesicles closer than {dt} to membrane per axon pathlength')
+            plt.savefig(f'{f_name}/close_ves_{dt}nm_box.svg')
+            plt.close()
+    else:
+        ves_density_close.to_csv(f'{f_name}/ves_density_close_{dist_threshold}nm.csv')
+        sns.boxplot(ves_density_close, palette=ct_palette)
+        plt.ylabel('vesicle density [1/µm]')
+        plt.title(f'Number of vesicles closer than {dist_threshold} to membrane per axon pathlength')
+        plt.savefig(f'{f_name}/close_ves_{dist_threshold}nm_box.svg')
+        plt.close()
 
     log.info(f'Analysis for vesicles closer to {dist_threshold}nm in all celltypes done')
 

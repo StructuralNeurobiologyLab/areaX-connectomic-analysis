@@ -8,7 +8,7 @@ if __name__ == '__main__':
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from vesicle_helper import get_ves_distance_per_cell, get_ves_distance_multiple_per_cell
+    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_ves_distance_per_cell, get_ves_distance_multiple_per_cell
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj

@@ -30,26 +30,22 @@ if __name__ == '__main__':
     color_key = 'TePkBr'
     comp_color_key = 'TeYw'
     if type(dist_threshold) == list:
-        f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230130_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%i_%s_%s" % (
+        f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230202_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%i_%s_%s" % (
             min_comp_len, dist_threshold[0], dist_threshold[1], color_key, comp_color_key)
     else:
-        f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230130_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%s_%s" % (
+        f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230202_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%s_%s" % (
             min_comp_len, dist_threshold, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('get distribution of sit2matrxi for single vesicles', log_dir=f_name + '/logs/')
+    log = initialize_logging('get distribution of membrane distance for single vesicles', log_dir=f_name + '/logs/')
     log.info(
         "min_comp_len = %i, colors = %s" % (
             min_comp_len, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
     known_mergers = load_pkl2obj("cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
-    log.info("Step 1/3: Load single vesicle info and prepare empty result DataFrames")
-    ves_wd = 'cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811/single_vesicles'
-    single_ves_ids = np.load(f'{ves_wd}/ids.npy')
-    single_ves_coords = np.load(f'{ves_wd}/rep_coords.npy')
-    ves_map2ssvids = np.load(f'{ves_wd}/mapping_ssv_ids.npy')
-    ves_dist2matrix = np.load(f'{ves_wd}/dist2matrix.npy')
+    log.info("Step 1/3: Prepare empty result DataFrames")
+    cache_name = "/cajal/nvmescratch/users/arother/j0251v4_prep"
 
     ct_palette = cls.ct_palette(color_key, num=False)
     comp_cls = CompColors()
@@ -66,15 +62,16 @@ if __name__ == '__main__':
             dist_str.append(str(dt) + ' nm')
     else:
         dist_str = ['all', str(dist_threshold) + ' nm']
+    num_cat = len(dist_str)
     ves_density_close = {dt: pd.DataFrame(columns=cts_str, index=range(10500)) for dt in dist_str}
     combined_density_data = pd.DataFrame(columns=combined_columns,
-                                         index=range(num_cts * len(dist_str) * 5000))
-    comb_median_data = pd.DataFrame(columns=combined_columns, index=range(num_cts * len(dist_str)))
+                                         index=range(num_cts * num_cat * 5000))
+    comb_median_data = pd.DataFrame(columns=combined_columns, index=range(num_cts * num_cat))
     if type(dist_threshold) == list and len(dist_threshold) > len(comp_cls_list):
         raise ValueError(
             f'Choose Color Palette with more colors. This has {len(comp_cls_list)} but you need {len(dist_threshold)}')
     else:
-        dist_palette = {dist_str[i]: comp_cls_list[i] for i in range(len(dist_str))}
+        dist_palette = {dist_str[i]: comp_cls_list[i] for i in range(num_cat)}
     log.info("Step 2/3: Iterate over celltypes to get suitable cellids, filter vesicles")
     prev_len_cellids = 0
     for ct in tqdm(range(num_cts)):
@@ -82,7 +79,7 @@ if __name__ == '__main__':
         ct_str = ct_dict[ct]
         if ct in ax_ct:
             cell_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/ax_%.3s_dict.pkl" % (ct_dict[ct]))
+                f"{cache_name}/ax_%.3s_dict.pkl" % (ct_dict[ct]))
             cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
@@ -90,24 +87,30 @@ if __name__ == '__main__':
                                             axon_only=True, max_path_len=None)
         else:
             cell_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % (ct_dict[ct]))
+                f"{cache_name}/full_%.3s_dict.pkl" % (ct_dict[ct]))
             cellids = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[ct])
+                f"{cache_name}/full_%.3s_arr.pkl" % ct_dict[ct])
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
             if ct == 2:
-                misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
+                misclassified_asto_ids = load_pkl2obj(f'{cache_name}/pot_astro_ids.pkl')
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                                 axon_only=False, max_path_len=None)
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
         log.info('Prefilter vesicles for celltype')
-        ct_ind = np.in1d(ves_map2ssvids, cellids)
-        ct_ves_ids = single_ves_ids[ct_ind]
-        ct_ves_map2ssvids = ves_map2ssvids[ct_ind]
-        ct_ves_dist2matrix = ves_dist2matrix[ct_ind]
-        ct_ves_coords = single_ves_coords[ct_ind]
+        # load caches prefiltered for celltype
+        ct_ves_ids = np.load(f'{cache_name}/{ct_dict[ct]}_ids.npy')
+        ct_ves_coords = np.load(f'{cache_name}/{ct_dict[ct]}_rep_coords.npy')
+        ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_dict[ct]}_mapping_ssv_ids.npy')
+        ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_dict[ct]}_dist2matrix.npy')
+        # filter for selected cellids
+        ct_ind = np.in1d(ct_ves_map2ssvids, cellids)
+        ct_ves_ids = ct_ves_ids[ct_ind]
+        ct_ves_map2ssvids = ct_ves_map2ssvids[ct_ind]
+        ct_ves_dist2matrix = ct_ves_dist2matrix[ct_ind]
+        ct_ves_coords = ct_ves_coords[ct_ind]
         assert len(np.unique(ct_ves_map2ssvids)) <= len(cellids)
         log.info('Iterate over cells to get vesicles associated to axon')
         #get axon_pathlength for corrensponding cellids
@@ -121,10 +124,10 @@ if __name__ == '__main__':
         else:
             outputs = start_multiprocess_imap(get_ves_distance_per_cell, cell_inputs)
         outputs = np.array(outputs)
-        ct_ves_density_dict = {dist_str[i]: outputs[:, i] for i in range(len(dist_str))}
+        ct_ves_density_dict = {dist_str[i]: outputs[:, i] for i in range(num_cat)}
         ves_density_all.loc[0:len(cellids) -1 , ct_str] = ct_ves_density_dict['all']
-        comb_median_data.loc[ct * 4: ct * 4 + len(dist_str) - 1, 'celltype'] = ct_str
-        combined_density_data.loc[prev_len_cellids: prev_len_cellids + len(dist_str) * len(cellids) - 1,
+        comb_median_data.loc[ct * num_cat: ct * num_cat + num_cat - 1, 'celltype'] = ct_str
+        combined_density_data.loc[prev_len_cellids: prev_len_cellids + num_cat * len(cellids) - 1,
         'celltype'] = ct_str
         for i, dt in enumerate(dist_str):
             ves_density_close[dt].loc[0:len(cellids) - 1, ct_str] = ct_ves_density_dict[dt]
@@ -135,15 +138,14 @@ if __name__ == '__main__':
             prev_len_cellids + i * len(cellids): prev_len_cellids + (i + 1) * len(cellids) - 1,
             'vesicle density'] = ct_ves_density_dict[dt]
             median_den = np.median(ct_ves_density_dict[dt])
-            comb_median_data.loc[ct * 4 + i, 'vesicle density'] = median_den
-            comb_median_data.loc[ct * 4 + i, 'distance threshold'] = dt
+            comb_median_data.loc[ct * num_cat + i, 'vesicle density'] = median_den
+            comb_median_data.loc[ct * num_cat + i, 'distance threshold'] = dt
             if i == 0:
                 log.info(f'{ct_str} cells have a median vesicle density of {median_den:.2f} 1/µm')
             else:
                 log.info(f'{ct_str} cells have a median vesicle density of {median_den:.2f} 1/µm '
                      f'for vesicles closer than {dt} nm')
-        prev_len_cellids += len(cellids)
-        raise ValueError
+        prev_len_cellids += len(cellids) * num_cat
 
     log.info('Step 3/3: Plot results')
     ves_density_all.to_csv(f'{f_name}/ves_density_all.csv')
@@ -154,7 +156,7 @@ if __name__ == '__main__':
     plt.title('Number of vesicles per axon pathlength')
     plt.savefig(f'{f_name}/all_ves_box.svg')
     plt.close()
-    sns.pointplot(x = 'celltype', y = 'vesicle density', data=comb_median_data, hue='distance threshold', palette=dist_palette)
+    sns.pointplot(x = 'celltype', y = 'vesicle density', data=comb_median_data, hue='distance threshold', palette=dist_palette, join=False)
     plt.ylabel('median vesicle density [1/µm]')
     plt.title('Median number of vesicles per axon pathlength with different thresholds in membrane distance')
     plt.savefig(f'{f_name}/all_ves_comb_median_point.svg')
@@ -167,7 +169,7 @@ if __name__ == '__main__':
     for i, dt_str in enumerate(dist_str):
         if i == 0:
             continue
-        dt = dist_threshold[i - 0]
+        dt = dist_threshold[i - 1]
         ves_density_close[dt_str].to_csv(f'{f_name}/ves_density_close_{dt}nm.csv')
         sns.boxplot(ves_density_close[dt_str], palette=ct_palette)
         plt.ylabel('vesicle density [1/µm]')

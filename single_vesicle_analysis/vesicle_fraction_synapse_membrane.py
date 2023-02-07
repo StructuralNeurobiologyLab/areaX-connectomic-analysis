@@ -1,13 +1,13 @@
 #analysis to see which fraction of vesicles close to membrane is close to the synapse
 
 if __name__ == '__main__':
-    from cajal.nvmescatch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescatch.users.arother.bio_analysis.generalanalysis_colors import CelltypeColors
-    from cajal.nvmescatch.users.arother.bio_analysis.generalanalysis_conn_helper import filter_synapse_caches_for_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from cajal.nvmescatch.users.arother.bio_analysis.general.vesicle_helper import get_synapse_proximity_vesicle_percell
+    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_synapse_proximity_vesicle_percell
     import os as os
     from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd
@@ -26,19 +26,20 @@ if __name__ == '__main__':
     dist_threshold = 15 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.8
-    syn_dist_threshold = 1000 #nm
+    syn_dist_threshold = 500 #nm
+    nonsyn_dist_threshold = 2000 #nm
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230201_j0251v4_ct_syn_fraction_closemembrane_mcl_%i_dt_%i_st_%i_%s" % (
-        min_comp_len, dist_threshold, syn_dist_threshold, color_key)
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/single_vesicle_analysis/230207_j0251v4_ct_syn_fraction_closemembrane_mcl_%i_dt_%i_st_%i_%i_%s" % (
+        min_comp_len, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('get fraction of vesicles close to membrane which are not close to synapse', log_dir=f_name + '/logs/')
     log.info(
         "min_comp_len = %i, min_syn_size = %.1f, syn_prob_thresh = %.1f, distance threshold to membrane = %s nm, "
-        "distance threshold to synapse = %i nm, colors = %s" % (
-            min_comp_len, min_syn_size, syn_prob_thresh, dist_threshold, syn_dist_threshold, color_key))
+        "distance threshold to synapse = %i nm, distance threshold for not at synapse = %i nm, colors = %s" % (
+            min_comp_len, min_syn_size, syn_prob_thresh, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
     known_mergers = load_pkl2obj("cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
@@ -127,7 +128,7 @@ if __name__ == '__main__':
         #prepare inputs for multiprocessing
         cell_inputs = [
             [cellids[i], ct_ves_coords, ct_ves_map2ssvids, ct_ves_dist2matrix, dist_threshold, syn_coords, syn_axs,
-             syn_ssv_partners, syn_dist_threshold, axon_pathlengths[i]] for i in range(len(cellids))]
+             syn_ssv_partners, syn_dist_threshold, nonsyn_dist_threshold, axon_pathlengths[i]] for i in range(len(cellids))]
         outputs = start_multiprocess_imap(get_synapse_proximity_vesicle_percell, cell_inputs)
         outputs = np.array(outputs)
         fraction_non_syn_mem_vesicles = outputs[:, 0]

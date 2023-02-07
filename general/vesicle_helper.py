@@ -99,7 +99,8 @@ def get_synapse_proximity_vesicle_percell(cell_input):
     syn_axs = cell_input[6]
     syn_ssv_partners = cell_input[7]
     syn_distance_threshold = cell_input[8]
-    axon_pathlength = cell_input[9]
+    non_syn_distance_threshold = cell_input[9]
+    axon_pathlength = cell_input[10]
     # filter synapses, similar to filtering in analysis_conn_helper
     ct_inds = np.in1d(syn_ssv_partners, cellid).reshape(len(syn_ssv_partners), 2)
     comp_inds = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
@@ -131,11 +132,18 @@ def get_synapse_proximity_vesicle_percell(cell_input):
     if len(ves_inds) == 0:
         number_syn_ves_close = 0
     else:
-        ves_inds_flatten = np.hstack(ves_inds).astype(int)
+        ves_inds_flatten = np.unique(np.hstack(ves_inds)).astype(int)
         ves_coords_syns = cell_axo_ves_coords_thresh[ves_inds_flatten]
         number_syn_ves_close = len(ves_coords_syns)
-    fraction_non_syn_ves = (number_vesicles_close - number_syn_ves_close) / number_vesicles_close
-    density_non_syn_ves = (number_vesicles_close - number_syn_ves_close) / axon_pathlength
+    ves_far_inds = ves_kdtree.query_ball_point(syn_coords * cell.scaling, r = non_syn_distance_threshold)
+    if len(ves_far_inds) == 0:
+        number_nonsyn_ves_close = number_vesicles_close
+    else:
+        ves_far_inds_flatten = np.unique(np.hstack(ves_far_inds)).astype(int)
+        ves_coords_synsmore = cell_axo_ves_coords_thresh[ves_far_inds_flatten]
+        number_nonsyn_ves_close = number_vesicles_close - len(ves_coords_synsmore)
+    fraction_non_syn_ves = number_nonsyn_ves_close / number_vesicles_close
+    density_non_syn_ves = number_nonsyn_ves_close / axon_pathlength
     density_syn_ves = number_syn_ves_close / axon_pathlength
     return [fraction_non_syn_ves, density_non_syn_ves, density_syn_ves]
 
@@ -186,7 +194,7 @@ def get_ves_synsize_percell(cell_input):
     ves_kdtree = scipy.spatial.cKDTree(cell_axo_ves_coords * cell.scaling)
     ves_inds = ves_kdtree.query_ball_point(syn_coords * cell.scaling, r=syn_distance_threshold)
     number_ves_per_synapse = np.array([len(ves_inds[i]) for i in range(num_syns)])
-    columns = ['cellid', 'synapse size [µm²]', 'number of vesicles', 'number of close-membrane vesicles']
+    columns = ['cellid', 'synapse size [µm²]', 'number of vesicles', 'number of membrane-close vesicles']
     output_df = pd.DataFrame(columns = columns, index = range(num_syns))
     output_df['synapse size [µm²]'] = syn_sizes
     output_df['number of vesicles'] = number_ves_per_synapse
@@ -197,8 +205,8 @@ def get_ves_synsize_percell(cell_input):
     ves_close_kdtree = scipy.spatial.cKDTree(cell_axo_ves_coords_thresh * cell.scaling)
     ves_close_inds = ves_close_kdtree.query_ball_point(syn_coords * cell.scaling, r = syn_distance_threshold)
     if len(ves_close_inds) == 0:
-        output_df['number of close-membrane vesicles'] = 0
+        output_df['number of membrane-close vesicles'] = 0
     else:
         number_close_per_synapse = np.array([len(ves_close_inds[i]) for i in range(len(syn_coords))])
-        output_df['number of close-membrane vesicles'] = number_close_per_synapse
+        output_df['number of membrane-close vesicles'] = number_close_per_synapse
     return output_df

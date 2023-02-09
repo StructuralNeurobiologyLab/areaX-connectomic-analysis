@@ -23,7 +23,7 @@ if __name__ == '__main__':
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     min_comp_len = 200
-    dist_threshold = 15 #nm
+    dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.8
     syn_dist_threshold = 500 #nm
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/single_vesicle_analysis/230207_j0251v4_ct_syn_fraction_closemembrane_mcl_%i_dt_%i_st_%i_%i_%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230208_j0251v4_ct_syn_fraction_closemembrane_mcl_%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

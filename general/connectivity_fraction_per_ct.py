@@ -36,7 +36,7 @@ if __name__ == '__main__':
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
-    min_comp_len = 50
+    min_comp_len = 200
     syn_prob = 0.8
     min_syn_size = 0.1
     msn_ct = 2
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     color_key = 'STNGP'
     plot_connmatrix_only = True
     fontsize = 20
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221130_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230209_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
     min_comp_len, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -282,8 +282,6 @@ if __name__ == '__main__':
                 perc_syn_sizes = 100 * filled_in_syn_sizes/ sorted_full_in_sizes
                 synapse_dict_perct[ct][f'incoming synapse number percentage of {other_ct_str}'] = perc_syn_numbers
                 synapse_dict_perct[ct][f'incoming synapse sum size percentage of {other_ct_str}'] = perc_syn_sizes
-                incoming_synapse_matrix_synnumbers_rel.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(perc_syn_numbers)
-                incoming_synapse_matrix_synsizes_rel.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(perc_syn_sizes)
             #outgoing
             if other_ct in axon_cts:
                 continue
@@ -320,8 +318,6 @@ if __name__ == '__main__':
             perc_syn_sizes = 100 * filled_out_syn_sizes / sorted_full_out_sizes
             synapse_dict_perct[ct][f'outgoing synapse number percentage of {other_ct_str}'] = perc_syn_numbers
             synapse_dict_perct[ct][f'outgoing synapse sum size percentage of {other_ct_str}'] = perc_syn_sizes
-            outgoing_synapse_matrix_synnumbers_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_numbers)
-            outgoing_synapse_matrix_synsizes_rel.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(perc_syn_sizes)
 
         # make plots per celltype, pie chart, violinplot
         if not plot_connmatrix_only:
@@ -399,13 +395,9 @@ if __name__ == '__main__':
 
     #save results as pkl and .csv
     write_obj2pkl('%s/synapse_dict_per_ct.pkl' % f_name, synapse_dict_perct)
-    incoming_synapse_matrix_synnumbers_rel.to_csv('%s/incoming_syn_number_matrix_rel.csv' % f_name)
-    incoming_synapse_matrix_synsizes_rel.to_csv('%s/incoming_syn_sizes_matrix_rel.csv' % f_name)
     incoming_synapse_matrix_synnumbers_abs.to_csv('%s/incoming_syn_number_matrix_abs.csv' % f_name)
     incoming_synapse_matrix_synsizes_abs_med.to_csv('%s/incoming_syn_sizes_matrix_abs_med.csv' % f_name)
     incoming_synapse_matrix_synsizes_abs_sum.to_csv('%s/incoming_syn_sizes_matrix_abs_sum.csv' % f_name)
-    outgoing_synapse_matrix_synnumbers_rel.to_csv('%s/outgoing_syn_number_matrix_rel.csv' % f_name)
-    outgoing_synapse_matrix_synsizes_rel.to_csv('%s/outgoing_syn_sizes_matrix_rel.csv' % f_name)
     outgoing_synapse_matrix_synnumbers_abs.to_csv('%s/outgoing_syn_number_matrix_abs.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_med.to_csv('%s/outgoing_syn_sizes_matrix_abs_med.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_sum.to_csv('%s/outgoing_syn_sizes_matrix_abs_sum.csv' % f_name)
@@ -415,9 +407,18 @@ if __name__ == '__main__':
     sum_outgoing = np.sum(outgoing_synapse_matrix_synsizes_abs_sum.sum())
     assert(sum_outgoing == sum_incoming)
     incoming_synapse_matrix_synsizes_abs_sum_dn = 100 * incoming_synapse_matrix_synsizes_abs_sum/ sum_incoming
+    incoming_synapse_matrix_synsizes_rel = incoming_synapse_matrix_synsizes_abs_sum * 100 / incoming_synapse_matrix_synsizes_abs_sum.sum()
+    incoming_synapse_matrix_synnumbers_rel = incoming_synapse_matrix_synnumbers_abs * 100 / incoming_synapse_matrix_synnumbers_abs.sum()
     outgoing_synapse_matrix_synsizes_abs_sum_dn = 100 * outgoing_synapse_matrix_synsizes_abs_sum / sum_outgoing
+    outgoing_synapse_matrix_synnumbers_rel = np.transpose(outgoing_synapse_matrix_synsizes_abs_sum.T * 100 / outgoing_synapse_matrix_synsizes_abs_sum.sum(axis = 1))
+    outgoing_synapse_matrix_synnumbers_rel = np.transpose(outgoing_synapse_matrix_synnumbers_abs.T * 100 / outgoing_synapse_matrix_synnumbers_abs.sum(axis = 1))
+    raise ValueError
     incoming_synapse_matrix_synsizes_abs_sum_dn.to_csv('%s/incoming_syn_sizes_matrix_abs_sum_dataset_norm.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_sum_dn.to_csv('%s/outgoing_syn_sizes_matrix_abs_sum_datatset_norm.csv' % f_name)
+    outgoing_synapse_matrix_synnumbers_rel.to_csv('%s/outgoing_syn_number_matrix_rel.csv' % f_name)
+    outgoing_synapse_matrix_synsizes_rel.to_csv('%s/outgoing_syn_sizes_matrix_rel.csv' % f_name)
+    incoming_synapse_matrix_synnumbers_rel.to_csv('%s/incoming_syn_number_matrix_rel.csv' % f_name)
+    incoming_synapse_matrix_synsizes_rel.to_csv('%s/incoming_syn_sizes_matrix_rel.csv' % f_name)
     log.info("Created Matrix with median values for cellids, presynapse is index, post is columns")
 
     log.info('Step 3/3 Plot results')

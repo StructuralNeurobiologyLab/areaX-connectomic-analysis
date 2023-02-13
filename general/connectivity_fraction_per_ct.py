@@ -48,7 +48,7 @@ if __name__ == '__main__':
     color_key = 'STNGP'
     plot_connmatrix_only = True
     fontsize = 20
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230209_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230213_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
     min_comp_len, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -410,9 +410,8 @@ if __name__ == '__main__':
     incoming_synapse_matrix_synsizes_rel = incoming_synapse_matrix_synsizes_abs_sum * 100 / incoming_synapse_matrix_synsizes_abs_sum.sum()
     incoming_synapse_matrix_synnumbers_rel = incoming_synapse_matrix_synnumbers_abs * 100 / incoming_synapse_matrix_synnumbers_abs.sum()
     outgoing_synapse_matrix_synsizes_abs_sum_dn = 100 * outgoing_synapse_matrix_synsizes_abs_sum / sum_outgoing
-    outgoing_synapse_matrix_synnumbers_rel = np.transpose(outgoing_synapse_matrix_synsizes_abs_sum.T * 100 / outgoing_synapse_matrix_synsizes_abs_sum.sum(axis = 1))
+    outgoing_synapse_matrix_synsizes_rel = np.transpose(outgoing_synapse_matrix_synsizes_abs_sum.T * 100 / outgoing_synapse_matrix_synsizes_abs_sum.sum(axis = 1))
     outgoing_synapse_matrix_synnumbers_rel = np.transpose(outgoing_synapse_matrix_synnumbers_abs.T * 100 / outgoing_synapse_matrix_synnumbers_abs.sum(axis = 1))
-    raise ValueError
     incoming_synapse_matrix_synsizes_abs_sum_dn.to_csv('%s/incoming_syn_sizes_matrix_abs_sum_dataset_norm.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_sum_dn.to_csv('%s/outgoing_syn_sizes_matrix_abs_sum_datatset_norm.csv' % f_name)
     outgoing_synapse_matrix_synnumbers_rel.to_csv('%s/outgoing_syn_number_matrix_rel.csv' % f_name)

@@ -23,11 +23,11 @@ if __name__ == '__main__':
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     min_comp_len = 200
-    dist_threshold = 10 #nm
+    dist_threshold = 15 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.8
     syn_dist_threshold = 500 #nm
-    nonsyn_dist_threshold = 2000 #nm
+    nonsyn_dist_threshold = 10000 #nm
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'

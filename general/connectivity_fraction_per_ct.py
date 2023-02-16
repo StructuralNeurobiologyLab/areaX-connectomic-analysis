@@ -46,9 +46,9 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGP'
-    plot_connmatrix_only = True
+    plot_connmatrix_only = False
     fontsize = 20
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230213_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230213_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
     min_comp_len, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

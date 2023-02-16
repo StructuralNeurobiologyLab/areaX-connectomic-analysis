@@ -31,7 +31,7 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230208_j0251v4_ct_syn_fraction_closemembrane_mcl_%i_dt_%i_st_%i_%i_%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230216_j0251v4_ct_syn_fraction_closemembrane_mcl_%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -68,6 +68,8 @@ if __name__ == '__main__':
     log.info('Step 3/4 Get information for vesicles close to membrane and synapse for all celltypes')
     for ct in tqdm(range(num_cts)):
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
+        if ct < 7:
+            continue
         ct_str = ct_dict[ct]
         if ct in ax_ct:
             cell_dict = load_pkl2obj(
@@ -129,6 +131,7 @@ if __name__ == '__main__':
         cell_inputs = [
             [cellids[i], ct_ves_coords, ct_ves_map2ssvids, ct_ves_dist2matrix, dist_threshold, syn_coords, syn_axs,
              syn_ssv_partners, syn_dist_threshold, nonsyn_dist_threshold, axon_pathlengths[i]] for i in range(len(cellids))]
+        raise ValueError
         outputs = start_multiprocess_imap(get_synapse_proximity_vesicle_percell, cell_inputs)
         outputs = np.array(outputs)
         fraction_non_syn_mem_vesicles = outputs[:, 0]

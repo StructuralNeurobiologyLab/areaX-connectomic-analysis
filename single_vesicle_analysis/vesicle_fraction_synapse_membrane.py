@@ -25,9 +25,9 @@ if __name__ == '__main__':
     min_comp_len = 200
     dist_threshold = 15 #nm
     min_syn_size = 0.1
-    syn_prob_thresh = 0.8
+    syn_prob_thresh = 0.6
     syn_dist_threshold = 500 #nm
-    nonsyn_dist_threshold = 10000 #nm
+    nonsyn_dist_threshold = 5000 #nm
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
@@ -68,8 +68,6 @@ if __name__ == '__main__':
     log.info('Step 3/4 Get information for vesicles close to membrane and synapse for all celltypes')
     for ct in tqdm(range(num_cts)):
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
-        if ct < 7:
-            continue
         ct_str = ct_dict[ct]
         if ct in ax_ct:
             cell_dict = load_pkl2obj(
@@ -131,7 +129,6 @@ if __name__ == '__main__':
         cell_inputs = [
             [cellids[i], ct_ves_coords, ct_ves_map2ssvids, ct_ves_dist2matrix, dist_threshold, syn_coords, syn_axs,
              syn_ssv_partners, syn_dist_threshold, nonsyn_dist_threshold, axon_pathlengths[i]] for i in range(len(cellids))]
-        raise ValueError
         outputs = start_multiprocess_imap(get_synapse_proximity_vesicle_percell, cell_inputs)
         outputs = np.array(outputs)
         fraction_non_syn_mem_vesicles = outputs[:, 0]

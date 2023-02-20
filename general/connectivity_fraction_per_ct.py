@@ -37,7 +37,7 @@ if __name__ == '__main__':
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     min_comp_len = 200
-    syn_prob = 0.8
+    syn_prob = 0.6
     min_syn_size = 0.1
     msn_ct = 2
     lman_ct = 3

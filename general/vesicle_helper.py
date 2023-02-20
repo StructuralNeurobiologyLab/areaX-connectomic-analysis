@@ -106,6 +106,8 @@ def get_synapse_proximity_vesicle_percell(cell_input):
     comp_inds = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
     filtered_inds = np.all(ct_inds == comp_inds, axis=1)
     syn_coords = syn_coords[filtered_inds]
+    if len(syn_coords) == 0:
+        return [np.nan, np.nan, np.nan]
     #load cell skeleton, filter all vesicles not close to axon
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
@@ -209,4 +211,57 @@ def get_ves_synsize_percell(cell_input):
     else:
         number_close_per_synapse = np.array([len(ves_close_inds[i]) for i in range(len(syn_coords))])
         output_df['number of membrane-close vesicles'] = number_close_per_synapse
+    return output_df
+
+def get_vesicle_distance_information_per_cell(input):
+    '''
+    filter vesicles if they are in axon of the cell and saves information about distance to
+    membrane. Filters synapses that are in axon of cell and calculates distance to
+    next synapse per vesicle. Saves information about all vesicles in dataframe.
+    :param input: cellid, vesicle_coords, vesicle_distance2membrane, ves_ssv_mapping, synapse_ssv_partners, synapse_axoness, synapse_coords
+    :return: all vesicles with coords in Dataframe
+    '''
+    cellid = input[0]
+    ves_coords = input[1]
+    mapped_ssv_ids = input[2]
+    ves_dist2matrix = input[3]
+    syn_coords = input[4]
+    syn_axs = input[5]
+    syn_ssv_partners = input[6]
+    celltype = input[7]
+    # filter synapses, similar to filtering in analysis_conn_helper
+    ct_inds = np.in1d(syn_ssv_partners, cellid).reshape(len(syn_ssv_partners), 2)
+    comp_inds = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
+    filtered_inds = np.all(ct_inds == comp_inds, axis=1)
+    syn_coords = syn_coords[filtered_inds]
+    if len(syn_coords) == 0:
+        return [np.nan, np.nan, np.nan]
+    #load cell skeleton, filter all vesicles not close to axon
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    cell_ves_ind = np.in1d(mapped_ssv_ids, cellid)
+    cell_ves_coords = ves_coords[cell_ves_ind]
+    cell_dist2matrix = ves_dist2matrix[cell_ves_ind]
+    kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"] * cell.scaling)
+    close_node_ids = kdtree.query(cell_ves_coords * cell.scaling, k=1)[1].astype(int)
+    axo = np.array(cell.skeleton["axoness_avg10000"][close_node_ids])
+    axo[axo == 3] = 1
+    axo[axo == 4] = 1
+    cell_axo_ves_coords = cell_ves_coords[axo == 1]
+    cell_axo_dist2matrix = cell_dist2matrix[axo == 1]
+    num_vesicles = len(cell_axo_ves_coords)
+    #get distance of vesicles to synapses
+    syn_kdtree = scipy.spatial.cKDTree(syn_coords * cell.scaling)
+    #search which vesicle indices are within certain distance of synapse
+    ves_dist2syn = syn_kdtree.query(cell_axo_ves_coords * cell.scaling)[0]
+    #write in dataframe
+    columns = ['cellid', 'celltype', 'ves coord x','ves coord y', 'ves coord z', 'dist 2 membrane', 'dist 2 synapse']
+    output_df = pd.DataFrame(columns=columns, index=range(num_vesicles))
+    output_df['cellid'] = cellid
+    output_df['celltype'] = celltype
+    output_df['ves coord x'] = cell_axo_ves_coords[:, 0]
+    output_df['ves coord y'] = cell_axo_ves_coords[:, 1]
+    output_df['ves coord z'] = cell_axo_ves_coords[:, 1]
+    output_df['dist 2 membrane'] = cell_axo_dist2matrix
+    output_df['dist 2 synapse'] = ves_dist2syn
     return output_df

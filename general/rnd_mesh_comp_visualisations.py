@@ -23,15 +23,16 @@ if __name__ == '__main__':
     min_comp_len = 200
     #samples per ct
     rnd_samples = 3
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230227_j0251v4_ct_random_comp_val_mcl_%i_samples_%i" % (
-        min_comp_len, rnd_samples)
+    color_key = 'axoness_avg10000_comp_maj'
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230227_j0251v4_ct_random_comp_val_mcl_%i_samples_%i_k%s" % (
+        min_comp_len, rnd_samples, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('select random subset of cells to write mesh to kzip to visualise compartments',
                              log_dir=f_name + '/logs/')
     log.info(
-        f"min_comp_len = %i, number of samples per ct = %i" % (
-            min_comp_len, rnd_samples))
+        f"min_comp_len = %i, number of samples per ct = %i, key to color to = %s" % (
+            min_comp_len, rnd_samples, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -79,10 +80,10 @@ if __name__ == '__main__':
     rnd_cellids_cts = np.hstack(np.array(rnd_cellids_cts))
 
     log.info('Generate mesh from selected cellids')
-    args = [[rnd_cellid, f_name] for rnd_cellid in rnd_cellids_cts]
+    args = [[rnd_cellid, f_name, color_key] for rnd_cellid in rnd_cellids_cts]
     #generate mesh from cellids
     out = start_multiprocess_imap(generate_colored_mesh_from_skel_data, args)
 
-    log.info('Generated colored meshes for {len(rnd_cellids)} cells')
+    log.info(f'Generated colored meshes for {len(rnd_cellids_cts)} cells')
 
 

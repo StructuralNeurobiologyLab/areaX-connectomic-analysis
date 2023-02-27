@@ -129,7 +129,6 @@ if __name__ == '__main__':
          syn_ssv_partners, ct_gt[i]] for i in range(len(cellids))]
     #write information about each vesicle into DataFrame
     outputs = start_multiprocess_imap(get_vesicle_distance_information_per_cell, cell_inputs)
-    raise ValueError
     #merge Dataframes
     ct_result_df = pd.concat(outputs)
 
@@ -147,50 +146,36 @@ if __name__ == '__main__':
         # all vesicles far from membrane and randomly select vesicles
         ct_df_far_membrane = ct_df[ct_df['dist 2 membrane'] > dist_thresholds[-1]]
         random_inds_far = np.random.choice(range(len(ct_df_far_membrane)), size = size_dist_cat, replace=False)
-        rnd_df_far_membrane = ct_df_far_membrane[random_inds_far]
+        rnd_df_far_membrane = ct_df_far_membrane.iloc[random_inds_far]
         random_selected_vesicles.append(rnd_df_far_membrane)
         #get all vesicles close to membrane
         ct_df_close_membrane = ct_df[ct_df['dist 2 membrane'] <= dist_thresholds[-1]]
         #close to membrane and close to synapse
         ct_df_close_membrane_syn = ct_df_close_membrane[ct_df_close_membrane['dist 2 synapse'] <= syn_dist_threshold_close]
         random_inds_close_syn = np.random.choice(range(len(ct_df_close_membrane_syn)), size=size_syn_cat, replace=False)
-        rnd_df_close_membrane_syn = ct_df_close_membrane_syn[random_inds_close_syn]
+        rnd_df_close_membrane_syn = ct_df_close_membrane_syn.iloc[random_inds_close_syn]
         random_selected_vesicles.append(rnd_df_close_membrane_syn)
         #close to membrane and far from synapse
         ct_df_close_membrane_nonsyn = ct_df_close_membrane[ct_df_close_membrane['dist 2 synapse'] >= syn_dist_threshold_close]
         random_inds_close_nonsyn = np.random.choice(range(len(ct_df_close_membrane_nonsyn)), size=size_syn_cat, replace=False)
-        rnd_df_close_membrane_nonsyn = ct_df_close_membrane_syn[random_inds_close_nonsyn]
+        rnd_df_close_membrane_nonsyn = ct_df_close_membrane_nonsyn.iloc[random_inds_close_nonsyn]
         random_selected_vesicles.append(rnd_df_close_membrane_nonsyn)
         #iterate over distance thresholds and randomly choose within them
         for di, dist in enumerate(dist_thresholds):
             if di == 0:
                 df_dist = ct_df_close_membrane[ct_df_close_membrane['dist 2 membrane'] <= dist]
                 random_inds_dist = np.random.choice(range(len(df_dist)), size = size_dist_cat, replace=False)
-                rnd_df_dist = df_dist[random_inds_dist]
+                rnd_df_dist = df_dist.iloc[random_inds_dist]
+                random_selected_vesicles.append(rnd_df_dist)
+            else:
+                df_dist = ct_df_close_membrane[ct_df_close_membrane['dist 2 membrane'] <= dist]
+                df_dist = df_dist[df_dist['dist 2 membrane'] > dist_thresholds[di  - 1]]
+                random_inds_dist = np.random.choice(range(len(df_dist)), size=size_dist_cat, replace=False)
+                rnd_df_dist = df_dist.iloc[random_inds_dist]
                 random_selected_vesicles.append(rnd_df_dist)
 
     random_selected_ves_df = pd.concat(random_selected_vesicles)
     random_selected_ves_df = shuffle(random_selected_ves_df)
 
     random_selected_ves_df.to_csv(f'{f_name}/random_selected_vesicles.csv')
-    ct_result_df.to_csv(f'{f_name}/gt_single_vesicles.csv')
     log.info('Randomly selecting vesicles for evaluation done')
-
-
-
-
-
-
-
-
-
-
-
-#filter vesicles for these cellids from overall vesicles
-#iterate over each cell to get vesicles that should be in axon
-#save information about cellid, celltype, distance to membrane, distance to synapse
-#either for each celltype select randomly vesicles or put all vesicles together and randomly select
-#either before or after make groups with different distances
-#if for each celltype: per celltype select 5 vesicles with distance < 5, 5 with distance 5 < 10, 5 with 1 < 15, 5 > 30
-# select 5 within 500 nm to synapse, 5 500 < 2000 nm to synapse, 5 2000 < 5000 nm, 5 > 5000 nm to synapse
-#if not for each celltype: select 200 vesicles in total -> 25 per category (some categories doubled)

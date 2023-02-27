@@ -5,7 +5,9 @@ import scipy
 from tqdm import tqdm
 from syconn.proc.meshes import mesh_area_calc, compartmentalize_mesh_fromskel
 from syconn.reps.super_segmentation import SuperSegmentationObject
-from syconn.handler.basics import load_pkl2obj, write_obj2pkl
+from syconn.handler.basics import load_pkl2obj
+from scipy.spatial import cKDTree
+from syconn.proc.meshes import write_mesh2kzip
 
 
 def get_compartment_length(sso, compartment, cell_graph):
@@ -388,6 +390,43 @@ def compute_overlap_skeleton(sso_id, sso_ids, all_node_positions, kdtree_radius 
         overlap_cell = len(unique_overlapping_nodes)/ len(nodes_2_compare)
         overlap[i] = overlap_cell
     return overlap
+
+def generate_colored_mesh_from_skel_data(args):
+    '''
+    Generates mesh coloured according to axoness_avg10000 prediction of skeleton.
+    Based partly on syconn2scripts.scripts.point_party.semseg_gt. Saves result as kzip
+    :param args: cellid, path to folder where kzip should be stored
+    :return:
+    '''
+    # color lookup from HA
+    col_lookup = {0: (76, 92, 158, 255), 1: (255, 125, 125, 255), 2: (125, 255, 125, 255),
+                  3: (113, 98, 227, 255),
+                  4: (255, 255, 125, 255)}
+    cellid, f_name = args
+
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    # load skeleton axoness, spiness attributes
+    nodes = cell.skeleton['nodes'] * cell.scaling
+    edges = cell.skeleton['edges']
+    axoness_labels = cell.skeleton['axoness_avg10000']
+    # spiness_labels = cell.skeleton['spiness']
+    # load mesh and put skeleton annotations on mesh
+    indices, vertices, normals = cell.mesh
+    vertices = vertices.reshape((-1, 3))
+    kdt = cKDTree(nodes)
+    dists, node_inds = kdt.query(vertices)
+    vert_axoness_labels = axoness_labels[node_inds]
+
+    # save colored mesh
+    cols = np.array([col_lookup[el] for el in vert_axoness_labels.squeeze()], dtype=np.uint8)
+    kzip_out = f'{f_name}/{cellid}_colored_mesh'
+    kzip_out_skel = f'{f_name}/{cellid}_skel'
+    write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,
+                    f'{cellid}.ply')
+    cell.save_skeleton_to_kzip(kzip_out_skel, additional_keys=['axoness_avg10000'])
+    return
+
 
 
 

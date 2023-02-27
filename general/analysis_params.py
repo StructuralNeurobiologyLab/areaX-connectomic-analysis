@@ -10,6 +10,7 @@ class Analysis_Params(object):
         self._working_dir = working_dir
         self._ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
+        self._num_cts = len(self._ct_dict.keys())
         self._axoness_dict = {0: 'dendrite', 1:'axon', 2:'soma'}
         self._spiness_dict = {0: 'spine neck', 1: 'spine head', 2:'dendritic shaft', 3:'other'}
         self._axon_cts = [1, 3, 4]
@@ -25,6 +26,14 @@ class Analysis_Params(object):
 
     def ct_dict(self):
         return self._ct_dict
+
+    def ct_str(self):
+        #return celltype names as list of str
+        ct_str = [self._ct_dict[i] for i in range(self._num_cts)]
+        return ct_str
+
+    def num_cts(self):
+        return self._num_cts
 
     def axoness_dict(self):
         return self.axoness_dict

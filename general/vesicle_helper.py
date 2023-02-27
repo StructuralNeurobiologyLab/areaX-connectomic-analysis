@@ -234,8 +234,6 @@ def get_vesicle_distance_information_per_cell(input):
     comp_inds = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
     filtered_inds = np.all(ct_inds == comp_inds, axis=1)
     syn_coords = syn_coords[filtered_inds]
-    if len(syn_coords) == 0:
-        return [np.nan, np.nan, np.nan]
     #load cell skeleton, filter all vesicles not close to axon
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
@@ -250,18 +248,19 @@ def get_vesicle_distance_information_per_cell(input):
     cell_axo_ves_coords = cell_ves_coords[axo == 1]
     cell_axo_dist2matrix = cell_dist2matrix[axo == 1]
     num_vesicles = len(cell_axo_ves_coords)
-    #get distance of vesicles to synapses
-    syn_kdtree = scipy.spatial.cKDTree(syn_coords * cell.scaling)
-    #search which vesicle indices are within certain distance of synapse
-    ves_dist2syn = syn_kdtree.query(cell_axo_ves_coords * cell.scaling)[0]
-    #write in dataframe
-    columns = ['cellid', 'celltype', 'ves coord x','ves coord y', 'ves coord z', 'dist 2 membrane', 'dist 2 synapse']
+    # write in dataframe
+    columns = ['cellid', 'celltype', 'ves coord x', 'ves coord y', 'ves coord z', 'dist 2 membrane', 'dist 2 synapse']
     output_df = pd.DataFrame(columns=columns, index=range(num_vesicles))
     output_df['cellid'] = cellid
     output_df['celltype'] = celltype
     output_df['ves coord x'] = cell_axo_ves_coords[:, 0]
     output_df['ves coord y'] = cell_axo_ves_coords[:, 1]
-    output_df['ves coord z'] = cell_axo_ves_coords[:, 1]
+    output_df['ves coord z'] = cell_axo_ves_coords[:, 2]
     output_df['dist 2 membrane'] = cell_axo_dist2matrix
-    output_df['dist 2 synapse'] = ves_dist2syn
+    #get distance of vesicles to synapses
+    if len(syn_coords) > 0:
+        syn_kdtree = scipy.spatial.cKDTree(syn_coords * cell.scaling)
+        #search which vesicle indices are within certain distance of synapse
+        ves_dist2syn = syn_kdtree.query(cell_axo_ves_coords * cell.scaling)[0]
+        output_df['dist 2 synapse'] = ves_dist2syn
     return output_df

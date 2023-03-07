@@ -1,8 +1,8 @@
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params

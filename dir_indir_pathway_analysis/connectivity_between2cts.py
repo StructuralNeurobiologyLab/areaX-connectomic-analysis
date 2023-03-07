@@ -1234,7 +1234,7 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
 
     return summed_synapse_sizes
 
-def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_size = 0.1, ct_pre = None, cellids_pre = None):
+def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_size = 0.1, ct_pre = None, cellids_pre = None, sort_per_postsyn_ct = True):
     '''
     Get compartment information between two celltypes. Use axo-somatic or axo-dendritic synapses to give percentage of compartments. This information is also a part of
     connectivitybetween2cts.
@@ -1247,6 +1247,7 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     :param min_syn_size: minimum synapse size
     :param ct_pre: presynaptic celltype, if None same as post
     :param cellids_pre: cellids for presynaptic celltype, if None same as postsynaptic
+    :param sort_per_postsyn_c: if True per cell information given for postsynaptic cells, else presynaptic
     :return: total synapse number and sum of synapses, also for each compartment
     '''
     #first filter synapses between two celltypes
@@ -1282,11 +1283,11 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
         m_sizes = m_sizes[suit_ct_inds]
         m_axs = m_axs[suit_ct_inds]
         m_spiness = m_spiness[suit_ct_inds]
-    # get total synapse number and sum of synapses per cellids_post
+    # get total synapse number and sum of synapses per cellids_post or pre if filter_per_postsyn_ct is False
     total_syn_numbers, total_sum_sizes, total_cellids = get_compartment_syn_number_sumsize(syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
                                                                                            syn_axs = m_axs, syn_spiness=None,
                                                                                            ax_comp=None,
-                                                                                           spiness_comp=None)
+                                                                                           spiness_comp=None,  sort_per_postsyn_ct = sort_per_postsyn_ct)
     sort_inds = np.argsort(total_cellids)
     total_syn_numbers = total_syn_numbers[sort_inds]
     total_sum_sizes = total_sum_sizes[sort_inds]
@@ -1301,11 +1302,13 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     all_comp_syn_numbers = {i : 0 for i in compartments}
     all_comp_syn_sum_sizes = {i : 0 for i in compartments}
     soma_numbers, soma_syn_sizes, soma_ids, all_soma_syn_sizes = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
-                                                                                           syn_ssv_partners=m_ssv_partners,
-                                                                                           syn_axs=m_axs,
-                                                                                           syn_spiness=None,
-                                                                                           ax_comp=2,
-                                                                                           spiness_comp=None, return_syn_sizes = True)
+                                                                                                    syn_ssv_partners=m_ssv_partners,
+                                                                                                    syn_axs=m_axs,
+                                                                                                    syn_spiness=None,
+                                                                                                    ax_comp=2,
+                                                                                                    spiness_comp=None,
+                                                                                                    return_syn_sizes=True,
+                                                                                                    sort_per_postsyn_ct=sort_per_postsyn_ct)
     sort_inds = np.argsort(soma_ids)
     cellid_inds = np.in1d(total_cellids, soma_ids[sort_inds])
     syn_numbers_dict['soma'][cellid_inds] = soma_numbers[sort_inds]
@@ -1316,11 +1319,13 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     for spiness_comp in range(len(spiness_dict.keys())):
         spiness_str = spiness_dict[spiness_comp]
         comp_numbers, comp_sizes, comp_ids, all_comp_syn_sizes = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
-                                                                                           syn_ssv_partners=m_ssv_partners,
-                                                                                           syn_axs=m_axs,
-                                                                                           syn_spiness=m_spiness,
-                                                                                           ax_comp=0,
-                                                                                           spiness_comp=spiness_comp, return_syn_sizes = True)
+                                                                                                    syn_ssv_partners=m_ssv_partners,
+                                                                                                    syn_axs=m_axs,
+                                                                                                    syn_spiness=m_spiness,
+                                                                                                    ax_comp=0,
+                                                                                                    spiness_comp=spiness_comp,
+                                                                                                    return_syn_sizes=True,
+                                                                                                    sort_per_postsyn_ct=sort_per_postsyn_ct)
         sort_inds = np.argsort(comp_ids)
         cellid_inds = np.in1d(total_cellids, comp_ids[sort_inds])
         syn_numbers_dict[spiness_str][cellid_inds] = comp_numbers[sort_inds]

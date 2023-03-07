@@ -352,7 +352,7 @@ def get_syn_input_distance_percell(args):
     max_distance = np.max(distance2soma)
     return [cellid, median_distance, min_distance, max_distance, distance2soma]
 
-def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn_spiness = None, ax_comp = None, spiness_comp = None, return_syn_sizes = False):
+def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn_spiness = None, ax_comp = None, spiness_comp = None, return_syn_sizes = False, sort_per_postsyn_ct = True):
     '''
     Get number of synapses and sum size per postsynaptic cell for a given compartment via ax_comp for axon, soma, dendrite or
     with ax_comp = 0 and spiness for dendritic shaft, spine neck, spine head. If no compartment is gives, computes total amount.
@@ -363,6 +363,7 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
     :param ax_comp: which axoness compartment is wanted, if None uses dendrite and soma
     :param spiness_comp: spiness compartment wanted, ax_comp has to be set to 0 for dendritic compartments
     :param return_syn_sizes: if true, return filtered sizes array
+    :param sort_per_postsyn_ct: if True gives parameters sorted per postsynaptic celltype, else per presynaptic celltype
     :return: number of synapses, sum of synapse sizes per cell, cellids
     '''
     if ax_comp is None:
@@ -388,9 +389,12 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
             comp_ssv_partners = comp_ssv_partners[comp_inds]
             comp_sizes = comp_sizes[comp_inds]
             comp_axs = comp_axs[comp_inds]
-        sort_inds = np.where(comp_axs == ax_comp)
-        post_ssvs = comp_ssv_partners[sort_inds]
-        syn_numbers, syn_ssv_sizes, unique_post_ssvs = get_percell_number_sumsize(ssvs = post_ssvs, syn_sizes = comp_sizes)
+        if sort_per_postsyn_ct:
+            sort_inds = np.where(comp_axs == ax_comp)
+        else:
+            sort_inds = np.where(comp_axs == 1)
+        sort_ssvs = comp_ssv_partners[sort_inds]
+        syn_numbers, syn_ssv_sizes, unique_post_ssvs = get_percell_number_sumsize(ssvs = sort_ssvs, syn_sizes = comp_sizes)
     if return_syn_sizes:
         return syn_numbers, syn_ssv_sizes, unique_post_ssvs, comp_sizes
     else:

@@ -408,9 +408,7 @@ def generate_colored_mesh_from_skel_data(args):
     cell.load_skeleton()
     # load skeleton axoness, spiness attributes
     nodes = cell.skeleton['nodes'] * cell.scaling
-    edges = cell.skeleton['edges']
     axoness_labels = cell.skeleton[key]
-    # spiness_labels = cell.skeleton['spiness']
     # load mesh and put skeleton annotations on mesh
     indices, vertices, normals = cell.mesh
     vertices = vertices.reshape((-1, 3))

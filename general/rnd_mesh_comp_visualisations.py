@@ -24,7 +24,7 @@ if __name__ == '__main__':
     #samples per ct
     rnd_samples = 3
     color_key = 'axoness_avg10000_comp_maj'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230227_j0251v4_ct_random_comp_val_mcl_%i_samples_%i_k%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230228_j0251v4_ct_random_comp_val_mcl_%i_samples_%i_k%s" % (
         min_comp_len, rnd_samples, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

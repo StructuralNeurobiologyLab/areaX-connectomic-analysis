@@ -367,7 +367,10 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
     :return: number of synapses, sum of synapse sizes per cell, cellids
     '''
     if ax_comp is None:
-        sort_inds = np.where(syn_axs != 1)
+        if sort_per_postsyn_ct:
+            sort_inds = np.where(syn_axs != 1)
+        else:
+            sort_inds = np.where(syn_axs == 1)
         post_ssvs = syn_ssv_partners[sort_inds]
         ssv_inds, unique_post_ssvs = pd.factorize(post_ssvs)
         syn_ssv_sizes = np.bincount(ssv_inds, syn_sizes)

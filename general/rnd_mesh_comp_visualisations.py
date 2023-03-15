@@ -23,8 +23,8 @@ if __name__ == '__main__':
     min_comp_len = 200
     #samples per ct
     rnd_samples = 3
-    color_key = 'axoness_avg10000_comp_maj'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230228_j0251v4_ct_random_comp_val_mcl_%i_samples_%i_k%s" % (
+    color_key = 'axoness_avg10000'
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230314_j0251v5_oldcts_ct_random_comp_val_mcl_%i_samples_%i_k%s" % (
         min_comp_len, rnd_samples, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -82,6 +82,7 @@ if __name__ == '__main__':
     log.info('Generate mesh from selected cellids')
     args = [[rnd_cellid, f_name, color_key] for rnd_cellid in rnd_cellids_cts]
     #generate mesh from cellids
+    global_params.wd = "cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     out = start_multiprocess_imap(generate_colored_mesh_from_skel_data, args)
 
     log.info(f'Generated colored meshes for {len(rnd_cellids_cts)} cells')

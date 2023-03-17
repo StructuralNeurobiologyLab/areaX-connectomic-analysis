@@ -41,10 +41,10 @@ if __name__ == '__main__':
     color_key = 'TeBk'
     fontsize = 20
     if handpicked_LMAN:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230307_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230317_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
             min_comp_len, color_key, syn_prob, min_syn_size)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230307_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230317_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f" % (
             min_comp_len, color_key, syn_prob, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -117,7 +117,7 @@ if __name__ == '__main__':
                                                                        sort_per_postsyn_ct = False)
 
     # syn_numbers_ct, sum_sizes_ct, syn_number_perc_ct, sum_sizes_perc_ct, ids_ct = percell_params
-    lman_ids2msn = np.unique(perlman_params[-1])
+    lman_ids2msn = perlman_params[-1]
     num_lman2msn_ids = len(lman_ids2msn)
     num_lman_cellids = len(cellids_dict[lman_ct])
     log.info(f'{num_lman2msn_ids} of {num_lman_cellids} LMAN cells '
@@ -141,7 +141,7 @@ if __name__ == '__main__':
             else:
                 lman_msn_df.loc[i_comp * num_lman2msn_ids: i_comp * num_lman2msn_ids + len_comp_params - 1, percell_params_str[iy]] = perlman_params[iy][compartment]
 
-    lman_msn_df.to_csv(f'{f_name}/lman_msn_comp_dict')
+    lman_msn_df.to_csv(f'{f_name}/lman_msn_comp_dict.csv')
     median_perc_shaft_syns = np.median(lman_msn_df['percentage of synapse sizes'][lman_msn_df['compartment of postynaptic cells'] == 'dendritic shaft'])
     median_perc_sh_syns = np.median(
         lman_msn_df['percentage of synapse sizes'][lman_msn_df['compartment of postynaptic cells'] == 'spine head'])
@@ -166,13 +166,12 @@ if __name__ == '__main__':
                                                                        sort_per_postsyn_ct=False)
 
     # syn_numbers_ct, sum_sizes_ct, syn_number_perc_ct, sum_sizes_perc_ct, ids_ct = percell_params
-    lman_ids2stn = np.unique(perlman_params[-1])
-    num_lman2stn_ids = len(lman_ids2msn)
+    lman_ids2stn = perlman_params[-1]
+    num_lman2stn_ids = len(lman_ids2stn)
     log.info(f'{num_lman2stn_ids} of {num_lman_cellids} LMAN cells '
              f'({100 * num_lman2stn_ids / num_lman_cellids}%) make synapses to STN cells.')
 
     lman_stn_df = pd.DataFrame(columns=columns, index=range(num_lman2stn_ids * num_comps))
-
     for i_comp, compartment in enumerate(compartments):
         # fill in numbers that summarise all synapses per compartment per celltype
         len_comp_params = len(perlman_params[0][compartment])
@@ -188,7 +187,7 @@ if __name__ == '__main__':
                 lman_stn_df.loc[i_comp * num_lman2stn_ids: i_comp * num_lman2stn_ids + len_comp_params - 1,
                 percell_params_str[iy]] = perlman_params[iy][compartment]
 
-    lman_stn_df.to_csv(f'{f_name}/lman_stn_comp_dict')
+    lman_stn_df.to_csv(f'{f_name}/lman_stn_comp_dict.csv')
     median_perc_shaft_syns = np.median(
         lman_stn_df['percentage of synapse sizes'][lman_stn_df['compartment of postynaptic cells'] == 'dendritic shaft'])
     median_perc_sh_syns = np.median(
@@ -208,28 +207,92 @@ if __name__ == '__main__':
         if 'cellid' in param:
             continue
         sns.barplot(data = lman_df, x = 'postsynaptic ct', y = param, hue='compartment of postynaptic cells', palette=comp_palette)
+        plt.title(param)
         plt.savefig(f'{f_name}/comp_{param}_barplot.png')
         plt.close()
-        sns.violinplot(data=lman_df, x='postsynaptic ct', y=param, hue='compartment of postynaptic cells',
+        sns.stripplot(data=lman_df, x='postsynaptic ct', y=param, hue='compartment of postynaptic cells', color="black", alpha=0.2,
+                              dodge=True, size=2)
+        sns.violinplot(data=pd.DataFrame(lman_df.to_dict()), x='postsynaptic ct', y=param, hue='compartment of postynaptic cells',
                     palette=comp_palette)
+        plt.title(param)
         plt.savefig(f'{f_name}/comp_{param}_violinplot.png')
         plt.close()
         sns.boxplot(data=lman_df, x='postsynaptic ct', y=param, hue='compartment of postynaptic cells',
                     palette=comp_palette)
+        plt.title(param)
         plt.savefig(f'{f_name}/comp_{param}_boxplot.png')
         plt.close()
+
+    # create pd DataFrame for information on how many LMAN axons make which connections
+    ids2msn_stn = lman_ids2msn[np.in1d(lman_ids2msn, lman_ids2stn)]
+    log.info(f'{len(ids2msn_stn)} of {num_lman_cellids} LMAN cells '
+             f'({100 * len(ids2msn_stn) / num_lman_cellids}%) make synapses to MSN and STN cells. \n'
+             f'{100 * len(ids2msn_stn) / num_lman2msn_ids} % of cells from LMAN to MSN and '
+             f'{100 * len(ids2msn_stn) / num_lman2stn_ids} % of cells from LMAN to STN.')
+    ids_perc_columns = ['number', '% of total LMAN', '% of LMAN to MSN', '% of LMAN to STN', '% of LMAN to MSN and STN']
+    lman_ids_perc_df = pd.DataFrame(columns=ids_perc_columns)
+    lman_ids_msn_or_stn = np.unique(np.hstack([lman_ids2msn, lman_ids2stn]))
+    lman_ids_perc_df.loc['LMAN to either MSN or STN', 'number'] = len(lman_ids_msn_or_stn)
+    lman_ids_perc_df.loc['LMAN to either MSN or STN', '% of total LMAN'] = 100 * len(
+        lman_ids_msn_or_stn) / num_lman_cellids
+    lman_ids_perc_df.loc['LMAN ids to MSN and STN', 'number'] = len(ids2msn_stn)
+    lman_ids_perc_df.loc['LMAN ids to MSN and STN', '% of total LMAN'] = 100 * len(ids2msn_stn) / num_lman_cellids
+    lman_ids_perc_df.loc['LMAN ids to MSN and STN', '% of LMAN to MSN'] = 100 * len(ids2msn_stn) / num_lman2msn_ids
+    lman_ids_perc_df.loc['LMAN ids to MSN and STN', '% of LMAN to STN'] = 100 * len(ids2msn_stn) / num_lman2stn_ids
+    lman_ids_perc_df.loc['LMAN ids to MSN and STN', '% of LMAN to MSN and STN'] = 100 * len(ids2msn_stn) / len(
+        ids2msn_stn)
     #get number of how many cells go to MSN and STN shaft and spine head (same and different)
+    lman_ids_dict = {}
     lman_msn_shaft = lman_msn_df[lman_msn_df['compartment of postynaptic cells'] == 'dendritic shaft']
-    lman_msn_shaft_ids = lman_msn_shaft['cellids'][lman_msn_shaft['number of synapses'] > 0]
-    lman_msn_shaft_ids_50 = lman_msn_shaft['cellids'][lman_msn_shaft['percentage of synapse sizes'] > 50]
+    lman_msn_shaft_ids = lman_msn_shaft['cellid'][lman_msn_shaft['number of synapses'] > 0]
+    lman_ids_dict['LMAN ids to MSN shaft'] = lman_msn_shaft_ids
+    lman_msn_shaft_ids_50 = lman_msn_shaft['cellid'][lman_msn_shaft['percentage of synapse sizes'] > 50]
+    lman_ids_dict['LMAN ids to MSN shaft (> 50% sum size)'] = lman_msn_shaft_ids_50
     lman_msn_head = lman_msn_df[lman_msn_df['compartment of postynaptic cells'] == 'spine head']
-    lman_msn_head_ids = lman_msn_head['cellids'][lman_msn_head['number of synapses'] > 0]
-    lman_msn_head_ids_50 = lman_msn_head['cellids'][lman_msn_head['percentage of synapse sizes'] > 50]
+    lman_msn_head_ids = lman_msn_head['cellid'][lman_msn_head['number of synapses'] > 0]
+    lman_ids_dict['LMAN ids to MSN head'] = lman_msn_head_ids
+    lman_msn_head_ids_50 = lman_msn_head['cellid'][lman_msn_head['percentage of synapse sizes'] > 50]
+    lman_ids_dict['LMAN ids to MSN head (> 50% sum size)'] = lman_msn_head_ids_50
+    lman_stn_shaft = lman_stn_df[lman_stn_df['compartment of postynaptic cells'] == 'dendritic shaft']
+    lman_stn_shaft_ids = lman_stn_shaft['cellid'][lman_stn_shaft['number of synapses'] > 0]
+    lman_ids_dict['LMAN ids to STN shaft'] = lman_stn_shaft_ids
+    lman_stn_shaft_ids_50 = lman_stn_shaft['cellid'][lman_stn_shaft['percentage of synapse sizes'] > 50]
+    lman_ids_dict['LMAN ids to STN shaft (> 50% sum size)'] = lman_stn_shaft_ids_50
+    lman_stn_head = lman_stn_df[lman_stn_df['compartment of postynaptic cells'] == 'spine head']
+    lman_stn_head_ids = lman_stn_head['cellid'][lman_stn_head['number of synapses'] > 0]
+    lman_ids_dict['LMAN ids to STN head'] = lman_stn_head_ids
+    lman_stn_head_ids_50 = lman_stn_head['cellid'][lman_stn_head['percentage of synapse sizes'] > 50]
+    lman_ids_dict['LMAN ids to STN head (> 50% sum size)'] = lman_stn_head_ids_50
+    msn_stn_shaft_ids = lman_msn_shaft_ids[np.in1d(lman_msn_shaft_ids, lman_stn_shaft_ids)]
+    msn_stn_head_ids = lman_msn_shaft_ids[np.in1d(lman_msn_head_ids, lman_stn_head_ids)]
+    msnshaft_stnhead_ids = lman_msn_shaft_ids[np.in1d(lman_msn_shaft_ids, lman_stn_head_ids)]
+    msnhead_stnshaft_ids = lman_msn_head_ids[np.in1d(lman_msn_head_ids, lman_stn_shaft_ids)]
+    lman_ids_dict['LMAN ids to MSN and STN shaft'] = msn_stn_shaft_ids
+    lman_ids_dict['LMAN ids to MSN and STN head'] = msn_stn_head_ids
+    lman_ids_dict['LMAN ids to MSN shaft and STN head'] = msnshaft_stnhead_ids
+    lman_ids_dict['LMAN ids to MSN head and STN shaft'] = msnhead_stnshaft_ids
+    msn_stn_shaft_ids50 = lman_msn_shaft_ids_50[np.in1d(lman_msn_shaft_ids_50, lman_stn_shaft_ids_50)]
+    msn_stn_head_ids50 = lman_msn_head_ids_50[np.in1d(lman_msn_head_ids_50, lman_stn_head_ids_50)]
+    msnshaft_stnhead_ids50 = lman_msn_shaft_ids_50[np.in1d(lman_msn_shaft_ids_50, lman_stn_head_ids_50)]
+    msnhead_stnshaft_ids50 = lman_msn_head_ids_50[np.in1d(lman_msn_head_ids_50, lman_stn_shaft_ids_50)]
+    lman_ids_dict['LMAN ids to MSN and STN shaft (> 50% sum size)'] = msn_stn_shaft_ids50
+    lman_ids_dict['LMAN ids to MSN and STN head (> 50% sum size)'] = msn_stn_head_ids50
+    lman_ids_dict['LMAN ids to MSN shaft and STN head (> 50% sum size)'] = msnshaft_stnhead_ids50
+    lman_ids_dict['LMAN ids to MSN head and STN shaft (> 50% sum size)'] = msnhead_stnshaft_ids50
+    for key in list(lman_ids_dict.keys()):
+        num_cells = len(lman_ids_dict[key])
+        lman_ids_perc_df.loc[key, 'number'] = num_cells
+        lman_ids_perc_df.loc[key, '% of total LMAN'] = 100 * num_cells / num_lman_cellids
+        lman_ids_perc_df.loc[key, '% of LMAN to MSN'] = 100 * num_cells / num_lman2msn_ids
+        lman_ids_perc_df.loc[key, '% of LMAN to STN'] = 100 * num_cells / num_lman2stn_ids
+        lman_ids_perc_df.loc[key, '% of LMAN to MSN and STN'] = 100 * num_cells / len(
+            ids2msn_stn)
+
+    write_obj2pkl(f'{f_name}/lman_ids_dict.pkl', lman_ids_dict)
+    lman_ids_perc_df.to_csv(f'{f_name}/lman_msn_stn_perc.csv')
 
     time_stamps = [time.time()]
     step_idents = ["got params for LMAN to MSN"]
-
-
 
     raise ValueError
 

@@ -41,10 +41,10 @@ if __name__ == '__main__':
     color_key = 'TeBk'
     fontsize = 20
     if handpicked_LMAN:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230317_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230319_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
             min_comp_len, color_key, syn_prob, min_syn_size)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230317_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230319_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f" % (
             min_comp_len, color_key, syn_prob, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     #percentage of sum size per comp
 
 
-    perlman_params, syn_params = get_compartment_specific_connectivity(ct_post=msn_ct,
+    perlman_params, syn_params, all_syns_msn = get_compartment_specific_connectivity(ct_post=msn_ct,
                                                                        cellids_post=cellids_dict[msn_ct],
                                                                        sd_synssv=sd_synssv,
                                                                        syn_prob=syn_prob,
@@ -122,8 +122,10 @@ if __name__ == '__main__':
     num_lman_cellids = len(cellids_dict[lman_ct])
     log.info(f'{num_lman2msn_ids} of {num_lman_cellids} LMAN cells '
              f'({100 * num_lman2msn_ids / num_lman_cellids}%) make synapses to MSN cells.')
+    log.info(f'{len(all_syns_msn)} synapses are made in total to MSN cells with a median size of {np.median(all_syns_msn["synapse size"]):.2f} µm².')
+    all_syns_msn['postsynaptic ct'] = ct_dict[msn_ct]
 
-    percell_params_str = ['number of synapses', 'summed synapse size', 'percentage of synapses',
+    percell_params_str = ['number of synapses', 'summed synapse size [µm²]', 'percentage of synapses',
                'percentage of synapse sizes', 'cellid']
     columns = np.hstack([percell_params_str, 'compartment of postynaptic cells', 'postsynaptic ct'])
     lman_msn_df = pd.DataFrame(columns=columns, index=range(num_lman2msn_ids*num_comps))
@@ -141,6 +143,11 @@ if __name__ == '__main__':
             else:
                 lman_msn_df.loc[i_comp * num_lman2msn_ids: i_comp * num_lman2msn_ids + len_comp_params - 1, percell_params_str[iy]] = perlman_params[iy][compartment]
 
+    lman_msn_df['median synapse size [µm²]'] = 0.0
+    nonzero_syn_inds = lman_msn_df['number of synapses'] > 0
+    mean_syn_size = lman_msn_df['summed synapse size [µm²]'][nonzero_syn_inds]/lman_msn_df['number of synapses'][nonzero_syn_inds]
+    lman_msn_df['mean synapse size [µm²]'] = mean_syn_size
+
     lman_msn_df.to_csv(f'{f_name}/lman_msn_comp_dict.csv')
     median_perc_shaft_syns = np.median(lman_msn_df['percentage of synapse sizes'][lman_msn_df['compartment of postynaptic cells'] == 'dendritic shaft'])
     median_perc_sh_syns = np.median(
@@ -156,7 +163,7 @@ if __name__ == '__main__':
     # parameters: number of synapses per MSN, sum of syn size, number of syns per comp, sum size per comp,
     # percentage of sum size per comp
 
-    perlman_params, syn_params = get_compartment_specific_connectivity(ct_post=stn_ct,
+    perlman_params, syn_params, all_syns_stn = get_compartment_specific_connectivity(ct_post=stn_ct,
                                                                        cellids_post=cellids_dict[stn_ct],
                                                                        sd_synssv=sd_synssv,
                                                                        syn_prob=syn_prob,
@@ -169,7 +176,8 @@ if __name__ == '__main__':
     lman_ids2stn = perlman_params[-1]
     num_lman2stn_ids = len(lman_ids2stn)
     log.info(f'{num_lman2stn_ids} of {num_lman_cellids} LMAN cells '
-             f'({100 * num_lman2stn_ids / num_lman_cellids}%) make synapses to STN cells.')
+             f'({100 * num_lman2stn_ids / num_lman_cellids:.2f}%) make synapses to STN cells.')
+    all_syns_stn['postsynaptic ct'] = ct_dict[stn_ct]
 
     lman_stn_df = pd.DataFrame(columns=columns, index=range(num_lman2stn_ids * num_comps))
     for i_comp, compartment in enumerate(compartments):
@@ -187,13 +195,19 @@ if __name__ == '__main__':
                 lman_stn_df.loc[i_comp * num_lman2stn_ids: i_comp * num_lman2stn_ids + len_comp_params - 1,
                 percell_params_str[iy]] = perlman_params[iy][compartment]
 
+    lman_stn_df['median synapse size [µm²]'] = 0.0
+    nonzero_syn_inds = lman_stn_df['number of synapses'] > 0
+    mean_syn_size = lman_stn_df['summed synapse size [µm²]'][nonzero_syn_inds] / lman_stn_df['number of synapses'][
+        nonzero_syn_inds]
+    lman_stn_df['mean synapse size [µm²]'] = mean_syn_size
+
     lman_stn_df.to_csv(f'{f_name}/lman_stn_comp_dict.csv')
     median_perc_shaft_syns = np.median(
         lman_stn_df['percentage of synapse sizes'][lman_stn_df['compartment of postynaptic cells'] == 'dendritic shaft'])
     median_perc_sh_syns = np.median(
         lman_stn_df['percentage of synapse sizes'][lman_stn_df['compartment of postynaptic cells'] == 'spine head'])
-    log.info(f'Median percentage of shaft synapse sizes to STN: {median_perc_shaft_syns}')
-    log.info(f'Median percentage of spine head synapse sizes to STN: {median_perc_sh_syns}')
+    log.info(f'Median percentage of shaft synapse sizes to STN: {median_perc_shaft_syns:.2f}')
+    log.info(f'Median percentage of spine head synapse sizes to STN: {median_perc_sh_syns:.2f}')
 
     time_stamps = [time.time()]
     step_idents = ["got params for LMAN to STN"]
@@ -203,8 +217,8 @@ if __name__ == '__main__':
     comp_cls = CompColors()
     comp_palette = comp_cls.comp_palette(color_key, num=False, denso=True)
     lman_df = pd.concat([lman_msn_df, lman_stn_df])
-    for param in percell_params_str:
-        if 'cellid' in param:
+    for param in lman_df.columns:
+        if 'cellid' in param or 'postsynaptic' in param:
             continue
         sns.barplot(data = lman_df, x = 'postsynaptic ct', y = param, hue='compartment of postynaptic cells', palette=comp_palette)
         plt.title(param)
@@ -223,12 +237,37 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/comp_{param}_boxplot.png')
         plt.close()
 
+    #make plot for all synapses about synapse size
+    all_syns_df = pd.concat([all_syns_msn, all_syns_stn])
+    sns.barplot(data=all_syns_df, x='postsynaptic ct', y='synapse size', hue='compartment',
+                palette=comp_palette)
+    plt.title('Synapse size from LMAN to different compartments')
+    plt.ylabel('synaptic mesh area [µm²]')
+    plt.savefig(f'{f_name}/all_syns_synsize_barplot.png')
+    plt.close()
+    sns.stripplot(data=all_syns_df, x='postsynaptic ct', y='synapse size', hue='compartment of postynaptic cells', color="black",
+                  alpha=0.2,
+                  dodge=True, size=2)
+    sns.violinplot(data=all_syns_df, x='postsynaptic ct', y='synapse size',
+                   hue='compartment of postynaptic cells',
+                   palette=comp_palette)
+    plt.title('Synapse size from LMAN to different compartments')
+    plt.ylabel('synaptic mesh area [µm²]')
+    plt.savefig(f'{f_name}/all_syns_synsize_violinplot.png')
+    plt.close()
+    sns.boxplot(data=all_syns_df, x='postsynaptic ct', y='synapse size', hue='compartment of postynaptic cells',
+                palette=comp_palette)
+    plt.title('Synapse size from LMAN to different compartments')
+    plt.ylabel('synaptic mesh area [µm²]')
+    plt.savefig(f'{f_name}/all_syns_synsize_boxplot.png')
+    plt.close()
+
     # create pd DataFrame for information on how many LMAN axons make which connections
     ids2msn_stn = lman_ids2msn[np.in1d(lman_ids2msn, lman_ids2stn)]
     log.info(f'{len(ids2msn_stn)} of {num_lman_cellids} LMAN cells '
-             f'({100 * len(ids2msn_stn) / num_lman_cellids}%) make synapses to MSN and STN cells. \n'
-             f'{100 * len(ids2msn_stn) / num_lman2msn_ids} % of cells from LMAN to MSN and '
-             f'{100 * len(ids2msn_stn) / num_lman2stn_ids} % of cells from LMAN to STN.')
+             f'({100 * len(ids2msn_stn) / num_lman_cellids:.2f}%) make synapses to MSN and STN cells. \n'
+             f'{100 * len(ids2msn_stn) / num_lman2msn_ids:.2f} % of cells from LMAN to MSN and '
+             f'{100 * len(ids2msn_stn) / num_lman2stn_ids:.2f} % of cells from LMAN to STN.')
     ids_perc_columns = ['number', '% of total LMAN', '% of LMAN to MSN', '% of LMAN to STN', '% of LMAN to MSN and STN']
     lman_ids_perc_df = pd.DataFrame(columns=ids_perc_columns)
     lman_ids_msn_or_stn = np.unique(np.hstack([lman_ids2msn, lman_ids2stn]))
@@ -288,12 +327,76 @@ if __name__ == '__main__':
         lman_ids_perc_df.loc[key, '% of LMAN to MSN and STN'] = 100 * num_cells / len(
             ids2msn_stn)
 
+    #make scatter plot to visualize dependency between MSN and STN synapse size per cell
+    #plot average synapse size to MSN and to STN for all cells that synapse to both independent of compartment
+    scatter_cols = ['cellid', 'number of synapses to MSN', 'number of synapses to STN', 'summed synapse size [µm2] to MSN', 'summed synapse size [µm2] to STN']
+    forscatter_df = pd.DataFrame(columns = scatter_cols, index = range(len(ids2msn_stn)))
+    forscatter_df['cellid'] = ids2msn_stn
+    for i, cellid in enumerate(ids2msn_stn):
+        cell_df = lman_df[lman_df['cellid'] == cellid]
+        forscatter_df.loc[i, 'number of synapses to MSN'] = cell_df['number of synapses'][cell_df['postsynaptic ct'] == 'MSN'].sum()
+        forscatter_df.loc[i, 'number of synapses to STN'] = cell_df['number of synapses'][
+            cell_df['postsynaptic ct'] == 'STN'].sum()
+        forscatter_df.loc[i, 'summed synapse size [µm2] to MSN'] = cell_df['summed synapse size [µm2]'][
+            cell_df['postsynaptic ct'] == 'MSN'].sum()
+        forscatter_df.loc[i, 'summed synapse size [µm2] to STN'] = cell_df['summed synapse size [µm2]'][
+            cell_df['postsynaptic ct'] == 'STN'].sum()
+    forscatter_df['mean synapse size [µm²] to MSN'] = forscatter_df['summed synapse size [µm2] to MSN'] / forscatter_df['number of synapses to MSN']
+    forscatter_df['mean synapse size [µm²] to STN'] = forscatter_df['summed synapse size [µm2] to STN'] / forscatter_df[
+        'number of synapses to STN']
+    lman2msn_stn_df = lman_df[np.in1d(lman_df['cellid'], ids2msn_stn)]
+    msn_data = lman2msn_stn_df[lman2msn_stn_df['postsynaptic ct'] == 'MSN']
+    stn_data = lman2msn_stn_df[lman2msn_stn_df['postsynaptic ct'] == 'STN']
+    for col in lman_df.columns:
+        if 'cellid' in col or 'postsynaptic' in col or 'percentage' in col:
+            continue
+        sns.scatter(data = forscatter_df, x=f'{col} to MSN', y = f'{col} to STN')
+        plt.xlabel(f'{col} to MSN')
+        plt.ylabel(f'{col} to STN')
+        plt.title(col)
+        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_scatter.png')
+        plt.close()
+        #plot scatter plot also dependent on compartment, MSN-STN shaft-shaft, head-head, shaft-head, head-shaft
+        sns.scatterplot(x = msn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'],
+                        y = stn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'])
+        plt.xlabel(f'{col} to MSN dendritic shaft')
+        plt.ylabel(f'{col} to STN dendritic shaft')
+        plt.title(col)
+        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnshaft_stnshaft_scatter.png')
+        plt.close()
+        sns.scatterplot(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'],
+                        y=stn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'])
+        plt.xlabel(f'{col} to MSN spine head')
+        plt.ylabel(f'{col} to STN spine head')
+        plt.title(col)
+        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnhead_stnhead_scatter.png')
+        plt.close()
+        sns.scatterplot(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'],
+                        y=stn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'])
+        plt.xlabel(f'{col} to MSN dendritic shaft')
+        plt.ylabel(f'{col} to STN spine head')
+        plt.title(col)
+        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnshaft_stnhead_scatter.png')
+        plt.close()
+        sns.scatterplot(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'],
+                        y=stn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'])
+        plt.xlabel(f'{col} to MSN spine head')
+        plt.ylabel(f'{col} to STN dendritic shaft')
+        plt.title(col)
+        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnshaft_stnshaft_scatter.png')
+        plt.close()
+
+
+
+
+
     write_obj2pkl(f'{f_name}/lman_ids_dict.pkl', lman_ids_dict)
     lman_ids_perc_df.to_csv(f'{f_name}/lman_msn_stn_perc.csv')
+    forscatter_df.to_csv(f'{f_name}/lman2msn_stn_scatter_total.csv')
 
     time_stamps = [time.time()]
     step_idents = ["got params for LMAN to MSN"]
 
-    raise ValueError
+    log.info('Analysis for LMAN connectivity to MSN and STN done')
 
 

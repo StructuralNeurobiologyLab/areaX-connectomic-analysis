@@ -114,14 +114,14 @@ if __name__ == '__main__':
         #get median, min, max synapse distance to soma per cell
         #function uses multiprocessing
         if ct == post_ct:
-            percell_params, syn_params = get_compartment_specific_connectivity(ct_post=post_ct,
+            percell_params, syn_params, all_syns_df = get_compartment_specific_connectivity(ct_post=post_ct,
                                                                                cellids_post=suitable_ids_dict[post_ct],
                                                                                sd_synssv=sd_synssv,
                                                                                syn_prob=syn_prob,
                                                                                min_syn_size=min_syn_size,
                                                                                ct_pre=None, cellids_pre=None)
         else:
-            percell_params, syn_params = get_compartment_specific_connectivity(ct_post=post_ct,
+            percell_params, syn_params, all_syns_df = get_compartment_specific_connectivity(ct_post=post_ct,
                                                                                cellids_post=suitable_ids_dict[post_ct],
                                                                                sd_synssv=sd_synssv,
                                                                                syn_prob=syn_prob,

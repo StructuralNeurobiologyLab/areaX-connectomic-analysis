@@ -1301,6 +1301,8 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     sum_sizes_dict = {i: np.zeros(len(total_cellids)) for i in compartments}
     all_comp_syn_numbers = {i : 0 for i in compartments}
     all_comp_syn_sum_sizes = {i : 0 for i in compartments}
+    all_syns_df_list = []
+    all_syns_df_soma = pd.DataFrame(columns = ['synapse size', 'compartment'])
     soma_numbers, soma_syn_sizes, soma_ids, all_soma_syn_sizes = get_compartment_syn_number_sumsize(syn_sizes=m_sizes,
                                                                                                     syn_ssv_partners=m_ssv_partners,
                                                                                                     syn_axs=m_axs,
@@ -1315,6 +1317,9 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     sum_sizes_dict['soma'][cellid_inds] = soma_syn_sizes[sort_inds]
     all_comp_syn_numbers['soma'] = len(all_soma_syn_sizes)
     all_comp_syn_sum_sizes['soma'] = np.sum(all_soma_syn_sizes)
+    all_syns_df_soma['synapse size'] = all_soma_syn_sizes
+    all_syns_df_soma['compartment'] = 'soma'
+    all_syns_df_list.append(all_syns_df_soma)
     spiness_dict = {0: 'spine neck', 1:'spine head', 2: 'dendritic shaft'}
     for spiness_comp in range(len(spiness_dict.keys())):
         spiness_str = spiness_dict[spiness_comp]
@@ -1332,6 +1337,10 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
         sum_sizes_dict[spiness_str][cellid_inds] = comp_sizes[sort_inds]
         all_comp_syn_numbers[spiness_str] = len(all_comp_syn_sizes)
         all_comp_syn_sum_sizes[spiness_str] = np.sum(all_comp_syn_sizes)
+        all_syns_df_spiness = pd.DataFrame(columns=['synapse size', 'compartment'])
+        all_syns_df_spiness['synapse size'] = all_comp_syn_sizes
+        all_syns_df_spiness['compartment'] = spiness_str
+        all_syns_df_list.append(all_syns_df_spiness)
     syn_percentages_dict = {i: np.zeros(len(total_cellids)) for i in compartments}
     size_percentages_dict = {i: np.zeros(len(total_cellids)) for i in compartments}
     all_syn_number_percentage = {i : 0 for i in compartments}
@@ -1343,7 +1352,8 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
         size_percentages_dict[key] = 100 * sum_sizes_dict[key] / total_sum_sizes
     per_cell_params = [syn_numbers_dict, sum_sizes_dict, syn_percentages_dict, size_percentages_dict, total_cellids]
     all_syn_params = [all_comp_syn_numbers, all_comp_syn_sum_sizes, all_syn_number_percentage, all_syn_size_percentage]
-    return per_cell_params, all_syn_params
+    all_syns_df = pd.concat(all_syns_df_list)
+    return per_cell_params, all_syn_params, all_syns_df
 
 
 

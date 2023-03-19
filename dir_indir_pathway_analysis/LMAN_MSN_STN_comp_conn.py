@@ -29,7 +29,7 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(global_params.wd)
     ct_dict = analysis_params.ct_dict()
     min_comp_len = 200
-    handpicked_LMAN = True
+    handpicked_LMAN = False
     # samples per ct
     syn_prob = 0.8
     min_syn_size = 0.1
@@ -115,6 +115,7 @@ if __name__ == '__main__':
                                                                        sort_per_postsyn_ct = False)
 
     # syn_numbers_ct, sum_sizes_ct, syn_number_perc_ct, sum_sizes_perc_ct, ids_ct = percell_params
+    raise ValueError
     lman_ids2msn = perlman_params[-1]
     num_lman2msn_ids = len(lman_ids2msn)
     num_lman_cellids = len(cellids_dict[lman_ct])
@@ -301,7 +302,7 @@ if __name__ == '__main__':
     lman_stn_head_ids_50 = lman_stn_head['cellid'][lman_stn_head['percentage of synapse sizes'] > 50]
     lman_ids_dict['LMAN ids to STN head (> 50% sum size)'] = lman_stn_head_ids_50
     msn_stn_shaft_ids = lman_msn_shaft_ids[np.in1d(lman_msn_shaft_ids, lman_stn_shaft_ids)]
-    msn_stn_head_ids = lman_msn_shaft_ids[np.in1d(lman_msn_head_ids, lman_stn_head_ids)]
+    msn_stn_head_ids = lman_msn_head_ids[np.in1d(lman_msn_head_ids, lman_stn_head_ids)]
     msnshaft_stnhead_ids = lman_msn_shaft_ids[np.in1d(lman_msn_shaft_ids, lman_stn_head_ids)]
     msnhead_stnshaft_ids = lman_msn_head_ids[np.in1d(lman_msn_head_ids, lman_stn_shaft_ids)]
     lman_ids_dict['LMAN ids to MSN and STN shaft'] = msn_stn_shaft_ids
@@ -339,6 +340,7 @@ if __name__ == '__main__':
             cell_df['postsynaptic ct'] == 'MSN'].sum()
         forscatter_df.loc[i, 'summed synapse size [µm²] to STN'] = cell_df['summed synapse size [µm²]'][
             cell_df['postsynaptic ct'] == 'STN'].sum()
+    raise ValueError
     forscatter_df['mean synapse size [µm²] to MSN'] = forscatter_df['summed synapse size [µm²] to MSN'] / forscatter_df['number of synapses to MSN']
     forscatter_df['mean synapse size [µm²] to STN'] = forscatter_df['summed synapse size [µm²] to STN'] / forscatter_df[
         'number of synapses to STN']
@@ -355,33 +357,33 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_scatter.png')
         plt.close()
         #plot scatter plot also dependent on compartment, MSN-STN shaft-shaft, head-head, shaft-head, head-shaft
-        sns.scatterplot(x = msn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'],
+        plt.scatter(x = msn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'],
                         y = stn_data[col][stn_data['compartment of postsynaptic cells'] == 'dendritic shaft'])
         plt.xlabel(f'{col} to MSN dendritic shaft')
         plt.ylabel(f'{col} to STN dendritic shaft')
         plt.title(col)
         plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnshaft_stnshaft_scatter.png')
         plt.close()
-        sns.scatterplot(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'],
+        plt.scatter(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'],
                         y=stn_data[col][stn_data['compartment of postsynaptic cells'] == 'spine head'])
         plt.xlabel(f'{col} to MSN spine head')
         plt.ylabel(f'{col} to STN spine head')
         plt.title(col)
         plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnhead_stnhead_scatter.png')
         plt.close()
-        sns.scatterplot(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'],
+        plt.scatter(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'],
                         y=stn_data[col][stn_data['compartment of postsynaptic cells'] == 'spine head'])
         plt.xlabel(f'{col} to MSN dendritic shaft')
         plt.ylabel(f'{col} to STN spine head')
         plt.title(col)
         plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnshaft_stnhead_scatter.png')
         plt.close()
-        sns.scatterplot(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'],
+        plt.scatter(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'],
                         y=stn_data[col][stn_data['compartment of postsynaptic cells'] == 'dendritic shaft'])
         plt.xlabel(f'{col} to MSN spine head')
         plt.ylabel(f'{col} to STN dendritic shaft')
         plt.title(col)
-        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnshaft_stnshaft_scatter.png')
+        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnhead_stnshaft_scatter.png')
         plt.close()
 
     write_obj2pkl(f'{f_name}/lman_ids_dict.pkl', lman_ids_dict)

@@ -66,7 +66,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, pre_cts).reshape(len(m_cts), 2)
             testax = np.in1d(m_axs, 1).reshape(len(m_cts), 2)
-            pre_ct_inds = np.any(testct == testax, axis = 1)
+            pre_ct_inds = np.all(testct == testax, axis = 1)
             m_cts = m_cts[pre_ct_inds]
             m_ids = m_ids[pre_ct_inds]
             m_axs = m_axs[pre_ct_inds]
@@ -87,7 +87,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, post_cts).reshape(len(m_cts), 2)
             testax = np.in1d(m_axs, [2,0]).reshape(len(m_cts), 2)
-            post_ct_inds = np.any(testct == testax, axis=1)
+            post_ct_inds = np.all(testct == testax, axis=1)
             m_cts = m_cts[post_ct_inds]
             m_ids = m_ids[post_ct_inds]
             m_axs = m_axs[post_ct_inds]

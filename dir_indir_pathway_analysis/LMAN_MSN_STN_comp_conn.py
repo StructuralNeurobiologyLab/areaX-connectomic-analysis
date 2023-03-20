@@ -348,10 +348,10 @@ if __name__ == '__main__':
     msn_data = lman2msn_stn_df[lman2msn_stn_df['postsynaptic ct'] == 'MSN']
     stn_data = lman2msn_stn_df[lman2msn_stn_df['postsynaptic ct'] == 'STN']
     # calculate spearman results for different parameters to see if they are likely to be correlated
-    spearman_results = pd.DataFrame(index = ['stats', 'p value'])
+    spearman_results = pd.DataFrame(columns = ['stats', 'p value'])
     #create iterable over desired compartments to compare
-    test_comps_str = ['dendritic shaft', 'spine neck']
-    test_comps_combs = product(test_comps_str, repeat = 2)
+    test_comps_str = ['dendritic shaft', 'spine head']
+    test_comps_combs = list(product(test_comps_str, repeat = 2))
     for col in lman_df.columns:
         if 'cellid' in col or 'postsynaptic' in col or 'percentage' in col:
             continue
@@ -370,8 +370,8 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_regplot.png')
         plt.close()
         spearman_result = spearmanr(forscatter_df[f'{col} to MSN'], forscatter_df[f'{col} to STN'])
-        spearman_results.loc['stats', f'{col} to MSN vs to STN'] = spearman_result[0]
-        spearman_results.loc['p value', f'{col} to MSN vs to STN'] = spearman_result[1]
+        spearman_results.loc[f'{col} to MSN vs to STN', 'stats'] = spearman_result[0]
+        spearman_results.loc[f'{col} to MSN vs to STN', 'p value'] = spearman_result[1]
         #plot scatter plot also dependent on compartment, MSN-STN shaft-shaft, head-head, shaft-head, head-shaft
         for test_comps in test_comps_combs:
             test_comp_msn = test_comps[0]
@@ -379,8 +379,8 @@ if __name__ == '__main__':
             msn_arr = np.array(msn_data[col][msn_data['compartment of postsynaptic cells'] == test_comp_msn])
             stn_arr = np.array(stn_data[col][stn_data['compartment of postsynaptic cells'] == test_comp_stn])
             spearman_result = spearmanr(msn_arr, stn_arr)
-            spearman_results.loc['stats', f'{col} to MSN {test_comp_msn} vs to STN {test_comp_stn}'] = spearman_result[0]
-            spearman_results.loc['p value', f'{col} to MSN {test_comp_msn} vs to STN {test_comp_stn}'] = spearman_result[1]
+            spearman_results.loc[f'{col} to MSN {test_comp_msn} vs to STN {test_comp_stn}', 'stats'] = spearman_result[0]
+            spearman_results.loc[f'{col} to MSN {test_comp_msn} vs to STN {test_comp_stn}', 'p value'] = spearman_result[1]
             plt.scatter(x = msn_arr,y = stn_arr)
             plt.xlabel(f'{col} to MSN {test_comp_msn}')
             plt.ylabel(f'{col} to STN {test_comp_stn}')

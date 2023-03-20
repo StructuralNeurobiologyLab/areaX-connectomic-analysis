@@ -39,10 +39,10 @@ if __name__ == '__main__':
     color_key = 'TeBk'
     fontsize = 20
     if handpicked_LMAN:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230319_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230320_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
             min_comp_len, color_key, syn_prob, min_syn_size)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230319_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230320_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f" % (
             min_comp_len, color_key, syn_prob, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -115,7 +115,6 @@ if __name__ == '__main__':
                                                                        sort_per_postsyn_ct = False)
 
     # syn_numbers_ct, sum_sizes_ct, syn_number_perc_ct, sum_sizes_perc_ct, ids_ct = percell_params
-    raise ValueError
     lman_ids2msn = perlman_params[-1]
     num_lman2msn_ids = len(lman_ids2msn)
     num_lman_cellids = len(cellids_dict[lman_ct])
@@ -127,20 +126,21 @@ if __name__ == '__main__':
     percell_params_str = ['number of synapses', 'summed synapse size [µm²]', 'percentage of synapses',
                'percentage of synapse sizes', 'cellid']
     columns = np.hstack([percell_params_str, 'compartment of postsynaptic cells', 'postsynaptic ct'])
-    lman_msn_df = pd.DataFrame(columns=columns, index=range(num_lman2msn_ids*num_comps))
+    lman_msns_df = []
 
-    for i_comp, compartment in enumerate(compartments):
+    for compartment in compartments:
         # fill in numbers that summarise all synapses per compartment per celltype
-        len_comp_params = len(perlman_params[0][compartment])
-        lman_msn_df.loc[i_comp * num_lman2msn_ids: i_comp * num_lman2msn_ids + len_comp_params - 1, 'compartment of postsynaptic cells'] = compartment
-        lman_msn_df.loc[i_comp * num_lman2msn_ids: i_comp * num_lman2msn_ids + len_comp_params - 1,
-        'postsynaptic ct'] = ct_dict[msn_ct]
+        df = pd.DataFrame(columns=columns, index = range(len(perlman_params[0][compartment])))
+        df['compartment of postsynaptic cells'] = compartment
+        df['postsynaptic ct'] = ct_dict[msn_ct]
         for iy in range(len(percell_params_str)):
             if iy == 4:
-                lman_msn_df.loc[i_comp * num_lman2msn_ids: i_comp * num_lman2msn_ids + len_comp_params - 1,
-                percell_params_str[iy]] = perlman_params[iy]
+                df[percell_params_str[iy]] = perlman_params[iy]
             else:
-                lman_msn_df.loc[i_comp * num_lman2msn_ids: i_comp * num_lman2msn_ids + len_comp_params - 1, percell_params_str[iy]] = perlman_params[iy][compartment]
+                df[percell_params_str[iy]] = perlman_params[iy][compartment]
+        lman_msns_df.append(df)
+
+    lman_msn_df = pd.concat(lman_msns_df, ignore_index=True)
 
     lman_msn_df['mean synapse size [µm²]'] = 0.0
     nonzero_syn_inds = lman_msn_df['number of synapses'] > 0
@@ -178,21 +178,20 @@ if __name__ == '__main__':
              f'({100 * num_lman2stn_ids / num_lman_cellids:.2f}%) make synapses to STN cells.')
     all_syns_stn['postsynaptic ct'] = ct_dict[stn_ct]
 
-    lman_stn_df = pd.DataFrame(columns=columns, index=range(num_lman2stn_ids * num_comps))
-    for i_comp, compartment in enumerate(compartments):
+    lman_stns_df = []
+    for compartment in compartments:
         # fill in numbers that summarise all synapses per compartment per celltype
-        len_comp_params = len(perlman_params[0][compartment])
-        lman_stn_df.loc[i_comp * num_lman2stn_ids: i_comp * num_lman2stn_ids + len_comp_params - 1,
-        'compartment of postsynaptic cells'] = compartment
-        lman_stn_df.loc[i_comp * num_lman2stn_ids: i_comp * num_lman2stn_ids + len_comp_params - 1,
-        'postsynaptic ct'] = ct_dict[stn_ct]
+        df = pd.DataFrame(columns=columns, index = range(len(perlman_params[0][compartment])))
+        df['compartment of postsynaptic cells'] = compartment
+        df['postsynaptic ct'] = ct_dict[stn_ct]
         for iy in range(len(percell_params_str)):
             if iy == 4:
-                lman_stn_df.loc[i_comp * num_lman2stn_ids: i_comp * num_lman2stn_ids + len_comp_params - 1,
-                percell_params_str[iy]] = perlman_params[iy]
+                df[percell_params_str[iy]] = perlman_params[iy]
             else:
-                lman_stn_df.loc[i_comp * num_lman2stn_ids: i_comp * num_lman2stn_ids + len_comp_params - 1,
-                percell_params_str[iy]] = perlman_params[iy][compartment]
+                df[percell_params_str[iy]] = perlman_params[iy][compartment]
+        lman_stns_df.append(df)
+
+    lman_stn_df = pd.concat(lman_stns_df, ignore_index=True)
 
     lman_stn_df['mean synapse size [µm²]'] = 0.0
     nonzero_syn_inds = lman_stn_df['number of synapses'] > 0
@@ -340,7 +339,6 @@ if __name__ == '__main__':
             cell_df['postsynaptic ct'] == 'MSN'].sum()
         forscatter_df.loc[i, 'summed synapse size [µm²] to STN'] = cell_df['summed synapse size [µm²]'][
             cell_df['postsynaptic ct'] == 'STN'].sum()
-    raise ValueError
     forscatter_df['mean synapse size [µm²] to MSN'] = forscatter_df['summed synapse size [µm²] to MSN'] / forscatter_df['number of synapses to MSN']
     forscatter_df['mean synapse size [µm²] to STN'] = forscatter_df['summed synapse size [µm²] to STN'] / forscatter_df[
         'number of synapses to STN']

@@ -20,8 +20,9 @@ if __name__ == '__main__':
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
-    import scipy
+    from scipy.stats import spearmanr
     import seaborn as sns
+    from itertools import product
 
     #global_params.wd = "cajal/nvmescrastch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     global_params.wd = "ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -29,7 +30,8 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(global_params.wd)
     ct_dict = analysis_params.ct_dict()
     min_comp_len = 200
-    handpicked_LMAN = False
+    min_comp_len_lman = min_comp_len
+    handpicked_LMAN = True
     # samples per ct
     syn_prob = 0.8
     min_syn_size = 0.1
@@ -42,8 +44,8 @@ if __name__ == '__main__':
         f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230320_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
             min_comp_len, color_key, syn_prob, min_syn_size)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230320_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f" % (
-            min_comp_len, color_key, syn_prob, min_syn_size)
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230320_j0251v4_ct_LMAN_MSN_STN_mcl_%i_mcllman_%i_k%s_sp_%.1f_ms_%.1f" % (
+            min_comp_len, min_comp_len_lman, color_key, syn_prob, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Connectivity from LMAN to MSN and STN',
@@ -72,7 +74,7 @@ if __name__ == '__main__':
                 cellids = np.array(list(cell_dict.keys()))
                 merger_inds = np.in1d(cellids, known_mergers) == False
                 cellids = cellids[merger_inds]
-                cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_lman,
                                                 axon_only=True, max_path_len=None)
             cellids_dict[ct] = cellids
         else:
@@ -145,14 +147,14 @@ if __name__ == '__main__':
     lman_msn_df['mean synapse size [µm²]'] = 0.0
     nonzero_syn_inds = lman_msn_df['number of synapses'] > 0
     mean_syn_size = lman_msn_df['summed synapse size [µm²]'][nonzero_syn_inds]/lman_msn_df['number of synapses'][nonzero_syn_inds]
-    lman_msn_df['mean synapse size [µm²]'][nonzero_syn_inds] = mean_syn_size
+    lman_msn_df.loc[nonzero_syn_inds, 'mean synapse size [µm²]'] = mean_syn_size
 
     lman_msn_df.to_csv(f'{f_name}/lman_msn_comp_dict.csv')
     median_perc_shaft_syns = np.median(lman_msn_df['percentage of synapse sizes'][lman_msn_df['compartment of postsynaptic cells'] == 'dendritic shaft'])
     median_perc_sh_syns = np.median(
         lman_msn_df['percentage of synapse sizes'][lman_msn_df['compartment of postsynaptic cells'] == 'spine head'])
     log.info(f'Median percentage of shaft synapse sizes to MSN: {median_perc_shaft_syns:.2f}')
-    log.info(f'Median percentage of spine head synapse sizes to MSM: {median_perc_sh_syns:.2f}')
+    log.info(f'Median percentage of spine head synapse sizes to MSN: {median_perc_sh_syns:.2f}')
 
     time_stamps = [time.time()]
     step_idents = ["got params for LMAN to MSN"]
@@ -197,7 +199,7 @@ if __name__ == '__main__':
     nonzero_syn_inds = lman_stn_df['number of synapses'] > 0
     mean_syn_size = lman_stn_df['summed synapse size [µm²]'][nonzero_syn_inds] / lman_stn_df['number of synapses'][
         nonzero_syn_inds]
-    lman_stn_df['mean synapse size [µm²]'][nonzero_syn_inds] = mean_syn_size
+    lman_stn_df.loc[nonzero_syn_inds, 'mean synapse size [µm²]'] = mean_syn_size
 
     lman_stn_df.to_csv(f'{f_name}/lman_stn_comp_dict.csv')
     median_perc_shaft_syns = np.median(
@@ -222,7 +224,7 @@ if __name__ == '__main__':
         plt.title(param)
         plt.savefig(f'{f_name}/comp_{param}_barplot.png')
         plt.close()
-        sns.stripplot(data=lman_df, x='postsynaptic ct', y=param, hue='compartment of postsynaptic cells', color="black", alpha=0.2,
+        sns.stripplot(data=lman_df, x='postsynaptic ct', y=param, hue='compartment of postsynaptic cells', palette='dark:black', alpha=0.2,
                               dodge=True, size=2)
         sns.violinplot(data=pd.DataFrame(lman_df.to_dict()), x='postsynaptic ct', y=param, hue='compartment of postsynaptic cells',
                     palette=comp_palette)
@@ -243,7 +245,7 @@ if __name__ == '__main__':
     plt.ylabel('synaptic mesh area [µm²]')
     plt.savefig(f'{f_name}/all_syns_synsize_barplot.png')
     plt.close()
-    sns.stripplot(data=all_syns_df, x='postsynaptic ct', y='synapse size', hue='compartment', color="black",
+    sns.stripplot(data=all_syns_df, x='postsynaptic ct', y='synapse size', hue='compartment', palette='dark:black',
                   alpha=0.2,
                   dodge=True, size=2)
     sns.violinplot(data=all_syns_df, x='postsynaptic ct', y='synapse size',
@@ -345,6 +347,11 @@ if __name__ == '__main__':
     lman2msn_stn_df = lman_df[np.in1d(lman_df['cellid'], ids2msn_stn)]
     msn_data = lman2msn_stn_df[lman2msn_stn_df['postsynaptic ct'] == 'MSN']
     stn_data = lman2msn_stn_df[lman2msn_stn_df['postsynaptic ct'] == 'STN']
+    # calculate spearman results for different parameters to see if they are likely to be correlated
+    spearman_results = pd.DataFrame(index = ['stats', 'p value'])
+    #create iterable over desired compartments to compare
+    test_comps_str = ['dendritic shaft', 'spine neck']
+    test_comps_combs = product(test_comps_str, repeat = 2)
     for col in lman_df.columns:
         if 'cellid' in col or 'postsynaptic' in col or 'percentage' in col:
             continue
@@ -354,39 +361,43 @@ if __name__ == '__main__':
         plt.title(col)
         plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_scatter.png')
         plt.close()
+        forscatter_df[f'{col} to MSN'] = forscatter_df[f'{col} to MSN'].astype(float)
+        forscatter_df[f'{col} to STN'] = forscatter_df[f'{col} to STN'].astype(float)
+        sns.regplot(data=forscatter_df, x=f'{col} to MSN', y=f'{col} to STN')
+        plt.xlabel(f'{col} to MSN')
+        plt.ylabel(f'{col} to STN')
+        plt.title(col)
+        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_regplot.png')
+        plt.close()
+        spearman_result = spearmanr(forscatter_df[f'{col} to MSN'], forscatter_df[f'{col} to STN'])
+        spearman_results.loc['stats', f'{col} to MSN vs to STN'] = spearman_result[0]
+        spearman_results.loc['p value', f'{col} to MSN vs to STN'] = spearman_result[1]
         #plot scatter plot also dependent on compartment, MSN-STN shaft-shaft, head-head, shaft-head, head-shaft
-        plt.scatter(x = msn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'],
-                        y = stn_data[col][stn_data['compartment of postsynaptic cells'] == 'dendritic shaft'])
-        plt.xlabel(f'{col} to MSN dendritic shaft')
-        plt.ylabel(f'{col} to STN dendritic shaft')
-        plt.title(col)
-        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnshaft_stnshaft_scatter.png')
-        plt.close()
-        plt.scatter(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'],
-                        y=stn_data[col][stn_data['compartment of postsynaptic cells'] == 'spine head'])
-        plt.xlabel(f'{col} to MSN spine head')
-        plt.ylabel(f'{col} to STN spine head')
-        plt.title(col)
-        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnhead_stnhead_scatter.png')
-        plt.close()
-        plt.scatter(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'dendritic shaft'],
-                        y=stn_data[col][stn_data['compartment of postsynaptic cells'] == 'spine head'])
-        plt.xlabel(f'{col} to MSN dendritic shaft')
-        plt.ylabel(f'{col} to STN spine head')
-        plt.title(col)
-        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnshaft_stnhead_scatter.png')
-        plt.close()
-        plt.scatter(x=msn_data[col][msn_data['compartment of postsynaptic cells'] == 'spine head'],
-                        y=stn_data[col][stn_data['compartment of postsynaptic cells'] == 'dendritic shaft'])
-        plt.xlabel(f'{col} to MSN spine head')
-        plt.ylabel(f'{col} to STN dendritic shaft')
-        plt.title(col)
-        plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msnhead_stnshaft_scatter.png')
-        plt.close()
+        for test_comps in test_comps_combs:
+            test_comp_msn = test_comps[0]
+            test_comp_stn = test_comps[1]
+            msn_arr = np.array(msn_data[col][msn_data['compartment of postsynaptic cells'] == test_comp_msn])
+            stn_arr = np.array(stn_data[col][stn_data['compartment of postsynaptic cells'] == test_comp_stn])
+            spearman_result = spearmanr(msn_arr, stn_arr)
+            spearman_results.loc['stats', f'{col} to MSN {test_comp_msn} vs to STN {test_comp_stn}'] = spearman_result[0]
+            spearman_results.loc['p value', f'{col} to MSN {test_comp_msn} vs to STN {test_comp_stn}'] = spearman_result[1]
+            plt.scatter(x = msn_arr,y = stn_arr)
+            plt.xlabel(f'{col} to MSN {test_comp_msn}')
+            plt.ylabel(f'{col} to STN {test_comp_stn}')
+            plt.title(col)
+            plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msn{test_comp_msn}_stn{test_comp_stn}_scatter.png')
+            plt.close()
+            sns.regplot(x=msn_arr,y=stn_arr)
+            plt.xlabel(f'{col} to MSN {test_comp_msn}')
+            plt.ylabel(f'{col} to STN {test_comp_stn}')
+            plt.title(col)
+            plt.savefig(f'{f_name}/percell_i2msn_stn_{col}_msn{test_comp_msn}_stn{test_comp_stn}_regplot.png')
+            plt.close()
 
     write_obj2pkl(f'{f_name}/lman_ids_dict.pkl', lman_ids_dict)
     lman_ids_perc_df.to_csv(f'{f_name}/lman_msn_stn_perc.csv')
     forscatter_df.to_csv(f'{f_name}/lman2msn_stn_scatter_total.csv')
+    spearman_results.to_csv(f'{f_name}/spearman_corr_results.csv')
 
     time_stamps = [time.time()]
     step_idents = ["got params for LMAN to MSN"]

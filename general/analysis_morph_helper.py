@@ -425,6 +425,39 @@ def generate_colored_mesh_from_skel_data(args):
     cell.save_skeleton_to_kzip(kzip_out_skel, additional_keys=[key])
     return
 
+def generate_colored_mesh_synprob_data(args):
+    '''
+    Generates mesh coloured according to synapse_probability values for cells of synapses its part of.
+    Does use all synapses cell is a part of, if synapses should be filtered this needs to be done before applying this function.
+    Based partly on syconn2scripts.scripts.point_party.semseg_gt, similar to generate_colored_mesh_from_skel_data. Saves result as kzip
+    :param args: cellid, path to folder where kzip should be stored, key to color
+    :return:
+    '''
+    # TO DO: color lookup for synapse probability here
+    cellid, f_name, key, syn_ssv_partners, syn_rep_coords, syn_prob = args
+
+    #TO DO: filter synapses for those cell is part off
+
+
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    # TO DO: map synapse probability values to cell
+    # load mesh and put skeleton annotations on mesh
+    indices, vertices, normals = cell.mesh
+    vertices = vertices.reshape((-1, 3))
+    kdt = cKDTree(nodes)
+    dists, node_inds = kdt.query(vertices)
+    vert_axoness_labels = axoness_labels[node_inds]
+
+    # save colored mesh
+    cols = np.array([col_lookup[el] for el in vert_axoness_labels.squeeze()], dtype=np.uint8)
+    kzip_out = f'{f_name}/{cellid}_colored_mesh'
+    kzip_out_skel = f'{f_name}/{cellid}_skel'
+    write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,
+                    f'{cellid}.ply')
+    cell.save_skeleton_to_kzip(kzip_out_skel, additional_keys=[key])
+    return
+
 
 
 

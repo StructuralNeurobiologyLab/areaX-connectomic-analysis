@@ -9,24 +9,22 @@ if __name__ == '__main__':
 
     from analysis_prep_func import find_full_cells, synapse_amount_percell, get_axon_length_area_perct
     from syconn.handler.config import initialize_logging
-    from multiprocessing import Process
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, \
-        get_compartment_mesh_area
-    from tqdm import tqdm
 
     #V3
     #global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
     #V4
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    #v5
+    global_params.wd = global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 
     # celltypes: j0256: STN = 0, DA = 1, MSN = 2, LMAN = 3, HVC = 4, TAN = 5, GPe = 6, GPi = 7,
-    #                      FS=8, LTS=9, NGF=10
+    #                      FS=8, LTS=9, NGF=10, ASTRO = 11, OLIGO = 12, MICRO = 13, FRAG = 14
 
     start = time.time()
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    f_name = "/wholebrain/scratch/arother/j0251v4_prep"
+    f_name = "/cajal/nvmescratch/users/arother/j0251v5_oldcomps_prep"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     syn_proba = 0.8
@@ -39,7 +37,7 @@ if __name__ == '__main__':
     #ct_list = [2,5, 6, 7, 0, 8, 9, 10]
     ax_list = [3, 4, 1]
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9:"LTS", 10:"NGF"}
-    #ct_list = [6, 7, 0, 5, 8, 9, 10, 2]
+    ct_list = list(ct_dict.keys())
     #ct_list = [2]
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m = syn_prob > syn_proba
@@ -56,7 +54,7 @@ if __name__ == '__main__':
     m_axs[m_axs == 4] = 1
     time_stamps = [time.time()]
     step_idents = ["finished preparations"]
-    '''
+
     for ix, ct in enumerate(ct_list):
         log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
         log.info("Get amount and sum of synapses")

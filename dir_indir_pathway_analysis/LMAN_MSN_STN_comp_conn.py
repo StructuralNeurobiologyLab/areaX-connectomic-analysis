@@ -30,8 +30,8 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(global_params.wd)
     ct_dict = analysis_params.ct_dict()
     min_comp_len = 200
-    min_comp_len_lman = min_comp_len
-    handpicked_LMAN = True
+    min_comp_len_lman = 2000
+    handpicked_LMAN = False
     # samples per ct
     syn_prob = 0.8
     min_syn_size = 0.1

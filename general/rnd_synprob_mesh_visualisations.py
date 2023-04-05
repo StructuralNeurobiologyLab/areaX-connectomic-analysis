@@ -1,4 +1,6 @@
-#script to visualise comparetment predictions of 3 random cells of each class
+#script to visualize synapse probabilities on meshes
+#similar to rnd_mesh_comp_visualisations
+#use also same cells
 
 if __name__ == '__main__':
     import time
@@ -10,10 +12,12 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from analysis_params import Analysis_Params
     from syconn.mp.mp_utils import start_multiprocess_imap
+    from syconn.reps.segmentation import SegmentationDataset
     from sklearn.utils import shuffle
     from analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_from_skel_data
     import time
     from syconn.handler.basics import load_pkl2obj
+    from analysis_conn_helper import filter_synapse_caches_for_ct
 
 
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -23,15 +27,16 @@ if __name__ == '__main__':
     #samples per ct
     rnd_samples = 3
     color_key = 'axoness_avg10000'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230314_j0251v5_oldcts_ct_random_comp_val_mcl_%i_samples_%i_k%s" % (
-        min_comp_len, rnd_samples, color_key)
+    min_syn_size = 0.1
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230405_j0251v4_synprob_mesh_visualization_mcl_%i_samples_%i_k%s_ms_%.1f" % (
+        min_comp_len, rnd_samples, color_key, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('select random subset of cells to write mesh to kzip to visualise compartments',
+    log = initialize_logging('synprob_mesh_visualisation',
                              log_dir=f_name + '/logs/')
     log.info(
-        f"min_comp_len = %i, number of samples per ct = %i, key to color to = %s" % (
-            min_comp_len, rnd_samples, color_key))
+        f"min_comp_len = %i, number of samples per ct = %i, key to color to = %s, minimum synapse size = %.1f" % (
+            min_comp_len, rnd_samples, color_key, min_syn_size))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -78,12 +83,22 @@ if __name__ == '__main__':
     selected_ids.to_csv(f'{f_name}/rnd_cellids.csv')
     rnd_cellids_cts = np.hstack(np.array(rnd_cellids_cts))
 
+    log.info('Prefilter synapse information')
+    sd_synssv = SegmentationDataset('syn_ssv', working_dir = global_params.wd)
+    pre_cts = np.arange(num_cts)
+    post_cts = pre_cts[np.in1d(pre_cts, ax_cts) == False]
+    #use filtering for minimal synapse size and pre, postcts, only axo-dendritic/axo-somatic synapses but not for synapse probability
+    syn_cts, syn_ids, syn_axs, syn_ssv_partners, syn_sizes, syn_spiness, syn_rep_coord, syn_prob = filter_synapse_caches_for_ct(sd_synssv,
+                                                                                                        pre_cts = pre_cts,
+                                                                                                        post_cts=post_cts,
+                                                                                                        syn_prob_thresh=None,
+                                                                                                        min_syn_size=min_syn_size,
+                                                                                                        axo_den_so=True)
+
     log.info('Generate mesh from selected cellids')
-    args = [[rnd_cellid, f_name, color_key] for rnd_cellid in rnd_cellids_cts]
+    args = [[rnd_cellid, f_name, color_key, syn_ssv_partners, syn_rep_coord, syn_prob] for rnd_cellid in rnd_cellids_cts]
     #generate mesh from cellids
     global_params.wd = "cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     out = start_multiprocess_imap(generate_colored_mesh_from_skel_data, args)
 
     log.info(f'Generated colored meshes for {len(rnd_cellids_cts)} cells')
-
-

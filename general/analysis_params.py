@@ -6,10 +6,17 @@ class Analysis_Params(object):
     Config object for setting general analysis parameters
     TO DO: base on file
     '''
-    def __init__(self, working_dir):
+    def __init__(self, working_dir, version):
         self._working_dir = working_dir
-        self._ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+        self._version = version
+        ct_dict = {'v3': {}, 'v4': {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               10: "NGF"}, 'v5': {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+               10: "NGF", 11:"ASTRO", 12:"OLIGO", 13:'MICRO', 14:'FRAG'}}
+        self._ct_dict = ct_dict[version]
+        if version == 'v5':
+            self._glia_cts = [11, 12, 13, 14]
+        else:
+            self._glia_cts = []
         self._num_cts = len(self._ct_dict.keys())
         self._axoness_dict = {0: 'dendrite', 1:'axon', 2:'soma'}
         self._spiness_dict = {0: 'spine neck', 1: 'spine head', 2:'dendritic shaft', 3:'other'}
@@ -17,6 +24,7 @@ class Analysis_Params(object):
         self._syn_prob_tresh = 0.8
         self._min_syn_size = 0.1
         self._min_comp_length = 200
+        file_locations = {'v3': , 'v4': "/cajal/nvmescratch/users/arother/j0251v4_prep", }
         self._merger_file_location = "/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl"
         self._pot_astros_file_location = 'cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl'
         self._cell_dicts_location = '/cajal/nvmescratch/users/arother/j0251v4_prep/'
@@ -24,16 +32,26 @@ class Analysis_Params(object):
     def working_dir(self):
         return self._working_dir
 
-    def ct_dict(self):
-        return self._ct_dict
+    def ct_dict(self, with_glia = False):
+        if with_glia:
+            return self._ct_dict
+        else:
+            ct_dict = {i: self._ct_dict[i] for i in range(self._num_cts) if i not in self._glia_cts}
+            return self._ct_dict
 
-    def ct_str(self):
+    def ct_str(self, with_glia = False):
         #return celltype names as list of str
-        ct_str = [self._ct_dict[i] for i in range(self._num_cts)]
+        if with_glia:
+            ct_str = [self._ct_dict[i] for i in range(self._num_cts)]
+        else:
+            ct_str = [self._ct_dict[i] for i in range(self._num_cts) if i not in self._glia_cts]
         return ct_str
 
-    def num_cts(self):
-        return self._num_cts
+    def num_cts(self, with_glia = False):
+        if with_glia:
+            return self._num_cts
+        else:
+            return self._num_cts - len(self._glia_cts)
 
     def axoness_dict(self):
         return self.axoness_dict

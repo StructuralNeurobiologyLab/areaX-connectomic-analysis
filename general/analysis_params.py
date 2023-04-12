@@ -24,7 +24,9 @@ class Analysis_Params(object):
         self._syn_prob_tresh = 0.8
         self._min_syn_size = 0.1
         self._min_comp_length = 200
-        file_locations = {'v3': , 'v4': "/cajal/nvmescratch/users/arother/j0251v4_prep", }
+        self.file_locations = {'v3': '/cajal/nvmescratch/users/arother/j0251v3_prep',
+                               'v4': "/cajal/nvmescratch/users/arother/j0251v4_prep",
+                               'v5': "/cajal/nvmescratch/users/arother/j0251v5_prep"}
         self._merger_file_location = "/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl"
         self._pot_astros_file_location = 'cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl'
         self._cell_dicts_location = '/cajal/nvmescratch/users/arother/j0251v4_prep/'

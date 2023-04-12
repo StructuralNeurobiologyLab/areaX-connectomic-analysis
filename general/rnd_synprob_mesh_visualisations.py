@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
 
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
-    analysis_params = Analysis_Params(global_params.wd)
+    analysis_params = Analysis_Params(global_params.wd, 'v4')
     ct_dict = analysis_params.ct_dict()
     min_comp_len = 200
     #samples per ct

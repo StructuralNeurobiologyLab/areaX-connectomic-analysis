@@ -18,6 +18,8 @@ if __name__ == '__main__':
     import time
     from syconn.handler.basics import load_pkl2obj
     from analysis_conn_helper import filter_synapse_caches_for_ct
+    import seaborn as sns
+    import matplotlib.pyplot as plt
 
 
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -96,7 +98,16 @@ if __name__ == '__main__':
                                                                                                         axo_den_so=True)
 
     log.info('Generate mesh from selected cellids')
-    args = [[rnd_cellid, f_name, color_key, syn_ssv_partners, syn_rep_coord, syn_prob] for rnd_cellid in rnd_cellids_cts]
+    col_lookup = {0.0: '#D62246', 0.2: '#912043', 0.4: '#232121', 0.6: '#0E7C7B', 0.8: '#17BEBB'}
+    #visualize color palette with categories
+    sns.palplot(col_lookup.values())
+    ax = plt.gca()
+
+    for i, key in enumerate(col_lookup.keys()):
+        ax.text(i, 0, key)
+    plt.savefig(f'{f_name}/syn_prob_color_palette.png')
+    plt.close()
+    args = [[rnd_cellid, f_name, syn_ssv_partners, syn_rep_coord, syn_prob, col_lookup] for rnd_cellid in rnd_cellids_cts]
     #generate mesh from cellids
     global_params.wd = "cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     out = start_multiprocess_imap(generate_colored_mesh_from_skel_data, args)

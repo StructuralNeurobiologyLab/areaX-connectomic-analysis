@@ -8,6 +8,7 @@ from syconn.reps.super_segmentation import SuperSegmentationObject
 from syconn.handler.basics import load_pkl2obj
 from scipy.spatial import cKDTree
 from syconn.proc.meshes import write_mesh2kzip
+import pandas as pd
 
 
 def get_compartment_length(sso, compartment, cell_graph):
@@ -430,27 +431,32 @@ def generate_colored_mesh_synprob_data(args):
     Generates mesh coloured according to synapse_probability values for cells of synapses its part of.
     Does use all synapses cell is a part of, if synapses should be filtered this needs to be done before applying this function.
     Based partly on syconn2scripts.scripts.point_party.semseg_gt, similar to generate_colored_mesh_from_skel_data. Saves result as kzip
-    :param args: cellid, path to folder where kzip should be stored, key to color
+    :param args: cellid, path to folder where kzip should be stored, syn_ssv_partners, synapse coords, synapse probability, color lookup
+    dictionary (categories to sort probability in should be keys)
     :return:
     '''
-    # TO DO: color lookup for synapse probability here
-    cellid, f_name, key, syn_ssv_partners, syn_rep_coords, syn_prob = args
-
-    #TO DO: filter synapses for those cell is part off
-
-
+    cellid, f_name, key, syn_ssv_partners, syn_rep_coords, syn_prob, col_lookup = args
+    #filter synapses for cellid
     cell = SuperSegmentationObject(cellid)
-    cell.load_skeleton()
-    # TO DO: map synapse probability values to cell
-    # load mesh and put skeleton annotations on mesh
+    cell_inds = np.where(syn_ssv_partners == cellid)[0]
+    cell_syn_coords = syn_rep_coords[cell_inds]
+    cell_syn_prob = syn_prob[cell_inds]
+    #make kdTree from synapse_coords and map synprob_labels to vertices
+    kdt = cKDTree(cell_syn_coords * cell.scaling)
     indices, vertices, normals = cell.mesh
     vertices = vertices.reshape((-1, 3))
-    kdt = cKDTree(nodes)
     dists, node_inds = kdt.query(vertices)
-    vert_axoness_labels = axoness_labels[node_inds]
-
+    vert_synprob_labels = cell_syn_prob[node_inds]
+    #caregorize labels to match color according to synapse probability
+    #categories are in these case assumed to be lower bounds e.g. 0.0, 0.2, 0.4, 0.6, 0.8
+    #this means 0.5 would be in category 0.4
+    cats = list(col_lookup.keys())
+    labels = cats
+    if 1.0 not in cats:
+        cats.append(1.0)
+    vert_synprob_labels_cats = np.array(pd.cut(vert_synprob_labels, cats, right = False, labels = labels))
     # save colored mesh
-    cols = np.array([col_lookup[el] for el in vert_axoness_labels.squeeze()], dtype=np.uint8)
+    cols = np.array([col_lookup[el] for el in vert_synprob_labels_cats.squeeze()], dtype=np.uint8)
     kzip_out = f'{f_name}/{cellid}_colored_mesh'
     kzip_out_skel = f'{f_name}/{cellid}_skel'
     write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,

@@ -14,13 +14,13 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     from syconn.reps.segmentation import SegmentationDataset
     from sklearn.utils import shuffle
-    from analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_from_skel_data
+    from analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_synprob_data
     import time
     from syconn.handler.basics import load_pkl2obj
     from analysis_conn_helper import filter_synapse_caches_for_ct
     import seaborn as sns
     import matplotlib.pyplot as plt
-
+    import matplotlib.colors as co
 
     global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     analysis_params = Analysis_Params(global_params.wd, 'v4')
@@ -98,18 +98,21 @@ if __name__ == '__main__':
                                                                                                         axo_den_so=True)
 
     log.info('Generate mesh from selected cellids')
-    col_lookup = {0.0: '#D62246', 0.2: '#912043', 0.4: '#232121', 0.6: '#0E7C7B', 0.8: '#17BEBB'}
+    cats = [0.0, 0.2, 0.4, 0.6, 0.8]
+    colors_hex = ['#D62246','#912043','#232121','#0E7C7B','#17BEBB']
+    colors_rgba = co.to_rgba_array(colors_hex)
+    colors_rgba_int = colors_rgba * 255
+    col_lookup = {cats[i]: colors_rgba_int[i] for i in range(len(cats))}
     #visualize color palette with categories
-    sns.palplot(col_lookup.values())
+    sns.palplot(colors_rgba)
     ax = plt.gca()
-
     for i, key in enumerate(col_lookup.keys()):
         ax.text(i, 0, key)
     plt.savefig(f'{f_name}/syn_prob_color_palette.png')
     plt.close()
     args = [[rnd_cellid, f_name, syn_ssv_partners, syn_rep_coord, syn_prob, col_lookup] for rnd_cellid in rnd_cellids_cts]
     #generate mesh from cellids
-    global_params.wd = "cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    out = start_multiprocess_imap(generate_colored_mesh_from_skel_data, args)
+    #global_params.wd = "cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    out = start_multiprocess_imap(generate_colored_mesh_synprob_data, args)
 
     log.info(f'Generated colored meshes for {len(rnd_cellids_cts)} cells')

@@ -435,7 +435,7 @@ def generate_colored_mesh_synprob_data(args):
     dictionary (categories to sort probability in should be keys)
     :return:
     '''
-    cellid, f_name, key, syn_ssv_partners, syn_rep_coords, syn_prob, col_lookup = args
+    cellid, f_name, syn_ssv_partners, syn_rep_coords, syn_prob, col_lookup = args
     #filter synapses for cellid
     cell = SuperSegmentationObject(cellid)
     cell_inds = np.where(syn_ssv_partners == cellid)[0]
@@ -451,17 +451,17 @@ def generate_colored_mesh_synprob_data(args):
     #categories are in these case assumed to be lower bounds e.g. 0.0, 0.2, 0.4, 0.6, 0.8
     #this means 0.5 would be in category 0.4
     cats = list(col_lookup.keys())
-    labels = cats
+    labels = list(col_lookup.keys())
     if 1.0 not in cats:
         cats.append(1.0)
     vert_synprob_labels_cats = np.array(pd.cut(vert_synprob_labels, cats, right = False, labels = labels))
     # save colored mesh
-    cols = np.array([col_lookup[el] for el in vert_synprob_labels_cats.squeeze()], dtype=np.uint8)
+    cols = np.array([col_lookup[el] for el in vert_synprob_labels_cats], dtype=np.uint8)
     kzip_out = f'{f_name}/{cellid}_colored_mesh'
     kzip_out_skel = f'{f_name}/{cellid}_skel'
     write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,
                     f'{cellid}.ply')
-    cell.save_skeleton_to_kzip(kzip_out_skel, additional_keys=[key])
+    cell.save_skeleton_to_kzip(kzip_out_skel)
     return
 
 

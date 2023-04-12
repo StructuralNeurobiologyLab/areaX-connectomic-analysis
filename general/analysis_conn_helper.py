@@ -83,7 +83,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, pre_cts).reshape(len(m_cts), 2)
             testax = np.in1d(m_axs, 1).reshape(len(m_cts), 2)
-            pre_ct_inds = np.all(testct == testax, axis = 1)
+            pre_ct_inds = np.any(testct == testax, axis = 1)
             m_cts = m_cts[pre_ct_inds]
             m_ids = m_ids[pre_ct_inds]
             m_axs = m_axs[pre_ct_inds]
@@ -108,7 +108,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, post_cts).reshape(len(m_cts), 2)
             testax = np.in1d(m_axs, [2,0]).reshape(len(m_cts), 2)
-            post_ct_inds = np.all(testct == testax, axis=1)
+            post_ct_inds = np.any(testct == testax, axis=1)
             m_cts = m_cts[post_ct_inds]
             m_ids = m_ids[post_ct_inds]
             m_axs = m_axs[post_ct_inds]
@@ -117,7 +117,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
             m_spiness = m_spiness[post_ct_inds]
             m_rep_coord = m_rep_coord[post_ct_inds]
             if syn_prob_thresh is None:
-                syn_prob = syn_prob[ct_inds]
+                syn_prob = syn_prob[post_ct_inds]
     # filter those with size below min_syn_size
     size_inds = m_sizes > min_syn_size
     m_cts = m_cts[size_inds]
@@ -128,7 +128,7 @@ def filter_synapse_caches_for_ct(sd_synssv, pre_cts, post_cts = None, syn_prob_t
     m_spiness = m_spiness[size_inds]
     m_rep_coord = m_rep_coord[size_inds]
     if syn_prob_thresh is None:
-        syn_prob = syn_prob[ct_inds]
+        syn_prob = syn_prob[size_inds]
     # only axo-dendritic or axo-somatic synapses allowed
     if axo_den_so:
         axs_inds = np.any(m_axs == 1, axis=1)

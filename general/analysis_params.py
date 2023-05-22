@@ -40,7 +40,7 @@ class Analysis_Params(object):
             return self._ct_dict
         else:
             ct_dict = {i: self._ct_dict[i] for i in range(self._num_cts) if i not in self._glia_cts}
-            return self._ct_dict
+            return ct_dict
 
     def ct_str(self, with_glia = False):
         #return celltype names as list of str

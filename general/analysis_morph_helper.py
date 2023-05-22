@@ -84,9 +84,9 @@ def get_compartment_radii(cell, comp_inds = None):
     :return: comp_radii as array in µm
     """
     if not np.all(comp_inds) is None:
-        comp_radii = cell.skeleton["diameters"][comp_inds] * 2 * cell.scaling[0] / 1000 #in µm
+        comp_radii = cell.skeleton["diameters"][comp_inds] * cell.scaling[0] / 2000 #in µm and divided by 2 to get radius
     else:
-        comp_radii = cell.skeleton["diameters"]* 2 * cell.scaling[0] / 1000  # in µm
+        comp_radii = cell.skeleton["diameters"] * cell.scaling[0] / 2000  # in µm
     return comp_radii
 
 def get_compartment_bbvolume(comp_nodes):

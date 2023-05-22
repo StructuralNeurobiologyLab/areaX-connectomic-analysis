@@ -30,7 +30,7 @@ if __name__ == '__main__':
     rnd_samples = 3
     color_key = 'axoness_avg10000'
     min_syn_size = 0.1
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230412_j0251v4_synprob_mesh_visualization_mcl_%i_samples_%i_k%s_ms_%.1f" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230503_j0251v5_synprob_old_cts_mesh_visualization_mcl_%i_samples_%i_k%s_ms_%.1f" % (
         min_comp_len, rnd_samples, color_key, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -84,6 +84,8 @@ if __name__ == '__main__':
 
     selected_ids.to_csv(f'{f_name}/rnd_cellids.csv')
     rnd_cellids_cts = np.hstack(np.array(rnd_cellids_cts))
+
+    global_params.wd = "cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
     log.info('Prefilter synapse information')
     sd_synssv = SegmentationDataset('syn_ssv', working_dir = global_params.wd)

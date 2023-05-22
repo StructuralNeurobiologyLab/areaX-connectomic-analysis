@@ -16,7 +16,7 @@ if __name__ == '__main__':
     #V4
     #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     #v5
-    global_params.wd = global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 
 
@@ -28,9 +28,10 @@ if __name__ == '__main__':
         os.mkdir(f_name)
     syn_proba = 0.6
     min_syn_size = 0.1
-    log = initialize_logging('analysis prep, syn_prob = %.2f, min syn size = %.2f' % (syn_proba, min_syn_size), log_dir=f_name + '/logs/')
+    log = initialize_logging('analysis prep', log_dir=f_name + '/logs/')
     log.info(f'Data based on the working directory {global_params.wd} will be cached')
     log.info('Compared to v4 (agglo2) this involves new synapse, mitochondria and vesicle cloud predictions; new celltype trainings but old skeletons and compartments')
+    log.info('syn_prob = %.2f, min syn size = %.2f' % (syn_proba, min_syn_size))
     log.info("Step 0: Loading synapse data on all cells")
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
@@ -73,7 +74,7 @@ if __name__ == '__main__':
         step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[ct]]
         log.info("Find full cells")
         cell_array, cell_dict = find_full_cells(ssd, celltype=ct)
-        log.info(f'{len(cell_array)} full cells for celltype {ct} found')
+        log.info(f'{len(cell_array)} full cells for celltype {ct_dict[ct]} found')
         time_stamps = [time.time()]
         step_idents = ["full cells (axon, dendrite, soma present) for celltype %s found" % ct_dict[ct]]
         log.info("Make per cell dictionary")
@@ -106,16 +107,15 @@ if __name__ == '__main__':
         log.info('Create statistics about cell number depending on axon or dendrite length')
         cell_number_info.loc[ct_dict[ct], 'total'] = len(ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == ct])
         cell_number_info.loc[ct_dict[ct], 'full cells'] = len(cell_array)
-        axon_lengths = np.array([cell_dict['axon length'][ci] for ci in cell_array])
-        dendrite_lengths = np.array([cell_dict['dendrite length'][ci] for ci in cell_array])
+        axon_lengths = np.array([cell_dict[ci]['axon length'] for ci in cell_array])
+        dendrite_lengths = np.array([cell_dict[ci]['dendrite length'] for ci in cell_array])
         for test_length in lengths_to_test:
-            cellids_axon_length_suitable = cell_array[axon_lengths >= lengths_to_test]
-            cellids_dendrite_length_suitable = cell_array[dendrite_lengths >= lengths_to_test]
+            cellids_axon_length_suitable = cell_array[axon_lengths >= test_length]
+            cellids_dendrite_length_suitable = cell_array[dendrite_lengths >= test_length]
             cellids_both_suitable = cellids_axon_length_suitable[np.in1d(cellids_axon_length_suitable, cellids_dendrite_length_suitable)]
-            cell_number_info.loc[ct_dict[ct], f'axon length > {test_length} µm'] = len(cellids_axon_length_suitable)
-            cell_number_info.loc[ct_dict[ct], f'dendrite length > {test_length} µm'] = len(cellids_dendrite_length_suitable)
+            cell_number_info.loc[ct_dict[ct], f'axon length >= {test_length} µm'] = len(cellids_axon_length_suitable)
+            cell_number_info.loc[ct_dict[ct], f'dendrite length >= {test_length} µm'] = len(cellids_dendrite_length_suitable)
             cell_number_info.loc[ct_dict[ct], f'axon and dendrite length >= {test_length} µm'] = len(cellids_both_suitable)
-        raise ValueError
         time_stamps = [time.time()]
         step_idents = ["cell number depending on axon/dendrite lengths %s prepared" % ct_dict[ct]]
         log.info("cell number depending on axon/dendrite lengths %s prepared" % ct_dict[ct])
@@ -146,17 +146,18 @@ if __name__ == '__main__':
         log.info('Create statistics about axon number depending on length')
         axon_ids = list(axon_dict.keys())
         cell_number_info.loc[ct_dict[ct], 'total'] = len(axon_ids)
-        axon_lengths = np.array([axon_dict['axon length'][ci] for ci in list(axon_dict.keys)])
+        axon_lengths = np.array([axon_dict[ci]['axon length'] for ci in list(axon_dict.keys)])
         for test_length in lengths_to_test:
-            cellids_axon_length_suitable = axon_ids[axon_lengths >= lengths_to_test]
-            cell_number_info.loc[ct_dict[ct], f'axon length > {test_length} µm'] = len(cellids_axon_length_suitable)
+            cellids_axon_length_suitable = axon_ids[axon_lengths >= test_length]
+            cell_number_info.loc[ct_dict[ct], f'axon length >= {test_length} µm'] = len(cellids_axon_length_suitable)
         time_stamps = [time.time()]
         step_idents = ["axon number depending on axon/dendrite lengths %s prepared" % ct_dict[ct]]
         log.info("axon number depending on axon/dendrite lengths %s prepared" % ct_dict[ct])
 
     cell_number_info.to_csv(f'{f_name}/cell_numbers.csv')
     time_stamps = [time.time()]
-    step_iden('Cell number infos saved, analysis finished')
+    step_idents('Cell number infos saved, analysis finished')
+    log.info('Cell number infos saved, analysis finished')
 
 
 

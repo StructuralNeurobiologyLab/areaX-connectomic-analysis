@@ -32,7 +32,7 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
     """
     calculates the spine density of the dendrite.Therefore, the amount of spines per µm dendrite is calculated.
      Amount of spines is the number of connected_components with spiness = spines.
-     # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
+     # spiness values: 0 = dendritic shaft, 1 = spine head, 2 = spine neck, 3 = other
     :param cell: super-segmentation object
     :param min_comp_len: minimum compartment length in µm
     :param full_cell_dict: dictionary with per cell parameter values, cell.id is key
@@ -61,11 +61,11 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
         dendrite_length = get_compartment_length(cell, compartment = 0, cell_graph = g)
     if dendrite_length < min_comp_len:
         return 0
-    spine_shaftinds = np.nonzero(cell.skeleton["spiness"] == 2)[0]
+    spine_shaftinds = np.nonzero(cell.skeleton["spiness"] == 0)[0]
     spine_otherinds = np.nonzero(cell.skeleton["spiness"] == 3)[0]
     nonspine_inds = np.hstack([spine_shaftinds, spine_otherinds])
     spine_head_inds = np.nonzero(cell.skeleton["spiness"] == 1)[0]
-    spine_neck_inds = np.nonzero(cell.skeleton["spiness"] == 0)[0]
+    spine_neck_inds = np.nonzero(cell.skeleton["spiness"] == 2)[0]
     spine_inds = np.hstack([spine_head_inds, spine_neck_inds])
     nospine_graph = g.copy()
     nospine_graph.remove_nodes_from(spine_inds)

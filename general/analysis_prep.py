@@ -28,19 +28,20 @@ if __name__ == '__main__':
         os.mkdir(f_name)
     syn_proba = 0.6
     min_syn_size = 0.1
+    with_glia = False
     log = initialize_logging('analysis prep', log_dir=f_name + '/logs/')
     log.info(f'Data based on the working directory {global_params.wd} will be cached')
     log.info('Compared to v4 (agglo2) this involves new synapse, mitochondria and vesicle cloud predictions; new celltype trainings but old skeletons and compartments')
-    log.info('syn_prob = %.2f, min syn size = %.2f' % (syn_proba, min_syn_size))
+    log.info('syn_prob = %.2f, min syn size = %.2f, with_glia = %s' % (syn_proba, min_syn_size, with_glia))
     log.info("Step 0: Loading synapse data on all cells")
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     # celltypes: j0256: STN = 0, DA = 1, MSN = 2, LMAN = 3, HVC = 4, TAN = 5, GPe = 6, GPi = 7,
     #                      FS=8, LTS=9, NGF=10, ASTRO = 11, OLIGO = 12, MICRO = 13, FRAG = 14
-    ct_dict = analysis_params.ct_dict(with_glia=True)
+    ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     ax_list = analysis_params.axon_cts()
     ct_list = list(ct_dict.keys())
-    ct_str = analysis_params.ct_str(with_glia=True)
+    ct_str = analysis_params.ct_str(with_glia=with_glia)
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m = syn_prob > syn_proba
     m_cts = sd_synssv.load_numpy_data("partner_celltypes")[m]

@@ -42,7 +42,6 @@ if __name__ == '__main__':
     ax_list = analysis_params.axon_cts()
     ct_list = list(ct_dict.keys())
     ct_str = analysis_params.ct_str(with_glia=with_glia)
-    raise ValueError
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m = syn_prob > syn_proba
     m_cts = sd_synssv.load_numpy_data("partner_celltypes")[m]
@@ -148,7 +147,7 @@ if __name__ == '__main__':
         log.info('Create statistics about axon number depending on length')
         axon_ids = list(axon_dict.keys())
         cell_number_info.loc[ct_dict[ct], 'total'] = len(axon_ids)
-        axon_lengths = np.array([axon_dict[ci]['axon length'] for ci in list(axon_dict.keys)])
+        axon_lengths = np.array([axon_dict[ci]['axon length'] for ci in axon_ids])
         for test_length in lengths_to_test:
             cellids_axon_length_suitable = axon_ids[axon_lengths >= test_length]
             cell_number_info.loc[ct_dict[ct], f'axon length >= {test_length} µm'] = len(cellids_axon_length_suitable)

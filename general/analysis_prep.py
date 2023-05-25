@@ -121,7 +121,6 @@ if __name__ == '__main__':
         step_idents = ["cell number depending on axon/dendrite lengths %s prepared" % ct_dict[ct]]
         log.info("cell number depending on axon/dendrite lengths %s prepared" % ct_dict[ct])
 
-
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
         cell_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == axct]
@@ -145,19 +144,18 @@ if __name__ == '__main__':
         step_idents = ["axon dictionaries for celltype %s prepared" % ct_dict[axct]]
         log.info("axon dictionaries for celltype %s prepared" % ct_dict[axct])
         log.info('Create statistics about axon number depending on length')
-        axon_ids = list(axon_dict.keys())
-        cell_number_info.loc[ct_dict[ct], 'total'] = len(axon_ids)
+        axon_ids = np.array(list(axon_dict.keys()))
+        cell_number_info.loc[ct_dict[axct], 'total'] = len(axon_ids)
         axon_lengths = np.array([axon_dict[ci]['axon length'] for ci in axon_ids])
         for test_length in lengths_to_test:
             cellids_axon_length_suitable = axon_ids[axon_lengths >= test_length]
-            cell_number_info.loc[ct_dict[ct], f'axon length >= {test_length} µm'] = len(cellids_axon_length_suitable)
+            cell_number_info.loc[ct_dict[axct], f'axon length >= {test_length} µm'] = len(cellids_axon_length_suitable)
         time_stamps = [time.time()]
-        step_idents = ["axon number depending on axon/dendrite lengths %s prepared" % ct_dict[ct]]
-        log.info("axon number depending on axon/dendrite lengths %s prepared" % ct_dict[ct])
+        step_idents = ["axon number depending on axon/dendrite lengths %s prepared" % ct_dict[axct]]
+        log.info("axon number depending on axon/dendrite lengths %s prepared" % ct_dict[axct])
 
     cell_number_info.to_csv(f'{f_name}/cell_numbers.csv')
     time_stamps = [time.time()]
-    step_idents('Cell number infos saved, analysis finished')
     log.info('Cell number infos saved, analysis finished')
 
 

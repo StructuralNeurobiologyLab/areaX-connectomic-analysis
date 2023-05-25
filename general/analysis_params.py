@@ -30,7 +30,7 @@ class Analysis_Params(object):
         self.file_locations = {file_locations[version]}
         self._merger_file_location = "/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl"
         self._pot_astros_file_location = 'cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl'
-        self._cell_dicts_location = '/cajal/nvmescratch/users/arother/j0251v4_prep/'
+        self._cell_dicts_location = file_locations[version]
 
     def working_dir(self):
         return self._working_dir

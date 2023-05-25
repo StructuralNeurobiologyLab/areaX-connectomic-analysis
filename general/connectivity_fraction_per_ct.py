@@ -12,10 +12,11 @@
 #save this in dictionary, table as well (can plot table as matrix then; one table for input (fragments, full cells), output)
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from analysis_morph_helper import check_comp_lengths_ct
+    from analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses
+    from result_helper import ConnMatrix
+    from analysis_colors import CelltypeColors
+    from analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -26,29 +27,27 @@ if __name__ == '__main__':
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
-    import scipy
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    global_params.wd = "ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = 'cajal/nvmescratch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2'
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v4')
+    ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len = 200
     syn_prob = 0.6
     min_syn_size = 0.1
-    msn_ct = 2
-    lman_ct = 3
-    gpi_ct = 7
     exclude_known_mergers = True
     cls = CelltypeColors()
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'STNGP'
+    color_key = 'TePkBr'
     plot_connmatrix_only = False
     fontsize = 20
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230213_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
+    annot = True
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230524_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
     min_comp_len, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -64,7 +63,7 @@ if __name__ == '__main__':
     axon_cts = [1, 3, 4]
     log.info("Step 1/3: Load cell dicts and get suitable cellids")
     if exclude_known_mergers:
-        known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
+        known_mergers = analysis_params.load_known_mergers()
     #To Do: also exlclude MSNs from list
     celltypes = np.array([ct_dict[ct] for ct in ct_dict])
     num_cts = len(celltypes)
@@ -75,8 +74,7 @@ if __name__ == '__main__':
     for ct in tqdm(range(num_cts)):
         ct_str = ct_dict[ct]
         if ct in axon_cts:
-            cell_dict = load_pkl2obj(
-            "/cajal/nvmescratch/users/arother/j0251v4_prep/ax_%.3s_dict.pkl" % ct_str)
+            cell_dict = analysis_params.load_cell_dict(ct)
             #get ids with min compartment length
             cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
@@ -85,14 +83,13 @@ if __name__ == '__main__':
                               max_path_len=None)
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(cellids)
         else:
-            cell_dict = load_pkl2obj(
-                "/cajal/nvmescratch/users/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_str)
+            cell_dict = analysis_params.load_cell_dict(ct)
             cellids = np.array(list(cell_dict.keys()))
             if exclude_known_mergers:
                 merger_inds = np.in1d(cellids, known_mergers) == False
                 cellids = cellids[merger_inds]
             if ct == 2:
-                misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
+                misclassified_asto_ids = analysis_params.load_potential_astros()
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
@@ -254,6 +251,7 @@ if __name__ == '__main__':
                         filter_ax=[0,2], filter_ids=suitable_ids_dict[ct], return_syn_arrays=False,
                         filter_pre_ids=None, filter_post_ids=None)
                 else:
+                    #raise ValueError
                     unique_in_ssvs, in_syn_sizes, in_syn_numbers = get_number_sum_size_synapses(
                         syn_ids=in_ids, syn_sizes=in_sizes, syn_ssv_partners=in_ssv_partners,
                         syn_axs=in_axs, syn_cts=in_cts, ct=ct, cellids=suitable_ids_dict[ct],
@@ -349,7 +347,7 @@ if __name__ == '__main__':
                             ylabel = 'synapse number'
                         else:
                             ylabel = 'sum of synapse size [µm²]'
-                    sns.stripplot(data=result_df, color="black", alpha=0.2,
+                    sns.stripplot(data=result_df, palette='dark:black', alpha=0.2,
                                   dodge=True, size=2)
                     sns.violinplot(data=result_df, inner="box",
                                         palette=ct_palette)
@@ -424,7 +422,6 @@ if __name__ == '__main__':
     # column is pre, index = postsynapse
     #cmap_heatmap = sns.color_palette('crest', as_cmap=True)
     cmap_heatmap = sns.light_palette('black', as_cmap=True)
-    annot = True
     inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs.astype(float), title = 'Numbers of incoming synapses', filename = f_name, cmap = cmap_heatmap)
     inc_numbers_abs.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
     inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synnumbers_rel.astype(float), title = 'Percentage of incoming synapse numbers', filename = f_name, cmap = cmap_heatmap)

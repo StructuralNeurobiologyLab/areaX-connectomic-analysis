@@ -30,12 +30,12 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    global_params.wd = 'cajal/nvmescratch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2'
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = 'cajal/nvmescratch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2'
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v4')
+    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len = 200
     syn_prob = 0.6
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     plot_connmatrix_only = False
     fontsize = 20
     annot = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230524_j0251v4_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230524_j0251v5_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
     min_comp_len, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -95,7 +95,8 @@ if __name__ == '__main__':
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                                 axon_only=False,
                                                 max_path_len=None)
-            all_cellids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == ct]
+            #new wd has celltype_cnn_e3 for same celltypes as agglo2 and celltype_pts_e3 for other celltypes
+            all_cellids = ssd.ssv_ids[ssd.load_numpy_data("celltype_pts_e3") == ct]
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(all_cellids)
             del all_cellids
         full_cell_dicts[ct] = cell_dict
@@ -106,6 +107,7 @@ if __name__ == '__main__':
 
         all_suitable_ids.append(cellids_checked)
 
+    raise ValueError
     all_suitable_ids = np.concatenate(all_suitable_ids)
     write_obj2pkl("%s/suitable_ids_allct.pkl" % f_name, suitable_ids_dict)
     cts_numbers_perct.to_csv("%s/numbers_perct.csv" % f_name)

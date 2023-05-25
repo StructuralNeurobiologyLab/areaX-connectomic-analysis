@@ -42,6 +42,8 @@ if __name__ == '__main__':
     ax_list = analysis_params.axon_cts()
     ct_list = list(ct_dict.keys())
     ct_str = analysis_params.ct_str(with_glia=with_glia)
+    celltype_key = analysis_params.celltype_key()
+    log.info(f'Celltype key {celltype_key} is used with version {analysis_params._version}')
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m = syn_prob > syn_proba
     m_cts = sd_synssv.load_numpy_data("partner_celltypes")[m]
@@ -74,7 +76,7 @@ if __name__ == '__main__':
         time_stamps = [time.time()]
         step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[ct]]
         log.info("Find full cells")
-        cell_array, cell_dict = find_full_cells(ssd, celltype=ct)
+        cell_array, cell_dict = find_full_cells(ssd, celltype=ct, key=celltype_key)
         log.info(f'{len(cell_array)} full cells for celltype {ct_dict[ct]} found')
         time_stamps = [time.time()]
         step_idents = ["full cells (axon, dendrite, soma present) for celltype %s found" % ct_dict[ct]]
@@ -106,7 +108,7 @@ if __name__ == '__main__':
         step_idents = ["full cell dictionaries for celltype %s prepared" % ct_dict[ct]]
         log.info("full cell dictionaries for celltype %s prepared" % ct_dict[ct])
         log.info('Create statistics about cell number depending on axon or dendrite length')
-        cell_number_info.loc[ct_dict[ct], 'total'] = len(ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == ct])
+        cell_number_info.loc[ct_dict[ct], 'total'] = len(ssd.ssv_ids[ssd.load_numpy_data(celltype_key) == ct])
         cell_number_info.loc[ct_dict[ct], 'full cells'] = len(cell_array)
         axon_lengths = np.array([cell_dict[ci]['axon length'] for ci in cell_array])
         dendrite_lengths = np.array([cell_dict[ci]['dendrite length'] for ci in cell_array])
@@ -123,13 +125,13 @@ if __name__ == '__main__':
 
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
-        cell_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == axct]
+        cell_ids = ssd.ssv_ids[ssd.load_numpy_data(celltype_key) == axct]
         axon_syns = synapse_amount_percell(celltype = axct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
                                                                 syn_axs = m_axs, axo_denso = True, all_comps = False)
         time_stamps = [time.time()]
         step_idents = ["per cell synapse data for celltype %s prepared" % ct_dict[axct]]
         log.info("Get axon length and surface area")
-        axon_dict = get_axon_length_area_perct(ssd, celltype = axct)
+        axon_dict = get_axon_length_area_perct(ssd, celltype = axct, key=celltype_key)
         for axonid in list(axon_dict.keys()):
             try:
                 axon_dict[axonid]["axon synapse amount"] = axon_syns[axonid]["amount"]

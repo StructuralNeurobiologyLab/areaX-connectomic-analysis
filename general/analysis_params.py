@@ -27,10 +27,12 @@ class Analysis_Params(object):
         file_locations = {'v3': '/cajal/nvmescratch/users/arother/j0251v3_prep/',
                                'v4': "/cajal/nvmescratch/users/arother/j0251v4_prep/",
                                'v5': "/cajal/nvmescratch/users/arother/j0251v5_prep/"}
-        self.file_locations = {file_locations[version]}
+        self.file_locations = file_locations[version]
         self._merger_file_location = "/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl"
         self._pot_astros_file_location = 'cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl'
-        self._cell_dicts_location = file_locations[version]
+        self._cell_dicts_location = self.file_locations
+        celltype_keys = {'v3':'celltype_cnn_e3', 'v4':'celltype_cnn_e3', 'v5':'celltype_pts_e3'}
+        self._celltype_key = celltype_keys[version]
 
     def working_dir(self):
         return self._working_dir
@@ -81,8 +83,11 @@ class Analysis_Params(object):
 
     def load_cell_dict(self, celltype):
         if celltype in self._axon_cts:
-            cell_dict = load_pkl2obj('%s/ax_%.3s_dict.pkl' % (self._cell_dicts_location, self._ct_dict[celltype]))
+            cell_dict = load_pkl2obj(f'{self._cell_dicts_location}/ax_{self._ct_dict[celltype]:.3s}_dict.pkl')
         else:
-            cell_dict = load_pkl2obj('%s/full_%.3s_dict.pkl' % (self._cell_dicts_location, self._ct_dict[celltype]))
+            cell_dict = load_pkl2obj(f'{self._cell_dicts_location}/full_{self._ct_dict[celltype]:.3s}_dict.pkl')
         return cell_dict
+
+    def celltype_key(self):
+        return self._celltype_key
         

@@ -45,15 +45,17 @@ def get_per_cell_morphology_params(cellid):
     return [cellid,params_dict]
     
 
-def find_full_cells(ssd, celltype):
+def find_full_cells(ssd, celltype, key):
     """
     function finds full cells of a specific celltype if the cells have a dendrite, soma and axon in axoness_avg10000.
     :param ssd: segmentation dataset
     :param celltype: number of the celltype that is searched for; celltypes: j0126: STN=0, modulatory=1, MSN=2, LMAN=3, HVC=4, GP=5, INT=6
     # j0251: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7, FS=8, LTS=9, NGF=10
+    :param key to get celltypes for agglo2: celltype_cnn_e3, for v5 new celltypes: celltype_pts_e3
     :return: an array with cell_ids of the full_cells and if soma centre was calculated also a dictionary for each cell with its soma_centre
     """
-    celltype_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
+    #for agglo2: celltype_cnn_e3, for v5: celltype_pts_e3
+    celltype_ids = ssd.ssv_ids[ssd.load_numpy_data(key) == celltype]
     p = pool.Pool()
     output = p.map(get_per_cell_morphology_params, tqdm(celltype_ids))
     output = np.array(output)
@@ -78,7 +80,7 @@ def get_per_cellfrag_morph_params(cellfragmentid):
     mesh_surface_area = mesh_area_calc(cellfragment.mesh)
     return [length, mesh_surface_area]
 
-def get_axon_length_area_perct(ssd, celltype):
+def get_axon_length_area_perct(ssd, celltype, key):
     """
     writes axon length and axon surface mesh area in dictionary with each cell.
     :param ssd: ssd: segmentation dataset
@@ -86,7 +88,7 @@ def get_axon_length_area_perct(ssd, celltype):
     # j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7, FS=8, LTS=9, NGF=10
     :return: dictionary with axon length and surface mesh area
     """
-    axon_ids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
+    axon_ids = ssd.ssv_ids[ssd.load_numpy_data(key) == celltype]
     p = pool.Pool()
     output = p.map(get_per_cellfrag_morph_params, tqdm(axon_ids))
     output = np.array(output)

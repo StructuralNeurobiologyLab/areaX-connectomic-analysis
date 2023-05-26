@@ -9,54 +9,60 @@ if __name__ == '__main__':
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     from syconn.reps.segmentation import SegmentationDataset
     from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
-    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
-    sd_csssv = SegmentationDataset("cs_ssv", working_dir=global_params.config.working_dir)
+    ssd = SuperSegmentationDataset(working_dir=global_params.wd)
+    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
+    sd_csssv = SegmentationDataset("cs_ssv", working_dir=global_params.wd)
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
+    ct_dict = analysis_params.ct_dict(with_glia=False)
     cl = 200
-    syn_prob = 0.8
+    syn_prob = 0.6
     min_syn_size = 0.1
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221005_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f_ranksums" % (cl, syn_prob)
+    gpe_ct = 6
+    gpi_ct = 7
+    msn_ct = 2
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221005_j0251v4_MSN_connGP_comparison_mcl_%i_synprob_%.2f_ranksums" % (cl, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity, mergers excluded', log_dir=f_name + '/logs/')
     log.info("MSN percentile comparison starts")
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    f_name_saving = "cajal/nvmescratch/users/arother/j0251v4_prep"
+    f_name_saving = "cajal/nvmescratch/users/arother/j0251v5_prep"
 
-    known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
+    known_mergers = analysis_params.load_known_mergers()
 
-    GPe_ids = load_pkl2obj(
-        "cajal/nvmescratch/users/arother/j0251v4_prep/full_GPe_arr.pkl")
+    GPe_dict = analysis_params.load_cell_dict(gpe_ct)
+    GPe_ids = np.array(list(GPe_dict.keys()))
     merger_inds = np.in1d(GPe_ids, known_mergers) == False
     GPe_ids = GPe_ids[merger_inds]
 
-    GPi_ids = load_pkl2obj(
-        "cajal/nvmescratch/users/arother/j0251v4_prep/full_GPi_arr.pkl")
+    GPi_dict = analysis_params.load_cell_dict(gpi_ct)
+    GPi_ids = np.array(list(GPi_dict.keys()))
     merger_inds = np.in1d(GPi_ids, known_mergers) == False
     GPi_ids = GPi_ids[merger_inds]
 
-    MSN_ids = load_pkl2obj(
-        "cajal/nvmescratch/users/arother/j0251v4_prep/full_MSN_arr.pkl")
+    MSN_dict = analysis_params.load_cell_dict(celltype=msn_ct)
+    MSN_ids = np.array(list(MSN_dict.keys()))
     merger_inds = np.in1d(MSN_ids, known_mergers) == False
     MSN_ids = MSN_ids[merger_inds]
-    misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
+    misclassified_asto_ids = analysis_params.load_potential_astros()
     astro_inds = np.in1d(MSN_ids, misclassified_asto_ids) == False
     MSN_ids = MSN_ids[astro_inds]
 
+    cell_dicts = [MSN_dict, GPe_dict, GPi_dict]
+
     log.info("Step 1/11: sort MSN based on connectivity to GPe and GPi")
     msn2gpe_ids, msn2gpi_ids, msn2gpei_ids, msn_nogp_ids = sort_by_connectivity(sd_synssv, sd_csssv = None, ct1 = 2, ct2 = 6, ct3 = 7, cellids1 = MSN_ids, cellids2 = GPe_ids, cellids3 = GPi_ids,
-                         f_name = f_name, f_name_saving = f_name_saving, min_comp_len = cl, syn_prob_thresh = syn_prob, min_syn_size = min_syn_size)
+                         f_name = f_name, celldicts= cell_dicts, f_name_saving = f_name_saving, min_comp_len = cl, syn_prob_thresh = syn_prob, min_syn_size = min_syn_size)
 
     time_stamps = [time.time()]
     step_idents = ['sort MSN via connectivity to GPe/i finished']
@@ -68,15 +74,15 @@ if __name__ == '__main__':
 
     log.info("Step 2/11: Compare new MSN groups based on morphology")
     MSN_only_GPe_results = axon_den_arborization_ct(ssd, celltype = 2, filename = f_name, cellids = msn2gpe_ids,
-                                                    min_comp_len = cl, full_cells = True, percentile = None, label_cts = "MSN only GPe", spiness = True)
+                                                    min_comp_len = cl, full_cell_dict = MSN_dict, percentile = None, label_cts = "MSN only GPe", spiness = True)
     MSN_only_GPi_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn2gpi_ids,
-                                                    min_comp_len=cl, full_cells=True, percentile=None,
+                                                    min_comp_len=cl, full_cell_dict = MSN_dict, percentile=None,
                                                     label_cts="MSN only GPi", spiness =True)
     MSN_both_GP_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn2gpei_ids,
-                                                    min_comp_len=cl, full_cells=True, percentile=None,
+                                                    min_comp_len=cl, full_cell_dict = MSN_dict, percentile=None,
                                                     label_cts="MSN both GPs", spiness = True)
     MSN_no_GP_results = axon_den_arborization_ct(ssd, celltype=2, filename=f_name, cellids=msn_nogp_ids,
-                                                    min_comp_len=cl, full_cells=True, percentile=None,
+                                                    min_comp_len=cl, full_cell_dict = MSN_dict, percentile=None,
                                                     label_cts="MSN no GPs", spiness = True)
     result_files = [MSN_only_GPe_results, MSN_only_GPi_results, MSN_both_GP_results, MSN_no_GP_results]
     compare_compartment_volume_ct_multiple(celltypes= msn_cts, filename=f_name, filename_cts=result_files, min_comp_len=cl, label_cts=labels_cts,

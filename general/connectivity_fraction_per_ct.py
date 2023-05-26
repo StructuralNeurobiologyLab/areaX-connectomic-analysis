@@ -37,25 +37,27 @@ if __name__ == '__main__':
     start = time.time()
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = analysis_params.ct_dict(with_glia=False)
-    min_comp_len = 200
+    celltype_key = analysis_params.celltype_key()
+    min_comp_len_ax = 200
+    min_comp_len_cells = 200
     syn_prob = 0.6
     min_syn_size = 0.1
     exclude_known_mergers = True
     cls = CelltypeColors()
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'TePkBr'
+    color_key = 'STNGP'
     plot_connmatrix_only = False
     fontsize = 20
     annot = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230524_j0251v5_cts_percentages_mcl_%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
-    min_comp_len, syn_prob, color_key, fontsize)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230525_j0251v5_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
+    min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     save_svg = True
     log = initialize_logging('Celltypes input output percentages', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
-        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key))
+        "min_comp_len = %i for full cells, min_comp_len = %i for axons, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
+        min_comp_len_cells, min_comp_len_ax, syn_prob, min_syn_size, exclude_known_mergers, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -79,7 +81,7 @@ if __name__ == '__main__':
             cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len, axon_only=True,
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax, axon_only=True,
                               max_path_len=None)
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(cellids)
         else:
@@ -92,11 +94,11 @@ if __name__ == '__main__':
                 misclassified_asto_ids = analysis_params.load_potential_astros()
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cells,
                                                 axon_only=False,
                                                 max_path_len=None)
             #new wd has celltype_cnn_e3 for same celltypes as agglo2 and celltype_pts_e3 for other celltypes
-            all_cellids = ssd.ssv_ids[ssd.load_numpy_data("celltype_pts_e3") == ct]
+            all_cellids = ssd.ssv_ids[ssd.load_numpy_data(celltype_key) == ct]
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(all_cellids)
             del all_cellids
         full_cell_dicts[ct] = cell_dict
@@ -107,7 +109,7 @@ if __name__ == '__main__':
 
         all_suitable_ids.append(cellids_checked)
 
-    raise ValueError
+
     all_suitable_ids = np.concatenate(all_suitable_ids)
     write_obj2pkl("%s/suitable_ids_allct.pkl" % f_name, suitable_ids_dict)
     cts_numbers_perct.to_csv("%s/numbers_perct.csv" % f_name)

@@ -1,6 +1,6 @@
 from collections import defaultdict
 import numpy as np
-from analysis_morph_helper import get_compartment_length, get_compartment_mesh_area
+from .analysis_morph_helper import get_compartment_length, get_compartment_mesh_area
 from tqdm import tqdm
 import pandas as pd
 from collections import defaultdict

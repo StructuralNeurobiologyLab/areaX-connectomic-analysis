@@ -2,7 +2,7 @@
 #similar to CT_input_syn_distance_analysis
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import get_compartment_specific_connectivity
+    from connectivity_between2cts import get_compartment_specific_connectivity
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors, CompColors
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import time
@@ -20,16 +20,17 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    global_params.wd = "ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
-    bio_params = Analysis_Params(global_params.wd)
-    ct_dict = bio_params.ct_dict()
+    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
+    ct_dict = bio_params.ct_dict(with_glia=False)
     #min_comp_len = bio_params.min_comp_length()
-    min_comp_len = 200
-    syn_prob = bio_params.syn_prob_thresh()
-    min_syn_size = bio_params.min_syn_size()
+    min_comp_len_cell = 200
+    min_comp_len_ax = 50
+    syn_prob = 0.6
+    min_syn_size = 0.1
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGP'
@@ -39,8 +40,8 @@ if __name__ == '__main__':
     comp_color_key = 'TeBk'
     save_svg = True
     fontsize = 20
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221129_j0251v4_%s_input_comps_mcl_%i_synprob_%.2f_%s_%s" % (
-    post_ct_str, min_comp_len, syn_prob, color_key, comp_color_key)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v5_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s" % (
+    post_ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
@@ -48,8 +49,8 @@ if __name__ == '__main__':
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
-        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
-        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key))
+        "min_comp_len = %i for full cells, min_comp_len = %i for axons, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
+        min_comp_len_cell, min_comp_len_ax, syn_prob, min_syn_size, exclude_known_mergers, color_key))
     log.info(f'Distance of synapses for celltypes {cts_str_analysis} will be compared to {post_ct_str}')
     time_stamps = [time.time()]
     step_idents = ['t-0']
@@ -77,11 +78,11 @@ if __name__ == '__main__':
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
         if ct in axon_cts:
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
                                                     axon_only=True,
                                                     max_path_len=None)
         else:
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
                                                     axon_only=False,
                                                     max_path_len=None)
         suitable_ids_dict[ct] = cellids_checked

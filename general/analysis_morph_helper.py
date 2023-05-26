@@ -464,6 +464,34 @@ def generate_colored_mesh_synprob_data(args):
     cell.save_skeleton_to_kzip(kzip_out_skel)
     return
 
+def get_per_cell_mito_myelin_info(input):
+    '''
+    Function to get information about myelin fraction, mitochondria density and axon radius per cell
+    :param input: cellid, cached mitochondria information, cell dict which cached cellids for celltype
+    :return: median radius per cell, mitochondria volume density, myelin fraction
+    '''
+    cellid, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, full_cell_dict = input
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    myelin_results = get_myelin_fraction(cellid=cellid, cell=cell, min_comp_len=min_comp_len, load_skeleton=False)
+    abs_myelin_cell = myelin_results[0]
+    rel_myelin_cell = myelin_results[1]
+    if abs_myelin_cell == 0:
+        return [0, 0, 0]
+    mito_results = get_organell_volume_density(cellid=cellid, cell=cell, cached_so_ids=cached_mito_ids,
+                                               cached_so_rep_coord=cached_mito_rep_coords,
+                                               cached_so_volume=cached_mito_volumes,
+                                               full_cell_dict=full_cell_dict, k=3, min_comp_len=100,
+                                               skeleton_loaded=True)
+    den_mito_density_cell = mito_results[1]
+    axo_mito_volume_density_cell = mito_results[2]
+    if den_mito_density_cell == 0:
+        return [0, 0, 0]
+    axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
+    axon_radii_cell = get_compartment_radii(cell, comp_inds=axon_inds)
+    ax_median_radius_cell = np.median(axon_radii_cell)
+    return [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
+
 
 
 

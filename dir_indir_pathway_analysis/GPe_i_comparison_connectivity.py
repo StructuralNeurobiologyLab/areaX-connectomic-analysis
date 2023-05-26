@@ -1,8 +1,8 @@
 #script for looking at GPe/i connectivity with FS, STN, TAN
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
+    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import AnalysisParams
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -10,17 +10,17 @@ if __name__ == '__main__':
     from syconn.reps.segmentation import SegmentationDataset
     import os as os
     import pandas as pd
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_nx_graph
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
     comp_length = 200
-    syn_prob = 0.8
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220505_j0251v4_GPe_i_comparison_mcl_%i_synprob_%.2f" % (comp_length, syn_prob)
+    syn_prob = 0.6
+    f_name = "wholebrain/scratch/arother/bio_analysis_results/dir_indir_pathway_analysis/220505_j0251v5_GPe_i_comparison_mcl_%i_synprob_%.2f" % (comp_length, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -29,6 +29,7 @@ if __name__ == '__main__':
     step_idents = ['t-0']
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                    #10: "NGF"}
+    analysis_params = AnalysisParams(working_dir = global_params.wd, version = 'v5')
 
     GPe_ids = load_pkl2obj(
         "/wholebrain/scratch/arother/j0251v4_prep/full_GPe_arr.pkl")
@@ -42,7 +43,7 @@ if __name__ == '__main__':
        # "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr_hp_v3.pkl")
 
 
-    """
+
     log.info("Step 1/5: GPe/i compartment comparison")
     # calculate parameters such as axon/dendrite length, volume, tortuosity and compare within celltypes
     result_GPe_filename = axon_den_arborization_ct(ssd, celltype=6, filename=f_name, cellids = GPe_ids, full_cells=True, min_comp_len = comp_length)
@@ -51,7 +52,7 @@ if __name__ == '__main__':
 
     time_stamps = [time.time()]
     step_idents = ["compartment comparison finished"]
-    """
+
 
     log.info("Step 2/5: GPe and GPi connectivity")
     # see how GPe and GPi are connected

@@ -24,13 +24,13 @@ if __name__ == '__main__':
     import seaborn as sns
     from itertools import product
 
-    #global_params.wd = "cajal/nvmescrastch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "cajal/nvmescrastch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     global_params.wd = "ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
-    analysis_params = Analysis_Params(global_params.wd)
+    analysis_params = Analysis_Params(working_dir = global_params.wd, version='v5')
     ct_dict = analysis_params.ct_dict()
     min_comp_len = 200
-    min_comp_len_lman = 2000
+    min_comp_len_lman = 200
     handpicked_LMAN = False
     # samples per ct
     syn_prob = 0.8
@@ -41,10 +41,10 @@ if __name__ == '__main__':
     color_key = 'TeBk'
     fontsize = 20
     if handpicked_LMAN:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230320_j0251v4_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v5_ct_LMAN_MSN_STN_mcl_%i_k%s_sp_%.1f_ms_%.1f_LMANhp" % (
             min_comp_len, color_key, syn_prob, min_syn_size)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230320_j0251v4_ct_LMAN_MSN_STN_mcl_%i_mcllman_%i_k%s_sp_%.1f_ms_%.1f" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v5_ct_LMAN_MSN_STN_mcl_%i_mcllman_%i_k%s_sp_%.1f_ms_%.1f" % (
             min_comp_len, min_comp_len_lman, color_key, syn_prob, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

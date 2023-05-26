@@ -100,16 +100,15 @@ class ResultsForPlotting():
         if bins is None:
             bins = "auto"
         if norm_hist:
-            sns.distplot(self.dictionary[key], hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color},
-             kde=False, norm_hist=True, bins=bins)
+            sns.histplot(self.dictionary[key], fill=False, element="step", bins=bins, common_norm=True, legend=True,
+                         color = self.color, linewidth = 3)
             if cells:
                 plt.ylabel("fraction of cells")
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            sns.distplot(self.dictionary[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color},
-                         kde=False, norm_hist=False, bins=bins)
+            sns.histplot(self.dictionary[key], fill=False, element="step", bins=bins, common_norm=False, legend=True,
+                         color=self.color, linewidth = 3)
             if cells:
                 plt.ylabel("count of cells")
             else:
@@ -148,7 +147,7 @@ class ResultsForPlotting():
     def plot_violin_params(self, key, param_list,subcell, xlabel = None, ticks = None, stripplot = True, celltype2 = None, outgoing = False):
         sns.violinplot(data=param_list, inner="box")
         if stripplot:
-            sns.stripplot(data=param_list, color="black", alpha=0.2, size=2)
+            sns.stripplot(data=param_list, palette='dark:black', alpha=0.2, size=2)
         if xlabel:
             if ticks is None:
                 raise ValueError("need labels and ticks")
@@ -173,7 +172,7 @@ class ResultsForPlotting():
     def plot_box_params(self, key, param_list,subcell, xlabel = None, ticks = None, stripplot = True, celltype2 = None, outgoing = False):
         sns.violinplot(data=param_list, inner="box")
         if stripplot:
-            sns.stripplot(data=param_list, color="black", alpha=0.2, size = 2)
+            sns.stripplot(data=param_list, palette='dark:black', alpha=0.2, size = 2)
         if xlabel:
             if ticks is None:
                 raise ValueError("need labels and ticks")
@@ -247,7 +246,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
                 TypeError("unknown dictionary entry")
         self.color_palette = {celltype1: color1, celltype2: color2}
 
-    def plot_hist_comparison(self, key, subcell, cells = True, add_key = None, norm_hist = False, bins = None, xlabel = None, title = None, conn_celltype = None, outgoing = False):
+    def plot_hist_comparison(self, key, result_df, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, title = None, conn_celltype = None, outgoing = False):
         """
                  plots two arrays and compares them in histogram and saves it.
                  :param key: key of dictionary that should be plotted
@@ -263,21 +262,11 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         if bins is None:
             bins = "auto"
         if norm_hist:
-            sns.distplot(self.dictionary1[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
-                         kde=False, norm_hist=True, bins=bins, label = self.celltype1)
-            sns.distplot(self.dictionary2[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color2},
-                         kde=False, norm_hist=True, bins=bins, label=self.celltype2)
-            if add_key:
-                try:
-                    sns.distplot(self.dictionary1[add_key],
-                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
-                                 kde=False, norm_hist=True, bins=bins, label=add_key)
-                except KeyError:
-                    sns.distplot(self.dictionary2[add_key],
-                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
-                                 kde=False, norm_hist=True, bins=bins, label=add_key)
+            sns.histplot(result_df, fill=False,element="step", bins = bins, common_norm=True, legend = True,
+                         palette=self.color_palette, linewidth = 3)
+            #sns.displot(self.dictionary2[key],
+            #             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color2},
+            #             kde=False, norm_hist=True, bins=bins, label=self.celltype2)
             if cells:
                 plt.ylabel("fraction of cells")
             elif "pair" in key:
@@ -285,28 +274,14 @@ class ComparingResultsForPLotting(ResultsForPlotting):
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            sns.distplot(self.dictionary1[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color1},
-                         kde=False, norm_hist=False, bins=bins, label=self.celltype1)
-            sns.distplot(self.dictionary2[key],
-                         hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color2},
-                         kde=False, norm_hist=False, bins=bins, label=self.celltype2)
-            if add_key:
-                try:
-                    sns.distplot(self.dictionary1[add_key],
-                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
-                                 kde=False, norm_hist=False, bins=bins, label=add_key)
-                except KeyError:
-                    sns.distplot(self.dictionary2[add_key],
-                                 hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": "gray"},
-                                 kde=False, norm_hist=False, bins=bins, label=add_key)
+            sns.histplot(result_df, fill=False, element="step", bins=bins, common_norm=False, legend=True,
+                         palette=self.color_palette, linewidth = 3)
             if cells:
                 plt.ylabel("count of cells")
             elif "pair" in key:
                 plt.ylabel("count of %s pairs" % subcell)
             else:
                 plt.ylabel("count of %s" % subcell)
-        plt.legend()
         plt.xticks(fontsize = 20)
         plt.yticks(fontsize = 20)
         if xlabel:
@@ -425,7 +400,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         """
         sns.violinplot(data=result_df, inner="box", palette=self.color_palette)
         if stripplot:
-            sns.stripplot(data=result_df, color="black", alpha=0.2, size = 2)
+            sns.stripplot(data=result_df, palette='dark:black', alpha=0.2, size = 2)
         plt.ylabel(self.param_label(key, subcell))
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
@@ -455,7 +430,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         """
         sns.boxplot(data=result_df, palette=self.color_palette)
         if stripplot:
-            sns.stripplot(data=result_df, color="black", alpha=0.2, size=2)
+            sns.stripplot(data=result_df, palette='dark:black', alpha=0.2, size=2)
         plt.ylabel(self.param_label(key, subcell))
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
@@ -485,7 +460,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         :return: None
         """
         if stripplot:
-            sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
+            sns.stripplot(x=x, y=key, data=results_df, hue=hue, palette='dark:black', alpha=0.2,
                           dodge=True, size = 2)
             ax = sns.violinplot(x=x, y=key, data=results_df.reset_index(), inner="box",
                                 palette=self.color_palette, hue=hue)
@@ -523,7 +498,7 @@ class ComparingResultsForPLotting(ResultsForPlotting):
         :return: None
         """
         if stripplot:
-            sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
+            sns.stripplot(x=x, y=key, data=results_df, hue=hue, palette='dark:black', alpha=0.2,
                           dodge=True, size = 2)
             ax = sns.boxplot(x=x, y=key, data=results_df.reset_index(),
                                 palette=self.color_palette, hue=hue)
@@ -604,11 +579,11 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         if x is None:
             sns.boxplot(data=result_df, palette=self.color_palette)
             if stripplot:
-                sns.stripplot(data=result_df, color="black", alpha=0.2, size = 2)
+                sns.stripplot(data=result_df, palette='dark:black', alpha=0.2, size = 2)
         else:
             sns.boxplot(x = x, y = key, data=result_df, palette=self.color_palette)
             if stripplot:
-                sns.stripplot(x = x, y = key, data=result_df, color="black", alpha=0.2, size = 2)
+                sns.stripplot(x = x, y = key, data=result_df, palette='dark:black', alpha=0.2, size = 2)
         plt.ylabel(self.param_label(key, subcell))
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
@@ -655,7 +630,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
                 "%s/%s_%s_%s_%s_violin.svg" % (self.filename, key, self.celltypes[0], self.celltypes[1], self.celltypes[2]))
         plt.close()
 
-    def plot_hist_comparison(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, outgoing = False):
+    def plot_hist_comparison(self, key, subcell, result_df, hue = None, cells = True, norm_hist = False, bins = None, xlabel = None, outgoing = False):
         """
                  plots two arrays and compares them in histogram and saves it.
                  :param key: key of dictionary that should be plotted
@@ -669,10 +644,12 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         if bins is None:
             bins = "auto"
         if norm_hist:
-            for i in range(len(list(self.celltypes.keys()))):
-                sns.distplot(self.dictionaries[i][key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1, "color": self.color_palette[self.celltypes[i]]},
-                             kde=False, norm_hist=True, bins=bins, label=self.celltypes[i])
+            if hue is None:
+                sns.histplot(result_df, fill=False, element="step", bins=bins, common_norm=True, legend=True,
+                             palette=self.color_palette, linewidth=3)
+            else:
+                sns.histplot(result_df, x= key, hue = hue, fill=False, element="step", bins=bins, common_norm=True, legend=True,
+                             palette=self.color_palette, linewidth=3)
             if cells:
                 plt.ylabel("fraction of cells")
             elif "pair" in key:
@@ -680,18 +657,19 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            for i in range(len(list(self.celltypes.keys()))):
-                sns.distplot(self.dictionaries[i][key],
-                             hist_kws={"histtype": "step", "linewidth": 3, "alpha": 1,
-                                       "color": self.color_palette[self.celltypes[i]]},
-                             kde=False, norm_hist=False, bins=bins, label=self.celltypes[i])
+            if hue is None:
+                sns.histplot(result_df, fill=False, element="step", bins=bins, common_norm=False, legend=True,
+                         palette=self.color_palette, linewidth=3)
+            else:
+                sns.histplot(result_df, x=key, hue=hue, fill=False, element="step", bins=bins, common_norm=True,
+                             legend=True,
+                             palette=self.color_palette, linewidth=3)
             if cells:
                 plt.ylabel("count of cells")
             elif "pair" in key:
                 plt.ylabel("count of %s pairs" % subcell)
             else:
                 plt.ylabel("count of %s" % subcell)
-        plt.legend()
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
         if xlabel:
@@ -780,7 +758,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         :return: None
         """
         if stripplot:
-            sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
+            sns.stripplot(x=x, y=key, data=results_df, hue=hue, palette='dark:black', alpha=0.2,
                           dodge=True, size=2)
             ax = sns.violinplot(x=x, y=key, data=results_df.reset_index(), inner="box",
                                 palette=self.color_palette, hue=hue)
@@ -818,7 +796,7 @@ class ComparingMultipleForPLotting(ResultsForPlotting):
         :return: None
         """
         if stripplot:
-            sns.stripplot(x=x, y=key, data=results_df, hue=hue, color="black", alpha=0.2,
+            sns.stripplot(x=x, y=key, data=results_df, hue=hue, palette='dark:black', alpha=0.2,
                           dodge=True, s = 2)
             ax = sns.boxplot(x=x, y=key, data=results_df.reset_index(),
                                 palette=self.color_palette, hue=hue)

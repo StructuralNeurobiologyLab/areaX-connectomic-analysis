@@ -21,16 +21,15 @@ class Analysis_Params(object):
         self._axoness_dict = {0: 'dendrite', 1:'axon', 2:'soma'}
         self._spiness_dict = {0: 'spine neck', 1: 'spine head', 2:'dendritic shaft', 3:'other'}
         self._axon_cts = [1, 3, 4]
-        self._syn_prob_tresh = 0.8
+        self._syn_prob_tresh = 0.6
         self._min_syn_size = 0.1
         self._min_comp_length = 200
         file_locations = {'v3': '/cajal/nvmescratch/users/arother/j0251v3_prep/',
                                'v4': "/cajal/nvmescratch/users/arother/j0251v4_prep/",
                                'v5': "/cajal/nvmescratch/users/arother/j0251v5_prep/"}
         self.file_locations = file_locations[version]
-        self._merger_file_location = "/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl"
-        self._pot_astros_file_location = 'cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl'
-        self._cell_dicts_location = self.file_locations
+        self._merger_file_location = f'{self.file_locations}/merger_arr.pkl'
+        self._pot_astros_file_location = f'{self.file_locations}/pot_astro_ids.pkl'
         celltype_keys = {'v3':'celltype_cnn_e3', 'v4':'celltype_cnn_e3', 'v5':'celltype_pts_e3'}
         self._celltype_key = celltype_keys[version]
 
@@ -83,10 +82,17 @@ class Analysis_Params(object):
 
     def load_cell_dict(self, celltype):
         if celltype in self._axon_cts:
-            cell_dict = load_pkl2obj(f'{self._cell_dicts_location}/ax_{self._ct_dict[celltype]:.3s}_dict.pkl')
+            cell_dict = load_pkl2obj(f'{self.file_locations}/ax_{self._ct_dict[celltype]:.3s}_dict.pkl')
         else:
-            cell_dict = load_pkl2obj(f'{self._cell_dicts_location}/full_{self._ct_dict[celltype]:.3s}_dict.pkl')
+            cell_dict = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]:.3s}_dict.pkl')
         return cell_dict
+
+    def load_full_cell_array(self, celltype):
+        if celltype in self._axon_cts:
+            raise ValueError('This function is only available for full cells. You are trying to load it with a celltype where only axons are available')
+        else:
+            cell_array = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]:.3s}_arr.pkl')
+        return cell_array
 
     def celltype_key(self):
         return self._celltype_key

@@ -15,13 +15,10 @@ from scipy.stats import ranksums
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes, get_cell_nodes_ax
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids, get_contact_site_axoness_percell
 from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_prep_func import synapse_amount_percell
 from multiprocessing import pool
 from functools import partial
-from syconn.reps.super_segmentation import SuperSegmentationObject
-import scipy
 
-def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, sd_csssv = None, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
+def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, celldicts, sd_csssv = None, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     """
     sort one celltype into 4 groups based on connectivty to two other celltypes. Groups will be only one of them, neither or both.
     Also synapse amount, sum of synaptic area and cellids of the cells they synapsed onto will be looked at.
@@ -31,6 +28,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     :param cellids1, cellids2, cellids3: cellids of corresponding celltypes, will be checked for
     minimal compartment length
     :param f_name: filename where plots should be saved
+    :param celldicts: list of three dictionaries for loading full celldicts
     :param sd_csssv: segmentation dataset for contact sites
     :param f_name_saving: where cellids should be saved, if not given then f_name
     :param full_celldict1, full_celldict2, full_celledcit3: dictionaries with parameters of correpsonding celltypes
@@ -41,9 +39,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     """
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
-    full_celldict1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[ct1])
-    full_celldict2 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[ct2])
-    full_celldict3 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[ct3])
+    full_celldict1 , full_celldict2, full_celldict3 = celldicts
     if f_name_saving is None:
         f_name_saving = f_name
     log = initialize_logging('subpopulation grouping per connectivity', log_dir=f_name + '/logs/')
@@ -412,8 +408,8 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
         ranksum_results.loc["p value - " + key, r_columns[2]] = p_value_b3
         conn_synapses.plot_violin(key = key, x = "connection to cts", result_df = conn_df, subcell="synapse", stripplot=True)
         conn_synapses.plot_box(key=key, x = "connection to cts", result_df=conn_df, subcell="synapse", stripplot=False)
-        conn_synapses.plot_hist_comparison(key=key, subcell="synapse", cells=True, norm_hist = True, bins= 10)
-        conn_synapses.plot_hist_comparison(key=key, subcell="synapse", cells=True, norm_hist=False, bins=10)
+        conn_synapses.plot_hist_comparison(key=key, subcell="synapse", result_df=conn_df, hue = 'connection to cts', cells=True, norm_hist = True, bins= 10)
+        conn_synapses.plot_hist_comparison(key=key, subcell="synapse", result_df=conn_df, hue = 'connection to cts', cells=True, norm_hist=False, bins=10)
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 

@@ -10,7 +10,7 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from scipy.stats import ranksums
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_myelin_fraction, get_compartment_radii, get_organell_volume_density, check_comp_lengths_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_myelin_fraction, get_compartment_radii, get_organell_volume_density, check_comp_lengths_ct, get_per_cell_mito_myelin_info
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import  ComparingResultsForPLotting
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
@@ -18,21 +18,21 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
     from multiprocessing import pool
-    from functools import partial
 
     from tqdm import tqdm
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
-    bio_params = Analysis_Params(global_params.wd)
+    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = bio_params.ct_dict()
-    min_comp_len = bio_params.min_comp_length()
+    min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221123_j0251v4_GPe_i_hpv3_myelin_mito_radius_%i_newcolors" % min_comp_len
+    fontsize_jointplot = 10
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -57,9 +57,6 @@ if __name__ == '__main__':
                                     axon_only=True,
                                     max_path_len=None)
 
-    axon_median_radius_gpe = np.zeros(len(GPe_ids))
-    axon_mito_volume_density_gpe = np.zeros(len(GPe_ids))
-    axon_myelin_gpe = np.zeros(len(GPe_ids))
     axon_median_radius_gpi = np.zeros(len(GPi_ids))
     axon_mito_volume_density_gpi = np.zeros(len(GPi_ids))
     axon_myelin_gpi = np.zeros(len(GPi_ids))
@@ -71,33 +68,14 @@ if __name__ == '__main__':
 
 
     log.info("Step 1/3: Get information from GPe")
-    for i, cellid in enumerate(tqdm(GPe_ids)):
-        cell = SuperSegmentationObject(cellid)
-        cell.load_skeleton()
-        myelin_results= get_myelin_fraction(cellid = cellid, cell = cell, min_comp_len = min_comp_len, load_skeleton = False)
-        abs_myelin_cell = myelin_results[0]
-        rel_myelin_cell = myelin_results[1]
-        if abs_myelin_cell == 0:
-            continue
-        #cell.load_skeleton()
-        mito_results = get_organell_volume_density(cellid = cellid, cell = cell, cached_so_ids = cached_mito_ids,
-                                    cached_so_rep_coord = cached_mito_rep_coords, cached_so_volume = cached_mito_volumes,
-                                    full_cell_dict = GPe_full_cell_dict, k=3, min_comp_len=100, skeleton_loaded = True)
-        axo_mito_density_cell = mito_results[0]
-        den_mito_density_cell = mito_results[1]
-        axo_mito_volume_density_cell = mito_results[2]
-        den_mito_volume_density_cell = mito_results[3]
-        if den_mito_density_cell == 0:
-            continue
-        axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
-        axon_radii_cell = get_compartment_radii(cell, comp_inds = axon_inds)
-        ax_median_radius_cell = np.median(axon_radii_cell)
-        dendrite_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 0)[0]
-        den_radii_cell = get_compartment_radii(cell, comp_inds=dendrite_inds)
-        den_median_radius_cell = np.median(den_radii_cell)
-        axon_median_radius_gpe[i] = ax_median_radius_cell
-        axon_mito_volume_density_gpe[i] = axo_mito_volume_density_cell
-        axon_myelin_gpe[i] = rel_myelin_cell
+    p = pool.Pool()
+    gpe_input = [[gpe_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, GPe_full_cell_dict] for gpe_id in GPe_ids]
+    gpe_output = p.map(get_per_cell_mito_myelin_info, tqdm(gpe_input))
+    gpe_output = np.array(gpe_output)
+    #[ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
+    axon_median_radius_gpe = gpe_output[:, 0]
+    axon_mito_volume_density_gpe = gpe_output[:, 1]
+    axon_myelin_gpe = gpe_output[:, 2]
 
     gpe_nonzero = axon_median_radius_gpe > 0
     GPe_params = {"axon median radius": axon_median_radius_gpe[gpe_nonzero], "axon mitochondria volume density": axon_mito_volume_density_gpe[gpe_nonzero],
@@ -110,35 +88,15 @@ if __name__ == '__main__':
     step_idents = ["GPe axon parameters collected"]
 
     log.info("Step 2/3: Get information from GPi")
-    for i, cellid in enumerate(tqdm(GPi_ids)):
-        cell = SuperSegmentationObject(cellid)
-        cell.load_skeleton()
-        myelin_results = get_myelin_fraction(cellid=cellid, cell=cell, min_comp_len=min_comp_len, load_skeleton=False)
-        abs_myelin_cell = myelin_results[0]
-        rel_myelin_cell = myelin_results[1]
-        if abs_myelin_cell == 0:
-            continue
-        # cell.load_skeleton()
-        mito_results = get_organell_volume_density(cellid=cellid, cell=cell, cached_so_ids=cached_mito_ids,
-                                                   cached_so_rep_coord=cached_mito_rep_coords,
-                                                   cached_so_volume=cached_mito_volumes,
-                                                   full_cell_dict=GPi_full_cell_dict, k=3, min_comp_len=100,
-                                                   skeleton_loaded=True)
-        axo_mito_density_cell = mito_results[0]
-        den_mito_density_cell = mito_results[1]
-        axo_mito_volume_density_cell = mito_results[2]
-        den_mito_volume_density_cell = mito_results[3]
-        if den_mito_density_cell == 0:
-            continue
-        axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
-        axon_radii_cell = get_compartment_radii(cell, comp_inds=axon_inds)
-        ax_median_radius_cell = np.median(axon_radii_cell)
-        dendrite_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 0)[0]
-        den_radii_cell = get_compartment_radii(cell, comp_inds=dendrite_inds)
-        den_median_radius_cell = np.median(den_radii_cell)
-        axon_median_radius_gpi[i] = ax_median_radius_cell
-        axon_mito_volume_density_gpi[i] = axo_mito_volume_density_cell
-        axon_myelin_gpi[i] = rel_myelin_cell
+    gpi_input = [
+        [gpi_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, GPi_full_cell_dict] for
+        gpi_id in GPi_ids]
+    gpi_output = p.map(get_per_cell_mito_myelin_info, tqdm(gpi_input))
+    gpi_output = np.array(gpi_output)
+    # [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
+    axon_median_radius_gpi = gpi_output[:, 0]
+    axon_mito_volume_density_gpi = gpi_output[:, 1]
+    axon_myelin_gpi = gpi_output[:, 2]
 
     gpi_nonzero = axon_median_radius_gpi > 0
     GPi_params = {"axon median radius": axon_median_radius_gpi[gpi_nonzero],
@@ -176,8 +134,8 @@ if __name__ == '__main__':
             subcell = "axon"
         results_comparison.plot_violin(key, results_for_plotting, subcell=subcell, stripplot=True)
         results_comparison.plot_box(key, results_for_plotting, subcell=subcell, stripplot=False)
-        results_comparison.plot_hist_comparison(key, subcell=subcell, bins=10, norm_hist=False)
-        results_comparison.plot_hist_comparison(key, subcell=subcell, bins=10, norm_hist=True)
+        results_comparison.plot_hist_comparison(key, results_for_plotting, subcell=subcell, bins=10, norm_hist=False)
+        results_comparison.plot_hist_comparison(key, results_for_plotting, subcell=subcell, bins=10, norm_hist=True)
         all_param_df.loc[0: GPe_len - 1, key] = GPe_params[key]
         all_param_df.loc[GPe_len: sum_length - 1, key] = GPi_params[key]
 
@@ -193,9 +151,14 @@ if __name__ == '__main__':
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot,  fill = True, alpha = 0.3,
                          kde=False, bins=10, palette = results_comparison.color_palette)
-        plt.legend()
-        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize = 20)
-        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=20)
+        g.ax_joint.set_xticks(g.ax_joint.get_xticks())
+        g.ax_joint.set_yticks(g.ax_joint.get_yticks())
+        if g.ax_joint.get_xticks()[0] < 0:
+            g.ax_marg_x.set_xlim(0)
+        if g.ax_joint.get_yticks()[0] < 0:
+            g.ax_marg_y.set_ylim(0)
+        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize = fontsize_jointplot)
+        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize= fontsize_jointplot)
         if "radius" in x:
             plt.xlabel("%s in µm" % x)
         elif "volume density" in x:

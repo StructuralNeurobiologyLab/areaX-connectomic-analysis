@@ -23,14 +23,15 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    global_params.wd = "ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
 
-    bio_params = Analysis_Params(global_params.wd)
+    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = bio_params.ct_dict()
-    min_comp_len = bio_params.min_comp_length()
+    min_comp_len_cell = 200
+    min_comp_len_ax = 50
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
     msn_ct = 2
@@ -43,8 +44,8 @@ if __name__ == '__main__':
     dist2ct = 2
     dist2ct_str = ct_dict[dist2ct]
     save_svg = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221124_j0251v4_%s_syn_distances_mcl_%i_synprob_%.2f_%s" % (
-    dist2ct_str, min_comp_len, syn_prob, color_key)
+    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v5_%s_syn_distances_mcl_%i_ax%i_synprob_%.2f_%s" % (
+    dist2ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
@@ -52,8 +53,8 @@ if __name__ == '__main__':
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
-        "min_comp_len = %i, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s, only from dendrite = %s" % (
-        min_comp_len, syn_prob, min_syn_size, exclude_known_mergers, color_key, only_dendrite))
+        "min_comp_len = %i for full cells, min_comp_len = %i for axons, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s, only from dendrite = %s" % (
+        min_comp_len_cell, min_comp_len_ax, syn_prob, min_syn_size, exclude_known_mergers, color_key, only_dendrite))
     log.info(f'Distance of synapses for celltypes {cts_str_analysis} will be compared to {dist2ct_str}')
     time_stamps = [time.time()]
     step_idents = ['t-0']
@@ -79,11 +80,11 @@ if __name__ == '__main__':
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
         if ct in axon_cts:
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
                                                     axon_only=True,
                                                     max_path_len=None)
         else:
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
                                                     axon_only=False,
                                                     max_path_len=None)
         suitable_ids_dict[ct] = cellids_checked

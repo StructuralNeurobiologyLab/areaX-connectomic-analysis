@@ -6,8 +6,6 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_ct_syn_number_sumsize
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import SubCT_Colors
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import \
-        sort_by_connectivity
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -18,26 +16,24 @@ if __name__ == '__main__':
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
-    from scipy.stats import ranksums
-    import scipy
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    global_params.wd = "ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
 
-    bio_params = Analysis_Params(global_params.wd)
+    bio_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = bio_params.ct_dict()
-    min_comp_len = bio_params.min_comp_length()
+    min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
     exclude_known_mergers = True
     #color keys: 'MSN','TeYw','MudGrays'}
     color_key = 'MSN'
     save_svg = True
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221125_j0251v4_GPe_MSN_NGF_loop_mcl_%i_synprob_%.2f_%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v4_GPe_MSN_NGF_loop_mcl_%i_synprob_%.2f_%s" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -216,7 +212,7 @@ if __name__ == '__main__':
     max_ct_id_length = np.max(ct_nums[:-1])
     result_df = pd.DataFrame(index=range(max_ct_id_length))
     # only put ngf, gpe that are part of loop
-    result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN ids'] = msn_rec_ssvs
+    result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN ids'] = msn_rec_ssvs.astype(int)
     result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN syn number from NGF'] = msn_syn_numbers
     result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN sum syn size from NGF'] = msn_syn_ssv_sizes
     result_df.loc[0: len(msn_rec_ssvs) -1, 'MSN number of NGF cells'] = msn_ngf_number
@@ -256,14 +252,14 @@ if __name__ == '__main__':
             log.info('All GPe project to NGF that then projct to MSN')
     else:
         log.info('All NGF that receive GPe input project to MSN')
-    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF ids'] = ngf_proj_ssvs
+    result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF ids'] = ngf_proj_ssvs.astype(int)
     result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF syn number from GPe'] = ngf_syn_numbers
     result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF sum syn size from GPe'] = ngf_syn_ssv_sizes
     result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF number of GPe cells'] = ngf_gpe_number
     result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF syn number to MSN'] = ngfmsn_syn_numbers
     result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF sum syn size to MSN'] = ngfmsn_syn_ssv_sizes
     result_df.loc[0: len(ngf_proj_ssvs) -1,'NGF number of MSN cells'] = ngf_msn_number
-    result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe ids'] = gpe_proj_ssvs
+    result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe ids'] = gpe_proj_ssvs.astype(int)
     result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe syn number to NGF'] = gpe_syn_numbers
     result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe sum syn size to NGF'] = gpe_syn_ssv_sizes
     result_df.loc[0: len(gpe_proj_ssvs) -1,'GPe number of NGF cells'] = gpe_ngf_number
@@ -287,7 +283,7 @@ if __name__ == '__main__':
     step_idents = ['get NGF-MSN information']
 
     log.info('Step 4/4: Get MSN ids for their connectivity to GPe and GPi')
-    saving_dir = 'cajal/nvmescratch/users/arother/j0251v4_prep'
+    saving_dir = 'cajal/nvmescratch/users/arother/j0251v5_prep'
     msn_2_gpi_ids = load_pkl2obj(f'{saving_dir}/full_MSN_2_GPi_arr_{min_comp_len}.pkl')
     msn_2_gpe_ids = load_pkl2obj(f'{saving_dir}/full_MSN_2_GPe_arr_{min_comp_len}.pkl')
     msn_2_bothgp_ids = load_pkl2obj(f'{saving_dir}/full_MSN_2_GPeGPi_arr_{min_comp_len}.pkl')

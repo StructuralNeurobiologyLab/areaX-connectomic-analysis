@@ -11,10 +11,11 @@ from scipy.stats import ranksums
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_compartment_syn_number_sumsize
 from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph, ComparingMultipleForPLotting
+from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_param import Analysis_Params
 
 
 
-def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = None, cellids2 = None, full_cells = True, percentile_ct1 = None,
+def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, celltype2 = None, cellids2 = None, full_cells = True, percentile_ct1 = None,
                          min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8, label_ct1 = None, label_ct2 = None, limit_multisynapse = None):
     '''
     looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
@@ -26,6 +27,8 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
                       FS=8, LTS=9, NGF=10
     :param cellids1, cellids2: cellids for celltypes 1 and 2
+    :param wd: workingd directory
+    :param version: version of the data for knowing the right file locations of caches
     :param full_cells: if True: full_cell_dict will be tried to load for celltypes
     :param percentile_ct1: if given, different subpopulations within a celltype will be compared
     :param min_comp_len: minimum length for axon/dendrite to have to include cell in analysis
@@ -37,8 +40,11 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     '''
 
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    analysis_params = Analysis_Params(working_dir = wd, version = version)
+    #{0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+              # 10: "NGF"}
+    ct_dict = analysis_params.ct_dict(with_glia=False)
+    known_mergers = analysis_params.load_known_mergers()
     if label_ct1 is None:
         ct1_str = ct_dict[celltype1]
     else:
@@ -72,13 +78,12 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     step_idents = ['t-0']
     if full_cells:
         try:
-            full_cell_dict_ct1 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype1])
+            full_cell_dict_ct1 = analysis_params.load_cell_dict(celltype1)
         except FileNotFoundError:
             print("preprocessed parameters not available for ct1")
     if celltype2 is not None and celltype2 != celltype1:
         try:
-            full_cell_dict_ct2 = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype2])
+            full_cell_dict_ct2 = analysis_params.load_cell_dict(celltype2)
         except FileNotFoundError:
             print("preprocessed parameters not available for ct2")
     else:
@@ -87,6 +92,8 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
     log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     cellids1 = check_comp_lengths_ct(cellids1, fullcelldict = full_cell_dict_ct1, min_comp_len = min_comp_len)
+    merger_inds = np.in1d(cellids1, known_mergers) == False
+    cellids1 = cellids1[merger_inds]
 
     ct1time = time.time() - start
     print("%.2f sec for iterating through %s cells" % (ct1time, ct1_str))
@@ -95,6 +102,8 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
 
     log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
     cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct2, min_comp_len = min_comp_len)
+    merger_inds = np.in1d(cellids2, known_mergers) == False
+    cellids2 = cellids2[merger_inds]
 
 
 
@@ -430,8 +439,8 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, celltype2 = N
 
     return f_name
 
-def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2, full_cells_ct2= True,
-                         min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8, label_ct1 = None, label_ct2 = None):
+def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2, wd, version, full_cells_ct2= True,
+                         min_comp_len_cell = 200, min_comp_len_ax = 50, min_syn_size = 0.1, syn_prob_thresh = 0.8, label_ct1 = None, label_ct2 = None):
     '''
     looks at basic connectivty parameters between two celltypes (one axon: ct1) such as amount of synapses, average of synapses between cell types but also
     the average from one cell to the same other cell. Also looks at distribution of axo_dendritic synapses onto spines/shaft and the percentage of axo-somatic
@@ -442,8 +451,10 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     :param celltype1, celltype2: celltypes to be compared. j0256: STN=0, DA=1, MSN=2, LMAN=3, HVC=4, TAN=5, GPe=6, GPi=7,
                       FS=8, LTS=9, NGF=10
     :param cellids1, cellids2: cellids for celltypes 1 and 2
+    :param wd working directory
+    :param version: version to know where cache files are stored
     :param full_cells_ct2: if True: full_cell_dict will be tried to load for celltype 2
-    :param min_comp_len: minimum length for axon/dendrite to have to include cell in analysis
+    :param min_comp_len_cell, muin_comp_len_ax: minimum length for axon/dendrite to have to include cell in analysis for full cells; axons
     :param min_syn_size: minimum size for synapses
     :param syn_prob_thresh: threshold for synapse probability
     :param label_ct1, label_ct2: label of celltypes or subgroups not in ct_dict
@@ -451,8 +462,11 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     '''
 
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    analysis_params = Analysis_Params(working_dir=wd, version=version)
+    # {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+    # 10: "NGF"}
+    ct_dict = analysis_params.ct_dict(with_glia=False)
+    known_mergers = analysis_params.load_known_mergers()
     if label_ct1 is None:
         ct1_str = ct_dict[celltype1]
     else:
@@ -462,32 +476,30 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     else:
         ct2_str = label_ct2
 
-    f_name = "%s/syn_conn_%s_2_%s_mcl%i_sysi_%.2f_st_%.2f" % (
-            filename, ct1_str, ct2_str, min_comp_len, min_syn_size, syn_prob_thresh)
+    f_name = "%s/syn_conn_%s_2_%s_mcl%i_ax%i_sysi_%.2f_st_%.2f" % (
+            filename, ct1_str, ct2_str, min_comp_len_cell, min_comp_len_ax, min_syn_size, syn_prob_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compartment volume estimation', log_dir=f_name + '/logs/')
-    log.info("parameters: celltype1 = %s, celltype2 = %s, min_comp_length = %.i, min_syn_size = %.2f, syn_prob_thresh = %.2f" %
-             (ct1_str, ct2_str, min_comp_len, min_syn_size, syn_prob_thresh))
+    log.info("parameters: celltype1 = %s, celltype2 = %s, min_comp_length = %i for cells, min_comp_length = %i for axons, min_syn_size = %.2f, syn_prob_thresh = %.2f" %
+             (ct1_str, ct2_str, min_comp_len_cell, min_comp_len_ax, min_syn_size, syn_prob_thresh))
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    ax_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/ax_%.3s_dict.pkl" % ct_dict[celltype1])
+    ax_dict = analysis_params.load_cell_dict(celltype1)
     if full_cells_ct2:
         try:
-            full_cell_dict_ct2 = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype2])
+            full_cell_dict_ct2 = analysis_params.load_cell_dict(celltype2)
         except FileNotFoundError:
             print("preprocessed parameters not available for ct1")
 
 
     log.info("Step 1/4 Iterate over %s to check min_comp_len" % ct1_str)
     # use axon and dendrite length dictionaries to lookup axon and dendrite length in future versions
-    checked_cells = np.zeros(len(cellids1))
-    for i, cellid in enumerate(tqdm(cellids1)):
-        cell_axon_length = ax_dict[cellid]["axon length"]
-        if cell_axon_length < min_comp_len:
-            continue
-        checked_cells[i] = cellid
-    cellids1 = checked_cells[checked_cells > 0]
+    cellids1 = check_comp_lengths_ct(cellids=cellids1, fullcelldict=ax_dict, min_comp_len=min_comp_len_ax,
+                                            axon_only=True,
+                                            max_path_len=None)
+    merger_inds = np.in1d(cellids1, known_mergers) == False
+    cellids1 = cellids1[merger_inds]
 
     ct1time = time.time() - start
     print("%.2f sec for iterating through %s cells" % (ct1time, ct1_str))
@@ -495,7 +507,10 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     step_idents.append('iterating over %s cells' % ct1_str)
 
     log.info("Step 2/4 Iterate over %s to check min_comp_len" % ct2_str)
-    cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct2, min_comp_len = min_comp_len)
+    cellids2 = check_comp_lengths_ct(cellids2, fullcelldict = full_cell_dict_ct2, min_comp_len = min_comp_len_cell,
+                                     axon_only = False)
+    merger_inds = np.in1d(cellids2, known_mergers) == False
+    cellids2 = cellids2[merger_inds]
 
 
 
@@ -712,7 +727,7 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
 
     return f_name
 
-def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 100, label_ct1 = None, label_ct2 = None,
+def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len_cell = 200, min_comp_len_ax = 50, label_ct1 = None, label_ct2 = None,
                          label_conn_ct = None, limit_multisynapse = None):
     '''
     compares connectivity parameters between two celltypes or connectivity of a third celltype to the two celltypes. Connectivity parameters are calculated in
@@ -753,20 +768,20 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             conn_ct_str = ct_dict[connected_ct]
         else:
             conn_ct_str = label_conn_ct
-        f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i" % (
-            filename, ct1_str, ct2_str, conn_ct_str, min_comp_len)
+        f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i_ax%i" % (
+            filename, ct1_str, ct2_str, conn_ct_str, min_comp_len_cell, min_comp_len_ax)
     else:
-        f_name = "%s/comp_conn_%s_%s_syn_con_comp_mcl%i" % (
-            filename, ct1_str, ct2_str, min_comp_len)
+        f_name = "%s/comp_conn_%s_%s_syn_con_comp_mcl%i_ax%i" % (
+            filename, ct1_str, ct2_str, min_comp_len_cell, min_comp_len_ax)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compare connectivty between two celltypes', log_dir=f_name + '/logs/')
     if connected_ct is not None:
-        log.info("parameters: celltype1 = %s,celltype2 = %s , connected ct = %s, min_comp_length = %.i" % (
-            ct1_str, ct2_str, conn_ct_str, min_comp_len))
+        log.info("parameters: celltype1 = %s,celltype2 = %s , connected ct = %s, min_comp_length = %.i for cells, min_comp_length = %i for axons" % (
+            ct1_str, ct2_str, conn_ct_str, min_comp_len_cell, min_comp_len_ax))
     else:
-        log.info("parameters: celltype1 = %s,celltype2 = %s, min_comp_length = %.i" % (
-           ct1_str, ct2_str, min_comp_len))
+        log.info("parameters: celltype1 = %s,celltype2 = %s, min_comp_length = %.i for cells, min_comp_length = %i for axons" % (
+           ct1_str, ct2_str, min_comp_len_cell, min_comp_len_ax))
     time_stamps = [time.time()]
     step_idents = ['t-0']
     if connected_ct is not None:

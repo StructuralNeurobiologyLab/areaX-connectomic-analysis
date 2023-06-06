@@ -9,6 +9,7 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_ves_distance_per_cell, get_ves_distance_multiple_per_cell
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
@@ -18,11 +19,14 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
-    min_comp_len = 200
+    #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+    #           10: "NGF"}
+    analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
+    ct_dict = analysis_params.ct_dict(with_glia=False)
+    min_comp_len_cell = 200
+    min_comp_len_ax = 50
     dist_threshold = [15, 10, 5] #nm
     #dist_threshold = 15
     cls = CelltypeColors()
@@ -30,22 +34,22 @@ if __name__ == '__main__':
     color_key = 'TePkBr'
     comp_color_key = 'TeYw'
     if type(dist_threshold) == list:
-        f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230202_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%i_%s_%s" % (
-            min_comp_len, dist_threshold[0], dist_threshold[1], color_key, comp_color_key)
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230531_j0251v5_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%i_%s_%s" % (
+            min_comp_len_cell, min_comp_len_ax, dist_threshold[0], dist_threshold[1], color_key, comp_color_key)
     else:
-        f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/230202_j0251v4_ct_dist2matrix_mcl_%i_dt_%i_%s_%s" % (
-            min_comp_len, dist_threshold, color_key, comp_color_key)
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230531_j0251v5_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%s_%s" % (
+            min_comp_len_cell, min_comp_len_ax, dist_threshold, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('get distribution of membrane distance for single vesicles', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i, colors = %s" % (
-            min_comp_len, color_key))
+        "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
+            min_comp_len_cell, min_comp_len_ax, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    known_mergers = load_pkl2obj("cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
+    known_mergers = analysis_params.load_known_mergers()
     log.info("Step 1/3: Prepare empty result DataFrames")
-    cache_name = "/cajal/nvmescratch/users/arother/j0251v4_prep"
+    cache_name = analysis_params.file_locations
 
     ct_palette = cls.ct_palette(color_key, num=False)
     comp_cls = CompColors()
@@ -78,25 +82,22 @@ if __name__ == '__main__':
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
         if ct in ax_ct:
-            cell_dict = load_pkl2obj(
-                f"{cache_name}/ax_%.3s_dict.pkl" % (ct_dict[ct]))
+            cell_dict = analysis_params.load_cell_dict(ct)
             cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
-            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
                                             axon_only=True, max_path_len=None)
         else:
-            cell_dict = load_pkl2obj(
-                f"{cache_name}/full_%.3s_dict.pkl" % (ct_dict[ct]))
-            cellids = load_pkl2obj(
-                f"{cache_name}/full_%.3s_arr.pkl" % ct_dict[ct])
+            cell_dict = analysis_params.load_cell_dict(ct)
+            cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
             if ct == 2:
-                misclassified_asto_ids = load_pkl2obj(f'{cache_name}/pot_astro_ids.pkl')
+                misclassified_asto_ids = analysis_params.load_potential_astros()
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
-            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
                                                 axon_only=False, max_path_len=None)
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
         log.info('Prefilter vesicles for celltype')

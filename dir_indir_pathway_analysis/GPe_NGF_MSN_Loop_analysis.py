@@ -33,7 +33,7 @@ if __name__ == '__main__':
     #color keys: 'MSN','TeYw','MudGrays'}
     color_key = 'MSN'
     save_svg = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v4_GPe_MSN_NGF_loop_mcl_%i_synprob_%.2f_%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230529_j0251v5_GPe_MSN_NGF_loop_mcl_%i_synprob_%.2f_%s" % (
     min_comp_len, syn_prob, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -203,7 +203,7 @@ if __name__ == '__main__':
         id_partners = m_ssv_partners[ind]
         ind = np.where(id_partners != msn_id)
         ngf_ids = np.unique(id_partners[ind])
-        msn_ngf_number[ni] = len(ngf_ids)
+        msn_ngf_number[mi] = len(ngf_ids)
     log.info(
         f'A median MSN receives syns from {np.median(msn_ngf_number)} NGF cells, with {np.median(msn_syn_numbers / msn_ngf_number):.2f}'
         f' synapses and {np.median(msn_syn_ssv_sizes / msn_ngf_number):.2f} synaptic area in µm²')

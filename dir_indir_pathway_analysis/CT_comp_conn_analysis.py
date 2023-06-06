@@ -34,18 +34,18 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGP'
-    post_ct = 10
+    post_ct = 6
     post_ct_str = ct_dict[post_ct]
     #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd, TeBk'}
     comp_color_key = 'TeBk'
     save_svg = True
-    fontsize = 20
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v5_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s" % (
-    post_ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key, comp_color_key)
+    fontsize = 10
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230529_j0251v5_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
+    post_ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key, comp_color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
-    cts_for_loading = [2, 3, 4, 6, 7, 10]
+    cts_for_loading = [0, 2, 3, 4,6]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -145,8 +145,9 @@ if __name__ == '__main__':
             all_comps_results_dict_percell.loc[start_ind: end_ind, 'celltype'] = ct_str
             for iy in range(len(syn_params)):
                 all_comps_results_dict.loc[ind_all_syns, param_titles[iy]] = syn_params[iy][compartment]
-                all_comps_results_dict_percell.loc[start_ind: end_ind, param_titles[iy]] = percell_params[iy][compartment]
+                all_comps_results_dict_percell.loc[start_ind: end_ind, param_titles[iy]] = percell_params[iy][compartment].astype(float)
 
+        all_comps_results_dict_percell = all_comps_results_dict_percell.convert_dtypes()
         f_name_ct = f'{f_name}/{ct_str}'
         if not os.path.exists(f_name_ct):
             os.mkdir(f_name_ct)
@@ -168,7 +169,7 @@ if __name__ == '__main__':
                 if save_svg:
                     plt.savefig(f'{f_name_ct}/{param_title}_per_cell_box.svg')
                 plt.close()
-                sns.stripplot(x = 'compartment', y = param_title, data = df_percell, color="black", alpha=0.2,
+                sns.stripplot(x = 'compartment', y = param_title, data = df_percell, color = 'black', alpha=0.2,
                               dodge=True, size=2)
                 sns.violinplot(x = 'compartment', y = param_title, data = df_percell, palette=comp_palette)
                 plt.ylabel(param_title)
@@ -209,7 +210,8 @@ if __name__ == '__main__':
             #make plots for data which is summarised per postsynaptic cell
             ranksum_results = pd.DataFrame()
             for comp in compartments:
-                comp_res_pc = all_comps_results_dict_percell[all_comps_results_dict_percell['compartment'] == comp]
+                comp_res_pc = pd.DataFrame(data = all_comps_results_dict_percell[all_comps_results_dict_percell['compartment'] == comp],
+                                           columns = all_comps_results_dict_percell.columns).astype(all_comps_results_dict_percell.dtypes)
                 comp_res_pc[param_title] = comp_res_pc[param_title].astype(float)
                 for c1 in cts_for_loading:
                     c1_str = ct_dict[c1]
@@ -226,7 +228,7 @@ if __name__ == '__main__':
                         ranksum_results.loc["p value " + comp + ' of ' + post_ct_str, c1_str + " vs " + c2_str] = p_value
                 # make violinplot, boxplot per compartment with all celltypes
                 ylabel = param_title
-                sns.stripplot(x = 'celltype', y = param_title, data=comp_res_pc, color="black", alpha=0.2,
+                sns.stripplot(x = 'celltype', y = param_title, data=comp_res_pc, color = 'black', alpha=0.2,
                               dodge=True, size=2)
                 sns.violinplot(x = 'celltype', y = param_title, data=comp_res_pc, inner="box",
                                palette=ct_palette)
@@ -256,7 +258,7 @@ if __name__ == '__main__':
             #make plot with all compartments
             all_comps_results_dict_percell[param_title] = all_comps_results_dict_percell[param_title].astype(float)
             ylabel = param_title
-            sns.stripplot(x = 'celltype', y = param_title, hue= 'compartment', data=all_comps_results_dict_percell, color="black", alpha=0.2,
+            sns.stripplot(x = 'celltype', y = param_title, hue= 'compartment', data=all_comps_results_dict_percell, palette='dark:black', alpha=0.2,
                           dodge=True, size=2, legend=False)
             sns.violinplot(x = 'celltype', y = param_title, hue= 'compartment', data=all_comps_results_dict_percell, inner="box",
                            palette=comp_palette)

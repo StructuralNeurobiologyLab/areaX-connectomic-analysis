@@ -11,7 +11,7 @@ from scipy.stats import ranksums
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_compartment_syn_number_sumsize
 from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph, ComparingMultipleForPLotting
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_param import Analysis_Params
+from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
 
 
 
@@ -39,7 +39,6 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, 
     :return: f_name: foldername in which results are stored
     '''
 
-    start = time.time()
     analysis_params = Analysis_Params(working_dir = wd, version = version)
     #{0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
               # 10: "NGF"}
@@ -95,8 +94,6 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, 
     merger_inds = np.in1d(cellids1, known_mergers) == False
     cellids1 = cellids1[merger_inds]
 
-    ct1time = time.time() - start
-    print("%.2f sec for iterating through %s cells" % (ct1time, ct1_str))
     time_stamps.append(time.time())
     step_idents.append('iterating over %s cells' % ct1_str)
 
@@ -105,19 +102,14 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, 
     merger_inds = np.in1d(cellids2, known_mergers) == False
     cellids2 = cellids2[merger_inds]
 
-
-
-    ct2time = time.time() - ct1time
-    print("%.2f sec for iterating through %s cells" % (ct2time, ct2_str))
     time_stamps.append(time.time())
     step_idents.append('iterating over %s cells' % ct2_str)
-
 
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")
     # prepare synapse caches with synapse threshold
     if celltype2 is not None and celltype2 != celltype1:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1, celltype2],
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_coords = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1, celltype2],
                                                                                                syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
     else:
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_coords = filter_synapse_caches_for_ct(sd_synssv,
@@ -125,13 +117,8 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, 
                                                                                                syn_prob_thresh=syn_prob_thresh,
                                                                                                min_syn_size=min_syn_size,
                                                                                                axo_den_so=True)
-
-    prepsyntime = time.time() - ct2time
-    print("%.2f sec for preprocessing synapses" % prepsyntime)
     time_stamps.append(time.time())
     step_idents.append('preprocessing synapses')
-
-
 
     log.info("Step 3b: iterate over synapses to get synaptic connectivity parameters")
     param_labels = ["amount synapses", "sum size synapses"]
@@ -205,8 +192,6 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, 
                 ct2_2_ct1_syn_dict[param_labels[0] + " - " + "soma"][cell1_ind] += 1
                 ct2_2_ct1_syn_dict[param_labels[1] + " - " + "soma"][cell1_ind] += syn_size
 
-    syntime = time.time() - prepsyntime
-    print("%.2f sec for processing synapses" % syntime)
     time_stamps.append(time.time())
     step_idents.append('processing synapses')
 
@@ -418,20 +403,18 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, 
             key2 = key_split[0] + "- " + comp_labels[1]
             key3 = key_split[0] + "- " + comp_labels[2]
             key4 = key_split[0] + "- " + comp_labels[3]
+            param_list_ct2 = [ct1_2_ct2_pd[key], ct1_2_ct2_pd[key2], ct1_2_ct2_pd[key3], ct1_2_ct2_pd[key4]]
+            param_list_ct1 = [ct2_2_ct1_pd[key], ct2_2_ct1_pd[key2], ct2_2_ct1_pd[key3], ct2_2_ct1_pd[key4]]
             if np.any(len(param_list_ct2) > 0):
-                param_list_ct2= [ct1_2_ct2_pd[key], ct1_2_ct2_pd[key2], ct1_2_ct2_pd[key3], ct1_2_ct2_pd[key4]]
                 ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = ct1_str, outgoing = False)
                 ct1_2_ct2_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct2, subcell="synapse",
                                                          stripplot=False, celltype2= ct1_str, outgoing = False)
-            if np.any(len(param_list_ct2) > 0):
-                param_list_ct1 = [ct2_2_ct1_pd[key], ct2_2_ct1_pd[key2], ct2_2_ct1_pd[key3], ct2_2_ct1_pd[key4]]
+            if np.any(len(param_list_ct1) > 0):
                 ct2_2_ct1_resultsdict.plot_violin_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
                                                          stripplot=True, celltype2=ct2_str, outgoing=False)
                 ct2_2_ct1_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct1, subcell="synapse",
                                                       stripplot=False, celltype2=ct2_str, outgoing=False)
 
-    plottime = time.time() - syntime
-    print("%.2f sec for calculating parameters, plotting" % plottime)
     time_stamps.append(time.time())
     step_idents.append('calculating last parameters, plotting')
 
@@ -461,7 +444,6 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     :return: f_name: foldername in which results are stored
     '''
 
-    start = time.time()
     analysis_params = Analysis_Params(working_dir=wd, version=version)
     # {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
     # 10: "NGF"}
@@ -501,8 +483,6 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     merger_inds = np.in1d(cellids1, known_mergers) == False
     cellids1 = cellids1[merger_inds]
 
-    ct1time = time.time() - start
-    print("%.2f sec for iterating through %s cells" % (ct1time, ct1_str))
     time_stamps.append(time.time())
     step_idents.append('iterating over %s cells' % ct1_str)
 
@@ -512,13 +492,8 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     merger_inds = np.in1d(cellids2, known_mergers) == False
     cellids2 = cellids2[merger_inds]
 
-
-
-    ct2time = time.time() - ct1time
-    print("%.2f sec for iterating through %s cells" % (ct2time, ct2_str))
     time_stamps.append(time.time())
     step_idents.append('iterating over %s cells' % ct2_str)
-
 
     log.info("Step 3/4 get synaptic connectivity parameters")
     log.info("Step 3a: prefilter synapse caches")
@@ -532,11 +507,9 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     else:
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1], post_cts = [celltype2],
                                                                                                syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
-    prepsyntime = time.time() - ct2time
-    print("%.2f sec for preprocessing synapses" % prepsyntime)
+
     time_stamps.append(time.time())
     step_idents.append('preprocessing synapses')
-
 
     log.info("Step 3b: iterate over synapses to get synaptic connectivity parameters")
     param_labels = ["amount synapses", "sum size synapses"]
@@ -589,8 +562,6 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
                 ct1_2_ct2_syn_dict[param_labels[0] + " - " + "soma"][cell2_ind] += 1
                 ct1_2_ct2_syn_dict[param_labels[1] + " - " + "soma"][cell2_ind] += syn_size
 
-    syntime = time.time() - prepsyntime
-    print("%.2f sec for processing synapses" % syntime)
     time_stamps.append(time.time())
     step_idents.append('processing synapses')
 
@@ -718,8 +689,7 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
             ct1_2_ct2_resultsdict.plot_violin_params(key = key_split[0], param_list = param_list_ct2, subcell = "synapse", stripplot= True, celltype2 = ct1_str, outgoing = False)
             ct1_2_ct2_resultsdict.plot_box_params(key=key_split[0], param_list=param_list_ct2, subcell="synapse",
                                                      stripplot=False, celltype2= ct1_str, outgoing = False)
-    plottime = time.time() - syntime
-    print("%.2f sec for calculating parameters, plotting" % plottime)
+
     time_stamps.append(time.time())
     step_idents.append('calculating last parameters, plotting')
 
@@ -727,7 +697,7 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
 
     return f_name
 
-def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len_cell = 200, min_comp_len_ax = 50, label_ct1 = None, label_ct2 = None,
+def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = None, percentile = None, foldername_ct1 = None, foldername_ct2 = None, min_comp_len = 200, min_comp_len_ax = None, label_ct1 = None, label_ct2 = None,
                          label_conn_ct = None, limit_multisynapse = None):
     '''
     compares connectivity parameters between two celltypes or connectivity of a third celltype to the two celltypes. Connectivity parameters are calculated in
@@ -742,7 +712,6 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
     :param limit_multisynapse: paramter for maximal number of connections
     :return: summed synapse sizes
     '''
-    start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     axon_cts = [1, 3, 4]
@@ -768,20 +737,32 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             conn_ct_str = ct_dict[connected_ct]
         else:
             conn_ct_str = label_conn_ct
-        f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i_ax%i" % (
-            filename, ct1_str, ct2_str, conn_ct_str, min_comp_len_cell, min_comp_len_ax)
+        if min_comp_len_ax is not None:
+            f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i_ax%i" % (
+                filename, ct1_str, ct2_str, conn_ct_str, min_comp_len, min_comp_len_ax)
+        else:
+            f_name = "%s/comp_conn_%s_%s_%s_syn_con_comp_mcl%i" % (
+                filename, ct1_str, ct2_str, conn_ct_str, min_comp_len)
     else:
-        f_name = "%s/comp_conn_%s_%s_syn_con_comp_mcl%i_ax%i" % (
-            filename, ct1_str, ct2_str, min_comp_len_cell, min_comp_len_ax)
+        if min_comp_len_ax is not None:
+            f_name = "%s/comp_conn_%s_%s_syn_con_comp_mcl%i_ax%i" % (
+                filename, ct1_str, ct2_str, min_comp_len, min_comp_len_ax)
+        else:
+            f_name = "%s/comp_conn_%s_%s_syn_con_comp_mcl%i" % (
+                filename, ct1_str, ct2_str, min_comp_len)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('compare connectivty between two celltypes', log_dir=f_name + '/logs/')
     if connected_ct is not None:
-        log.info("parameters: celltype1 = %s,celltype2 = %s , connected ct = %s, min_comp_length = %.i for cells, min_comp_length = %i for axons" % (
-            ct1_str, ct2_str, conn_ct_str, min_comp_len_cell, min_comp_len_ax))
+        log.info("parameters: celltype1 = %s,celltype2 = %s , connected ct = %s, min_comp_length = %.i for cells" % (
+            ct1_str, ct2_str, conn_ct_str, min_comp_len))
     else:
-        log.info("parameters: celltype1 = %s,celltype2 = %s, min_comp_length = %.i for cells, min_comp_length = %i for axons" % (
-           ct1_str, ct2_str, min_comp_len_cell, min_comp_len_ax))
+        if min_comp_len_ax is not None:
+            log.info("parameters: celltype1 = %s,celltype2 = %s, min_comp_length = %.i for cells, min_comp_length = %i for axons" % (
+               ct1_str, ct2_str, min_comp_len, min_comp_len_ax))
+        else:
+            log.info("parameters: celltype1 = %s,celltype2 = %s, min_comp_length = %.i for cells" % (
+                ct1_str, ct2_str, min_comp_len))
     time_stamps = [time.time()]
     step_idents = ['t-0']
     if connected_ct is not None:
@@ -837,8 +818,8 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ranksum_results.loc["stats", key] = stats
         ranksum_results.loc["p value", key] = p_value
         # plot parameter as violinplot
+        results_for_plotting = results_comparison.result_df_per_param(key)
         if "-" not in key:
-            results_for_plotting = results_comparison.result_df_per_param(key)
             if connected_ct is not None:
                 results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True, conn_celltype=conn_ct_str, outgoing=False)
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot= False,
@@ -848,23 +829,23 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False)
         if connected_ct is not None:
             if "all" in key:
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell="synapse", bins=10, cells=False, norm_hist=False,
                                                         conn_celltype=conn_ct_str, outgoing=False)
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell="synapse", bins=10, cells=False, norm_hist=True,
                                                         conn_celltype=conn_ct_str, outgoing=False)
             else:
-                results_comparison.plot_hist_comparison(key, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=conn_ct_str, outgoing=False)
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell = "synapse", bins = 10, norm_hist=False, conn_celltype=conn_ct_str, outgoing=False)
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell="synapse", bins=10, norm_hist=True,
                                                         conn_celltype=conn_ct_str, outgoing=False)
         else:
             if "all" in key:
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell="synapse", bins=10, cells=False, norm_hist=False,
                                                         outgoing=False)
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell="synapse", bins=10, cells=False, norm_hist=True,
                                                         outgoing=False)
             else:
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False)
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True)
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell="synapse", bins=10, norm_hist=False)
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell="synapse", bins=10, norm_hist=True)
 
     if connected_ct is not None:
         ranksum_results.to_csv("%s/ranksum_%s_2_%s_%s.csv" % (f_name, conn_ct_str, ct1_str, ct2_str))
@@ -952,21 +933,21 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
             ranksum_results.loc["stats", key] = stats
             ranksum_results.loc["p value", key] = p_value
             # plot parameter as violinplot
+            results_for_plotting = results_comparison.result_df_per_param(key)
             if not "spine" in key and not "soma" in key and not "shaft" in key:
-                results_for_plotting = results_comparison.result_df_per_param(key)
                 results_comparison.plot_violin(key, results_for_plotting, subcell="synapse", stripplot=True,
                                                conn_celltype=conn_ct_str, outgoing=True)
                 results_comparison.plot_box(key, results_for_plotting, subcell="synapse", stripplot=False,
                                             conn_celltype=conn_ct_str, outgoing=True)
             if "all" in key:
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=False,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting, subcell="synapse", bins=10, cells=False, norm_hist=False,
                                                         conn_celltype=conn_ct_str, outgoing=True)
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, cells=False, norm_hist=True,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting,subcell="synapse", bins=10, cells=False, norm_hist=True,
                                                         conn_celltype=conn_ct_str, outgoing=True)
             else:
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=False,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting,subcell="synapse", bins=10, norm_hist=False,
                                                         conn_celltype=conn_ct_str, outgoing=True)
-                results_comparison.plot_hist_comparison(key, subcell="synapse", bins=10, norm_hist=True,
+                results_comparison.plot_hist_comparison(key, result_df= results_for_plotting,subcell="synapse", bins=10, norm_hist=True,
                                                         conn_celltype=conn_ct_str, outgoing=True)
 
         ranksum_results.to_csv("%s/ranksum_%s_%s_2_%s_outgoing.csv" % (f_name, ct1_str, ct2_str, conn_ct_str))
@@ -1020,8 +1001,6 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         f_name, ct1_str, ct2_str)
     plot_nx_graph(results_dictionary = summed_synapse_sizes, filename = filename, title = "sum of synapse size")
 
-    plottime = time.time() - start
-    print("%.2f sec for statistics and plotting" % plottime)
     time_stamps.append(time.time())
     step_idents.append('comparing celltypes')
     log.info("comparing celltypes via connectivity finished")
@@ -1044,7 +1023,6 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     :param colours = list of colors that should be used for plotting, same length as comp_cts
     :return: summed synapse sizes
     '''
-    start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
     axon_cts = [1, 3, 4]
@@ -1241,8 +1219,6 @@ def compare_connectivity_multiple(comp_cts, filename, foldernames, connected_ct,
     filename = "%s/sum_synapse_size_ct_%s_%s_%s_nxgraph.png" % (f_name, label_cts[0], label_cts[1], conn_ct_str)
     plot_nx_graph(results_dictionary = summed_synapse_sizes, filename = filename, title = "sum of synapse size")
 
-    plottime = time.time() - start
-    print("%.2f sec for statistics and plotting" % plottime)
     time_stamps.append(time.time())
     step_idents.append('comparing celltypes')
     log.info("comparing celltypes via connectivity finished")

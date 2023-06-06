@@ -3,6 +3,7 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
     from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
         axon_den_arborization_ct, compare_compartment_volume_ct_multiple
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -31,7 +32,7 @@ if __name__ == '__main__':
     gpe_ct = 6
     gpi_ct = 7
     msn_ct = 2
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/221005_j0251v4_MSN_connGP_comparison_mcl_%i_ax%i_synprob_%.2f_ranksums" % (cl_cell, cl_ax, syn_prob)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230606_j0251v5_MSN_connGP_comparison_mcl_%i_ax%i_synprob_%.2f_ranksums" % (cl_cell, cl_ax, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity, mergers excluded', log_dir=f_name + '/logs/')
@@ -46,11 +47,17 @@ if __name__ == '__main__':
     GPe_ids = np.array(list(GPe_dict.keys()))
     merger_inds = np.in1d(GPe_ids, known_mergers) == False
     GPe_ids = GPe_ids[merger_inds]
+    GPe_ids = check_comp_lengths_ct(cellids=GPe_ids, fullcelldict=GPe_dict, min_comp_len=cl_cell,
+                                    axon_only=False,
+                                    max_path_len=None)
 
     GPi_dict = analysis_params.load_cell_dict(gpi_ct)
     GPi_ids = np.array(list(GPi_dict.keys()))
     merger_inds = np.in1d(GPi_ids, known_mergers) == False
     GPi_ids = GPi_ids[merger_inds]
+    GPi_ids = check_comp_lengths_ct(cellids=GPi_ids, fullcelldict=GPi_dict, min_comp_len=cl_cell,
+                                    axon_only=False,
+                                    max_path_len=None)
 
     MSN_dict = analysis_params.load_cell_dict(celltype=msn_ct)
     MSN_ids = np.array(list(MSN_dict.keys()))
@@ -59,6 +66,9 @@ if __name__ == '__main__':
     misclassified_asto_ids = analysis_params.load_potential_astros()
     astro_inds = np.in1d(MSN_ids, misclassified_asto_ids) == False
     MSN_ids = MSN_ids[astro_inds]
+    MSN_ids = check_comp_lengths_ct(cellids=MSN_ids, fullcelldict=MSN_dict, min_comp_len=cl_cell,
+                                    axon_only=False,
+                                    max_path_len=None)
 
     cell_dicts = [MSN_dict, GPe_dict, GPi_dict]
 
@@ -87,7 +97,7 @@ if __name__ == '__main__':
                                                     min_comp_len=cl_cell, full_cell_dict = MSN_dict, percentile=None,
                                                     label_cts="MSN no GPs", spiness = True)
     result_files = [MSN_only_GPe_results, MSN_only_GPi_results, MSN_both_GP_results, MSN_no_GP_results]
-    compare_compartment_volume_ct_multiple(celltypes= msn_cts, filename=f_name, filename_cts=result_files, min_comp_len=cl, label_cts=labels_cts,
+    compare_compartment_volume_ct_multiple(celltypes= msn_cts, filename=f_name, filename_cts=result_files, min_comp_len=cl_cell, label_cts=labels_cts,
                                            colours=msn_colors)
     #compartment comparision for multiple groups
     #also compare spiness

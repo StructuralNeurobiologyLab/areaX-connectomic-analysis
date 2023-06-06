@@ -280,6 +280,16 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
+    log.info(f'Cell numbers: only {ct_dict[ct2]}: {len(only_2ct2_cellids)}, only {ct_dict[ct3]}: {len(only_2ct3_cellids)}, both: {len(both_cellids)}, none: {len(not_connected_ids)}')
+    columns = [f'only {ct_dict[ct2]}', f'only {ct_dict[ct3]}', 'both', 'none']
+    number_pd = pd.DataFrame(columns = columns, index = range(0))
+    number_pd.loc[0, f'only {ct_dict[ct2]}'] = len(only_2ct2_cellids)
+    number_pd.loc[0, f'only {ct_dict[ct3]}'] = len(only_2ct3_cellids)
+    number_pd.loc[0, 'both'] =len(both_cellids)
+    number_pd.loc[0, 'none'] = len(not_connected_ids)
+    number_pd.to_csv(f'{f_name}/cell_numbers.csv')
+
+
     log.info("Step 4/4: Compute statistics and plot results")
 
     conn_df = pd.DataFrame(columns=["cellids", "connection to cts", "synapse amount", "sum size synapses", "amount partners", "avg synapse amount per partner", "avg synapse size per partner"], index=range(len(connected_cellids1)))

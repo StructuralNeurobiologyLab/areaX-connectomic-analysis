@@ -191,7 +191,7 @@ def get_myelin_fraction(cellid, cell = None, min_comp_len = 100, load_skeleton =
     relative_myelin_length = absolute_myelin_length / axon_length
     return [absolute_myelin_length, relative_myelin_length]
 
-def get_organell_volume_density(cellid, cached_so_ids,cached_so_rep_coord, cached_so_volume, cell = None, full_cell_dict = None,skeleton_loaded = False, k = 3, min_comp_len = 100):
+def get_organell_volume_density(cellid, cached_so_ids,cached_so_rep_coord, cached_so_volume, cell = None, full_cell_dict = None,skeleton_loaded = False, via_skeleton = True, k = 3, min_comp_len = 100):
     '''
     calculate density and volume density of a supersegmentation object per cell for axon and dendrite. Skeleton has to be loaded
     :param cell: super segmentation object
@@ -201,6 +201,7 @@ def get_organell_volume_density(cellid, cached_so_ids,cached_so_rep_coord, cache
     :param cached_so_volume: cached organell volume for all cells
     :param full_cell_dict: lookup dictionary for per cell parameters, cell.id is key, if None given will be calculated
     :param k: number of nodes surrounding the organells compartment will be determined from
+    :param: via_skeleton: if True calculate volume density based on pathlength, else based on cell.size
     :param min_comp_len: minimum compartment length
     :return: densities and volume densities for aoxn and dendrite
     '''

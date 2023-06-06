@@ -8,6 +8,7 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_synapse_proximity_vesicle_percell
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd
@@ -17,13 +18,18 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
+    import scipy.stats
+    from itertools import combinations
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
-    min_comp_len = 200
-    dist_threshold = 15 #nm
+    #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
+     #          10: "NGF"}
+    analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
+    ct_dict = analysis_params.ct_dict()
+    min_comp_len_cell = 200
+    min_comp_len_ax = 200
+    dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
     syn_dist_threshold = 500 #nm
@@ -31,22 +37,22 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230216_j0251v4_ct_syn_fraction_closemembrane_mcl_%i_dt_%i_st_%i_%i_%s" % (
-        min_comp_len, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230606_j0251v5_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+        min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('get fraction of vesicles close to membrane which are not close to synapse', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i, min_syn_size = %.1f, syn_prob_thresh = %.1f, distance threshold to membrane = %s nm, "
+        "min_comp_len = %i for full cells, min_comp_len = %i for axons, min_syn_size = %.1f, syn_prob_thresh = %.1f, distance threshold to membrane = %s nm, "
         "distance threshold to synapse = %i nm, distance threshold for not at synapse = %i nm, colors = %s" % (
-            min_comp_len, min_syn_size, syn_prob_thresh, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key))
+            min_comp_len_cell, min_comp_len_ax, min_syn_size, syn_prob_thresh, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    known_mergers = load_pkl2obj("cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
+    known_mergers = analysis_params.load_known_mergers()
     log.info("Step 1/4: synapse segmentation dataset")
 
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
-    cache_name = "/cajal/nvmescratch/users/arother/j0251v4_prep"
+    cache_name = analysis_params.file_locations
 
     log.info('Step 2/4: Prepare dataframes for results')
 
@@ -70,25 +76,22 @@ if __name__ == '__main__':
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
         if ct in ax_ct:
-            cell_dict = load_pkl2obj(
-                f"{cache_name}/ax_%.3s_dict.pkl" % (ct_dict[ct]))
+            cell_dict = analysis_params.load_cell_dict(ct)
             cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
-            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
                                             axon_only=True, max_path_len=None)
         else:
-            cell_dict = load_pkl2obj(
-                f"{cache_name}/full_%.3s_dict.pkl" % (ct_dict[ct]))
-            cellids = load_pkl2obj(
-                f"{cache_name}/full_%.3s_arr.pkl" % ct_dict[ct])
+            cell_dict = analysis_params.load_cell_dict(ct)
+            cellids = np.array(list(cell_dict.keys()))
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
             if ct == 2:
-                misclassified_asto_ids = load_pkl2obj(f'{cache_name}/pot_astro_ids.pkl')
+                misclassified_asto_ids = analysis_params.load_potential_astros()
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
-            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
                                                 axon_only=False, max_path_len=None)
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
         log.info('Prefilter synapses for celltype')
@@ -139,8 +142,8 @@ if __name__ == '__main__':
         density_syn_df.loc[0:len(cellids) - 1, ct_str] = density_syn_mem_vesicles
         median_values_df.loc[ct, 'celltype'] = ct_str
         median_fraction = np.nanmedian(fraction_non_syn_mem_vesicles)
-        median_nonsyn_density = np.median(density_non_syn_mem_vesicles)
-        median_syn_density = np.median(density_syn_mem_vesicles)
+        median_nonsyn_density = np.nanmedian(density_non_syn_mem_vesicles)
+        median_syn_density = np.nanmedian(density_syn_mem_vesicles)
         median_values_df.loc[ct, columns[1]] = median_fraction
         median_values_df.loc[ct, columns[2]] = median_nonsyn_density
         median_values_df.loc[ct, columns[3]] = median_syn_density
@@ -152,7 +155,14 @@ if __name__ == '__main__':
         log.info(f'{ct_str} cells have a median median fraction of membrane-close vesicles '
                  f'not at synapses of {median_fraction:.2f} ')
 
-    log.info('Step 4/4: Plot results')
+    log.info('Step 4/5 calculate statistics')
+    stats_combinations = combinations(np.arange(num_cts), 2)
+    columns = ['Fraction of non- synaptic vesicles', 'Density non-synaptic vesicles', 'Density synaptic vesicles']
+
+    stats_results = pd.DataFrame(columns = columns, index = ['Kruskal'])
+
+
+    log.info('Step 5/5: Plot results')
     fraction_nonsyn_df.to_csv(f'{f_name}/fraction_nonsyn_mem_vesicles.csv')
     density_non_syn_df.to_csv(f'{f_name}/density_nonsyn_mem_vesicles.csv')
     density_syn_df.to_csv(f'{f_name}/density_syn_mem_vesicles.csv')

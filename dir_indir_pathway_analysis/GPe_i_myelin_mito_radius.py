@@ -31,8 +31,8 @@ if __name__ == '__main__':
     min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    fontsize_jointplot = 10
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230525_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
+    fontsize_jointplot = 20
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230606_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -47,14 +47,14 @@ if __name__ == '__main__':
     merger_inds = np.in1d(GPi_ids, known_mergers) == False
     GPi_ids = GPi_ids[merger_inds]
     GPi_ids = check_comp_lengths_ct(cellids=GPi_ids, fullcelldict=GPi_full_cell_dict, min_comp_len=min_comp_len,
-                                            axon_only=True,
+                                            axon_only=False,
                                             max_path_len=None)
     GPe_full_cell_dict = bio_params.load_cell_dict(6)
     GPe_ids = np.array(list(GPe_full_cell_dict.keys()))
     merger_inds = np.in1d(GPe_ids, known_mergers) == False
     GPe_ids = GPe_ids[merger_inds]
     GPe_ids = check_comp_lengths_ct(cellids=GPe_ids, fullcelldict=GPe_full_cell_dict, min_comp_len=min_comp_len,
-                                    axon_only=True,
+                                    axon_only=False,
                                     max_path_len=None)
 
     axon_median_radius_gpi = np.zeros(len(GPi_ids))

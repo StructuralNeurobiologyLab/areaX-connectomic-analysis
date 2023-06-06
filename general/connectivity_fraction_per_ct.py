@@ -38,7 +38,7 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = analysis_params.ct_dict(with_glia=False)
     celltype_key = analysis_params.celltype_key()
-    min_comp_len_ax = 200
+    min_comp_len_ax = 50
     min_comp_len_cells = 200
     syn_prob = 0.6
     min_syn_size = 0.1
@@ -46,10 +46,10 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGP'
-    plot_connmatrix_only = False
+    plot_connmatrix_only = True
     fontsize = 20
-    annot = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230525_j0251v5_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_only_dn" % (
+    annot = False
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230529_j0251v5_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i_hm_noannot" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

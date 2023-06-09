@@ -7,12 +7,14 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from analysis_params import Analysis_Params
 
-    f_name = "/cajal/nvmescratch/users/arother/j0251v5_prep"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
+    f_name = analysis_params.file_locations
     log = initialize_logging('sort single vesicles into celltypes',
                              log_dir=f_name + '/logs/')
     with_glia = False
     log.info(f'Sort single vesicles into celltypes v1 of single vesicles, with_glia = {with_glia}')
-    global_params.wd =  "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+
     ves_wd = f'{global_params.wd}/single_vesicles'
     log.info(f'wd = {ves_wd}')
     log.info('Load single vesicle data')
@@ -22,11 +24,9 @@ if __name__ == '__main__':
     ves_dist2matrix = np.load(f'{ves_wd}/dist2matrix.npy')
 
 
-
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
-    celltypes = ssd.load_numpy_data('celltype_cnn_e3')
+    celltypes = ssd.load_numpy_data(analysis_params.celltype_key())
     cellids = ssd.ssv_ids
 
     log.info('Iterate over celltypes to sort single vesicle data')

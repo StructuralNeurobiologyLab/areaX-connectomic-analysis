@@ -101,16 +101,30 @@ if __name__ == '__main__':
         syn_sizes = m_sizes[filtered_inds]
         log.info('Prefilter vesicles for celltype')
         #load caches prefiltered for celltype
-        ct_ves_ids = np.load(f'{cache_name}/{ct_dict[ct]}_ids.npy')
-        ct_ves_coords = np.load(f'{cache_name}/{ct_dict[ct]}_rep_coords.npy')
-        ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_dict[ct]}_mapping_ssv_ids.npy')
-        ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_dict[ct]}_dist2matrix.npy')
+        if ct in ax_ct:
+            ct_ves_ids = np.load(f'{cache_name}/{ct_dict[ct]}_ids.npy')
+            ct_ves_coords = np.load(f'{cache_name}/{ct_dict[ct]}_rep_coords.npy')
+            ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_dict[ct]}_mapping_ssv_ids.npy')
+            ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_dict[ct]}_dist2matrix.npy')
+        else:
+            ct_ves_ids = np.load(f'{cache_name}/{ct_dict[ct]}_ids_fullcells.npy')
+            ct_ves_coords = np.load(f'{cache_name}/{ct_dict[ct]}_rep_coords_fullcells.npy')
+            ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_dict[ct]}_mapping_ssv_ids_fullcells.npy')
+            ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_dict[ct]}_dist2matrix_fullcells.npy')
+            ct_ves_axoness = np.load(f'{cache_name}/{ct_dict[ct]}_axoness_coarse_fullcells.npy')
         #filter for selected cellids
         ct_ind = np.in1d(ct_ves_map2ssvids, cellids)
         ct_ves_ids = ct_ves_ids[ct_ind]
         ct_ves_map2ssvids = ct_ves_map2ssvids[ct_ind]
         ct_ves_dist2matrix = ct_ves_dist2matrix[ct_ind]
         ct_ves_coords = ct_ves_coords[ct_ind]
+        if ct not in ax_ct:
+            ct_ves_axoness = ct_ves_axoness[ct_ind]
+            # make sure for full cells vesicles are only in axon
+            ax_ind = np.in1d(ct_ves_axoness, 1)
+            ct_ves_ids = ct_ves_ids[ax_ind]
+            ct_ves_map2ssvids = ct_ves_map2ssvids[ax_ind]
+            ct_ves_dist2matrix = ct_ves_dist2matrix[ax_ind]
         assert len(np.unique(ct_ves_map2ssvids)) <= len(cellids)
         log.info('Iterate over cells to get vesicles associated to axon, vesicle info for synapses')
         #prepare inputs for multiprocessing

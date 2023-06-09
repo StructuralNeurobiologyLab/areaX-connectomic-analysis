@@ -28,7 +28,7 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = analysis_params.ct_dict()
     min_comp_len_cell = 200
-    min_comp_len_ax = 200
+    min_comp_len_ax = 50
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230606_j0251v5_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230609_j0251v5_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -111,17 +111,31 @@ if __name__ == '__main__':
         syn_axs = m_axs[filtered_inds]
         syn_ssv_partners = m_ssv_partners[filtered_inds]
         log.info('Prefilter vesicles for celltype')
-        #load caches prefiltered for celltype
-        ct_ves_ids = np.load(f'{cache_name}/{ct_dict[ct]}_ids.npy')
-        ct_ves_coords = np.load(f'{cache_name}/{ct_dict[ct]}_rep_coords.npy')
-        ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_dict[ct]}_mapping_ssv_ids.npy')
-        ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_dict[ct]}_dist2matrix.npy')
+        #load caches prefiltered for celltype (if celltype with full cells -> load only those)
+        if ct in ax_ct:
+            ct_ves_ids = np.load(f'{cache_name}/{ct_dict[ct]}_ids.npy')
+            ct_ves_coords = np.load(f'{cache_name}/{ct_dict[ct]}_rep_coords.npy')
+            ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_dict[ct]}_mapping_ssv_ids.npy')
+            ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_dict[ct]}_dist2matrix.npy')
+        else:
+            ct_ves_ids = np.load(f'{cache_name}/{ct_dict[ct]}_ids_fullcells.npy')
+            ct_ves_coords = np.load(f'{cache_name}/{ct_dict[ct]}_rep_coords_fullcells.npy')
+            ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_dict[ct]}_mapping_ssv_ids_fullcells.npy')
+            ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_dict[ct]}_dist2matrix_fullcells.npy')
+            ct_ves_axoness = np.load(f'{cache_name}/{ct_dict[ct]}_axoness_coarse_fullcells.npy')
         #filter for selected cellids
         ct_ind = np.in1d(ct_ves_map2ssvids, cellids)
         ct_ves_ids = ct_ves_ids[ct_ind]
         ct_ves_map2ssvids = ct_ves_map2ssvids[ct_ind]
         ct_ves_dist2matrix = ct_ves_dist2matrix[ct_ind]
         ct_ves_coords = ct_ves_coords[ct_ind]
+        if ct not in ax_ct:
+            ct_ves_axoness = ct_ves_axoness[ct_ind]
+            #make sure for full cells vesicles are only in axon
+            ax_ind = np.in1d(ct_ves_axoness, 1)
+            ct_ves_ids = ct_ves_ids[ax_ind]
+            ct_ves_map2ssvids = ct_ves_map2ssvids[ax_ind]
+            ct_ves_dist2matrix = ct_ves_dist2matrix[ax_ind]
         assert len(np.unique(ct_ves_map2ssvids)) <= len(cellids)
         # get axon_pathlength for corrensponding cellids
         axon_pathlengths = np.zeros(len(cellids))
@@ -158,8 +172,8 @@ if __name__ == '__main__':
     log.info('Step 4/5 calculate statistics')
     stats_combinations = combinations(np.arange(num_cts), 2)
     columns = ['Fraction of non- synaptic vesicles', 'Density non-synaptic vesicles', 'Density synaptic vesicles']
-
-    stats_results = pd.DataFrame(columns = columns, index = ['Kruskal'])
+    stats_comb_list = np.array([c for c in stats_combinations])
+    stats_results = pd.DataFrame(columns = columns, index = np.hstack(['Kruskal', stats_comb_list]))
 
 
     log.info('Step 5/5: Plot results')

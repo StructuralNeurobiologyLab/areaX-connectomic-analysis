@@ -1,5 +1,6 @@
 #this file sets general analysis values
 from syconn.handler.basics import load_pkl2obj
+import numpy as np
 
 class Analysis_Params(object):
     '''
@@ -96,4 +97,11 @@ class Analysis_Params(object):
 
     def celltype_key(self):
         return self._celltype_key
+
+    def load_celltypes_full_cells(self, with_glia = False):
+        ct_types = np.arange(self.num_cts(with_glia=with_glia))
+        full_ct_types = ct_types[np.in1d(ct_types, self._axon_cts) == False]
+        return full_ct_types
+
+
         

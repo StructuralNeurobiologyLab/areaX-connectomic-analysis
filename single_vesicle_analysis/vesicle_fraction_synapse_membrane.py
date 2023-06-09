@@ -26,7 +26,7 @@ if __name__ == '__main__':
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
      #          10: "NGF"}
     analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
-    ct_dict = analysis_params.ct_dict()
+    ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len_cell = 200
     min_comp_len_ax = 50
     dist_threshold = 10 #nm
@@ -57,8 +57,8 @@ if __name__ == '__main__':
     log.info('Step 2/4: Prepare dataframes for results')
 
     cts = list(ct_dict.keys())
-    ax_ct = [1, 3, 4]
-    num_cts = len(cts)
+    ax_ct = analysis_params.axon_cts()
+    num_cts = analysis_params.num_cts(with_glia=False)
     cts_str = [ct_dict[i] for i in range(num_cts)]
     ct_palette = cls.ct_palette(color_key, num=False)
 

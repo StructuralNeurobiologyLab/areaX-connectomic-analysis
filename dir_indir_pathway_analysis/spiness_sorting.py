@@ -7,27 +7,27 @@ from syconn.handler.config import initialize_logging
 from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
-from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_spine_density
-from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
+from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_spine_density
+from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
 from multiprocessing import pool
 from scipy.stats import ranksums
 from functools import partial
 
-def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting = None, full_cells = True, percentiles = [], min_comp_len = 100):
+def saving_spiness_percentiles(ssd, celltype, filename_saving, analysis_params, filename_plotting = None, full_cells = True, percentiles = [], min_comp_len = 100):
     """
     saves MSN IDS depending on their spiness. Spiness is determined via spiness skeleton nodes using counting_spiness as spine density in relation to the skeelton length
     of the dendrite. Cells without a minimal compartment length are discarded.
     :param ssd: super segmentation dataset
     :param celltype: ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     :param filename_saving: directory where cells should be saved
+    :param analysis_params: object with saved file locations etc
     :param full_cells: if True, cellids of preprocessed cells with axon, dendrite, soma are loaded
     :param percentiles: list of percentiles, that should be saved
     :param min_comp_len: minimal compartment length in µm
     :return:
     """
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    ct_dict = analysis_params.ct_dict(with_glia=False)
     if not os.path.exists(filename_saving):
         os.mkdir(filename_saving)
     if not filename_plotting:
@@ -39,15 +39,21 @@ def saving_spiness_percentiles(ssd, celltype, filename_saving, filename_plotting
     time_stamps = [time.time()]
     step_idents = ['t-0']
     if full_cells:
-        cellids = load_pkl2obj(
-            "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[celltype])
+        cellids = analysis_params.load_full_cell_array(celltype)
         try:
-            full_cell_dict = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % ct_dict[celltype])
+            full_cell_dict = analysis_params.load_cell_dict(celltype)
             length_dicts = True
         except FileNotFoundError:
             length_dicts = False
     else:
         cellids = ssd.ssv_ids[ssd.load_numpy_data("celltype_cnn_e3") == celltype]
+
+    known_mergers = analysis_params.load_known_mergers()
+    misclassified_astro_ids = analysis_params.load_potential_astros()
+    merger_inds = np.in1d(cellids, known_mergers) == False
+    cellids = cellids[merger_inds]
+    astro_inds = np.in1d(cellids, misclassified_astro_ids) == False
+    cellids = cellids[astro_inds]
 
     log.info("Step 1/2: iterate over cells and get amount of spines")
     p = pool.Pool()

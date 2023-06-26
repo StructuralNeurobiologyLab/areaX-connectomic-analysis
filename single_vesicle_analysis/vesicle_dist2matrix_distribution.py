@@ -25,8 +25,8 @@ if __name__ == '__main__':
     #           10: "NGF"}
     analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = analysis_params.ct_dict(with_glia=False)
-    min_comp_len_cell = 200
-    min_comp_len_ax = 50
+    min_comp_len_cell = 1000
+    min_comp_len_ax = 1000
     dist_threshold = [15, 10, 5] #nm
     #dist_threshold = 15
     cls = CelltypeColors()
@@ -34,10 +34,10 @@ if __name__ == '__main__':
     color_key = 'TePkBr'
     comp_color_key = 'TeYw'
     if type(dist_threshold) == list:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230531_j0251v5_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%i_%s_%s" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230612_j0251v5_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%i_%s_%s" % (
             min_comp_len_cell, min_comp_len_ax, dist_threshold[0], dist_threshold[1], color_key, comp_color_key)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230531_j0251v5_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%s_%s" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230612_j0251v5_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%s_%s" % (
             min_comp_len_cell, min_comp_len_ax, dist_threshold, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

@@ -4,7 +4,7 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
     from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct
     from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
-    from cajal.vmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -49,13 +49,12 @@ if __name__ == '__main__':
 
     if not os.path.exists(filename_spiness_results):
         os.mkdir(filename_spiness_results)
-    saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, filename_plotting = filename_spiness_results, percentiles = percentiles, min_comp_len = cl)
+    saving_spiness_percentiles(ssd, celltype = 2, filename_saving = filename_spiness_saving, analysis_params = analysis_params,
+                               filename_plotting = filename_spiness_results, percentiles = percentiles, min_comp_len = cl)
     
     
     time_stamps = [time.time()]
     step_idents = ["spiness percentiles calculated"]
-    
-
 
     MSN_id_dict = {}
 

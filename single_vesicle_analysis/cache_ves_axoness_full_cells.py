@@ -24,8 +24,6 @@ if __name__ == '__main__':
 
     log.info('Iterate over celltypes to map vesicles to axons')
     for ct in ct_types:
-        if ct <= 7:
-            continue
         log.info(f'Now processing celltype {ct_dict[ct]}')
         #get cellids for celltype
         ct_ids = analysis_params.load_full_cell_array(ct)

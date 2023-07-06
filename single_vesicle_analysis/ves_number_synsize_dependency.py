@@ -20,11 +20,11 @@ if __name__ == '__main__':
     import seaborn as sns
     from collections import ChainMap
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}
-    min_comp_len = 200
+    min_comp_len = 1000
     dist_threshold = 15 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.8
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230207_j0251v4_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230704_j0251v5_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s" % (
         min_comp_len, dist_threshold, syn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -125,6 +125,7 @@ if __name__ == '__main__':
             ct_ves_ids = ct_ves_ids[ax_ind]
             ct_ves_map2ssvids = ct_ves_map2ssvids[ax_ind]
             ct_ves_dist2matrix = ct_ves_dist2matrix[ax_ind]
+            ct_ves_coords = ct_ves_coords[ax_ind]
         assert len(np.unique(ct_ves_map2ssvids)) <= len(cellids)
         log.info('Iterate over cells to get vesicles associated to axon, vesicle info for synapses')
         #prepare inputs for multiprocessing

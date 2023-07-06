@@ -27,8 +27,8 @@ if __name__ == '__main__':
      #          10: "NGF"}
     analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = analysis_params.ct_dict(with_glia=False)
-    min_comp_len_cell = 200
-    min_comp_len_ax = 50
+    min_comp_len_cell = 1000
+    min_comp_len_ax = 1000
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230609_j0251v5_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230704_j0251v5_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -136,6 +136,7 @@ if __name__ == '__main__':
             ct_ves_ids = ct_ves_ids[ax_ind]
             ct_ves_map2ssvids = ct_ves_map2ssvids[ax_ind]
             ct_ves_dist2matrix = ct_ves_dist2matrix[ax_ind]
+            ct_ves_coords = ct_ves_coords[ax_ind]
         assert len(np.unique(ct_ves_map2ssvids)) <= len(cellids)
         # get axon_pathlength for corrensponding cellids
         axon_pathlengths = np.zeros(len(cellids))

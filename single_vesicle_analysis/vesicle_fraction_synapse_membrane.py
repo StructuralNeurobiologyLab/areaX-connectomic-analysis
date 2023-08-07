@@ -27,8 +27,8 @@ if __name__ == '__main__':
      #          10: "NGF"}
     analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = analysis_params.ct_dict(with_glia=False)
-    min_comp_len_cell = 1000
-    min_comp_len_ax = 1000
+    min_comp_len_cell = 500
+    min_comp_len_ax = 500
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6

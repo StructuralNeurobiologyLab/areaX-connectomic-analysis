@@ -493,6 +493,26 @@ def get_per_cell_mito_myelin_info(input):
     ax_median_radius_cell = np.median(axon_radii_cell)
     return [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
 
+def get_cell_soma_radius(cellid):
+    '''
+    Gives an estimate about the soma radius. Calculates radius as median distance from soma
+    centre to mesh vertices. Soma centre is calculated as average of the vertex coordiantes and
+    the mehs of the soma is estimated from the skeleton prediciton 'axoness avg 10000'.
+    Uses syconn.mesh.compartmentalize_mesh_fromskel
+    :param cellid: id of cell
+    :return: soma center, radius
+    '''
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    cell_comp_meshes = compartmentalize_mesh_fromskel(cell, 'axoness_avg10000')
+    soma_mesh = cell_comp_meshes['soma']
+    ind, vert, norm = soma_mesh
+    soma_vert_coords = vert.reshape((-1, 3))
+    soma_vert_avg = np.mean(soma_vert_coords, axis=0)
+    dist2centre = np.linalg.norm(soma_vert_coords - soma_vert_avg, axis = 1)
+    radius = np.median(dist2centre)
+    return [soma_vert_avg, radius]
+
 
 
 

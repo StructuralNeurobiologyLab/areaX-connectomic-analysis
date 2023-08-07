@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     log.info("Step 1/4: Load synapse segmentation dataset")
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
-    cache_name = "/cajal/nvmescratch/users/arother/j0251v4_prep"
+    cache_name = "/cajal/nvmescratch/users/arother/j0251v5_prep"
     known_mergers = load_pkl2obj(f"{cache_name}/merger_arr.pkl")
 
     cts = list(ct_dict.keys())

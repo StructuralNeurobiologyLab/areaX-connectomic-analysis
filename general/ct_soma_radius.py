@@ -18,6 +18,8 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
     from syconn.mp.mp_utils import start_multiprocess_imap
+    from itertools import combinations
+    from scipy.stats import kruskal, ranksums
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -27,22 +29,24 @@ if __name__ == '__main__':
     min_comp_len_cells = 200
     exclude_known_mergers = True
     cls = CelltypeColors()
+    fontsize = 12
+    save_svg = False
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'STNGP'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230807_j0251v5_cts_soma_radius_mcl_%i_%s" % (
-    min_comp_len_cells,color_key)
+    color_key = 'TePkBr'
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230807_j0251v5_cts_soma_radius_mcl_%i_%s_fs%i" % (
+    min_comp_len_cells,color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     save_svg = True
     log = initialize_logging('soma raidus calculation', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i for full cells, known mergers excluded = %s, colors = %s" % (
-        min_comp_len_cells,exclude_known_mergers, color_key))
+        "min_comp_len = %i for full cells, known mergers excluded = %s, colors = %s, fonsize = %i" % (
+        min_comp_len_cells,exclude_known_mergers, color_key, fontsize))
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
     #filter cells for min_comp_len
-    log.info("Step 1/X: Load cell dicts and get suitable cellids")
+    log.info("Step 1/4: Load cell dicts and get suitable cellids")
     if exclude_known_mergers:
         known_mergers = analysis_params.load_known_mergers()
     # To Do: also exlclude MSNs from list
@@ -70,9 +74,12 @@ if __name__ == '__main__':
         full_cell_dicts[ct] = cell_dict
         suitable_ids_dict[ct] = cellids_checked
         all_suitable_ids.append(cellids_checked)
-        all_suitable_ids_cts.append(np.zeros(len(cellids_checked)) + ct)
+        all_suitable_ids_cts.append([ct_str for i in range(len(cellids_checked))])
 
-    log.info('Step 2/X: Get soma radius from all cellids')
+    all_suitable_ids = np.hstack(all_suitable_ids)
+    all_suitable_ids_cts = np.hstack(all_suitable_ids_cts)
+
+    log.info('Step 2/4: Get soma radius from all cellids')
     columns = ['cellid', 'celltype', 'soma radius', 'soma diameter', 'soma centre voxel coords x', 'soma centre voxel coords y', 'soma centre voxel coords z']
     soma_results_pd = pd.DataFrame(columns=columns, index = range(len(all_suitable_ids)))
     soma_results_pd['cellid'] = all_suitable_ids
@@ -81,17 +88,84 @@ if __name__ == '__main__':
     output = np.array(output, dtype='object')
     soma_centres = np.concatenate(output[:, 0]).reshape(len(output), 3)
     soma_centres_vox = soma_centres / [10, 10, 25]
-    soma_radii = output[:, 1]
+    soma_radii = output[:, 1].astype(float)
+    soma_diameters = soma_radii * 2
     soma_results_pd['soma centre voxel x'] = soma_centres_vox[:, 0].astype(int)
     soma_results_pd['soma centre voxel y'] = soma_centres_vox[:, 1].astype(int)
     soma_results_pd['soma centre voxel z'] = soma_centres_vox[:, 2].astype(int)
     soma_results_pd['soma radius'] = soma_radii
-    soma_results_pd['soma diameter'] = soma_radii * 2
+    soma_results_pd['soma diameter'] = soma_diameters
+    soma_results_pd= soma_results_pd.round(2)
     soma_results_pd.to_csv(f'{f_name}/soma_radius_results.csv')
 
-    log.info('Step 3/X: Plot results')
+    log.info('Step 3/4: Plot results')
+    ct_colours = cls.colors[color_key]
+    ct_palette = cls.ct_palette(color_key, num=False)
+    #make box-and violinplot as overview
+    ylabel = 'soma diameter [µm]'
+    title = 'soma diameter of different celltypes'
+    sns.stripplot(x = 'celltype', y = 'soma diameter', data=soma_results_pd, palette='dark:black', alpha=0.2,
+                  dodge=True, size=2)
+    sns.violinplot(x = 'celltype', y = 'soma diameter', data=soma_results_pd, inner="box",
+                   palette=ct_palette)
+    plt.title(title)
+    plt.ylabel(ylabel)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_violin.png')
+    if save_svg:
+        plt.savefig(f'{f_name}/soma_diameter_celltypes_violin.svg')
+    plt.close()
+    sns.boxplot(x = 'celltype', y = 'soma diameter', data=soma_results_pd, palette=ct_palette)
+    plt.title(title)
+    plt.ylabel(ylabel)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_box.png')
+    if save_svg:
+        plt.savefig(f'{f_name}/soma_diameter_celltypes_box.svg')
+    plt.close()
+    #make individual histogram plots for each celltype
+    xhist = 'soma diameter [µm]'
+    for ct in celltypes:
+        ct_str = ct_dict[ct]
+        # make individual histogram plots for each celltype to see eventual bimodal distributions
+        data = soma_results_pd[soma_results_pd['celltype'] == ct_str]
+        sns.histplot(x = 'soma diameter', data = data, color=ct_palette[ct_str], common_norm=False)
+        plt.ylabel('count of cells')
+        plt.xlabel(xhist)
+        plt.title(f'Soma diameter for {ct_str}')
+        plt.savefig(f'{f_name}/{ct_str}_soma_diameter_hist.png')
+        plt.close()
+        sns.histplot(x='soma diameter', data=data, color=ct_palette[ct_str], common_norm=True)
+        plt.ylabel('fraction of cells')
+        plt.xlabel(xhist)
+        plt.title(f'Soma diameter for {ct_str}')
+        plt.savefig(f'{f_name}/{ct_str}_soma_diameter_hist_norm.png')
+        plt.close()
 
-    #multiprocess get_cell_soma_radius
-    #write additional function to verify radius manually
+    log.info('Step 4/4: run statistical tests')
+    celltype_diameter_groups = [group['soma diameter'].values for name, group in soma_results_pd.groupby('celltype')]
+    ind_celltypes_mapped = {ct: i for i, ct in enumerate(celltypes)}
+    #run kruskal wallis test
+    kruskal_results = kruskal(*celltype_diameter_groups)
+    log.info(f'Results of kruskal-wallis-test: p-value = {kruskal_results[1]:.2f}, stats: {kruskal_results[0]:.2f}')
+    #run ranksum test on each combination
+    celltype_combs = combinations(celltypes, 2)
+    ranksum_results = pd.DataFrame(columns=list(celltype_combs), index = ['stats', 'p-value'])
+    for comb in combinations:
+        ct1 = comb[0]
+        ct2 = comb[1]
+        ct1_data = celltype_diameter_groups[ind_celltypes_mapped[ct1]]
+        ct2_data = celltype_diameter_groups[ind_celltypes_mapped[ct2]]
+        stats, p_value = ranksums(ct1_data, ct2_data)
+        ranksum_results.loc['stats', comb] = stats
+        ranksum_results.loc['p-value', comb] = p_value
+
+    ranksum_results.to_csv(f'{f_name}/diameter_ranksum_results.csv')
+
+    log.info('soma diameter analysis for all celltypes done')
+
+
 
 

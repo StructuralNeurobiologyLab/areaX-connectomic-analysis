@@ -74,6 +74,6 @@ if __name__ == '__main__':
     selected_cellids_pd['soma centre voxel z'] = soma_centres_vox[:, 2].astype(int)
     selected_cellids_pd['radius'] = soma_radii
     selected_cellids_pd['diameter'] = soma_radii * 2
-    selected_cellids_pd.round(2)
+    selected_cellids_pd = selected_cellids_pd.round(2)
     selected_cellids_pd.to_csv(f'{f_name}/rndm_soma_diameters.csv')
     log.info('Soma diameter of random samples selected')

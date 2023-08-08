@@ -10,8 +10,8 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from scipy.stats import ranksums
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_myelin_fraction, get_compartment_radii, get_organell_volume_density, check_comp_lengths_ct, get_per_cell_mito_myelin_info
-    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, get_cell_soma_radius
+    from syconn.handler.basics import write_obj2pkl
     from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import  ComparingResultsForPLotting
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import itertools
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
     fontsize_jointplot = 20
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230606_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230808_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -78,8 +78,12 @@ if __name__ == '__main__':
     axon_myelin_gpe = gpe_output[:, 2]
 
     gpe_nonzero = axon_median_radius_gpe > 0
+    # get soma diameter from all GPe
+    gpe_soma_results = p.map(get_cell_soma_radius, GPe_ids)
+    gpe_soma_results = np.array(gpe_soma_results, dtype='object')
+    gpe_diameters = gpe_soma_results[:, 1].astype(float) * 2
     GPe_params = {"axon median radius": axon_median_radius_gpe[gpe_nonzero], "axon mitochondria volume density": axon_mito_volume_density_gpe[gpe_nonzero],
-                  "axon myelin fraction": axon_myelin_gpe[gpe_nonzero], "cellids": GPe_ids[gpe_nonzero]}
+                  "axon myelin fraction": axon_myelin_gpe[gpe_nonzero], "cellids": GPe_ids[gpe_nonzero], 'soma diameter': gpe_diameters}
     GPe_param_df = pd.DataFrame(GPe_params)
     GPe_param_df.to_csv("%s/GPe_params.csv" % f_name)
     write_obj2pkl("%s/GPe_dict.pkl" % f_name, GPe_params)
@@ -99,9 +103,14 @@ if __name__ == '__main__':
     axon_myelin_gpi = gpi_output[:, 2]
 
     gpi_nonzero = axon_median_radius_gpi > 0
+    # get soma diameter from all GPi
+    gpi_soma_results = p.map(get_cell_soma_radius, GPi_ids)
+    gpi_soma_results = np.array(gpi_soma_results, dtype='object')
+    gpi_diameters = gpi_soma_results[:, 1].astype(float) * 2
     GPi_params = {"axon median radius": axon_median_radius_gpi[gpi_nonzero],
                   "axon mitochondria volume density": axon_mito_volume_density_gpi[gpi_nonzero],
-                  "axon myelin fraction": axon_myelin_gpi[gpi_nonzero], "cellids": GPi_ids[gpi_nonzero]}
+                  "axon myelin fraction": axon_myelin_gpi[gpi_nonzero], "cellids": GPi_ids[gpi_nonzero],
+                  'soma diameter': gpi_diameters}
     GPi_param_df = pd.DataFrame(GPi_params)
     GPi_param_df.to_csv("%s/GPi_params.csv" % f_name)
     write_obj2pkl("%s/GPi_dict.pkl" % f_name, GPi_params)
@@ -130,6 +139,8 @@ if __name__ == '__main__':
             subcell = "mitochondria"
         elif "myelin" in key:
             subcell = "myelin"
+        elif 'soma' in key:
+            subcell = 'soma'
         else:
             subcell = "axon"
         results_comparison.plot_violin(key, results_for_plotting, subcell=subcell, stripplot=True)
@@ -159,7 +170,7 @@ if __name__ == '__main__':
             g.ax_marg_y.set_ylim(0)
         g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize = fontsize_jointplot)
         g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize= fontsize_jointplot)
-        if "radius" in x:
+        if "radius" in x or 'diameter' in x:
             plt.xlabel("%s in µm" % x)
         elif "volume density" in x:
             plt.xlabel("%s in µm³/µm" % x)

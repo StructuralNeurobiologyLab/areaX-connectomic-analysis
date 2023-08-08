@@ -1,7 +1,7 @@
 #get radius of soma for all celltypes
 
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
+    from analysis_morph_helper import check_comp_lengths_ct, get_cell_soma_radius
     from analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses
     from result_helper import ConnMatrix
     from analysis_colors import CelltypeColors
@@ -17,10 +17,10 @@ if __name__ == '__main__':
     from tqdm import tqdm
     import seaborn as sns
     import matplotlib.pyplot as plt
+    from syconn.mp.mp_utils import start_multiprocess_imap
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-    start = time.time()
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = analysis_params.ct_dict(with_glia=False)
     celltype_key = analysis_params.celltype_key()
@@ -73,24 +73,25 @@ if __name__ == '__main__':
         all_suitable_ids_cts.append(np.zeros(len(cellids_checked)) + ct)
 
     log.info('Step 2/X: Get soma radius from all cellids')
-    columns = ['cellid', 'celltype', 'soma centre coords', 'soma centre voxel coords', 'soma radius']
+    columns = ['cellid', 'celltype', 'soma radius', 'soma diameter', 'soma centre voxel coords x', 'soma centre voxel coords y', 'soma centre voxel coords z']
     soma_results_pd = pd.DataFrame(columns=columns, index = range(len(all_suitable_ids)))
     soma_results_pd['cellid'] = all_suitable_ids
     soma_results_pd['celltype'] = all_suitable_ids_cts
+    output = start_multiprocess_imap(get_cell_soma_radius, all_suitable_ids)
+    output = np.array(output, dtype='object')
+    soma_centres = np.concatenate(output[:, 0]).reshape(len(output), 3)
+    soma_centres_vox = soma_centres / [10, 10, 25]
+    soma_radii = output[:, 1]
+    soma_results_pd['soma centre voxel x'] = soma_centres_vox[:, 0].astype(int)
+    soma_results_pd['soma centre voxel y'] = soma_centres_vox[:, 1].astype(int)
+    soma_results_pd['soma centre voxel z'] = soma_centres_vox[:, 2].astype(int)
+    soma_results_pd['soma radius'] = soma_radii
+    soma_results_pd['soma diameter'] = soma_radii * 2
+    soma_results_pd.to_csv(f'{f_name}/soma_radius_results.csv')
 
-    # calculate soma radius with the following steps
-    # get meshes related to soma
-    # calculate average coordinate to get soma centre
-    # compare to images/ compare to soma centre from skeleton points
-    # for each mesh coordinate get distance to soma centre
-    # take median distance as radius
-    # compare again to images
+    log.info('Step 3/X: Plot results')
 
-    cell = SuperSegmentationObject(cellid)
-    cell.load_skeleton()
-    cell_comp_meshes = compartmentalize_mesh_fromskel(cell, 'axoness_avg10000')
-    soma_mesh = cell_comp_meshes['soma']
-    ind, vert, norm = soma_mesh
-    soma_vert_coords = vert.reshape((-1, 3))
-    soma_vert_avg = np.mean(soma_vert_coords, axis = 0)
+    #multiprocess get_cell_soma_radius
+    #write additional function to verify radius manually
+
 

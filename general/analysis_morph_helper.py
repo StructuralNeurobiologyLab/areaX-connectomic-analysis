@@ -500,7 +500,7 @@ def get_cell_soma_radius(cellid):
     the mehs of the soma is estimated from the skeleton prediciton 'axoness avg 10000'.
     Uses syconn.mesh.compartmentalize_mesh_fromskel
     :param cellid: id of cell
-    :return: soma center, radius
+    :return: soma center in physical coordinates, radius in nm
     '''
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
@@ -510,7 +510,7 @@ def get_cell_soma_radius(cellid):
     soma_vert_coords = vert.reshape((-1, 3))
     soma_vert_avg = np.mean(soma_vert_coords, axis=0)
     dist2centre = np.linalg.norm(soma_vert_coords - soma_vert_avg, axis = 1)
-    radius = np.median(dist2centre)
+    radius = np.median(dist2centre) / 1000
     return [soma_vert_avg, radius]
 
 

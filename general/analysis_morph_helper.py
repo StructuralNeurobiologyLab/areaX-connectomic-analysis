@@ -184,7 +184,7 @@ def get_myelin_fraction(cellid, cell = None, min_comp_len = 100, load_skeleton =
     axon_graph.remove_nodes_from(non_axon_inds)
     axon_length = axon_graph.size(weight="weight") / 1000  # in µm
     if axon_length < min_comp_len:
-        return 0,0
+        return np.nan, np.nan
     myelin_graph = axon_graph.copy()
     myelin_graph.remove_nodes_from(non_myelin_inds)
     absolute_myelin_length = myelin_graph.size(weight="weight") / 1000  # in µm
@@ -477,17 +477,15 @@ def get_per_cell_mito_myelin_info(input):
     myelin_results = get_myelin_fraction(cellid=cellid, cell=cell, min_comp_len=min_comp_len, load_skeleton=False)
     abs_myelin_cell = myelin_results[0]
     rel_myelin_cell = myelin_results[1]
-    if abs_myelin_cell == 0:
-        return [0, 0, 0]
-    mito_results = get_organell_volume_density(cellid=cellid, cell=cell, cached_so_ids=cached_mito_ids,
-                                               cached_so_rep_coord=cached_mito_rep_coords,
-                                               cached_so_volume=cached_mito_volumes,
-                                               full_cell_dict=full_cell_dict, k=3, min_comp_len=100,
-                                               skeleton_loaded=True)
+    if np.isnan(abs_myelin_cell):
+        return [np.nan, np.nan, np.nan]
+    #input for organell analysis: cellid, cached_so_ids, cached_so_rep_coord,
+    # cached_so_volume, full_cell_dict,k, min_comp_len, axon_only
+    organell_input = [cellid, cached_mito_ids, cached_mito_rep_coords,
+                      cached_mito_volumes, full_cell_dict, 3, min_comp_len, False]
+    mito_results = get_organell_volume_density(organell_input)
     den_mito_density_cell = mito_results[1]
     axo_mito_volume_density_cell = mito_results[2]
-    if den_mito_density_cell == 0:
-        return [0, 0, 0]
     axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
     axon_radii_cell = get_compartment_radii(cell, comp_inds=axon_inds)
     ax_median_radius_cell = np.median(axon_radii_cell)
@@ -508,6 +506,8 @@ def get_cell_soma_radius(cellid):
     soma_mesh = cell_comp_meshes['soma']
     ind, vert, norm = soma_mesh
     soma_vert_coords = vert.reshape((-1, 3))
+    if len(soma_vert_coords) == 0:
+        return [[np.nan, np.nan, np.nan], np.nan]
     soma_vert_avg = np.mean(soma_vert_coords, axis=0)
     dist2centre = np.linalg.norm(soma_vert_coords - soma_vert_avg, axis = 1)
     radius = np.median(dist2centre) / 1000

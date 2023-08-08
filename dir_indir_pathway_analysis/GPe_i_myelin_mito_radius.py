@@ -17,7 +17,7 @@ if __name__ == '__main__':
     import itertools
     import seaborn as sns
     import matplotlib.pyplot as plt
-    from multiprocessing import pool
+    from syconn.mp.mp_utils import start_multiprocess_imap
 
     from tqdm import tqdm
 
@@ -68,9 +68,8 @@ if __name__ == '__main__':
 
 
     log.info("Step 1/3: Get information from GPe")
-    p = pool.Pool()
     gpe_input = [[gpe_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, GPe_full_cell_dict] for gpe_id in GPe_ids]
-    gpe_output = p.map(get_per_cell_mito_myelin_info, tqdm(gpe_input))
+    gpe_output = start_multiprocess_imap(get_per_cell_mito_myelin_info, gpe_input)
     gpe_output = np.array(gpe_output)
     #[ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
     axon_median_radius_gpe = gpe_output[:, 0]
@@ -79,11 +78,12 @@ if __name__ == '__main__':
 
     gpe_nonzero = axon_median_radius_gpe > 0
     # get soma diameter from all GPe
-    gpe_soma_results = p.map(get_cell_soma_radius, GPe_ids)
+    gpe_soma_results = start_multiprocess_imap(get_cell_soma_radius, GPe_ids)
     gpe_soma_results = np.array(gpe_soma_results, dtype='object')
     gpe_diameters = gpe_soma_results[:, 1].astype(float) * 2
+    raise ValueError
     GPe_params = {"axon median radius": axon_median_radius_gpe[gpe_nonzero], "axon mitochondria volume density": axon_mito_volume_density_gpe[gpe_nonzero],
-                  "axon myelin fraction": axon_myelin_gpe[gpe_nonzero], "cellids": GPe_ids[gpe_nonzero], 'soma diameter': gpe_diameters}
+                  "axon myelin fraction": axon_myelin_gpe[gpe_nonzero], "cellids": GPe_ids[gpe_nonzero], 'soma diameter': gpe_diameters[gpe_nonzero]}
     GPe_param_df = pd.DataFrame(GPe_params)
     GPe_param_df.to_csv("%s/GPe_params.csv" % f_name)
     write_obj2pkl("%s/GPe_dict.pkl" % f_name, GPe_params)
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     gpi_input = [
         [gpi_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, GPi_full_cell_dict] for
         gpi_id in GPi_ids]
-    gpi_output = p.map(get_per_cell_mito_myelin_info, tqdm(gpi_input))
+    gpi_output = start_multiprocess_imap(get_per_cell_mito_myelin_info, gpi_input)
     gpi_output = np.array(gpi_output)
     # [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
     axon_median_radius_gpi = gpi_output[:, 0]
@@ -104,13 +104,13 @@ if __name__ == '__main__':
 
     gpi_nonzero = axon_median_radius_gpi > 0
     # get soma diameter from all GPi
-    gpi_soma_results = p.map(get_cell_soma_radius, GPi_ids)
+    gpi_soma_results = start_multiprocess_imap(get_cell_soma_radius, GPi_ids)
     gpi_soma_results = np.array(gpi_soma_results, dtype='object')
     gpi_diameters = gpi_soma_results[:, 1].astype(float) * 2
     GPi_params = {"axon median radius": axon_median_radius_gpi[gpi_nonzero],
                   "axon mitochondria volume density": axon_mito_volume_density_gpi[gpi_nonzero],
                   "axon myelin fraction": axon_myelin_gpi[gpi_nonzero], "cellids": GPi_ids[gpi_nonzero],
-                  'soma diameter': gpi_diameters}
+                  'soma diameter': gpi_diameters[gpi_nonzero]}
     GPi_param_df = pd.DataFrame(GPi_params)
     GPi_param_df.to_csv("%s/GPi_params.csv" % f_name)
     write_obj2pkl("%s/GPi_dict.pkl" % f_name, GPi_params)

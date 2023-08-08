@@ -86,6 +86,7 @@ if __name__ == '__main__':
     soma_results_pd['celltype'] = all_suitable_ids_cts
     output = start_multiprocess_imap(get_cell_soma_radius, all_suitable_ids)
     output = np.array(output, dtype='object')
+    raise ValueError
     soma_centres = np.concatenate(output[:, 0]).reshape(len(output), 3)
     soma_centres_vox = soma_centres / [10, 10, 25]
     soma_radii = output[:, 1].astype(float)
@@ -96,7 +97,15 @@ if __name__ == '__main__':
     soma_results_pd['soma radius'] = soma_radii
     soma_results_pd['soma diameter'] = soma_diameters
     soma_results_pd= soma_results_pd.round(2)
+    len_before_drop = len(soma_results_pd)
+    cellids_before_drop = soma_results_pd['cellid']
+    soma_results_pd = soma_results_pd.dropna()
+    len_after_drop = len(soma_results_pd)
+    cellids_after_drop = soma_results_pd['cellid']
+    cellids_no_soma = cellids_before_drop[np.in1d(cellids_before_drop, cellids_after_drop) == False]
     soma_results_pd.to_csv(f'{f_name}/soma_radius_results.csv')
+    log.info(f'{len_before_drop - len_after_drop} cells had to be excluded for missing soma')
+
 
     log.info('Step 3/4: Plot results')
     ct_colours = cls.colors[color_key]
@@ -104,7 +113,7 @@ if __name__ == '__main__':
     #make box-and violinplot as overview
     ylabel = 'soma diameter [µm]'
     title = 'soma diameter of different celltypes'
-    sns.stripplot(x = 'celltype', y = 'soma diameter', data=soma_results_pd, palette='dark:black', alpha=0.2,
+    sns.stripplot(x = 'celltype', y = 'soma diameter', data=soma_results_pd, color='black', alpha=0.2,
                   dodge=True, size=2)
     sns.violinplot(x = 'celltype', y = 'soma diameter', data=soma_results_pd, inner="box",
                    palette=ct_palette)
@@ -131,13 +140,16 @@ if __name__ == '__main__':
         ct_str = ct_dict[ct]
         # make individual histogram plots for each celltype to see eventual bimodal distributions
         data = soma_results_pd[soma_results_pd['celltype'] == ct_str]
-        sns.histplot(x = 'soma diameter', data = data, color=ct_palette[ct_str], common_norm=False)
+        sns.histplot(x = 'soma diameter', data = data, color=ct_palette[ct_str], common_norm=False,
+                     fill=False,element="step", linewidth=3)
         plt.ylabel('count of cells')
         plt.xlabel(xhist)
         plt.title(f'Soma diameter for {ct_str}')
         plt.savefig(f'{f_name}/{ct_str}_soma_diameter_hist.png')
         plt.close()
-        sns.histplot(x='soma diameter', data=data, color=ct_palette[ct_str], common_norm=True)
+        sns.histplot(x='soma diameter', data=data, color=ct_palette[ct_str], common_norm=True,
+                     fill=False,element="step", linewidth=3
+                     )
         plt.ylabel('fraction of cells')
         plt.xlabel(xhist)
         plt.title(f'Soma diameter for {ct_str}')

@@ -10,17 +10,15 @@ import scipy
 import time
 from syconn.handler.config import initialize_logging
 from syconn.handler.basics import load_pkl2obj
-from multiprocessing import pool
-from functools import partial
-from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
-from scipy.stats import ranksums
+from scipy.stats import ranksums, kruskal
 from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, ComparingMultipleForPLotting
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, get_compartment_bbvolume, \
-    get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled, get_spine_density
+    get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled, get_spine_density, get_cell_soma_radius
 from syconn.reps.super_segmentation import SuperSegmentationObject
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
 from syconn.mp.mp_utils import start_multiprocess_imap
+from itertools import combinations
 
 global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
@@ -462,3 +460,106 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
     time_stamps.append(time.time())
     step_idents.append('comparing celltypes')
     log.info("compartment volume comparison finished")
+
+def compare_soma_diameters(cellids, celltypes, filename, colours = None):
+    '''
+    Compares different groups soma diameter by estimating it with get_soma_diameter,
+    running a ranksum test from scipy.stats and plotting it. Functions assumes cells are already prefiltered.
+    :param cellids: array or list cellids of the different cells, grouped by celltype
+    :param celltypes: labels or celltypes of the groups to be compared, assumes str
+    :param filename: filename where results should be saved
+    :param colors: colors for plotting, if None will be different shades of blue
+    :return:
+    '''
+    num_cts = len(celltypes)
+    f_name = f'{filename}/soma_diameter_comparison/'
+    log = initialize_logging('soma diameter comparison', log_dir=f_name + '/logs/')
+    all_cellids = np.hstack(cellids)
+    log.info(f'Compare {len(all_cellids)} of {num_cts} groups/ celltypes: {celltypes}')
+    ct_dict = {i: ct for i, ct in enumerate(celltypes)}
+    if colours is None:
+        blues = ["#0ECCEB", "#0A95AB", "#06535F", "#065E6C", "#043C45"]
+        colours = blues[num_cts]
+
+    log.info(f'Step 1/3: Get soma diameter for {len(all_cellids)} cells')
+    all_cts = []
+    for i in range(num_cts):
+        ct_str = ct_dict[i]
+        all_cts.append([ct_str for i in range(len(cellids[i]))])
+    all_cts = np.hstack(all_cts)
+    columns = ['cellid', 'celltype', 'soma diameter [µm]']
+    soma_results_df = pd.DataFrame(columns=columns, index = range(len(all_cellids)))
+    soma_results_df['cellid'] = all_cellids
+    soma_results_df['celltype'] = all_cts
+    #get soma centre coords, soma radius in µm
+    soma_output = start_multiprocess_imap(get_cell_soma_radius)
+    soma_output = np.array(soma_output, dtype='object')
+    soma_radius = soma_output[:, 1].astype(float)
+    soma_diameter = soma_radius * 2
+    soma_results_df['soma diameter [µm]'] = soma_diameter
+    len_before_drop = len(soma_results_df)
+    cellids_before_drop = soma_results_df['cellid']
+    soma_results_df = soma_results_df.dropna()
+    len_after_drop = len(soma_results_df)
+    cellids_after_drop = soma_results_df['cellid']
+    cellids_no_soma = cellids_before_drop[np.in1d(cellids_before_drop, cellids_after_drop) == False]
+    soma_results_df.to_csv(f'{f_name}/soma_diameter_results.csv')
+    log.info(f'{len_before_drop - len_after_drop} cells (cellids: {cellids_no_soma}) were excluded due to missing soma skeleton points.')
+
+    log.info('Step 2/3: Plot results')
+    ct_palette = {celltypes[i]: colours[i] for i in range(num_cts)}
+    title = 'soma diameter comparison'
+    sns.stripplot(x='celltype', y='soma diameter [µm]', data=soma_results_df, color='black', alpha=0.2,
+                  dodge=True, size=2)
+    sns.violinplot(x='celltype', y='soma diameter [µm]', data=soma_results_df, inner="box",
+                   palette=ct_palette)
+    plt.title(title)
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_violin.png')
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_violin.svg')
+    plt.close()
+    sns.boxplot(x='celltype', y='soma diameter [µm]', data=soma_results_df, palette=ct_palette)
+    plt.title(title)
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_box.png')
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_box.svg')
+    plt.close()
+    sns.histplot(x = 'soma diameter [µm]', data = soma_results_df, hue = 'celltype',
+                 palette=ct_palette, common_norm=False, fill=False,
+                 element="step", legend = True,linewidth = 3)
+    plt.ylabel('count of cells')
+    plt.title(title)
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_hist.png')
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_hist.svg')
+    plt.close()
+    sns.histplot(x='soma diameter [µm]', data=soma_results_df, hue='celltype',
+                 palette=ct_palette, common_norm=True, fill=False,
+                 element="step", legend=True, linewidth=3)
+    plt.ylabel('fraction of cells')
+    plt.title(title)
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_hist_norm.png')
+    plt.savefig(f'{f_name}/soma_diameter_celltypes_hist_norm.svg')
+    plt.close()
+
+    log.info('Step 3/3: Calculate statistics and plot results')
+    celltype_diameter_groups = [group['soma diameter'].values for name, group in soma_results_df.groupby('celltype')]
+    ind_celltypes_mapped = {ct: i for i, ct in enumerate(celltypes)}
+    # run kruskal wallis test
+    kruskal_results = kruskal(*celltype_diameter_groups)
+    log.info(f'Results of kruskal-wallis-test: p-value = {kruskal_results[1]:.2f}, stats: {kruskal_results[0]:.2f}')
+    # run ranksum test on each combination
+    celltype_combs = combinations(celltypes, 2)
+    ranksum_results = pd.DataFrame(columns=list(celltype_combs), index=['stats', 'p-value'])
+    for comb in combinations:
+        ct1 = comb[0]
+        ct2 = comb[1]
+        ct1_data = celltype_diameter_groups[ind_celltypes_mapped[ct1]]
+        ct2_data = celltype_diameter_groups[ind_celltypes_mapped[ct2]]
+        stats, p_value = ranksums(ct1_data, ct2_data)
+        ranksum_results.loc['stats', comb] = stats
+        ranksum_results.loc['p-value', comb] = p_value
+    ranksum_results.to_csv(f'{f_name}/diameter_ranksum_results.csv')
+
+    log.info('Comparison of soma diameters finished.')
+
+
+
+

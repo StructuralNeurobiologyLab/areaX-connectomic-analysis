@@ -28,7 +28,7 @@ def get_compartment_length(sso, compartment, cell_graph):
     return comp_length
 
 
-def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
+def get_spine_density(input):
     """
     calculates the spine density of the dendrite.Therefore, the amount of spines per µm dendrite is calculated.
      Amount of spines is the number of connected_components with spiness = spines.
@@ -38,6 +38,9 @@ def get_spine_density(cellid , min_comp_len = 100, full_cell_dict = None):
     :param full_cell_dict: dictionary with per cell parameter values, cell.id is key
     :return: amount of spines on dendrite, 0 if not having min_comp_len
     """
+    cellid, min_comp_len, full_cell_dict = input
+    if min_comp_len is None:
+        min_comp_len = 100
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))

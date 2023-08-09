@@ -21,6 +21,7 @@ if __name__ == '__main__':
     min_comp_len = 200
     n_samples = 3
     use_gt = True
+    use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact
     np.random.seed(42)
     f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230808_j0251v5_rndm_cts_soma_radius_mcl_%i_n_%i_gt%s" % (
         min_comp_len, n_samples, use_gt)
@@ -29,6 +30,10 @@ if __name__ == '__main__':
     log = initialize_logging('generate random samples for soam diameter testing', log_dir=f_name + '/logs/')
     log.info("min_comp_len = %i, use ground_truth = %s, n samples per celltype = %i" % (
     min_comp_len, use_gt, n_samples))
+    if use_skel:
+        log.info('use skeleton node predictions to get soma mesh coordinates')
+    else:
+        log.info('use vertex label dict predictions to get soma vertices')
     known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
     if use_gt:
         v6_gt = pd.read_csv("cajal/nvmescratch/projects/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv", names = ["cellids", "celltype"])

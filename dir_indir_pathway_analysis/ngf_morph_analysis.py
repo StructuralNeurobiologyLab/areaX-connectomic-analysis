@@ -35,7 +35,7 @@ if __name__ == '__main__':
     min_syn_size = bio_params.min_syn_size()
     fontsize_jointplot = 12
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230808_j0251v5_ngf_mito_radius_spiness_mcl%i_fs%i" % (min_comp_len, fontsize_jointplot)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230809_j0251v5_ngf_mito_radius_spiness_mcl%i_fs%i" % (min_comp_len, fontsize_jointplot)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('NGF seperation morphology', log_dir=f_name + '/logs/')
@@ -127,3 +127,5 @@ if __name__ == '__main__':
 
         plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
         plt.close()
+
+    log.info('NGF morphology analysis is done')

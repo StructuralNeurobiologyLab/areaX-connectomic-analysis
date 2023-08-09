@@ -557,7 +557,7 @@ def compare_soma_diameters(cellids, celltypes, filename, colours = None, use_ske
     # run ranksum test on each combination
     celltype_combs = combinations(celltypes, 2)
     comb_list = list(celltype_combs)
-    comb_list_str = [f'{ct_dict[ct1]} vs {ct_dict[ct2]}' for (ct1, ct2) in comb_list]
+    comb_list_str = [f'{ct1} vs {ct2}' for (ct1, ct2) in comb_list]
     ranksum_results = pd.DataFrame(columns=comb_list_str, index=['stats', 'p-value'])
     for comb in comb_list:
         ct1 = comb[0]
@@ -565,8 +565,8 @@ def compare_soma_diameters(cellids, celltypes, filename, colours = None, use_ske
         ct1_data = celltype_diameter_groups[ind_celltypes_mapped[ct1]]
         ct2_data = celltype_diameter_groups[ind_celltypes_mapped[ct2]]
         stats, p_value = ranksums(ct1_data, ct2_data)
-        ranksum_results.loc['stats', f'{ct_dict[ct1]} vs {ct_dict[ct2]}'] = stats
-        ranksum_results.loc['p-value', f'{ct_dict[ct1]} vs {ct_dict[ct2]}'] = p_value
+        ranksum_results.loc['stats', f'{ct1} vs {ct2}'] = stats
+        ranksum_results.loc['p-value', f'{ct1} vs {ct2}'] = p_value
     ranksum_results.to_csv(f'{f_name}/diameter_ranksum_results.csv')
 
     log.info('Comparison of soma diameters finished.')

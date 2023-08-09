@@ -29,7 +29,7 @@ if __name__ == '__main__':
     min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    fontsize_jointplot = 20
+    fontsize_jointplot = 12
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230808_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
     if not os.path.exists(f_name):

@@ -19,8 +19,6 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from syconn.mp.mp_utils import start_multiprocess_imap
 
-    from tqdm import tqdm
-
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)

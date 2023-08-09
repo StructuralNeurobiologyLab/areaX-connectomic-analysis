@@ -23,7 +23,7 @@ if __name__ == '__main__':
     use_gt = True
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact
     np.random.seed(42)
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230808_j0251v5_rndm_cts_soma_radius_mcl_%i_n_%i_gt%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230809_j0251v5_rndm_cts_soma_radius_mcl_%i_n_%i_gt%s" % (
         min_comp_len, n_samples, use_gt)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

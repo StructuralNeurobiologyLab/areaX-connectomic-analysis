@@ -30,7 +30,7 @@ if __name__ == '__main__':
     save_svg = False
     use_skel = False #if true would use skeleton labels for getting soma; vertex labels more exact
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'STNGP'
+    color_key = 'TePkBr'
     f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230809_j0251v5_cts_soma_radius_mcl_%i_%s_fs%i" % (
     min_comp_len_cells,color_key, fontsize)
     if not os.path.exists(f_name):

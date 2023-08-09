@@ -11,18 +11,14 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
     import numpy as np
-    from scipy.stats import ranksums
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, \
         get_spine_density, get_cell_soma_radius
     from syconn.handler.basics import write_obj2pkl
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import  ComparingResultsForPLotting
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import itertools
     import seaborn as sns
     import matplotlib.pyplot as plt
     from syconn.mp.mp_utils import start_multiprocess_imap
-
-    from tqdm import tqdm
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
@@ -33,7 +29,7 @@ if __name__ == '__main__':
     min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    fontsize_jointplot = 12
+    fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230809_j0251v5_ngf_mito_radius_spiness_mcl%i_fs%i" % (min_comp_len, fontsize_jointplot)
     if not os.path.exists(f_name):
@@ -84,9 +80,10 @@ if __name__ == '__main__':
     #get spine density from all ngf cells
     ngf_input = [[ngf_id, min_comp_len, ngf_cell_dict] for ngf_id in ngf_ids]
     spine_density = start_multiprocess_imap(get_spine_density, ngf_input)
+    spine_density = np.array(spine_density)
     ngf_params = {"axon median radius": axon_median_radius_ngf[ngf_nonzero], "axon mitochondria volume density": axon_mito_volume_density_ngf[ngf_nonzero],
                   "axon myelin fraction": axon_myelin_ngf[ngf_nonzero], 'soma diameter': ngf_diameters[ngf_nonzero],
-                  'spine density [1/µm]': spine_density[ngf_nonzero], "cellids": ngf_ids[ngf_nonzero]}
+                  'spine density': spine_density[ngf_nonzero], "cellids": ngf_ids[ngf_nonzero]}
     ngf_param_df = pd.DataFrame(ngf_params)
     ngf_param_df.to_csv("%s/ngf_params.csv" % f_name)
     write_obj2pkl("%s/ngf_dict.pkl" % f_name, ngf_params)
@@ -116,16 +113,21 @@ if __name__ == '__main__':
         g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize = fontsize_jointplot)
         g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize= fontsize_jointplot)
         if "radius" in x or 'diameter' in x:
-            plt.xlabel("%s in µm" % x)
+            plt.xlabel("%s [µm]" % x)
         elif "volume density" in x:
-            plt.xlabel("%s in µm³/µm" % x)
+            plt.xlabel("%s [µm³/µm]" % x)
+        elif 'spine density' in x:
+            plt.xlabel('%s [1/µm]')
 
-        if "radius" in y:
-            plt.ylabel("%s in µm" % y)
+        if "radius" in y or 'diameter' in y:
+            plt.ylabel("%s [µm]" % y)
         elif "volume density" in y:
-            plt.ylabel("%s in µm³/µm" % y)
+            plt.ylabel("%s [µm³/µm]" % y)
+        elif 'spine density' in y:
+            plt.xlabel('%s [1/µm]')
 
         plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
+        plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))
         plt.close()
 
     log.info('NGF morphology analysis is done')

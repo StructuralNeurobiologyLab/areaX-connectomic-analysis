@@ -87,7 +87,8 @@ def axon_dendritic_arborization_cell(input):
     ax_dict = {"length": axon_length, "volume": axon_volume, "median radius": ax_median_radius, "tortuosity complete": ax_tortuosity_complete, "tortuosity sampled": ax_tortuosity_sampled}
     den_dict = {"length": dendrite_length, "volume": dendrite_volume, "median radius": dendrite_median_radius, "tortuosity complete": dendrite_tortuosity_complete, "tortuosity sampled": dendrite_tortuosity_sampled}
     if spiness:
-        den_dict["spine density"] = get_spine_density(cellid , min_comp_len = min_comp_len, full_cell_dict = full_cell_dict)
+        input = [cellid, min_comp_len, full_cell_dict]
+        den_dict["spine density"] = get_spine_density(input)
     return np.array([ax_dict, den_dict])
 
 def axon_den_arborization_ct(ssd, celltype, filename, cellids, min_comp_len = 100, full_cell_dict = None, percentile = None, label_cts = None, spiness = False):

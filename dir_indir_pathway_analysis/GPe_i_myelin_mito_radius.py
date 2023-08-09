@@ -32,10 +32,15 @@ if __name__ == '__main__':
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
     fontsize_jointplot = 20
+    use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230808_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
+    if use_skel:
+        log.info('use skeleton node predictions to get soma mesh coordinates')
+    else:
+        log.info('use vertex label dict predictions to get soma vertices')
     log.info("GPe/i comparison starts")
     time_stamps = [time.time()]
     step_idents = ['t-0']
@@ -81,9 +86,8 @@ if __name__ == '__main__':
     gpe_soma_results = start_multiprocess_imap(get_cell_soma_radius, GPe_ids)
     gpe_soma_results = np.array(gpe_soma_results, dtype='object')
     gpe_diameters = gpe_soma_results[:, 1].astype(float) * 2
-    raise ValueError
     GPe_params = {"axon median radius": axon_median_radius_gpe[gpe_nonzero], "axon mitochondria volume density": axon_mito_volume_density_gpe[gpe_nonzero],
-                  "axon myelin fraction": axon_myelin_gpe[gpe_nonzero], "cellids": GPe_ids[gpe_nonzero], 'soma diameter': gpe_diameters[gpe_nonzero]}
+                  "axon myelin fraction": axon_myelin_gpe[gpe_nonzero], 'soma diameter': gpe_diameters[gpe_nonzero], "cellids": GPe_ids[gpe_nonzero]}
     GPe_param_df = pd.DataFrame(GPe_params)
     GPe_param_df.to_csv("%s/GPe_params.csv" % f_name)
     write_obj2pkl("%s/GPe_dict.pkl" % f_name, GPe_params)
@@ -109,8 +113,8 @@ if __name__ == '__main__':
     gpi_diameters = gpi_soma_results[:, 1].astype(float) * 2
     GPi_params = {"axon median radius": axon_median_radius_gpi[gpi_nonzero],
                   "axon mitochondria volume density": axon_mito_volume_density_gpi[gpi_nonzero],
-                  "axon myelin fraction": axon_myelin_gpi[gpi_nonzero], "cellids": GPi_ids[gpi_nonzero],
-                  'soma diameter': gpi_diameters[gpi_nonzero]}
+                  "axon myelin fraction": axon_myelin_gpi[gpi_nonzero],
+                  'soma diameter': gpi_diameters[gpi_nonzero], "cellids": GPi_ids[gpi_nonzero]}
     GPi_param_df = pd.DataFrame(GPi_params)
     GPi_param_df.to_csv("%s/GPi_params.csv" % f_name)
     write_obj2pkl("%s/GPi_dict.pkl" % f_name, GPi_params)

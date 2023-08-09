@@ -461,7 +461,7 @@ def compare_compartment_volume_ct_multiple(celltypes, filename, filename_cts = N
     step_idents.append('comparing celltypes')
     log.info("compartment volume comparison finished")
 
-def compare_soma_diameters(cellids, celltypes, filename, colours = None):
+def compare_soma_diameters(cellids, celltypes, filename, colours = None, use_skel = False):
     '''
     Compares different groups soma diameter by estimating it with get_soma_diameter,
     running a ranksum test from scipy.stats and plotting it. Functions assumes cells are already prefiltered.
@@ -469,6 +469,8 @@ def compare_soma_diameters(cellids, celltypes, filename, colours = None):
     :param celltypes: labels or celltypes of the groups to be compared, assumes str
     :param filename: filename where results should be saved
     :param colors: colors for plotting, if None will be different shades of blue
+    :param use_skel: if True uses skeleton node predictions to get mesh from soma
+                    otherwise uses vertex label dict (more exact)
     :return:
     '''
     num_cts = len(celltypes)
@@ -476,6 +478,10 @@ def compare_soma_diameters(cellids, celltypes, filename, colours = None):
     log = initialize_logging('soma diameter comparison', log_dir=f_name + '/logs/')
     all_cellids = np.hstack(cellids)
     log.info(f'Compare {len(all_cellids)} of {num_cts} groups/ celltypes: {celltypes}')
+    if use_skel:
+        log.info('use skeleton node predictions to get soma mesh coordinates')
+    else:
+        log.info('use vertex label dict predictions to get soma vertices')
     ct_dict = {i: ct for i, ct in enumerate(celltypes)}
     if colours is None:
         blues = ["#0ECCEB", "#0A95AB", "#06535F", "#065E6C", "#043C45"]
@@ -492,7 +498,7 @@ def compare_soma_diameters(cellids, celltypes, filename, colours = None):
     soma_results_df['cellid'] = all_cellids
     soma_results_df['celltype'] = all_cts
     #get soma centre coords, soma radius in µm
-    soma_output = start_multiprocess_imap(get_cell_soma_radius)
+    soma_output = start_multiprocess_imap(get_cell_soma_radius, all_cellids)
     soma_output = np.array(soma_output, dtype='object')
     soma_radius = soma_output[:, 1].astype(float)
     soma_diameter = soma_radius * 2
@@ -540,22 +546,27 @@ def compare_soma_diameters(cellids, celltypes, filename, colours = None):
     plt.close()
 
     log.info('Step 3/3: Calculate statistics and plot results')
-    celltype_diameter_groups = [group['soma diameter'].values for name, group in soma_results_df.groupby('celltype')]
+    celltype_diameter_groups = [group['soma diameter [µm]'].values for name, group in soma_results_df.groupby('celltype')]
     ind_celltypes_mapped = {ct: i for i, ct in enumerate(celltypes)}
+    celltype_groups = soma_results_df.groupby('celltype')
+    celltype_diameter_median = celltype_groups['soma diameter [µm]'].median()
+    celltype_diameter_median.to_csv(f'{f_name}/median_diameters_celltype.csv')
     # run kruskal wallis test
     kruskal_results = kruskal(*celltype_diameter_groups)
     log.info(f'Results of kruskal-wallis-test: p-value = {kruskal_results[1]:.2f}, stats: {kruskal_results[0]:.2f}')
     # run ranksum test on each combination
     celltype_combs = combinations(celltypes, 2)
-    ranksum_results = pd.DataFrame(columns=list(celltype_combs), index=['stats', 'p-value'])
-    for comb in combinations:
+    comb_list = list(celltype_combs)
+    comb_list_str = [f'{ct_dict[ct1]} vs {ct_dict[ct2]}' for (ct1, ct2) in comb_list]
+    ranksum_results = pd.DataFrame(columns=comb_list_str, index=['stats', 'p-value'])
+    for comb in comb_list:
         ct1 = comb[0]
         ct2 = comb[1]
         ct1_data = celltype_diameter_groups[ind_celltypes_mapped[ct1]]
         ct2_data = celltype_diameter_groups[ind_celltypes_mapped[ct2]]
         stats, p_value = ranksums(ct1_data, ct2_data)
-        ranksum_results.loc['stats', comb] = stats
-        ranksum_results.loc['p-value', comb] = p_value
+        ranksum_results.loc['stats', f'{ct_dict[ct1]} vs {ct_dict[ct2]}'] = stats
+        ranksum_results.loc['p-value', f'{ct_dict[ct1]} vs {ct_dict[ct2]}'] = p_value
     ranksum_results.to_csv(f'{f_name}/diameter_ranksum_results.csv')
 
     log.info('Comparison of soma diameters finished.')

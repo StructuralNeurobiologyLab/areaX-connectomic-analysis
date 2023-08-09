@@ -491,21 +491,49 @@ def get_per_cell_mito_myelin_info(input):
     ax_median_radius_cell = np.median(axon_radii_cell)
     return [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
 
-def get_cell_soma_radius(cellid):
+def get_cell_comp_vert_coords(cellid, comp):
     '''
-    Gives an estimate about the soma radius. Calculates radius as median distance from soma
-    centre to mesh vertices. Soma centre is calculated as average of the vertex coordiantes and
-    the mehs of the soma is estimated from the skeleton prediciton 'axoness avg 10000'.
-    Uses syconn.mesh.compartmentalize_mesh_fromskel
-    :param cellid: id of cell
-    :return: soma center in physical coordinates, radius in nm
+    Gets vertex coordinates from a mesh of a specific compartment based on
+    the cells label dict.
+    :param cellid: id of the cell
+    :param comp: compartment to be selected for
+    :return: vertex coordinates in physical space
     '''
     cell = SuperSegmentationObject(cellid)
-    cell.load_skeleton()
-    cell_comp_meshes = compartmentalize_mesh_fromskel(cell, 'axoness_avg10000')
-    soma_mesh = cell_comp_meshes['soma']
-    ind, vert, norm = soma_mesh
-    soma_vert_coords = vert.reshape((-1, 3))
+    cell_ld = cell.label_dict('vertex')
+    cell_ld_axoness = cell_ld['axoness']
+    if comp == 1:
+        #set en-passant bouton and terminal boutons to axon
+        cell_ld_axoness[cell_ld_axoness == 3] = 1
+        cell_ld_axoness[cell_ld_axoness == 4] = 1
+    ind, vert, norm = cell.mesh
+    vert_coords = vert.reshape((-1, 3))
+    vert_comp_coords = vert_coords[cell_ld_axoness == comp]
+    return vert_comp_coords
+
+def get_cell_soma_radius(cellid, use_skel = False):
+    '''
+    Gives an estimate about the soma radius. Calculates radius as median distance from soma
+    centre to mesh vertices. Soma centre is calculated as average of the vertex coordiantes.
+    Default is getting the vertex coordinates of soma directly from the vertex label dict via
+    get_cell_comp_vert_coords. Can use the skeleton 'axoness_avg_10000' key to map the skeleton
+    to the mesh with syconn.mesh.compartmentalize_mesh_fromskel but it less exact.
+    :param cellid: id of cell
+    :param use_skel: if True uses compartmentalize_mesh_fromskel to get soma mesh.
+                    If soma coordinates far away from skeleton nodes it might not find them
+                    If false uses get_cell_comp_vert_coords which uses the label dict of the vertices directly
+    :return: soma center in physical coordinates, radius in nm
+    '''
+
+    if use_skel:
+        cell = SuperSegmentationObject(cellid)
+        cell.load_skeleton()
+        cell_comp_meshes = compartmentalize_mesh_fromskel(cell, 'axoness_avg10000')
+        soma_mesh = cell_comp_meshes['soma']
+        ind, vert, norm = soma_mesh
+        soma_vert_coords = vert.reshape((-1, 3))
+    else:
+        soma_vert_coords = get_cell_comp_vert_coords(cellid, comp=2)
     if len(soma_vert_coords) == 0:
         return [[np.nan, np.nan, np.nan], np.nan]
     soma_vert_avg = np.mean(soma_vert_coords, axis=0)

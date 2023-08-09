@@ -2,17 +2,14 @@
 
 if __name__ == '__main__':
     from analysis_morph_helper import check_comp_lengths_ct, get_cell_soma_radius
-    from analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses
-    from result_helper import ConnMatrix
     from analysis_colors import CelltypeColors
     from analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
     import os as os
     import pandas as pd
-    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
     import seaborn as sns
@@ -31,17 +28,22 @@ if __name__ == '__main__':
     cls = CelltypeColors()
     fontsize = 12
     save_svg = False
+    use_skel = False #if true would use skeleton labels for getting soma; vertex labels more exact
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230807_j0251v5_cts_soma_radius_mcl_%i_%s_fs%i" % (
+    color_key = 'STNGP'
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230809_j0251v5_cts_soma_radius_mcl_%i_%s_fs%i" % (
     min_comp_len_cells,color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     save_svg = True
-    log = initialize_logging('soma raidus calculation', log_dir=f_name + '/logs/')
+    log = initialize_logging('soma radius calculation', log_dir=f_name + '/logs/')
     log.info(
         "min_comp_len = %i for full cells, known mergers excluded = %s, colors = %s, fonsize = %i" % (
         min_comp_len_cells,exclude_known_mergers, color_key, fontsize))
+    if use_skel:
+        log.info('use skeleton node predictions to get soma mesh coordinates')
+    else:
+        log.info('use vertex label dict predictions to get soma vertices')
     time_stamps = [time.time()]
     step_idents = ['t-0']
 
@@ -80,13 +82,12 @@ if __name__ == '__main__':
     all_suitable_ids_cts = np.hstack(all_suitable_ids_cts)
 
     log.info('Step 2/4: Get soma radius from all cellids')
-    columns = ['cellid', 'celltype', 'soma radius', 'soma diameter', 'soma centre voxel coords x', 'soma centre voxel coords y', 'soma centre voxel coords z']
+    columns = ['cellid', 'celltype', 'soma radius', 'soma diameter', 'soma centre voxel x', 'soma centre voxel y', 'soma centre voxel z']
     soma_results_pd = pd.DataFrame(columns=columns, index = range(len(all_suitable_ids)))
     soma_results_pd['cellid'] = all_suitable_ids
     soma_results_pd['celltype'] = all_suitable_ids_cts
     output = start_multiprocess_imap(get_cell_soma_radius, all_suitable_ids)
     output = np.array(output, dtype='object')
-    raise ValueError
     soma_centres = np.concatenate(output[:, 0]).reshape(len(output), 3)
     soma_centres_vox = soma_centres / [10, 10, 25]
     soma_radii = output[:, 1].astype(float)
@@ -104,7 +105,8 @@ if __name__ == '__main__':
     cellids_after_drop = soma_results_pd['cellid']
     cellids_no_soma = cellids_before_drop[np.in1d(cellids_before_drop, cellids_after_drop) == False]
     soma_results_pd.to_csv(f'{f_name}/soma_radius_results.csv')
-    log.info(f'{len_before_drop - len_after_drop} cells had to be excluded for missing soma')
+    log.info(f'{len_before_drop - len_after_drop} cells had to be excluded for '
+             f'missing soma mesh(id: {cellids_no_soma})')
 
 
     log.info('Step 3/4: Plot results')
@@ -158,21 +160,26 @@ if __name__ == '__main__':
 
     log.info('Step 4/4: run statistical tests')
     celltype_diameter_groups = [group['soma diameter'].values for name, group in soma_results_pd.groupby('celltype')]
+    celltype_groups = soma_results_pd.groupby('celltype')
+    celltype_diameter_median = celltype_groups['soma diameter'].median()
+    celltype_diameter_median.to_csv(f'{f_name}/median_diameters_celltype.csv')
     ind_celltypes_mapped = {ct: i for i, ct in enumerate(celltypes)}
     #run kruskal wallis test
     kruskal_results = kruskal(*celltype_diameter_groups)
     log.info(f'Results of kruskal-wallis-test: p-value = {kruskal_results[1]:.2f}, stats: {kruskal_results[0]:.2f}')
     #run ranksum test on each combination
     celltype_combs = combinations(celltypes, 2)
-    ranksum_results = pd.DataFrame(columns=list(celltype_combs), index = ['stats', 'p-value'])
-    for comb in combinations:
+    comb_list = list(celltype_combs)
+    comb_list_str = [f'{ct_dict[ct1]} vs {ct_dict[ct2]}' for (ct1, ct2) in comb_list]
+    ranksum_results = pd.DataFrame(columns=comb_list_str, index = ['stats', 'p-value'])
+    for comb in comb_list:
         ct1 = comb[0]
         ct2 = comb[1]
         ct1_data = celltype_diameter_groups[ind_celltypes_mapped[ct1]]
         ct2_data = celltype_diameter_groups[ind_celltypes_mapped[ct2]]
         stats, p_value = ranksums(ct1_data, ct2_data)
-        ranksum_results.loc['stats', comb] = stats
-        ranksum_results.loc['p-value', comb] = p_value
+        ranksum_results.loc['stats', f'{ct_dict[ct1]} vs {ct_dict[ct2]}'] = stats
+        ranksum_results.loc['p-value', f'{ct_dict[ct1]} vs {ct_dict[ct2]}'] = p_value
 
     ranksum_results.to_csv(f'{f_name}/diameter_ranksum_results.csv')
 

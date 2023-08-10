@@ -31,7 +31,7 @@ if __name__ == '__main__':
     min_syn_size = bio_params.min_syn_size()
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230809_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -173,14 +173,14 @@ if __name__ == '__main__':
         g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize = fontsize_jointplot)
         g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize= fontsize_jointplot)
         if "radius" in x or 'diameter' in x:
-            plt.xlabel("%s [µm]" % x)
+            g.ax_joint.set_xlabel("%s [µm]" % x)
         elif "volume density" in x:
-            plt.xlabel("%s [µm³/µm]" % x)
+            g.ax_joint.set_xlabel("%s [µm³/µm]" % x)
 
         if "radius" in y or 'diameter' in y:
-            plt.ylabel("%s [µm]" % y)
+            g.ax_joint.set_ylabel("%s [µm]" % y)
         elif "volume density" in y:
-            plt.ylabel("%s [µm³/µm]" % y)
+            g.ax_joint.set_xlabel("%s [µm³/µm]" % y)
 
         plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
         plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))

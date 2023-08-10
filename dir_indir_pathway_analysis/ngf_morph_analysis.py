@@ -31,7 +31,9 @@ if __name__ == '__main__':
     min_syn_size = bio_params.min_syn_size()
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_ngf_mito_radius_spiness_mcl%i_fs%i" % (min_comp_len, fontsize_jointplot)
+    use_median = True  # if true use median of vertex coordinates to find centre
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_ngf_mito_radius_spiness_mcl%i_fs%i_med%i" % \
+             (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('NGF seperation morphology', log_dir=f_name + '/logs/')
@@ -40,6 +42,10 @@ if __name__ == '__main__':
         log.info('use skeleton node predictions to get soma mesh coordinates')
     else:
         log.info('use vertex label dict predictions to get soma vertices')
+    if use_median:
+        log.info('Median of coords used to get soma centre')
+    else:
+        log.info('Mean of coords used to get soma centre')
     log.info("Finding potential ngf subpopulations starts")
     time_stamps = [time.time()]
     step_idents = ['t-0']
@@ -97,6 +103,31 @@ if __name__ == '__main__':
     log.info("Step 2/3 Plot results")
     key_list = list(ngf_params.keys())[:-1]
 
+    for key in key_list:
+        if 'results' in key or 'diameter' in key:
+            xhist = f'{key} [µm]'
+        elif 'volume density' in key:
+            xhist = f'{key} [µm³/µm]'
+        elif 'spine density' in key:
+            xhist = f'{key} [1/µm]'
+        else:
+            xhist = key
+        sns.histplot(x=key, data=ngf_param_df, color='black', common_norm=False,
+                     fill=False, element="step", linewidth=3)
+        plt.ylabel('count of cells')
+        plt.xlabel(xhist)
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist.png')
+        plt.close()
+        sns.histplot(x=key, data=ngf_param_df, color='black', common_norm=True,
+                     fill=False, element="step", linewidth=3
+                     )
+        plt.ylabel('fraction of cells')
+        plt.xlabel(xhist)
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist_norm.png')
+        plt.close()
+
     combinations = list(itertools.combinations(range(len(key_list)), 2))
     #sns.set(font_scale=1.5)
     for comb in combinations:
@@ -126,26 +157,49 @@ if __name__ == '__main__':
         elif "volume density" in y:
             g.ax_joint.set_ylabel("%s [µm³/µm]" % y)
         elif 'spine density' in y:
-            g.ax_joint.set_ylabel('%s [1/µm]')
+            g.ax_joint.set_ylabel('%s [1/µm]' % y)
 
         plt.savefig("%s/%s_%s_joinplot_all.svg" % (f_name, x, y))
         plt.savefig("%s/%s_%s_joinplot_all.png" % (f_name, x, y))
         plt.close()
 
     soma_den_thresh = 11.5
-    log.info(f'Step 3/3:Seperate populations by manual threshold for soma density = {soma_den_thresh}')
-    ngf_params['celltype'] = str
-    ct_palette = {'type 1': '#232121', 'type 2': '#15AEAB'}
-    raise ValueError
-    type1_ids = ngf_params['cellids'][ngf_params['soma diameter'] < soma_den_thresh]
-    type1_inds = ngf_params['soma diameter'] < soma_den_thresh
-    ngf_params.loc[type1_inds, 'celltype'] = 'type 1'
-    type2_ids = ngf_params['cellids'][ngf_params['soma diameter'] >= soma_den_thresh]
-    type2_inds = ngf_params['soma diameter'] >= soma_den_thresh
-    ngf_params.loc[type2_inds, 'celltype'] = 'type 2'
+    axon_med_radius_thresh = 0.11
+    mito_density_thresh = 0.03
+    spine_density_thresh = 0.02
+    log.info(f'Step 3/3:Seperate populations by manual thresholds: \n'
+             f'for soma density = {soma_den_thresh} µm, axon median radius = {axon_med_radius_thresh} µm, \n'
+             f'mito volume density = {mito_density_thresh} µm³/µm, spine density = {spine_density_thresh} 1/µm')
+    ngf_params.drop('myelin fraction')
+    threshold = [axon_med_radius_thresh, mito_density_thresh, soma_den_thresh, spine_density_thresh]
+    ct_palette = {'type 1': '#232121', 'type 2': '#15AEAB', 'no type':'#707070'}
+    #seperate based on these threshold and if cells don't fit into either category, plot in grey
+    type_1_inds_collected = np.zeros((len(ngf_param_df, 4)))
+    type_2_inds_collected = np.zeros((len(ngf_param_df, 4)))
+    for i, key in enumerate(ngf_params.keys()):
+        if 'spine' in key:
+            type_1_inds = ngf_params[key] >= threshold[i]
+            type_2_inds = ngf_params[key] < threshold[i]
+        else:
+            type_1_inds = ngf_params[key] < threshold[i]
+            type_2_inds = ngf_params[key] >= threshold[i]
+        type_1_inds_collected[:, i] = type_1_inds
+        type_2_inds_collected[:, i] = type_2_inds
+    type_1_inds_all = np.all(type_1_inds_collected, axis = 1)
+    type_2_inds_all = np.all(type_2_inds_collected, axis = 1)
+    type1_ids = ngf_params['cellids'][type_1_inds_all]
+    ngf_param_df.loc[type_1_inds_all, 'celltype'] = 'type 1'
+    type2_ids = ngf_params['cellids'][type_2_inds_all]
+    ngf_param_df.loc[type_2_inds_all, 'celltype'] = 'type 2'
+    no_type_inds = np.all(np.array([type_1_inds_all, type_2_inds_all]) == False, axis = 1)
+    no_type_ids = ngf_params['cellids'][no_type_inds]
+    ngf_param_df.loc[no_type_inds, 'celltype'] = 'no type'
     ngf_param_df.to_csv("%s/ngf_params.csv" % f_name)
-    write_obj2pkl(f'{f_name}/type1_ids.pkl', np.array(type1_ids))
-    write_obj2pkl(f'{f_name}/type2_ids.pkl', np.array(type2_ids))
+    write_obj2pkl(f'{bio_params.file_locations}/ngf_type1_ids.pkl', type1_ids)
+    write_obj2pkl(f'{bio_params.file_locations}/ngf_type2_ids.pkl', type2_ids)
+    write_obj2pkl(f'{f_name}/ngf_type1_ids.pkl', type1_ids)
+    write_obj2pkl(f'{f_name}/ngf_type2_ids.pkl', type2_ids)
+    log.info(f'Type 1 NGF are {len(type1_ids)} cells, Type 2 NGF are {len(type2_ids)} cells, {len(no_type_ids)} belong to no type')
 
     for comb in combinations:
         x = key_list[comb[0]]

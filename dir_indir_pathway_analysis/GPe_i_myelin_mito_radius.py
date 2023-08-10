@@ -31,7 +31,9 @@ if __name__ == '__main__':
     min_syn_size = bio_params.min_syn_size()
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i" % (min_comp_len, fontsize_jointplot)
+    use_median = True  # if true use median of vertex coordinates to find centre
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
+             (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')
@@ -39,6 +41,10 @@ if __name__ == '__main__':
         log.info('use skeleton node predictions to get soma mesh coordinates')
     else:
         log.info('use vertex label dict predictions to get soma vertices')
+    if use_median:
+        log.info('Median of coords used to get soma centre')
+    else:
+        log.info('Mean of coords used to get soma centre')
     log.info("GPe/i comparison starts")
     time_stamps = [time.time()]
     step_idents = ['t-0']

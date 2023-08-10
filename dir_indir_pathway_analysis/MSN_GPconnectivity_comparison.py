@@ -32,7 +32,7 @@ if __name__ == '__main__':
     gpe_ct = 6
     gpi_ct = 7
     msn_ct = 2
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230809_j0251v5_MSN_connGP_comparison_mcl_%i_ax%i_synprob_%.2f_ranksums" % (cl_cell, cl_ax, syn_prob)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_MSN_connGP_comparison_mcl_%i_ax%i_synprob_%.2f_ranksums_med" % (cl_cell, cl_ax, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN percentile comparison connectivity, mergers excluded', log_dir=f_name + '/logs/')

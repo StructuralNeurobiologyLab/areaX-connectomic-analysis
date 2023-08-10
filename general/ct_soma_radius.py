@@ -29,9 +29,10 @@ if __name__ == '__main__':
     fontsize = 12
     save_svg = False
     use_skel = False #if true would use skeleton labels for getting soma; vertex labels more exact
+    use_median = True  # if true use median of vertex coordinates to find centre
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230809_j0251v5_cts_soma_radius_mcl_%i_%s_fs%i" % (
+    color_key = 'STNGP'
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230810_j0251v5_cts_soma_radius_mcl_%i_%s_fs%i" % (
     min_comp_len_cells,color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -44,6 +45,10 @@ if __name__ == '__main__':
         log.info('use skeleton node predictions to get soma mesh coordinates')
     else:
         log.info('use vertex label dict predictions to get soma vertices')
+    if use_median:
+        log.info('Median of coords used to get soma centre')
+    else:
+        log.info('Mean of coords used to get soma centre')
     time_stamps = [time.time()]
     step_idents = ['t-0']
 

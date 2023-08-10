@@ -22,8 +22,9 @@ if __name__ == '__main__':
     n_samples = 3
     use_gt = True
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact
+    use_median = True #if true use median of vertex coordinates to find centre
     np.random.seed(42)
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230809_j0251v5_rndm_cts_soma_radius_mcl_%i_n_%i_gt%s" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230810_j0251v5_rndm_cts_soma_radius_mcl_%i_n_%i_gt%s" % (
         min_comp_len, n_samples, use_gt)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -34,6 +35,10 @@ if __name__ == '__main__':
         log.info('use skeleton node predictions to get soma mesh coordinates')
     else:
         log.info('use vertex label dict predictions to get soma vertices')
+    if use_median:
+        log.info('Median of coords used to get soma centre')
+    else:
+        log.info('Mean of coords used to get soma centre')
     known_mergers = load_pkl2obj("/cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
     if use_gt:
         v6_gt = pd.read_csv("cajal/nvmescratch/projects/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv", names = ["cellids", "celltype"])

@@ -514,7 +514,7 @@ def get_cell_comp_vert_coords(cellid, comp):
     vert_comp_coords = vert_coords[cell_ld_axoness == comp]
     return vert_comp_coords
 
-def get_cell_soma_radius(cellid, use_skel = False):
+def get_cell_soma_radius(cellid, use_skel = False, use_median_centre = True):
     '''
     Gives an estimate about the soma radius. Calculates radius as median distance from soma
     centre to mesh vertices. Soma centre is calculated as average of the vertex coordiantes.
@@ -525,6 +525,7 @@ def get_cell_soma_radius(cellid, use_skel = False):
     :param use_skel: if True uses compartmentalize_mesh_fromskel to get soma mesh.
                     If soma coordinates far away from skeleton nodes it might not find them
                     If false uses get_cell_comp_vert_coords which uses the label dict of the vertices directly
+    :param use_median_centre: if True uses the median to find the soma centre, otherwise average
     :return: soma center in physical coordinates, radius in nm
     '''
 
@@ -539,7 +540,10 @@ def get_cell_soma_radius(cellid, use_skel = False):
         soma_vert_coords = get_cell_comp_vert_coords(cellid, comp=2)
     if len(soma_vert_coords) == 0:
         return [[np.nan, np.nan, np.nan], np.nan]
-    soma_vert_avg = np.mean(soma_vert_coords, axis=0)
+    if use_median_centre:
+        soma_vert_avg = np.median(soma_vert_coords, axis=0)
+    else:
+        soma_vert_avg = np.mean(soma_vert_coords, axis=0)
     dist2centre = np.linalg.norm(soma_vert_coords - soma_vert_avg, axis = 1)
     radius = np.median(dist2centre) / 1000
     return [soma_vert_avg, radius]

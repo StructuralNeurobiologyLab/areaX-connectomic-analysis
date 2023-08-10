@@ -142,16 +142,9 @@ if __name__ == '__main__':
     m_rep_coord = m_rep_coord[suit_ct_inds]
     syn_prob = syn_prob[suit_ct_inds]
     #change m_cts from all cells from ngf type 2 to 11
-    type2_inds = np.any(np.in1d(m_ssv_partners, suitable_ids_dict[11]).reshape(len(m_ssv_partners), 2), axis=1)
-    ngf_ct_inds = np.where(m_cts == 10)
+    type2_inds = np.in1d(m_ssv_partners, suitable_ids_dict[11]).reshape(len(m_ssv_partners), 2)
     type2_inds_where = np.where(type2_inds == True)
-    #check if all type2 are really in places where ngf is
-    assert(np.all(np.in1d(type2_inds_where, ngf_ct_inds)))
-    type2_ct_0 = ngf_ct_inds[0][np.in1d(ngf_ct_inds[0], type2_inds_where[0])]
-    type2_ct_1 = ngf_ct_inds[1][np.in1d(ngf_ct_inds[0], type2_inds_where[0])]
-    type2_ct = (type2_ct_0, type2_ct_1)
-    m_cts[type2_ct] = 11
-
+    m_cts[type2_inds_where] = 11
     synapse_cache = [m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob]
 
     for ct in tqdm(range(num_cts)):
@@ -215,12 +208,11 @@ if __name__ == '__main__':
                         filter_ax=[0,2], filter_ids=suitable_ids_dict[ct], return_syn_arrays=False,
                         filter_pre_ids=None, filter_post_ids=None)
                 else:
-                    #raise ValueError
                     unique_in_ssvs, in_syn_sizes, in_syn_numbers = get_number_sum_size_synapses(
-                        syn_ids=in_ids, syn_sizes=in_sizes, syn_ssv_partners=in_ssv_partners,
-                        syn_axs=in_axs, syn_cts=in_cts, ct=ct, cellids=suitable_ids_dict[ct],
-                        filter_ax=None, filter_ids=None, return_syn_arrays=False,
-                        filter_pre_ids=suitable_ids_dict[other_ct], filter_post_ids=suitable_ids_dict[ct])
+                            syn_ids=in_ids, syn_sizes=in_sizes, syn_ssv_partners=in_ssv_partners,
+                            syn_axs=in_axs, syn_cts=in_cts, ct=ct, cellids=suitable_ids_dict[ct],
+                            filter_ax=None, filter_ids=None, return_syn_arrays=False,
+                            filter_pre_ids=suitable_ids_dict[other_ct], filter_post_ids=suitable_ids_dict[ct])
                 #add zeros for cells that have no synapses to this celltype, re-order arrays to full ssv ids
                 #sort array for this
                 sorted_in_ssv_ind = np.argsort(unique_in_ssvs)

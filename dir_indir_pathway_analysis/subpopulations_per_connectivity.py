@@ -55,7 +55,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     cellids3 = check_comp_lengths_ct(cellids3, fullcelldict=full_celldict3, min_comp_len=min_comp_len)
 
     log.info("Step 2/4: Prefilter synapses for synapses between these celltypes")
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
                                                                                            pre_cts=[ct1], post_cts = [ct2, ct3],
                                                                                            syn_prob_thresh=syn_prob_thresh,
                                                                                            min_syn_size=min_syn_size,

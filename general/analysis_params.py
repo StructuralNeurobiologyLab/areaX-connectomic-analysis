@@ -103,5 +103,10 @@ class Analysis_Params(object):
         full_ct_types = ct_types[np.in1d(ct_types, self._axon_cts) == False]
         return full_ct_types
 
+    def load_ngf_subids(self, type):
+        #either type 1 or type 2
+        ids = load_pkl2obj(f'{self.file_locations}/ngf_type{type}_ids.pkl')
+        return ids
+
 
         

@@ -23,7 +23,10 @@ class CelltypeColors():
         c5 = ['#002C42', '#003049', '#1B2F45', '#362E41', '#6B2C39', '#D62828', '#E75414', '#F77F00', '#FCBF49', '#EAE2B7', '#0C0B0B']
         #celltype specific colors: highlighting STN in red, MSN in yellow, GPe in viollett, GPi in green, NGF in black, rest gray
         c6 = ['#790D18', '#707070', '#EAAE34', '#707070', '#707070', '#707070', '#592A87', '#2AC644', '#707070', '#707070', '#232121']
-        self.colors = {'BlRdGy': c1, 'MudGrays': c2, 'BlGrTe': c3, 'TePkBr': c4, 'BlYw': c5, 'STNGP': c6}
+        #celltype specific with ngf subgroups
+        c7 = ['#790D18', '#707070', '#EAAE34', '#707070', '#707070', '#707070', '#592A87', '#2AC644', '#707070',
+              '#707070', '#232121', '#15AEAB']
+        self.colors = {'BlRdGy': c1, 'MudGrays': c2, 'BlGrTe': c3, 'TePkBr': c4, 'BlYw': c5, 'STNGP': c6, 'NGF': c7}
         self.palettes = list(self.colors.keys())
 
     def ct_palette(self, key, num = False):
@@ -33,6 +36,24 @@ class CelltypeColors():
         :param num: if True, use numbers as keys, else str
         :return: color palette
         '''
+        if num:
+            palette = {i: self.colors[key][i] for i in range(self.num_cts)}
+        else:
+            palette = {self.ct_dict[i]: self.colors[key][i] for i in range(self.num_cts)}
+        return palette
+
+    def ct_palette_add_groups(self, key, ct, add_groups, num=False, ):
+        '''
+        Creates color palette with celltypes, either str or number as keys.
+        :param key: Desired colors
+        :param ct: celltype groups are added to (will be counted up from there)
+        :param add_groups: list of labels for new names
+        :param num: if True, use numbers as keys, else str
+        :return: color palette
+        '''
+        self.num_cts += len(add_groups) - 1
+        for i,ag in enumerate(add_groups):
+            self.ct_dict[ct + i] = ag
         if num:
             palette = {i: self.colors[key][i] for i in range(self.num_cts)}
         else:

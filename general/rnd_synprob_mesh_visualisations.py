@@ -97,7 +97,7 @@ if __name__ == '__main__':
                                                                                                         post_cts=post_cts,
                                                                                                         syn_prob_thresh=None,
                                                                                                         min_syn_size=min_syn_size,
-                                                                                                        axo_den_so=True)
+                                                                                                        axo_den_so=True, return_syn_prob=True)
 
     log.info('Generate mesh from selected cellids')
     cats = [0.0, 0.2, 0.4, 0.6, 0.8]

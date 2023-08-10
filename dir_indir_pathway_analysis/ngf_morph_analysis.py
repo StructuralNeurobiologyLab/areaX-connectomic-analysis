@@ -91,8 +91,7 @@ if __name__ == '__main__':
     spine_density = start_multiprocess_imap(get_spine_density, ngf_input)
     spine_density = np.array(spine_density)
     ngf_params = {"axon median radius": axon_median_radius_ngf[ngf_nonzero], "axon mitochondria volume density": axon_mito_volume_density_ngf[ngf_nonzero],
-                  "axon myelin fraction": axon_myelin_ngf[ngf_nonzero], 'soma diameter': ngf_diameters[ngf_nonzero],
-                  'spine density': spine_density[ngf_nonzero], "cellids": ngf_ids[ngf_nonzero]}
+                  'soma diameter': ngf_diameters[ngf_nonzero],'spine density': spine_density[ngf_nonzero], "cellids": ngf_ids[ngf_nonzero]}
     ngf_param_df = pd.DataFrame(ngf_params)
     ngf_param_df.to_csv("%s/ngf_params.csv" % f_name)
 
@@ -165,18 +164,17 @@ if __name__ == '__main__':
 
     soma_den_thresh = 11.5
     axon_med_radius_thresh = 0.11
-    mito_density_thresh = 0.03
-    spine_density_thresh = 0.02
+    mito_density_thresh = 0.025
+    spine_density_thresh = 0.025
     log.info(f'Step 3/3:Seperate populations by manual thresholds: \n'
              f'for soma density = {soma_den_thresh} µm, axon median radius = {axon_med_radius_thresh} µm, \n'
              f'mito volume density = {mito_density_thresh} µm³/µm, spine density = {spine_density_thresh} 1/µm')
-    ngf_params.drop('myelin fraction')
     threshold = [axon_med_radius_thresh, mito_density_thresh, soma_den_thresh, spine_density_thresh]
     ct_palette = {'type 1': '#232121', 'type 2': '#15AEAB', 'no type':'#707070'}
     #seperate based on these threshold and if cells don't fit into either category, plot in grey
-    type_1_inds_collected = np.zeros((len(ngf_param_df, 4)))
-    type_2_inds_collected = np.zeros((len(ngf_param_df, 4)))
-    for i, key in enumerate(ngf_params.keys()):
+    type_1_inds_collected = np.zeros((len(ngf_param_df), 4))
+    type_2_inds_collected = np.zeros((len(ngf_param_df), 4))
+    for i, key in enumerate(key_list):
         if 'spine' in key:
             type_1_inds = ngf_params[key] >= threshold[i]
             type_2_inds = ngf_params[key] < threshold[i]
@@ -191,9 +189,10 @@ if __name__ == '__main__':
     ngf_param_df.loc[type_1_inds_all, 'celltype'] = 'type 1'
     type2_ids = ngf_params['cellids'][type_2_inds_all]
     ngf_param_df.loc[type_2_inds_all, 'celltype'] = 'type 2'
-    no_type_inds = np.all(np.array([type_1_inds_all, type_2_inds_all]) == False, axis = 1)
+    no_type_inds = np.all(np.array([type_1_inds_all, type_2_inds_all]) == False, axis = 0)
     no_type_ids = ngf_params['cellids'][no_type_inds]
     ngf_param_df.loc[no_type_inds, 'celltype'] = 'no type'
+    assert(len(ngf_param_df) == len(type1_ids) + len(type2_ids) + len(no_type_ids))
     ngf_param_df.to_csv("%s/ngf_params.csv" % f_name)
     write_obj2pkl(f'{bio_params.file_locations}/ngf_type1_ids.pkl', type1_ids)
     write_obj2pkl(f'{bio_params.file_locations}/ngf_type2_ids.pkl', type2_ids)
@@ -228,7 +227,7 @@ if __name__ == '__main__':
         elif "volume density" in y:
             g.ax_joint.set_ylabel("%s [µm³/µm]" % y)
         elif 'spine density' in y:
-            g.ax_joint.set_ylabel('%s [1/µm]')
+            g.ax_joint.set_ylabel('%s [1/µm]' % y)
 
         plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
         plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))

@@ -109,10 +109,10 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, 
     log.info("Step 3a: prefilter synapse caches")
     # prepare synapse caches with synapse threshold
     if celltype2 is not None and celltype2 != celltype1:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_coords = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1, celltype2],
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_coords = filter_synapse_caches_for_ct(sd_synssv = sd_synssv, pre_cts = [celltype1, celltype2],
                                                                                                syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
     else:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_coords = filter_synapse_caches_for_ct(sd_synssv,
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_coords = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
                                                                                                pre_cts=[celltype1],
                                                                                                syn_prob_thresh=syn_prob_thresh,
                                                                                                min_syn_size=min_syn_size,
@@ -499,13 +499,13 @@ def synapses_ax2ct(sd_synssv, celltype1, filename, cellids1, celltype2, cellids2
     log.info("Step 3a: prefilter synapse caches")
     # prepare synapse caches with synapse threshold
     if celltype1 == celltype2:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv,
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
                                                                                                pre_cts=[celltype1],
                                                                                                syn_prob_thresh=syn_prob_thresh,
                                                                                                min_syn_size=min_syn_size,
                                                                                                axo_den_so=True)
     else:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [celltype1], post_cts = [celltype2],
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness = filter_synapse_caches_for_ct(sd_synssv = sd_synssv, pre_cts = [celltype1], post_cts = [celltype2],
                                                                                                syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size, axo_den_so = True)
 
     time_stamps.append(time.time())
@@ -1245,7 +1245,7 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     compartments = ['soma', 'spine neck', 'spine head', 'dendritic shaft']
     if ct_pre is None:
         ct_pre = ct_post
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
                                                                                                         pre_cts=[ct_pre],
                                                                                                         post_cts=None,
                                                                                                         syn_prob_thresh=syn_prob,
@@ -1257,7 +1257,7 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
         m_axs = m_axs[suit_ct_inds]
         m_spiness = m_spiness[suit_ct_inds]
     else:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
                                                                                                             pre_cts=[ct_pre],
                                                                                                             post_cts=[ct_post],
                                                                                                             syn_prob_thresh=syn_prob,

@@ -478,7 +478,7 @@ def get_compartment_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_axs, syn
 
 def get_ct_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_cts, ct):
     '''
-    Get number of synapses and sum size per postsynaptic cell for a given celltype that can be pre- or postsynaptic.
+    Get number of synapses and sum size per cell for a given celltype that can be pre- or postsynaptic.
     Assumes that incoming arrays are filtered and all synapses can be used.
     :param syn_sizes: size of synapses
     :param syn_ssv_partners: synaptic partner neuron ids

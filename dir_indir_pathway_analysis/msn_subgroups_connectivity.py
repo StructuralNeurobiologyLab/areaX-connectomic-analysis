@@ -76,18 +76,21 @@ if __name__ == '__main__':
     all_suitable_ids = []
     cts_numbers_perct = pd.DataFrame(columns=['total number of cells', 'number of suitable cells', 'percentage of suitable cells'], index=celltypes)
     for ct in tqdm(range(num_cts)):
+        if ct == 2:
+            continue
+        if ngf_subgroups == False and ct == 11:
+            continue
         ct_str = ct_dict[ct]
         if ct in axon_cts:
             cell_dict = analysis_params.load_cell_dict(ct)
             #get ids with min compartment length
             cellids = np.array(list(cell_dict.keys()))
-            merger_inds = np.in1d(cellids, known_mergers) == False
-            cellids = cellids[merger_inds]
+            if exclude_known_mergers:
+                merger_inds = np.in1d(cellids, known_mergers) == False
+                cellids = cellids[merger_inds]
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax, axon_only=True,
                               max_path_len=None)
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(cellids)
-        if ct == 2:
-            continue
         else:
             if ct >= 10 and ngf_subgroups:
                 cell_dict = analysis_params.load_cell_dict(10)
@@ -97,7 +100,7 @@ if __name__ == '__main__':
                     cellids = analysis_params.load_ngf_subids(type=2)
             elif ct >= 12:
                 cell_dict = analysis_params.load_cell_dict(2)
-                cellids = analysis_params.load_ngf_subids(type=ct_dict[ct], min_comp_len = min_comp_len_cells)
+                cellids = analysis_params.load_msn_subids(type=ct_dict[ct], min_comp_len = min_comp_len_cells)
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
             else:

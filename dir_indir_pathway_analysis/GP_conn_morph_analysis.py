@@ -1,17 +1,18 @@
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity, get_ct_via_inputfraction
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
+    from cajal.users.nvmescratch.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity, get_ct_via_inputfraction
+    from cajal.users.nvmescratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
+    from cajal.users.nvmescratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
         axon_den_arborization_ct, compare_compartment_volume_ct_multiple, compare_compartment_volume_ct
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import get_organell_volume_density, get_compartment_radii, get_myelin_fraction
+    from cajal.users.nvmescratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
+    from cajal.users.nvmescratch.arother.bio_analysis.general.analysis_morph_helper import get_organell_volume_density, get_compartment_radii, get_myelin_fraction
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
     from syconn.reps.segmentation import SegmentationDataset
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from cajal.users.nvmescratch.arother.bio_analysis.general.result_helper import plot_nx_graph
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
@@ -23,15 +24,16 @@ if __name__ == '__main__':
     import itertools
     import matplotlib.pyplot as plt
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    version = 'v5'
+    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    ct_dict = analysis_params.ct_dict(with_glia=False)
     cl = 200
-    syn_prob = 0.8
+    syn_prob = 0.6
     min_syn_size = 0.1
     sumsize_threshold = 0.25
     mito_gp_threshold = 0.025

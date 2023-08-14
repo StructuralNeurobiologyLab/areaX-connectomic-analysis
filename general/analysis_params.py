@@ -108,5 +108,14 @@ class Analysis_Params(object):
         ids = load_pkl2obj(f'{self.file_locations}/ngf_type{type}_ids.pkl')
         return ids
 
+    def load_msn_subids(self, type, min_comp_len = 200):
+        msn_sub_dict = {'MSN only GPi':'2_GPi', 'MSN only GPe':'2_GPe', 'MSN both GPs':'2_GPeGPi', 'MSN no GP':'no_conn_GPeGPi'}
+        try:
+            ids = load_pkl2obj(f'{self.file_locations}/full_MSN_{msn_sub_dict[type]}_arr_{min_comp_len}.pkl')
+        except FileNotFoundError:
+            raise FileNotFoundError('no msn subgroup ids for either this type or this compartment length saved')
+        return ids
+
+
 
         

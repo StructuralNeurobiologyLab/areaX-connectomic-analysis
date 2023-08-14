@@ -39,7 +39,7 @@ if __name__ == '__main__':
     plot_connmatrix_only = False
     fontsize = 12
     annot = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230810_j0251v5_cts_percentages_ngf_subgroups_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230811_j0251v5_cts_percentages_ngf_subgroups_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

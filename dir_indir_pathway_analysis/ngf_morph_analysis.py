@@ -32,7 +32,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_ngf_mito_radius_spiness_mcl%i_fs%i_med%i" % \
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230811_j0251v5_ngf_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -200,6 +200,8 @@ if __name__ == '__main__':
     write_obj2pkl(f'{f_name}/ngf_type2_ids.pkl', type2_ids)
     log.info(f'Type 1 NGF are {len(type1_ids)} cells, Type 2 NGF are {len(type2_ids)} cells, {len(no_type_ids)} belong to no type')
 
+    example_cellids = [126798179, 1155532413, 15724767, 24397945]
+    example_inds = np.in1d(ngf_params['cellids'], example_cellids)
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
@@ -217,20 +219,39 @@ if __name__ == '__main__':
         g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize= fontsize_jointplot)
         if "radius" in x or 'diameter' in x:
             g.ax_joint.set_xlabel("%s [µm]" % x)
+            scatter_x = "%s [µm]" % x
         elif "volume density" in x:
             g.ax_joint.set_xlabel("%s [µm³/µm]" % x)
+            scatter_x = "%s [µm³/µm]" % x
         elif 'spine density' in x:
-            g.ax_joint.set_xlabel('%s [1/µm]')
+            g.ax_joint.set_xlabel('%s [1/µm]' % x)
+            scatter_x = "%s [1/µm]" % x
+        else:
+            scatter_x = x
 
         if "radius" in y or 'diameter' in y:
             g.ax_joint.set_ylabel("%s [µm]" % y)
+            scatter_y = "%s [µm]" % y
         elif "volume density" in y:
             g.ax_joint.set_ylabel("%s [µm³/µm]" % y)
+            scatter_y = "%s [µm³/µm]" % y
         elif 'spine density' in y:
             g.ax_joint.set_ylabel('%s [1/µm]' % y)
+            scatter_y = "%s [1/µm]" % y
+        else:
+            scatter_y = y
 
         plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
         plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))
+        plt.close()
+
+        example_x = ngf_params[x][example_inds]
+        example_y = ngf_params[y][example_inds]
+        plt.scatter(ngf_param_df[x], ngf_param_df[y], color = 'gray')
+        plt.scatter(example_x, example_y, color = 'red')
+        plt.xlabel(scatter_x)
+        plt.ylabel(scatter_y)
+        plt.savefig(f'{f_name}/{x}_{y}_scatter_examplecells.png')
         plt.close()
 
 

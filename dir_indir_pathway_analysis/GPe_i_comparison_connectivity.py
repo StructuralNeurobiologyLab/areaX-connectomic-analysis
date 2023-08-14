@@ -27,7 +27,7 @@ if __name__ == '__main__':
     syn_prob = 0.6
     gpe_ct = 6
     gpi_ct = 7
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230606_j0251v5_GPe_i_comparison_mcl_%i_synprob_%.2f" % (comp_length_cell, syn_prob)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_GPe_i_comparison_mcl_%i_synprob_%.2f" % (comp_length_cell, syn_prob)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('GPe, GPi comparison connectivity', log_dir=f_name + '/logs/')

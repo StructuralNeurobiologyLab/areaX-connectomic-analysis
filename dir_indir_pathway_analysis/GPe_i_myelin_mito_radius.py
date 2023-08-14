@@ -136,6 +136,8 @@ if __name__ == '__main__':
     all_param_df = pd.DataFrame(columns=np.hstack([key_list, "celltype"]), index=range(sum_length))
     all_param_df.loc[0: GPe_len- 1, "celltype"] = "GPe"
     all_param_df.loc[GPe_len: sum_length - 1, "celltype"] = "GPi"
+    all_param_df.loc[0: GPe_len - 1, "cellids"] = GPe_params['cellids']
+    all_param_df.loc[GPe_len: sum_length - 1, 'cellids'] = GPi_params['cellids']
     for key in key_list:
         if "cellids" in key:
             continue
@@ -162,6 +164,8 @@ if __name__ == '__main__':
     all_param_df.to_csv("%s/GPe_GPi_params.csv" % f_name)
 
     combinations = list(itertools.combinations(range(len(key_list)), 2))
+    example_cellids = [32356701, 26790127, 379072583]
+    example_inds = np.in1d(all_param_df['cellids'], example_cellids)
     #sns.set(font_scale=1.5)
     for comb in combinations:
         x = key_list[comb[0]]
@@ -180,13 +184,30 @@ if __name__ == '__main__':
         g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize= fontsize_jointplot)
         if "radius" in x or 'diameter' in x:
             g.ax_joint.set_xlabel("%s [µm]" % x)
+            scatter_x = "%s [µm]" % x
         elif "volume density" in x:
             g.ax_joint.set_xlabel("%s [µm³/µm]" % x)
+            scatter_x = "%s [µm³/µm]" % x
+        else:
+            scatter_x = x
 
         if "radius" in y or 'diameter' in y:
             g.ax_joint.set_ylabel("%s [µm]" % y)
+            scatter_y = "%s [µm]" % y
         elif "volume density" in y:
             g.ax_joint.set_xlabel("%s [µm³/µm]" % y)
+            scatter:y = "%s [µm³/µm]" % y
+        else:
+            scatter_y = y
+
+        example_x = all_param_df[x][example_inds]
+        example_y = all_param_df[y][example_inds]
+        plt.scatter(all_param_df[x], all_param_df[y], color='gray')
+        plt.scatter(example_x, example_y, color='red')
+        plt.xlabel(scatter_x)
+        plt.ylabel(scatter_y)
+        plt.savefig(f'{f_name}/{x}_{y}_scatter_examplecells.png')
+        plt.close()
 
         plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
         plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))

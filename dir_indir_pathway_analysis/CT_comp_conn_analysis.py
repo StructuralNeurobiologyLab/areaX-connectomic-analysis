@@ -34,18 +34,18 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGP'
-    post_ct = 6
+    post_ct = 7
     post_ct_str = ct_dict[post_ct]
     #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd, TeBk'}
     comp_color_key = 'TeBk'
     save_svg = True
     fontsize = 10
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230529_j0251v5_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230814_j0251v5_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
     post_ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key, comp_color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
-    cts_for_loading = [0, 2, 3, 4,6]
+    cts_for_loading = [0, 2, 3, 4,6, 7, 8]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(

@@ -100,6 +100,9 @@ if __name__ == '__main__':
                 cellids = analysis_params.load_ngf_subids(type=ct_dict[ct], min_comp_len = min_comp_len_cells)
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
+            else:
+                cell_dict = analysis_params.load_cell_dict(ct)
+                cellids = np.array(list(cell_dict.keys()))
             if exclude_known_mergers:
                 merger_inds = np.in1d(cellids, known_mergers) == False
                 cellids = cellids[merger_inds]

@@ -390,7 +390,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
                   only_2ct3_cellids)
     write_obj2pkl(
         "%s/full_%s_2_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
-        both_dict)
+        both_cellids)
     write_obj2pkl(
         "%s/full_%s_no_conn_%s%s_arr_%i.pkl" % (f_name_saving, ct_dict[ct1], ct_dict[ct2], ct_dict[ct3], min_comp_len),
         not_connected_ids)

@@ -32,7 +32,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230811_j0251v5_ngf_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230814_j0251v5_ngf_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -132,10 +132,10 @@ if __name__ == '__main__':
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
-        g = sns.JointGrid(data= ngf_params, x = x, y = y, palette='dark:black')
-        g.plot_joint(sns.scatterplot)
-        g.plot_marginals(sns.histplot,  fill = False, alpha = 0.3,
-                         kde=False, bins=10, color = 'black')
+        g = sns.JointGrid(data= ngf_params, x = x, y = y)
+        g.plot_joint(sns.scatterplot, color = 'black')
+        g.plot_marginals(sns.histplot,  fill = False,
+                         kde=False, bins='auto', color = 'black')
         g.ax_joint.set_xticks(g.ax_joint.get_xticks())
         g.ax_joint.set_yticks(g.ax_joint.get_yticks())
         if g.ax_joint.get_xticks()[0] < 0:
@@ -208,7 +208,7 @@ if __name__ == '__main__':
         g = sns.JointGrid(data= ngf_param_df, x = x, y = y, hue = "celltype", palette = ct_palette)
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot,  fill = True, alpha = 0.3,
-                         kde=False, bins=10, palette = ct_palette)
+                         kde=False, bins=20, palette = ct_palette)
         g.ax_joint.set_xticks(g.ax_joint.get_xticks())
         g.ax_joint.set_yticks(g.ax_joint.get_yticks())
         if g.ax_joint.get_xticks()[0] < 0:

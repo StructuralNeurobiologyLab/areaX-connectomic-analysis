@@ -53,6 +53,7 @@ if __name__ == '__main__':
     msn_subgroups = ['MSN only GPi','MSN only GPe', 'MSN both GP', 'MSN no GP']
     msn_subgroups_short = ['MSN1', 'MSN2', 'MSN3', 'MSN4']
     msn_subgroup_ct_ids = [12, 13, 14, 15]
+    msnshort2long = {msn_subgroups_short[i]: msn_subgroups[i] for i in range(len(msn_subgroups))}
     log.info(f'The following subgroups {msn_subgroups} will be plotted with the following abbreviations: {msn_subgroups_short} '
              f'and the corresponding celltype ids: {msn_subgroup_ct_ids}')
     for i, sg in enumerate(msn_subgroups_short):
@@ -100,7 +101,7 @@ if __name__ == '__main__':
                     cellids = analysis_params.load_ngf_subids(type=2)
             elif ct >= 12:
                 cell_dict = analysis_params.load_cell_dict(2)
-                cellids = analysis_params.load_msn_subids(type=ct_dict[ct], min_comp_len = min_comp_len_cells)
+                cellids = analysis_params.load_msn_subids(type=msnshort2long[ct_dict[ct]], min_comp_len = min_comp_len_cells)
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
             else:

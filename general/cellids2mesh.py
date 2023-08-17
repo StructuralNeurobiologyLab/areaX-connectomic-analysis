@@ -14,7 +14,7 @@ if __name__ == '__main__':
     bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = bio_params.ct_dict()
 
-    cellids = [ 126798179, 1155532413, 15724767, 24397945, 379072583]
+    cellids = [ 662789385, 542544908, 1340425305, 728819856, 1200237873,27161078]
 
     for cellid in tqdm(cellids):
         cell = SuperSegmentationObject(cellid)

@@ -548,6 +548,46 @@ def get_cell_soma_radius(cellid, use_skel = False, use_median_centre = True):
     radius = np.median(dist2centre) / 1000
     return [soma_vert_avg, radius]
 
+def get_dendrite_info_cell(input):
+    '''
+    Get information about the dendrtíes of a cell with a specified total minimum length.
+    Calculates total dendritic length without spines, number of primary dendrites
+    :param input: combination of the three parameters below
+    :param cellid: id of cell
+    :param min_comp_len: minimum total length of dendrite
+    :return: total dendritic length, number of primary dendrites
+    '''
+    cellid, min_comp_len = input
+    if min_comp_len is None:
+        min_comp_len = 200
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
+    #code from get_compartment_length
+    #get dendrite compartments
+    axoness = cell.skeleton["axoness_avg10000"]
+    axoness[axoness == 3] = 1
+    axoness[axoness == 4] = 1
+    non_comp_inds = np.nonzero(axoness != 0)[0]
+    dendrite_graph = g.copy()
+    dendrite_graph.remove_nodes_from(non_comp_inds)
+    #remove spines
+    spine_head_inds = np.nonzero(cell.skeleton["spiness"] == 1)[0]
+    spine_neck_inds = np.nonzero(cell.skeleton["spiness"] == 0)[0]
+    spine_inds = np.hstack([spine_head_inds, spine_neck_inds])
+    dendrite_no_spine_graph = dendrite_graph.copy()
+    dendrite_no_spine_graph.remove_nodes_from(spine_inds)
+    dendrite_length = dendrite_no_spine_graph.size(weight="weight") / 1000  # in µm
+    if dendrite_length < min_comp_len:
+        return [np.nan, np.nan, np.nan]
+    #get number of primary dendrites
+    dendrite_subgraphs = list(dendrite_graph.subgraph(c) for c in nx.connected_components(dendrite_graph))
+    primary_dendrite_number = len(dendrite_subgraphs)
+    return dendrite_length, primary_dendrite_number
+
+
+
+
 
 
 

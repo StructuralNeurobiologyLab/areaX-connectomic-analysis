@@ -4,22 +4,16 @@
 #GPe/GPi ratios = (GPe + GPi)/GPi
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
-        axon_den_arborization_ct, compare_compartment_volume_ct_multiple, compare_soma_diameters
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_spine_density, get_cell_soma_radius
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_spine_density, get_cell_soma_radius, get_dendrite_info_cell
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_ct_syn_number_sumsize
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     from syconn.reps.segmentation import SegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_nx_graph
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np
-    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     from syconn.mp.mp_utils import start_multiprocess_imap
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -38,7 +32,7 @@ if __name__ == '__main__':
     gpi_ct = 7
     fontsize_jointplot = 12
     kde = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230814_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230825_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
     min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -49,7 +43,7 @@ if __name__ == '__main__':
     else:
         log.info('Centre of jointplot will be scatter')
 
-    log.info('Step 1/5: Load and check all MSN cells')
+    log.info('Step 1/7: Load and check all MSN cells')
     known_mergers = analysis_params.load_known_mergers()
     MSN_dict = analysis_params.load_cell_dict(celltype=msn_ct)
     MSN_ids = np.array(list(MSN_dict.keys()))
@@ -62,56 +56,44 @@ if __name__ == '__main__':
                                     axon_only=False,
                                     max_path_len=None)
 
-    columns = ['cellid', 'spine density', 'celltype', 'GP ratio syn number', 'GP ratio sum syn size', 'syn number to GPe', 'syn size to GPe', 'syn number to GPi', 'syn size to GPi']
+    columns = ['cellid', 'celltype','spine density', 'dendritic length', 'number primary dendrites',
+               'number branching points','ratio branching points / primary dendrites','GP ratio syn number',
+               'GP ratio sum syn size', 'syn number to GPe', 'syn size to GPe', 'syn number to GPi', 'syn size to GPi',
+               'GP ratio cs number', 'GP ratio sum cs size', 'cs number to GPe', 'cs size to GPe',
+               'cs number to GPi', 'cs size to GPi']
     msn_result_df = pd.DataFrame(columns=columns, index=range(len(MSN_ids)))
     MSN_ids = np.sort(MSN_ids)
     msn_result_df['cellid'] = MSN_ids
 
-
-    log.info('Step 2/6: Get spine density of all MSN cells')
+    log.info('Step 2/7: Get spine density of all MSN cells')
     msn_input = [[msn_id, min_comp_len, MSN_dict] for msn_id in MSN_ids]
     spine_density = start_multiprocess_imap(get_spine_density, msn_input)
     spine_density = np.array(spine_density)
     msn_result_df['spine density'] = spine_density
     msn_result_df.to_csv(f'{f_name}/msn_spine_density_results.csv')
-    xhist = 'spine density [1/µm]'
-    sns.histplot(x='spine density', data=msn_result_df, color='black', common_norm=True,
-                 fill=False, element="step", linewidth=3)
-    plt.ylabel('fraction of cells')
-    plt.xlabel(xhist)
-    plt.title('spine density in MSN')
-    plt.savefig(f'{f_name}/spine_density_hist_norm.png')
-    plt.close()
-    sns.histplot(x='spine density', data=msn_result_df, color='black', common_norm=False,
-                 fill=False, element="step", linewidth=3)
-    plt.ylabel('number of cells')
-    plt.xlabel(xhist)
-    plt.title('spine density in MSN')
-    plt.savefig(f'{f_name}/spine_density_hist.png')
-    plt.close()
 
-    log.info('Step 3/6: Get soma diameter for MSNs')
+    log.info('Step 3/7: Get soma diameter for MSNs')
     msn_soma_results = start_multiprocess_imap(get_cell_soma_radius, MSN_ids)
     msn_soma_results = np.array(msn_soma_results, dtype='object')
     msn_diameters = msn_soma_results[:, 1].astype(float) * 2
     msn_result_df['soma diameter'] = msn_diameters
-    sns.histplot(x='soma diameter', data=msn_result_df, color='black', common_norm=False,
-                 fill=False, element="step", linewidth=3)
-    plt.ylabel('number of cells')
-    plt.xlabel('soma diameter [µm]')
-    plt.title('soma diametert in MSN')
-    plt.savefig(f'{f_name}/soma_diameter_hist.png')
-    plt.close()
-
-    #add other parameter used in literature here
-    #see gertler 2008
-    #use dendritic length, number of branching points, primary dendrites
 
 
+    log.info('Step 4/7: Get number of primary dendrites and dendritic lengths')
+    #can also add number of branching points but currently difficult with skeleton parameter
+    input = [[msn_id, min_comp_len] for msn_id in MSN_ids]
+    msn_dendrite_results = start_multiprocess_imap(get_dendrite_info_cell, input)
+    msn_dendrite_results = np.array(msn_dendrite_results, dtype='object')
+    dendrite_lengths = msn_dendrite_results[:, 0]
+    number_primary_dendrites = msn_dendrite_results[:, 1]
+    number_branching_points = msn_dendrite_results[:, 2]
+    msn_result_df['dendritic length'] = dendrite_lengths
+    msn_result_df['number primary dendrites'] = number_primary_dendrites
+    msn_result_df['number branching points'] = number_branching_points
+    msn_result_df['ratio branching points / primary dendrites'] = number_branching_points/ number_primary_dendrites
+    msn_result_df.to_csv(f'{f_name}/msn_morph_results.csv')
 
-
-
-    log.info('Step 4/6: Get GP ratio for MSNs')
+    log.info('Step 4/7: Get GP syn ratio for MSNs')
     msn_result_df['syn number to GPe'] = 0
     msn_result_df['syn size to GPe'] = 0
     msn_result_df['syn number to GPi'] = 0
@@ -135,15 +117,15 @@ if __name__ == '__main__':
     log.info(f'{len(GPe_ids)} suitable for analysis and {len(GPi_ids)} suitable for analysis')
 
     log.info('Get information from synapses to GPe and GPi')
-    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
     #prefilter synapses for syn_prob, min_syn_size and celltype
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
-                                                                                                        pre_cts=[msn_ct],
-                                                                                                        post_cts=[gpe_ct, gpi_ct],
-                                                                                                        syn_prob_thresh=syn_prob,
-                                                                                                        min_syn_size=min_syn_size,
-                                                                                                        axo_den_so=True,
-                                                                                                        synapses_caches=None)
+    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = None,
+                                                                                                            pre_cts=[msn_ct],
+                                                                                                            post_cts=[gpe_ct, gpi_ct],
+                                                                                                            syn_prob_thresh=syn_prob,
+                                                                                                            min_syn_size=min_syn_size,
+                                                                                                            axo_den_so=True,
+                                                                                                            synapses_caches=None, wd = global_params.wd)
     #filter synapses to only include full cells
     all_suitable_ids = np.hstack([MSN_ids, GPe_ids, GPi_ids])
     suit_ct_inds = np.all(np.in1d(m_ssv_partners, all_suitable_ids).reshape(len(m_ssv_partners), 2), axis=1)
@@ -189,15 +171,24 @@ if __name__ == '__main__':
                                                              (msn_result_df.loc[nonzero_inds, 'syn number to GPi']  + msn_result_df.loc[nonzero_inds, 'syn number to GPe'])
     msn_result_df.loc[nonzero_inds, 'GP ratio sum syn size'] =  msn_result_df.loc[nonzero_inds, 'syn size to GPi']/ \
                                                                  (msn_result_df.loc[nonzero_inds, 'syn size to GPe'] + msn_result_df.loc[nonzero_inds, 'syn size to GPi'])
-    msn_result_df.to_csv(f'{f_name}/msn_spine_density_GPratio.csv')
-    #plot histograms for all cells, GP ratio only for those connected to GP
+
+    msn_result_df.to_csv(f'{f_name}/msn_morph_GPratio.csv')
+
+    #log.info('Step 5/7: Get GP cs ratio from MSN')
+
+    log.info('Step 6/7: Plot morphological parameters vs GP ratio as joint plot')
+    # plot histograms for all cells, GP ratio only for those connected to GP
     for key in msn_result_df.keys():
-        if 'cellid' in key or 'density' in key:
+        if 'cellid' in key:
             continue
         if 'GP ratio' in key:
             xhist = '(GPe + GPi)/GPi'
         elif 'syn size' in key:
             xhist = f'{key} [µm2]'
+        elif 'length' in key or 'diameter' in key:
+            xhist = f'{key} [µm]'
+        elif 'density' in key:
+            xhist = f'{key} [1/µm]'
         else:
             xhist = key
         sns.histplot(x=key, data=msn_result_df, color='black', common_norm=False,
@@ -207,59 +198,42 @@ if __name__ == '__main__':
         plt.title(key)
         plt.savefig(f'{f_name}/{key}_hist.png')
         plt.close()
-        sns.histplot(x=key, data=msn_result_df, color='black', common_norm=True,
-                     fill=False, element="step", linewidth=3
-                     )
-        plt.ylabel('fraction of cells')
-        plt.xlabel(xhist)
-        plt.title(key)
-        plt.savefig(f'{f_name}/{key}_hist_norm.png')
-        plt.close()
 
-    f_loading = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230814_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i" % (
-    min_comp_len, syn_prob, kde)
-    msn_result_df = pd.read_csv(f'{f_loading}/msn_spine_density_GPratio.csv')
-
-    log.info('Step 5/6: Plot spine density vs GP ratio as joint plot')
     ratio_key_list = ['GP ratio syn number', 'GP ratio sum syn size']
-    for rkey in ratio_key_list:
-        g = sns.JointGrid(data=msn_result_df, x='spine density', y=rkey)
-        g.plot_joint(sns.kdeplot, color = "#EAAE34")
-        g.plot_joint(sns.scatterplot, color = 'black', alpha = 0.3)
-        g.plot_marginals(sns.histplot, fill=False,
-                         kde=False, bins='auto', color='black')
-        g.ax_joint.set_xticks(g.ax_joint.get_xticks())
-        g.ax_joint.set_yticks(g.ax_joint.get_yticks())
-        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize_jointplot)
-        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=fontsize_jointplot)
-        g.ax_joint.set_xlabel('spine density [1/µm]')
-        if 'number' in rkey:
-            g.ax_joint.set_ylabel('(GPe + GPi)/GPi syn numbers')
+    for key in msn_result_df.keys():
+        if 'cellid' in key:
+            continue
+        if 'GP ratio' in key and 'syn' in key:
+            continue
+        if 'syn size' in key:
+            xhist = f'{key} [µm2]'
+        elif 'length' in key or 'diameter' in key:
+            xhist = f'{key} [µm]'
+        elif 'density' in key:
+            xhist = f'{key} [1/µm]'
         else:
-            g.ax_joint.set_ylabel('(GPe + GPi)/GPi syn area')
-        plt.savefig(f'{f_name}/spine_density_{rkey}_all.png')
-        plt.savefig(f'{f_name}/spine_density_{rkey}_all.svg')
-        plt.close()
-        g = sns.JointGrid(data=msn_result_df, x='soma diameter', y=rkey)
-        g.plot_joint(sns.kdeplot, color="#EAAE34")
-        g.plot_joint(sns.scatterplot, color='black', alpha=0.3)
-        g.plot_marginals(sns.histplot, fill=False,
-                         kde=False, bins='auto', color='black')
-        g.ax_joint.set_xticks(g.ax_joint.get_xticks())
-        g.ax_joint.set_yticks(g.ax_joint.get_yticks())
-        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize_jointplot)
-        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=fontsize_jointplot)
-        g.ax_joint.set_xlabel('soma diameter [µm]')
-        if 'number' in rkey:
-            g.ax_joint.set_ylabel('(GPe + GPi)/GPi syn numbers')
-        else:
-            g.ax_joint.set_ylabel('(GPe + GPi)/GPi syn area')
-        plt.savefig(f'{f_name}/soma_diameter_{rkey}_all.png')
-        plt.savefig(f'{f_name}/soma_diamter_{rkey}_all.svg')
-        plt.close()
+            xhist = key
+        for rkey in ratio_key_list:
+            g = sns.JointGrid(data=msn_result_df, x=key, y=rkey)
+            g.plot_joint(sns.kdeplot, color = "#EAAE34")
+            g.plot_joint(sns.scatterplot, color = 'black', alpha = 0.3)
+            g.plot_marginals(sns.histplot, fill=False,
+                             kde=False, bins='auto', color='black')
+            g.ax_joint.set_xticks(g.ax_joint.get_xticks())
+            g.ax_joint.set_yticks(g.ax_joint.get_yticks())
+            g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize_jointplot)
+            g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=fontsize_jointplot)
+            g.ax_joint.set_xlabel(xhist)
+            if 'number' in rkey:
+                g.ax_joint.set_ylabel('(GPe + GPi)/GPi syn numbers')
+            else:
+                g.ax_joint.set_ylabel('(GPe + GPi)/GPi syn area')
+            plt.savefig(f'{f_name}/{key}_{rkey}_all.png')
+            plt.savefig(f'{f_name}/{key}_{rkey}_all.svg')
+            plt.close()
 
 
-    log.info('Step 6/6: Divide MSN into groups depending on connectivity, plot again and compare groups')
+    log.info('Step 7/7: Divide MSN into groups depending on connectivity, plot again and compare groups')
     gpe_zero = msn_result_df['syn number to GPe'] == 0
     gpi_zero = msn_result_df['syn number to GPi'] == 0
     no_gp = np.all([gpe_zero, gpi_zero], axis = 0)
@@ -284,14 +258,46 @@ if __name__ == '__main__':
     msn_subgroup_df.to_csv(f'{f_name}/msn_subgroup_numbers.csv')
     msn_colors = ["#EAAE34", "black", "#707070", '#2F86A8']
     msn_palette = {ct: msn_colors[i] for i, ct in enumerate(msn_groups_str)}
-    '''
     for key in msn_subgroup_df.keys():
         if 'celltype' in key:
             continue
+        if 'GP ratio' in key:
+            axis_label = '(GPe + GPi)/GPi'
+        elif 'syn size' in key:
+            axis_label = f'{key} [µm2]'
+        elif 'length' in key or 'diameter' in key:
+            axis_label = f'{key} [µm]'
+        elif 'density' in key:
+            axis_label = f'{key} [1/µm]'
+        else:
+            axis_label = key
         sns.barplot(data = msn_subgroup_df, x = 'celltype', y = key, palette=msn_palette)
         plt.title(key)
+        plt.ylabel(axis_label)
         plt.savefig(f'{f_name}/{key}_overview_bar.png')
         plt.savefig(f'{f_name}/{key}_overview_bar.svg')
+        plt.close()
+        sns.boxplot(data=msn_subgroup_df, x='celltype', y=key, palette=msn_palette)
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_overview_box.png')
+        plt.savefig(f'{f_name}/{key}_overview_box.svg')
+        plt.ylabel(axis_label)
+        plt.close()
+        sns.stripplot(x='celltype', y=key, data=msn_subgroup_df, color='black', alpha=0.2,
+                      dodge=True, size=2)
+        sns.violinplot(x='celltype', y=key, data=msn_subgroup_df, inner="box",
+                       palette=msn_palette)
+        plt.title(key)
+        plt.ylabel(axis_label)
+        plt.savefig(f'{f_name}/{key}_overview_violin.png')
+        plt.savefig(f'{f_name}/{key}_overview_violin.svg')
+        plt.close()
+        sns.histplot(x=key, data=msn_result_df, hue = 'celltype', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True)
+        plt.ylabel('number of cells')
+        plt.xlabel(axis_label)
+        plt.savefig(f'{f_name}/{key}_celltype_hist.png')
+        plt.savefig(f'{f_name}/{key}_celltype_hist.svg')
         plt.close()
     '''
     #overlay jointplot with density plot and plot again
@@ -314,6 +320,7 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/spine_density_{rkey}.png')
         plt.savefig(f'{f_name}/spine_density_{rkey}.svg')
         plt.close()
+        '''
 
 
     log.info('MSN subgroup analysis of spine density and GP ratio done')

@@ -21,8 +21,10 @@ def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size
     :param sd_synssv: segmentation dataset
     :param syn_prob_thresh: threshold for synapse probability
     :param min_syn_size: threshold for synapse size
+    :param wd: path to working directory to load caches from .npy
     :return: m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord
     '''
+
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m_ids = sd_synssv.ids
     m_axs = sd_synssv.load_numpy_data("partner_axoness")
@@ -295,7 +297,7 @@ def filter_contact_caches_for_cellids(sd_cs_ssv, cellids1, cellids2):
 
     return cs_partners, cs_ids, cs_coords
 
-def get_contact_site_axoness_percell(cs_dict, compartment):
+def get_contact_site_compartment_axoness_percell(cs_dict, compartment):
     """
     get contact sites related to a specific compartment per cell
     :param cellid: id of the cell
@@ -323,6 +325,40 @@ def get_contact_site_axoness_percell(cs_dict, compartment):
     cs_dict["cs coords"] = cs_coords[close_node_comp_inds]
     cs_dict["cs ids"] = cs_ids[close_node_comp_inds]
     return cs_dict
+
+def get_contact_size_axoness_per_cell(input):
+    '''
+    get information about which cs_ids is in which compartment per cell.
+    :param cellid: id of the cell
+    :param cs_ids: all cs_ids that axoness information is required
+    :param cs_coords: all cs coords where axoness information in required
+    :param cs_partners: all cs to be processed with information about neuron_partners
+    :return: dictionary with cs_ids sorted into each compartment
+    '''
+    cellid, cs_ids, cs_coords, cs_partners = input
+    #set up dictionary
+    cell_dict = {cellid: {}}
+    #get cs which cellid is a part of
+    cell_inds = np.any(np.in1d(cs_partners, cellid).reshape(len(cs_partners, 2)), axis = 1)
+    cell_cs_ids = cs_ids[cell_inds]
+    cell_cs_coords = cs_ids[cell_inds]
+    #get axoness information from cell
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    cell_nodes = cell.skeleton["nodes"] * cell.scaling
+    axo = np.array(cell.skeleton["axoness_avg10000"])
+    axo[axo == 3] = 1
+    axo[axo == 4] = 1
+    kdtree = scipy.spatial.cKDTree(cell_nodes)
+    dists, close_node_ids = kdtree.query(cell_cs_coords * cell.scaling)
+    axoness_close_node_ids = axo[close_node_ids]
+    axon_cs_ids = cell_cs_ids[axoness_close_node_ids == 1]
+    dendrite_cs_ids = cell_cs_ids[axoness_close_node_ids == 0]
+    soma_cs_ids = cell_cs_ids[axoness_close_node_ids == 2]
+    cell_dict[cellid]['axon cs ids'] = axon_cs_ids
+    cell_dict[cellid]['dendrite cs ids'] = dendrite_cs_ids
+    cell_dict[cellid]['soma cs ids'] = soma_cs_ids
+    return cell_dict
 
 def get_percell_number_sumsize(ssvs, syn_sizes):
     '''
@@ -490,5 +526,32 @@ def get_ct_syn_number_sumsize(syn_sizes, syn_ssv_partners, syn_cts, ct):
     ssvs = syn_ssv_partners[sort_inds]
     syn_numbers, syn_ssv_sizes, unique_post_ssvs = get_percell_number_sumsize(ssvs = ssvs, syn_sizes = syn_sizes)
     return syn_numbers, syn_ssv_sizes, unique_post_ssvs
+
+def get_ct_information_npy(ssv_partners, cellids_array_full, celltype_array_full, desired_ssv_ids = None):
+    '''
+    For a given segmentation dataset, get information about celltypes from numpy array with all cellids and celltypes
+    :param ssv_partners: numpy array with saved ssv_partners
+    :param cellids_array_full: all cellids for SuperSegmentationDataset
+    :param celltype_array_full: celltype numpy array for SuperSegmentationDataset, same length as cellids_array_full
+    :param desired_ssv_ids: if given, will filter for these cellids
+    :return:
+    '''
+
+    if desired_ssv_ids is not None:
+        id_inds = np.in1d(cellids_array_full, desired_ssv_ids)
+        cellids_array_full = cellids_array_full[id_inds]
+        celltype_array_full = celltype_array_full[id_inds]
+        id_inds2 = np.all(np.in1d(ssv_partners, desired_ssv_ids).reshape(len(ssv_partners), 2), axis = 1)
+        ssv_partners = ssv_partners[id_inds2]
+    celltypes = np.unique(celltype_array_full)
+    celltype_partners = np.zeros(len(ssv_partners), 2)
+    for ct in celltypes:
+        ct_ids = cellids_array_full[celltype_array_full == ct]
+        ct_mask = np.in1d(ssv_partners, ct_ids).reshape(len(ssv_partners), 2)
+        ct_inds = np.where(ct_mask == True)
+        celltype_partners[ct_inds] = ct
+        assert(np.unique(celltype_partners) == celltypes)
+    return celltype_partners
+
 
 

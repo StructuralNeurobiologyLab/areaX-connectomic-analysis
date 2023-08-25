@@ -1,13 +1,16 @@
 #cache cs_ssv_0 for cellids used with 200 µm
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
+    from analysis_morph_helper import check_comp_lengths_ct, get_contact_size_axoness_per_cell
+    from analysis_conn_helper import get_ct_information_npy
     from analysis_params import Analysis_Params
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
     import os as os
     import numpy as np
     from tqdm import tqdm
+    from syconn.mp.mp_utils import start_multiprocess_imap
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
@@ -81,6 +84,31 @@ if __name__ == '__main__':
     cs_ssv_sizes = cs_ssv_sizes[suit_ct_inds]
     cs_ssv_partners = cs_ssv_partners[suit_ct_inds]
     assert(np.all(np.in1d(np.unique(cs_ssv_partners), all_suitable_ids)))
+    #get celltype information
+    #TO DO: Test
+    ssd = SuperSegmentationDataset(working_dir=global_params.wd)
+    full_cellids = ssd.ssv_ids
+    full_celltypes = ssd.load_numpy_data('celltype_pts_e3')
+    partner_celltypes = get_ct_information_npy(ssv_partners=cs_ssv_partners, cellids_array_full=full_cellids,
+                                               celltype_array_full=full_celltypes, desired_ssv_ids=all_suitable_ids)
+    #get axoness information and save it
+    # TO DO: Test
+    input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in all_suitable_ids]
+    comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, input)
+    comp_output_dict = {**comp_output}
+    cs_ssv_axoness = np.zeros(len(cs_ssv_ids), 2) - 1
+    compartments = {0: 'dendrite cs ids', 1:'axon cs ids', 2:'soma cs ids'}
+    for cellid in all_suitable_ids:
+        for comp in compartments.keys():
+            comp_cell_cs_ssv_ids = comp_output_dict[cellid][compartments[comp]]
+            comp_cell_inds = np.in1d(cs_ssv_ids, comp_cell_cs_ssv_ids)
+            comp_cell_ssv_partners = cs_ssv_partners[comp_cell_inds]
+            partner_inds = np.where(comp_cell_ssv_partners == cellid)
+            cs_ssv_axoness[comp_cell_inds, partner_inds[1]] = comp
+    unique_cs_ssv_axoness = np.unique(cs_ssv_axoness)
+    assert(len(unique_cs_ssv_axoness) == 3)
+    assert(-1 not in unique_cs_ssv_axoness)
+
     log.info(f'There are {len(cs_ssv_ids)} cs_ssv between suitable cellids')
     np.save(f'{analysis_params.file_locations}/cs_ssv_ids_filtered.npy', cs_ssv_ids)
     np.save(f'{analysis_params.file_locations}/cs_ssv_mesh_areas_filtered.npy', cs_ssv_mesh_areas)
@@ -88,5 +116,7 @@ if __name__ == '__main__':
     np.save(f'{analysis_params.file_locations}/cs_ssv_coords_filtered.npy', cs_ssv_coords)
     np.save(f'{analysis_params.file_locations}/cs_ssv_sizes_filtered.npy', cs_ssv_sizes)
     np.save(f'{analysis_params.file_locations}/cs_ssv_neuron_partners_filtered.npy', cs_ssv_partners)
+    np.save(f'{analysis_params.file_locations}/cs_ssv_celltypes_filtered.npy', partner_celltypes)
+    np.save(f'{analysis_params.file_locations}/cs_ssv_axoness_filtered.npy', cs_ssv_axoness)
 
     log.info(f'Caching finished, saved at {analysis_params.file_locations}')

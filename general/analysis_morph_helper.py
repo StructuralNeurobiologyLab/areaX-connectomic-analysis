@@ -551,7 +551,12 @@ def get_cell_soma_radius(cellid, use_skel = False, use_median_centre = True):
 def get_dendrite_info_cell(input):
     '''
     Get information about the dendrtíes of a cell with a specified total minimum length.
-    Calculates total dendritic length without spines, number of primary dendrites
+    Calculates total dendritic length without spines, number of primary dendrites.
+    Number of branching points needs to be interpretet carefully as it needs a manual
+    threshold. With a threshold too small there are spines included which should be
+    avoided but with a threshold too high real branching points are missed out.
+    The threshold used will always be a compromise between the two, giving as many real
+    branching points but trying to avoid most spines or other branches.
     :param input: combination of the three parameters below
     :param cellid: id of cell
     :param min_comp_len: minimum total length of dendrite
@@ -583,7 +588,24 @@ def get_dendrite_info_cell(input):
     #get number of primary dendrites
     dendrite_subgraphs = list(dendrite_graph.subgraph(c) for c in nx.connected_components(dendrite_graph))
     primary_dendrite_number = len(dendrite_subgraphs)
-    return dendrite_length, primary_dendrite_number
+    #get number of branching points
+    degrees = np.zeros(len(g))
+    for ix, node_id in enumerate(g.nodes):
+        degrees[ix] = g.degree[node_id]
+    pot_branching_points = np.where(degrees > 2)[0]
+    branching_points = []
+    for indiv_dendrite in dendrite_subgraphs:
+        sub_branching_points = pot_branching_points[np.in1d(pot_branching_points, indiv_dendrite.nodes)]
+        for b in sub_branching_points:
+            test_sub = indiv_dendrite.copy()
+            test_sub.remove_node(b)
+            sub_subs = list(test_sub.subgraphs(c) for c in nx.connected_components(test_sub))
+            if len(sub_subs) >= 3:
+                lenghts = [sub.size(weight = 'weight') / 1000 for sub in sub_subs]
+                if min(lenghts) > 8:
+                    branching_points.append(b)
+    number_branching_points = len(branching_points)
+    return dendrite_length, primary_dendrite_number, number_branching_points
 
 
 

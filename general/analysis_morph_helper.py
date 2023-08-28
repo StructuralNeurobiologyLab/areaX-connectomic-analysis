@@ -599,7 +599,7 @@ def get_dendrite_info_cell(input):
         for b in sub_branching_points:
             test_sub = indiv_dendrite.copy()
             test_sub.remove_node(b)
-            sub_subs = list(test_sub.subgraphs(c) for c in nx.connected_components(test_sub))
+            sub_subs = list(test_sub.subgraph(c) for c in nx.connected_components(test_sub))
             if len(sub_subs) >= 3:
                 lenghts = [sub.size(weight = 'weight') / 1000 for sub in sub_subs]
                 if min(lenghts) > 8:

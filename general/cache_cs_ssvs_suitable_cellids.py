@@ -1,7 +1,7 @@
 #cache cs_ssv_0 for cellids used with 200 µm
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct, get_contact_size_axoness_per_cell
-    from analysis_conn_helper import get_ct_information_npy
+    from analysis_morph_helper import check_comp_lengths_ct
+    from analysis_conn_helper import get_ct_information_npy, get_contact_size_axoness_per_cell
     from analysis_params import Analysis_Params
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -61,42 +61,46 @@ if __name__ == '__main__':
                                                 axon_only=False,
                                                 max_path_len=None)
             #new wd has celltype_cnn_e3 for same celltypes as agglo2 and celltype_pts_e3 for other celltypes
-            all_suitable_ids.append(cellids_checked)
+        all_suitable_ids.append(cellids_checked)
     
     all_suitable_ids = np.concatenate(all_suitable_ids)
     log.info(f'{len(all_suitable_ids)} cells/ axons found that fulfill criteria')
     
     log.info('Step 2/2: Filter and cache cs_ssvs')
+    '''
     sd_cs_ssv = SegmentationDataset('cs_ssv')
     cs_ssv_ids = sd_cs_ssv.ids
     cs_ssv_mesh_areas = sd_cs_ssv.load_numpy_data('mesh_area')
     cs_ssv_mesh_bb = sd_cs_ssv.load_numpy_data('mesh_bb')
     cs_ssv_coords = sd_cs_ssv.load_numpy_data('rep_coord')
-    cs_ssv_sizes = sd_cs_ssv.load_numpy_data('size')
     cs_ssv_partners = sd_cs_ssv.load_numpy_data('neuron_partners')
     log.info(f' In total there are {len(cs_ssv_ids)} cs_ssvs')
+    '''
+    old_cs_ssv_loading = f'{global_params.wd}/old_cs_ssv/'
+    cs_ssv_ids = np.load(f'{old_cs_ssv_loading}/ids.npy')
+    cs_ssv_mesh_areas = np.load(f'{old_cs_ssv_loading}/mesh_areas.npy')
+    cs_ssv_mesh_bb = np.load(f'{old_cs_ssv_loading}/mesh_bbs.npy')
+    cs_ssv_coords = np.load(f'{old_cs_ssv_loading}/rep_coords.npy')
+    cs_ssv_partners = np.load(f'{old_cs_ssv_loading}/neuron_partnerss.npy')
     #filter for only ones in suitable ids
     suit_ct_inds = np.all(np.in1d(cs_ssv_partners, all_suitable_ids).reshape(len(cs_ssv_partners), 2), axis=1)
     cs_ssv_ids = cs_ssv_ids[suit_ct_inds]
     cs_ssv_mesh_areas = cs_ssv_mesh_areas[suit_ct_inds]
     cs_ssv_mesh_bb = cs_ssv_mesh_bb[suit_ct_inds]
     cs_ssv_coords = cs_ssv_coords[suit_ct_inds]
-    cs_ssv_sizes = cs_ssv_sizes[suit_ct_inds]
     cs_ssv_partners = cs_ssv_partners[suit_ct_inds]
     assert(np.all(np.in1d(np.unique(cs_ssv_partners), all_suitable_ids)))
     #get celltype information
-    #TO DO: Test
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
     full_cellids = ssd.ssv_ids
     full_celltypes = ssd.load_numpy_data('celltype_pts_e3')
     partner_celltypes = get_ct_information_npy(ssv_partners=cs_ssv_partners, cellids_array_full=full_cellids,
                                                celltype_array_full=full_celltypes, desired_ssv_ids=all_suitable_ids)
     #get axoness information and save it
-    # TO DO: Test
     input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in all_suitable_ids]
     comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, input)
     comp_output_dict = {**comp_output}
-    cs_ssv_axoness = np.zeros(len(cs_ssv_ids), 2) - 1
+    cs_ssv_axoness = np.zeros((len(cs_ssv_ids), 2)) - 1
     compartments = {0: 'dendrite cs ids', 1:'axon cs ids', 2:'soma cs ids'}
     for cellid in all_suitable_ids:
         for comp in compartments.keys():
@@ -114,7 +118,6 @@ if __name__ == '__main__':
     np.save(f'{analysis_params.file_locations}/cs_ssv_mesh_areas_filtered.npy', cs_ssv_mesh_areas)
     np.save(f'{analysis_params.file_locations}/cs_ssv_mesh_bbs_filtered.npy', cs_ssv_mesh_bb)
     np.save(f'{analysis_params.file_locations}/cs_ssv_coords_filtered.npy', cs_ssv_coords)
-    np.save(f'{analysis_params.file_locations}/cs_ssv_sizes_filtered.npy', cs_ssv_sizes)
     np.save(f'{analysis_params.file_locations}/cs_ssv_neuron_partners_filtered.npy', cs_ssv_partners)
     np.save(f'{analysis_params.file_locations}/cs_ssv_celltypes_filtered.npy', partner_celltypes)
     np.save(f'{analysis_params.file_locations}/cs_ssv_axoness_filtered.npy', cs_ssv_axoness)

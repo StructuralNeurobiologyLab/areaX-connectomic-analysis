@@ -200,6 +200,36 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
     else:
         return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord
 
+def filter_contact_sites_axoness(cs_ssv_mesh_areas, cs_ssv_celltypes, cs_ssv_neuron_partners, cs_ssv_axoness, cs_ssv_coords, pre_cts, post_cts = None, axo_den_so = True, min_size = 0.1):
+    '''
+    Funktion that filters cs_ssv numpy data similar to filter_synapse_caches. Needs information about cs_ssv celltypes and cs_ssv_axoness in array form.
+    Will make sure that all cs_ssv have a minimum size, and that they contain only celltypes that are desired.
+    :param cs_ssv_mesh_areas: mesh areas / size of contact area for cs_ssv.
+    :param cs_ssv_celltypes: celltypes for both partners, 2D array
+    :param cs_ssv_neuron_partners: ssv_ids for both partners, 2D array
+    :param cs_ssv_axoness: axoness for both partners, 2D arrays, 0 = dendrite, 1 = axon, 2 = soma
+    :param cs_ssv_coords: coordinates of cs_ssv
+    :param pre_cts: celltypes for axons
+    :param post_cts: celltypes for dendrite, soma
+    :param axo_den_so: if True only connections between axon and dendrite, or axon and soma analysed (similar to comparable synapses)
+    :param min_size: minimum mesh area
+    :return: filtered numpy arrays for mesh_area, celltype, neuron_partner, axoness
+    '''
+    #make sure only suitable sizes are filtered
+    if min_size > 0:
+        size_inds = cs_ssv_mesh_areas > min_size
+        cs_ssv_mesh_areas = cs_ssv_mesh_areas[size_inds]
+        cs_ssv_celltypes = cs_ssv_celltypes[size_inds]
+        cs_ssv_neuron_partners = cs_ssv_neuron_partners[size_inds]
+        cs_ssv_axoness = cs_ssv_axoness[size_inds]
+        cs_ssv_coords = cs_ssv_coords[size_inds]
+    #axoness should only idicate axon, soma, dendrite
+    if 4 in np.unique(cs_ssv_axoness) or 5 in np.unique(cs_ssv_axoness):
+        cs_ssv_axoness[cs_ssv_axoness == 4] = 1
+        cs_ssv_axoness[cs_ssv_axoness == 5] = 1
+
+
+
 def synapse_amount_sumsize_between2cts(celltype1, cellids1, cellids2, syn_ids, syn_cts, syn_ssv_partners, syn_sizes, syn_axs, seperate_soma_dens = False, fragments_pre = False):
     '''
         gives amount and summed synapse size for each cell from other celltpye and writes it in dictionary. Calculates synapses from celltype1 to celltype2.
@@ -339,9 +369,9 @@ def get_contact_size_axoness_per_cell(input):
     #set up dictionary
     cell_dict = {cellid: {}}
     #get cs which cellid is a part of
-    cell_inds = np.any(np.in1d(cs_partners, cellid).reshape(len(cs_partners, 2)), axis = 1)
+    cell_inds = np.any(np.in1d(cs_partners, cellid).reshape(len(cs_partners), 2), axis = 1)
     cell_cs_ids = cs_ids[cell_inds]
-    cell_cs_coords = cs_ids[cell_inds]
+    cell_cs_coords = cs_coords[cell_inds]
     #get axoness information from cell
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
@@ -544,14 +574,17 @@ def get_ct_information_npy(ssv_partners, cellids_array_full, celltype_array_full
         id_inds2 = np.all(np.in1d(ssv_partners, desired_ssv_ids).reshape(len(ssv_partners), 2), axis = 1)
         ssv_partners = ssv_partners[id_inds2]
     celltypes = np.unique(celltype_array_full)
-    celltype_partners = np.zeros(len(ssv_partners), 2)
+    celltype_partners = np.zeros((len(ssv_partners), 2)) -1
     for ct in celltypes:
         ct_ids = cellids_array_full[celltype_array_full == ct]
         ct_mask = np.in1d(ssv_partners, ct_ids).reshape(len(ssv_partners), 2)
         ct_inds = np.where(ct_mask == True)
         celltype_partners[ct_inds] = ct
-        assert(np.unique(celltype_partners) == celltypes)
+    assert(np.all(np.unique(celltype_partners) == celltypes))
     return celltype_partners
+
+
+
 
 
 

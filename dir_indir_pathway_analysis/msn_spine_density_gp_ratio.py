@@ -119,13 +119,13 @@ if __name__ == '__main__':
     log.info('Get information from synapses to GPe and GPi')
     #prefilter synapses for syn_prob, min_syn_size and celltype
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = None,
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv =sd_synssv,
                                                                                                             pre_cts=[msn_ct],
                                                                                                             post_cts=[gpe_ct, gpi_ct],
                                                                                                             syn_prob_thresh=syn_prob,
                                                                                                             min_syn_size=min_syn_size,
                                                                                                             axo_den_so=True,
-                                                                                                            synapses_caches=None, wd = global_params.wd)
+                                                                                                            synapses_caches=None)
     #filter synapses to only include full cells
     all_suitable_ids = np.hstack([MSN_ids, GPe_ids, GPi_ids])
     suit_ct_inds = np.all(np.in1d(m_ssv_partners, all_suitable_ids).reshape(len(m_ssv_partners), 2), axis=1)
@@ -174,7 +174,13 @@ if __name__ == '__main__':
 
     msn_result_df.to_csv(f'{f_name}/msn_morph_GPratio.csv')
 
-    #log.info('Step 5/7: Get GP cs ratio from MSN')
+    log.info('Step 5/7: Get GP cs ratio from MSN')
+    cs_ssv_ids = np.load(f'/{analysis_params.file_locations}/cs_ssv_ids_filtered.npy')
+    cs_ssv_mesh_areas = np.load(f'/{analysis_params.file_locations}/cs_ssv_mesh_areas_filtered.npy') / 2
+    cs_ssv_neuron_partners = np.load(f'/{analysis_params.file_locations}/cs_ssv_neuron_partners_filtered.npy')
+    cs_ssv_axoness = np.load(f'/{analysis_params.file_locations}/cs_ssv_axoness_filtered.npy')
+    cs_ssv_celltypes = np.load(f'/{analysis_params.file_locations}/cs_ssv_celltypes_filtered.npy')
+    # filter so that only MSN axons to GPe/GPi dendrites are left
 
     log.info('Step 6/7: Plot morphological parameters vs GP ratio as joint plot')
     # plot histograms for all cells, GP ratio only for those connected to GP

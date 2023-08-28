@@ -37,6 +37,8 @@ if __name__ == '__main__':
     celltypes = np.array([ct_dict[ct] for ct in ct_dict])
     num_cts = len(celltypes)
     all_suitable_ids = []
+    full_cell_suitable_ids = []
+    axon_ct_suitable_ids = []
     for ct in tqdm(range(num_cts)):
         ct_str = ct_dict[ct]
         if ct in axon_cts:
@@ -47,6 +49,7 @@ if __name__ == '__main__':
             cellids = cellids[merger_inds]
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax, axon_only=True,
                               max_path_len=None)
+            axon_ct_suitable_ids.append(cellids_checked)
         else:
             cell_dict = analysis_params.load_cell_dict(ct)
             cellids = np.array(list(cell_dict.keys()))
@@ -61,9 +64,14 @@ if __name__ == '__main__':
                                                 axon_only=False,
                                                 max_path_len=None)
             #new wd has celltype_cnn_e3 for same celltypes as agglo2 and celltype_pts_e3 for other celltypes
+            full_cell_suitable_ids.append(cellids_checked)
         all_suitable_ids.append(cellids_checked)
     
     all_suitable_ids = np.concatenate(all_suitable_ids)
+    axon_ct_suitable_ids = np.concatenate(axon_ct_suitable_ids)
+    full_cell_suitable_ids = np.concatenate(full_cell_suitable_ids)
+    assert(np.all(np.in1d(full_cell_suitable_ids, axon_ct_suitable_ids)) == False)
+    assert(np.all(np.in1d(all_suitable_ids, np.hstack([axon_ct_suitable_ids, full_cell_suitable_ids]))))
     log.info(f'{len(all_suitable_ids)} cells/ axons found that fulfill criteria')
     
     log.info('Step 2/2: Filter and cache cs_ssvs')
@@ -96,19 +104,25 @@ if __name__ == '__main__':
     full_celltypes = ssd.load_numpy_data('celltype_pts_e3')
     partner_celltypes = get_ct_information_npy(ssv_partners=cs_ssv_partners, cellids_array_full=full_cellids,
                                                celltype_array_full=full_celltypes, desired_ssv_ids=all_suitable_ids)
-    #get axoness information and save it
-    input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in all_suitable_ids]
+    #get axoness information  for full cells and save it
+    input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
     comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, input)
     comp_output_dict = {**comp_output}
     cs_ssv_axoness = np.zeros((len(cs_ssv_ids), 2)) - 1
     compartments = {0: 'dendrite cs ids', 1:'axon cs ids', 2:'soma cs ids'}
     for cellid in all_suitable_ids:
-        for comp in compartments.keys():
-            comp_cell_cs_ssv_ids = comp_output_dict[cellid][compartments[comp]]
-            comp_cell_inds = np.in1d(cs_ssv_ids, comp_cell_cs_ssv_ids)
-            comp_cell_ssv_partners = cs_ssv_partners[comp_cell_inds]
-            partner_inds = np.where(comp_cell_ssv_partners == cellid)
-            cs_ssv_axoness[comp_cell_inds, partner_inds[1]] = comp
+        if cellid in full_cell_suitable_ids:
+            for comp in compartments.keys():
+                comp_cell_cs_ssv_ids = comp_output_dict[cellid][compartments[comp]]
+                comp_cell_inds = np.in1d(cs_ssv_ids, comp_cell_cs_ssv_ids)
+                comp_cell_ssv_partners = cs_ssv_partners[comp_cell_inds]
+                partner_inds = np.where(comp_cell_ssv_partners == cellid)
+                cs_ssv_axoness[comp_cell_inds, partner_inds[1]] = comp
+        else:
+            #if whole celltype is axon set to 1 where cellid is
+            assert(cellid in axon_ct_suitable_ids)
+            cell_inds = np.where(cs_ssv_partners == cellid)
+            cs_ssv_axoness[cell_inds] == 1
     unique_cs_ssv_axoness = np.unique(cs_ssv_axoness)
     assert(len(unique_cs_ssv_axoness) == 3)
     assert(-1 not in unique_cs_ssv_axoness)

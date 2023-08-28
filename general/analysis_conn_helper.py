@@ -73,12 +73,12 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         raise ValueError('Function needs either a Segmentation Dataset or Cached Synapse Parameters')
     if sd_synssv is not None:
         syn_prob = sd_synssv.load_numpy_data("syn_prob")
-        m_ids = sd_synssv.ids
+        #m_ids = sd_synssv.ids
         m_axs = sd_synssv.load_numpy_data("partner_axoness")
         m_cts = sd_synssv.load_numpy_data("partner_celltypes")
         m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")
         m_sizes = sd_synssv.load_numpy_data("mesh_area") / 2
-        m_spiness = sd_synssv.load_numpy_data("partner_spiness")
+        #m_spiness = sd_synssv.load_numpy_data("partner_spiness")
         m_rep_coord = sd_synssv.load_numpy_data("rep_coord")
     else:
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = synapses_caches
@@ -87,12 +87,12 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
     #filter for synanpse probabilty threshold
     if syn_prob_thresh is not None:
         m = syn_prob > syn_prob_thresh
-        m_ids = m_ids[m]
+        #m_ids = m_ids[m]
         m_axs = m_axs[m]
         m_cts = m_cts[m]
         m_ssv_partners = m_ssv_partners[m]
         m_sizes = m_sizes[m]
-        m_spiness = m_spiness[m]
+        #m_spiness = m_spiness[m]
         m_rep_coord = m_rep_coord[m]
     # select only those of given_celltypes
     # if post and pre not specified both celltypes can be on both sides
@@ -100,11 +100,11 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         for ct in pre_cts:
             ct_inds = np.any(m_cts == ct, axis=1)
             m_cts = m_cts[ct_inds]
-            m_ids = m_ids[ct_inds]
+           # m_ids = m_ids[ct_inds]
             m_axs = m_axs[ct_inds]
             m_ssv_partners = m_ssv_partners[ct_inds]
             m_sizes = m_sizes[ct_inds]
-            m_spiness = m_spiness[ct_inds]
+            #m_spiness = m_spiness[ct_inds]
             m_rep_coord = m_rep_coord[ct_inds]
             if return_syn_prob:
                 syn_prob = syn_prob[ct_inds]
@@ -113,11 +113,11 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         #exclude synapses without precelltypes
         ct_inds = np.any(np.in1d(m_cts, pre_cts).reshape(len(m_cts), 2), axis=1)
         m_cts = m_cts[ct_inds]
-        m_ids = m_ids[ct_inds]
+        #m_ids = m_ids[ct_inds]
         m_axs = m_axs[ct_inds]
         m_ssv_partners = m_ssv_partners[ct_inds]
         m_sizes = m_sizes[ct_inds]
-        m_spiness = m_spiness[ct_inds]
+        #m_spiness = m_spiness[ct_inds]
         m_rep_coord = m_rep_coord[ct_inds]
         if return_syn_prob:
             syn_prob = syn_prob[ct_inds]
@@ -127,36 +127,36 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
             testax = np.in1d(m_axs, 1).reshape(len(m_cts), 2)
             pre_ct_inds = np.any(testct == testax, axis = 1)
             m_cts = m_cts[pre_ct_inds]
-            m_ids = m_ids[pre_ct_inds]
+            #m_ids = m_ids[pre_ct_inds]
             m_axs = m_axs[pre_ct_inds]
             m_ssv_partners = m_ssv_partners[pre_ct_inds]
             m_sizes = m_sizes[pre_ct_inds]
-            m_spiness = m_spiness[pre_ct_inds]
+            #m_spiness = m_spiness[pre_ct_inds]
             m_rep_coord = m_rep_coord[pre_ct_inds]
             if return_syn_prob:
                 syn_prob = syn_prob[pre_ct_inds]
         # exclude synapses without postcelltypes
         ct_inds = np.any(np.in1d(m_cts, post_cts).reshape(len(m_cts), 2), axis=1)
         m_cts = m_cts[ct_inds]
-        m_ids = m_ids[ct_inds]
+        #m_ids = m_ids[ct_inds]
         m_axs = m_axs[ct_inds]
         m_ssv_partners = m_ssv_partners[ct_inds]
         m_sizes = m_sizes[ct_inds]
-        m_spiness = m_spiness[ct_inds]
+        #m_spiness = m_spiness[ct_inds]
         m_rep_coord = m_rep_coord[ct_inds]
         if return_syn_prob:
             syn_prob = syn_prob[ct_inds]
-        #filter those where postcts are where axon is, only if axo_den_so
+        #filter those where postcts are where axon is not, only if axo_den_so
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, post_cts).reshape(len(m_cts), 2)
             testax = np.in1d(m_axs, [2,0]).reshape(len(m_cts), 2)
             post_ct_inds = np.any(testct == testax, axis=1)
             m_cts = m_cts[post_ct_inds]
-            m_ids = m_ids[post_ct_inds]
+            #m_ids = m_ids[post_ct_inds]
             m_axs = m_axs[post_ct_inds]
             m_ssv_partners = m_ssv_partners[post_ct_inds]
             m_sizes = m_sizes[post_ct_inds]
-            m_spiness = m_spiness[post_ct_inds]
+            #m_spiness = m_spiness[post_ct_inds]
             m_rep_coord = m_rep_coord[post_ct_inds]
             if return_syn_prob:
                 syn_prob = syn_prob[post_ct_inds]
@@ -164,11 +164,11 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
     if min_syn_size is not None:
         size_inds = m_sizes > min_syn_size
         m_cts = m_cts[size_inds]
-        m_ids = m_ids[size_inds]
+        #m_ids = m_ids[size_inds]
         m_axs = m_axs[size_inds]
         m_ssv_partners = m_ssv_partners[size_inds]
         m_sizes = m_sizes[size_inds]
-        m_spiness = m_spiness[size_inds]
+        #m_spiness = m_spiness[size_inds]
         m_rep_coord = m_rep_coord[size_inds]
     if return_syn_prob:
         syn_prob = syn_prob[size_inds]
@@ -176,29 +176,30 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
     if axo_den_so:
         axs_inds = np.any(m_axs == 1, axis=1)
         m_cts = m_cts[axs_inds]
-        m_ids = m_ids[axs_inds]
+        #m_ids = m_ids[axs_inds]
         m_axs = m_axs[axs_inds]
         m_ssv_partners = m_ssv_partners[axs_inds]
         m_sizes = m_sizes[axs_inds]
-        m_spiness = m_spiness[axs_inds]
+        #m_spiness = m_spiness[axs_inds]
         m_rep_coord = m_rep_coord[axs_inds]
         if return_syn_prob:
             syn_prob = syn_prob[axs_inds]
         den_so = np.array([0, 2])
         den_so_inds = np.any(np.in1d(m_axs, den_so).reshape(len(m_axs), 2), axis=1)
         m_cts = m_cts[den_so_inds]
-        m_ids = m_ids[den_so_inds]
+        #m_ids = m_ids[den_so_inds]
         m_axs = m_axs[den_so_inds]
         m_ssv_partners = m_ssv_partners[den_so_inds]
         m_sizes = m_sizes[den_so_inds]
-        m_spiness = m_spiness[den_so_inds]
+        #m_spiness = m_spiness[den_so_inds]
         m_rep_coord = m_rep_coord[den_so_inds]
         if return_syn_prob:
             syn_prob = syn_prob[den_so_inds]
     if return_syn_prob:
         return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob
     else:
-        return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord
+        #return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord
+        return m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord
 
 def filter_contact_sites_axoness(cs_ssv_mesh_areas, cs_ssv_celltypes, cs_ssv_neuron_partners, cs_ssv_axoness, cs_ssv_coords, pre_cts, post_cts = None, axo_den_so = True, min_size = 0.1):
     '''
@@ -210,7 +211,7 @@ def filter_contact_sites_axoness(cs_ssv_mesh_areas, cs_ssv_celltypes, cs_ssv_neu
     :param cs_ssv_axoness: axoness for both partners, 2D arrays, 0 = dendrite, 1 = axon, 2 = soma
     :param cs_ssv_coords: coordinates of cs_ssv
     :param pre_cts: celltypes for axons
-    :param post_cts: celltypes for dendrite, soma
+    :param post_cts: celltypes for dendrite, soma, if None, pre_cts can also be post
     :param axo_den_so: if True only connections between axon and dendrite, or axon and soma analysed (similar to comparable synapses)
     :param min_size: minimum mesh area
     :return: filtered numpy arrays for mesh_area, celltype, neuron_partner, axoness
@@ -227,6 +228,67 @@ def filter_contact_sites_axoness(cs_ssv_mesh_areas, cs_ssv_celltypes, cs_ssv_neu
     if 4 in np.unique(cs_ssv_axoness) or 5 in np.unique(cs_ssv_axoness):
         cs_ssv_axoness[cs_ssv_axoness == 4] = 1
         cs_ssv_axoness[cs_ssv_axoness == 5] = 1
+    if post_cts is None:
+        for ct in pre_cts:
+            ct_inds = np.any(cs_ssv_celltypes == ct, axis=1)
+            cs_ssv_celltypes = cs_ssv_celltypes[ct_inds]
+            cs_ssv_mesh_areas = cs_ssv_mesh_areas[ct_inds]
+            cs_ssv_axoness = cs_ssv_axoness[ct_inds]
+            cs_ssv_neuron_partners = cs_ssv_neuron_partners[ct_inds]
+            cs_ssv_coords = cs_ssv_coords[ct_inds]
+    else:
+        # make sure to exclude pre and postsynaptic cells from wrong celltypes
+        # exclude cs_ssv without pre-celltypes
+        ct_inds = np.any(np.in1d(cs_ssv_celltypes, pre_cts).reshape(len(cs_ssv_celltypes), 2), axis=1)
+        cs_ssv_celltypes = cs_ssv_celltypes[ct_inds]
+        cs_ssv_mesh_areas = cs_ssv_mesh_areas[ct_inds]
+        cs_ssv_axoness = cs_ssv_axoness[ct_inds]
+        cs_ssv_neuron_partners = cs_ssv_neuron_partners[ct_inds]
+        cs_ssv_coords = cs_ssv_coords[ct_inds]
+        # filter those where prects are not where axon is, only if axo_den_so
+        if axo_den_so == True:
+            testct = np.in1d(cs_ssv_celltypes, pre_cts).reshape(len(cs_ssv_celltypes), 2)
+            testax = np.in1d(cs_ssv_axoness, 1).reshape(len(cs_ssv_axoness), 2)
+            pre_ct_inds = np.any(testct == testax, axis=1)
+            cs_ssv_celltypes = cs_ssv_celltypes[pre_ct_inds]
+            cs_ssv_mesh_areas = cs_ssv_mesh_areas[pre_ct_inds]
+            cs_ssv_axoness = cs_ssv_axoness[pre_ct_inds]
+            cs_ssv_neuron_partners = cs_ssv_neuron_partners[pre_ct_inds]
+            cs_ssv_coords = cs_ssv_coords[pre_ct_inds]
+        # exclude synapses without postcelltypes
+        ct_inds = np.any(np.in1d(cs_ssv_celltypes, post_cts).reshape(len(cs_ssv_celltypes), 2), axis=1)
+        cs_ssv_celltypes = cs_ssv_celltypes[ct_inds]
+        cs_ssv_mesh_areas = cs_ssv_mesh_areas[ct_inds]
+        cs_ssv_axoness = cs_ssv_axoness[ct_inds]
+        cs_ssv_neuron_partners = cs_ssv_neuron_partners[ct_inds]
+        cs_ssv_coords = cs_ssv_coords[ct_inds]
+        # filter those where postcts are where axon is not, only if axo_den_so
+        if axo_den_so == True:
+            testct = np.in1d(cs_ssv_celltypes, post_cts).reshape(len(cs_ssv_celltypes), 2)
+            testax = np.in1d(cs_ssv_axoness, [2, 0]).reshape(len(cs_ssv_celltypes), 2)
+            post_ct_inds = np.any(testct == testax, axis=1)
+            cs_ssv_celltypes = cs_ssv_celltypes[post_ct_inds]
+            cs_ssv_mesh_areas = cs_ssv_mesh_areas[post_ct_inds]
+            cs_ssv_axoness = cs_ssv_axoness[post_ct_inds]
+            cs_ssv_neuron_partners = cs_ssv_neuron_partners[post_ct_inds]
+            cs_ssv_coords = cs_ssv_coords[post_ct_inds]
+    # only axo-dendritic or axo-somatic synapses allowed
+    if axo_den_so:
+        axs_inds = np.any(cs_ssv_axoness == 1, axis=1)
+        cs_ssv_celltypes = cs_ssv_celltypes[axs_inds]
+        cs_ssv_mesh_areas = cs_ssv_mesh_areas[axs_inds]
+        cs_ssv_axoness = cs_ssv_axoness[axs_inds]
+        cs_ssv_neuron_partners = cs_ssv_neuron_partners[axs_inds]
+        cs_ssv_coords = cs_ssv_coords[axs_inds]
+        den_so = np.array([0, 2])
+        den_so_inds = np.any(np.in1d(cs_ssv_axoness, den_so).reshape(len(cs_ssv_axoness), 2), axis=1)
+        cs_ssv_celltypes = cs_ssv_celltypes[den_so_inds]
+        cs_ssv_mesh_areas = cs_ssv_mesh_areas[den_so_inds]
+        cs_ssv_axoness = cs_ssv_axoness[den_so_inds]
+        cs_ssv_neuron_partners = cs_ssv_neuron_partners[den_so_inds]
+        cs_ssv_coords = cs_ssv_coords[den_so_inds]
+    return cs_ssv_celltypes, cs_ssv_axoness, cs_ssv_neuron_partners, cs_ssv_mesh_areas, cs_ssv_coords
+
 
 
 

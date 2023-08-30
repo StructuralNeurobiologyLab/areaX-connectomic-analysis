@@ -11,6 +11,7 @@ if __name__ == '__main__':
     import numpy as np
     from tqdm import tqdm
     from syconn.mp.mp_utils import start_multiprocess_imap
+    from collections import ChainMap
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     min_comp_len_ax = 50
     min_comp_len_cells = 200
     exclude_known_mergers = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230817_cache_cs_ssv_mcl_%i_ax%i" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230830_cache_cs_ssv_mcl_%i_ax%i" % (
     min_comp_len_cells, min_comp_len_ax)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -98,19 +99,25 @@ if __name__ == '__main__':
     cs_ssv_coords = cs_ssv_coords[suit_ct_inds]
     cs_ssv_partners = cs_ssv_partners[suit_ct_inds]
     assert(np.all(np.in1d(np.unique(cs_ssv_partners), all_suitable_ids)))
+    log.info('Filtering for suitable cellids done')
+    log.info('Will now create a numpy array with information about celltypes')
     #get celltype information
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
     full_cellids = ssd.ssv_ids
     full_celltypes = ssd.load_numpy_data('celltype_pts_e3')
     partner_celltypes = get_ct_information_npy(ssv_partners=cs_ssv_partners, cellids_array_full=full_cellids,
                                                celltype_array_full=full_celltypes, desired_ssv_ids=all_suitable_ids)
+    log.info('Created celltype array')
+    log.info('Will start getting information to map axoness values to each cs')
     #get axoness information  for full cells and save it
     input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
     comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, input)
-    comp_output_dict = {**comp_output}
+    log.info('Per cell axoness information processed via multiprocessing, will now start writing it '
+             'in one numpy array.')
+    comp_output_dict = dict(ChainMap(*comp_output))
     cs_ssv_axoness = np.zeros((len(cs_ssv_ids), 2)) - 1
     compartments = {0: 'dendrite cs ids', 1:'axon cs ids', 2:'soma cs ids'}
-    for cellid in all_suitable_ids:
+    for cellid in tqdm(all_suitable_ids):
         if cellid in full_cell_suitable_ids:
             for comp in compartments.keys():
                 comp_cell_cs_ssv_ids = comp_output_dict[cellid][compartments[comp]]
@@ -126,7 +133,7 @@ if __name__ == '__main__':
     unique_cs_ssv_axoness = np.unique(cs_ssv_axoness)
     assert(len(unique_cs_ssv_axoness) == 3)
     assert(-1 not in unique_cs_ssv_axoness)
-
+    log.info('Axoness values mapping done')
     log.info(f'There are {len(cs_ssv_ids)} cs_ssv between suitable cellids')
     np.save(f'{analysis_params.file_locations}/cs_ssv_ids_filtered.npy', cs_ssv_ids)
     np.save(f'{analysis_params.file_locations}/cs_ssv_mesh_areas_filtered.npy', cs_ssv_mesh_areas)

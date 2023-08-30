@@ -32,7 +32,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230810_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230830_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -196,10 +196,13 @@ if __name__ == '__main__':
             scatter_y = "%s [µm]" % y
         elif "volume density" in y:
             g.ax_joint.set_xlabel("%s [µm³/µm]" % y)
-            scatter:y = "%s [µm³/µm]" % y
+            scatter_y = "%s [µm³/µm]" % y
         else:
             scatter_y = y
 
+        plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
+        plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))
+        plt.close()
         example_x = all_param_df[x][example_inds]
         example_y = all_param_df[y][example_inds]
         plt.scatter(all_param_df[x], all_param_df[y], color='gray')
@@ -209,9 +212,9 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{x}_{y}_scatter_examplecells.png')
         plt.close()
 
-        plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
-        plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))
-        plt.close()
+    log.info('GPe/i analysis for mito, myelin, radius and soma info done')
+
+
 
 
 

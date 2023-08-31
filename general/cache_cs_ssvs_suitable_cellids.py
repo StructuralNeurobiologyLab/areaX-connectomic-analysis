@@ -20,7 +20,7 @@ if __name__ == '__main__':
     min_comp_len_ax = 50
     min_comp_len_cells = 200
     exclude_known_mergers = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230830_cache_cs_ssv_mcl_%i_ax%i" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230831_cache_cs_ssv_mcl_%i_ax%i" % (
     min_comp_len_cells, min_comp_len_ax)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -110,7 +110,6 @@ if __name__ == '__main__':
     log.info('Created celltype array')
     log.info('Will start getting information to map axoness values to each cs')
     #get axoness information  for full cells and save it
-    raise ValueError
     input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
     comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, input)
     log.info('Per cell axoness information processed via multiprocessing, will now start writing it '

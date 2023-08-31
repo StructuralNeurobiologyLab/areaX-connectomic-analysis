@@ -34,7 +34,7 @@ if __name__ == '__main__':
     gpi_ct = 7
     fontsize_jointplot = 12
     kde = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230830_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230831_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
     min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -44,6 +44,7 @@ if __name__ == '__main__':
         log.info('Centre of jointplot will be kdeplot')
     else:
         log.info('Centre of jointplot will be scatter')
+
 
     log.info('Step 1/7: Load and check all MSN cells')
     known_mergers = analysis_params.load_known_mergers()
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     msn_result_df = pd.DataFrame(columns=columns, index=range(len(MSN_ids)))
     MSN_ids = np.sort(MSN_ids)
     msn_result_df['cellid'] = MSN_ids
-
+    '''
     log.info('Step 2/7: Get spine density of all MSN cells')
     msn_input = [[msn_id, min_comp_len, MSN_dict] for msn_id in MSN_ids]
     spine_density = start_multiprocess_imap(get_spine_density, msn_input)
@@ -95,17 +96,15 @@ if __name__ == '__main__':
     msn_result_df['ratio branching points vs primary dendrites'] = number_branching_points/ number_primary_dendrites
     msn_result_df.to_csv(f'{f_name}/msn_morph_results.csv')
     '''
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230825_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
+
+    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230830_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
         min_comp_len, syn_prob, kde)
     log.info(f'Use morph parameters from {f_name_saving1}')
-    msn_morph_df = pd.read_csv(f'{f_name_saving1}/msn_morph_results.csv', index_col = 0)
-    msn_result_df = msn_morph_df.copy()
-    msn_result_df['ratio branch points vs primary dendrites'] = msn_morph_df['ratio branching points / primary dendrites']
-    msn_result_df = msn_result_df.drop('ratio branching points / primary dendrites', axis = 1)
+    msn_result_df = pd.read_csv(f'{f_name_saving1}/msn_morph_results.csv', index_col = 0)
     for key in msn_result_df.keys():
         if 'cs' in key:
             msn_result_df = msn_result_df.drop(key, axis = 1)
-    '''
+
     log.info('Step 4/7: Get GP syn ratio for MSNs')
     msn_result_df['syn number to GPe'] = 0
     msn_result_df['syn size to GPe'] = 0
@@ -191,7 +190,7 @@ if __name__ == '__main__':
     msn_result_df.loc[gpi_df_inds, 'syn size to GPi'] = gpi_sum_sizes_sorted
     msn_result_df.loc[gpi_df_inds, 'mean syn size to GPi'] = gpi_sum_sizes_sorted / gpi_syn_numbers_sorted
     #get GP ratio per msn cell and put in dataframe: GPi/(GPi + GPe)
-    nonzero_inds = gpi_syn_numbers_sorted
+    nonzero_inds = np.any([msn_result_df['syn number to GPi'] > 0, msn_result_df['syn number to GPe'] > 0], axis = 0)
     msn_result_df.loc[nonzero_inds, 'GP ratio syn number'] = msn_result_df.loc[nonzero_inds, 'syn number to GPi'] / \
                                                              (msn_result_df.loc[nonzero_inds, 'syn number to GPi']  + msn_result_df.loc[nonzero_inds, 'syn number to GPe'])
     msn_result_df.loc[nonzero_inds, 'GP ratio sum syn size'] =  msn_result_df.loc[nonzero_inds, 'syn size to GPi']/ \
@@ -309,19 +308,20 @@ if __name__ == '__main__':
     msn_result_df.loc[gpi_df_inds, 'cs size to GPi'] = gpi_cs_sum_sizes_sorted
     msn_result_df.loc[gpi_df_inds, 'mean cs size to GPi'] = gpi_cs_sum_sizes_sorted / gpi_cs_numbers_sorted
     # get GP ratio per msn cell and put in dataframe: GPi/(GPi + GPe)
-    gpi_nonzero_inds = gpi_cs_numbers_sorted > 0
-    msn_result_df.loc[gpi_nonzero_inds, 'GP ratio cs number'] = msn_result_df.loc[gpi_nonzero_inds, 'cs number to GPi'] / \
-                                                             (msn_result_df.loc[gpi_nonzero_inds, 'cs number to GPi'] +
-                                                              msn_result_df.loc[gpi_nonzero_inds, 'cs number to GPe'])
-    msn_result_df.loc[gpi_nonzero_inds, 'GP ratio sum cs size'] = msn_result_df.loc[gpi_nonzero_inds, 'cs size to GPi'] / \
-                                                               (msn_result_df.loc[gpi_nonzero_inds, 'cs size to GPe'] +
-                                                                msn_result_df.loc[gpi_nonzero_inds, 'cs size to GPi'])
+    nonzero_inds = np.any([msn_result_df['syn number to GPi'] > 0, msn_result_df['syn number to GPe'] > 0], axis = 0)
+    msn_result_df.loc[nonzero_inds, 'GP ratio cs number'] = msn_result_df.loc[nonzero_inds, 'cs number to GPi'] / \
+                                                             (msn_result_df.loc[nonzero_inds, 'cs number to GPi'] +
+                                                              msn_result_df.loc[nonzero_inds, 'cs number to GPe'])
+    msn_result_df.loc[nonzero_inds, 'GP ratio sum cs size'] = msn_result_df.loc[nonzero_inds, 'cs size to GPi'] / \
+                                                               (msn_result_df.loc[nonzero_inds, 'cs size to GPe'] +
+                                                                msn_result_df.loc[nonzero_inds, 'cs size to GPi'])
     # get cs size in relation to syn size
     #check that number of cs lager than that of syns
     assert (msn_result_df['cs number to GPe'].sum() >= msn_result_df['syn number to GPe'].sum())
     assert (msn_result_df['cs number to GPi'].sum() >= msn_result_df['syn number to GPi'].sum())
     #get cs number and size in relation to syn number and size
-    gpe_nonzero_inds = gpe_cs_numbers_sorted > 0
+    gpe_nonzero_inds = msn_result_df['cs number to GPe'] > 0
+    gpi_nonzero_inds = msn_result_df['cs number to GPi'] > 0
     msn_result_df.loc[gpe_nonzero_inds, 'GPe syn vs cs fraction number'] = msn_result_df.loc[gpe_nonzero_inds, 'syn number to GPe']/ \
                                                                         msn_result_df.loc[gpe_nonzero_inds, 'cs number to GPe']
     msn_result_df.loc[gpe_nonzero_inds, 'GPe syn vs cs fraction sum size'] = msn_result_df.loc[
@@ -431,7 +431,7 @@ if __name__ == '__main__':
     ratio_key_list = ['GP ratio syn number', 'GP ratio sum syn size']
     spearman_result_df = pd.DataFrame(columns = ['stats', 'p-value'])
     for key in msn_result_df.keys():
-        if 'cellid' in key or 'celltype' in key:
+        if 'cellid' in key or 'celltype' in key or 'mean' in key:
             continue
         if 'GP ratio' in key and 'syn' in key and 'cs' in key:
             continue

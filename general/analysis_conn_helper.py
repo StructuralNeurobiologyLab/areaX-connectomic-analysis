@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy
 from syconn.reps.super_segmentation import SuperSegmentationObject
+from itertools import combinations
 
 def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     '''
@@ -628,6 +629,85 @@ def get_ct_information_npy(ssv_partners, cellids_array_full, celltype_array_full
         celltype_partners[ct_inds] = ct
     assert(np.all(np.unique(celltype_partners) == celltypes))
     return celltype_partners
+
+def get_multi_syn_info_per_cell(input):
+    '''
+    Get information about multiple conections between cells for individual cells.
+    Calculates distances between different synapses. Assumes synapses are filtered.
+    Other ct is celltype not of cellid but cells it is connected to.
+    :param input: Cellid, syn_ssv_partners, syn_ssv_sizes, syn_ssv_coords, syn_celltypes, other_ct
+    :return:
+    '''
+    cellid, syn_ssv_partners, syn_ssv_sizes, syn_ssv_coords, syn_celltypes, other_ct = input
+    cell_inds = np.where(syn_ssv_partners == cellid)[0]
+    cell_ssv_partners = syn_ssv_partners[cell_inds]
+    cell_syn_sizes = syn_ssv_sizes[cell_inds]
+    cell_syn_coords = syn_ssv_coords[cell_inds]
+    cell_syn_cts = syn_celltypes[cell_inds]
+    if other_ct is not None:
+        ct_inds = np.where(cell_syn_cts == other_ct)[0]
+        cell_ssv_partners = cell_ssv_partners[ct_inds]
+        cell_syn_sizes = cell_syn_sizes[ct_inds]
+        cell_syn_coords = cell_syn_coords[ct_inds]
+        cell_syn_cts = cell_syn_cts[ct_inds]
+    #get number, sum size for each connected cell
+    syn_numbers_tc, syn_sizes_tc, targeted_cell_ids = get_ct_syn_number_sumsize(cell_syn_sizes,
+                                                                                cell_ssv_partners,
+                                                                                cell_syn_cts,
+                                                                                other_ct)
+    res_dict = {'cellid':{}}
+    #save info for parameters per connected cell in dictionary
+    res_dict['cellid']['target cell ids'] = targeted_cell_ids
+    res_dict['cellid']['number of connected cells'] = len(targeted_cell_ids)
+    res_dict['cellid']['connected cell syn numbers'] = syn_numbers_tc
+    res_dict['cellid']['connected cell sum syn sizes'] = syn_sizes_tc
+    # get % of how many cells and synapses make monosynaptic connections
+    mono_inds = syn_numbers_tc == 1
+    mono_conn_cells = targeted_cell_ids[mono_inds]
+    mono_conn_numbers = syn_numbers_tc[mono_inds]
+    mono_sum_sizes = syn_sizes_tc[mono_inds]
+    perc_single_conn_cells = 100 * len(mono_conn_cells) / len(targeted_cell_ids)
+    res_dict['cellid']['% cells monosynaptic'] = perc_single_conn_cells
+    perc_single_conn_syns = 100 * mono_conn_numbers.sum() / syn_numbers_tc.sum()
+    res_dict['cellid']['% syn numbers monosynaptic'] = perc_single_conn_syns
+    perc_single_con_sizes = 100 * mono_sum_sizes.sum() / syn_numbers_tc.sum()
+    res_dict['cellid']['% syn sum size monosynaptic'] = perc_single_con_sizes
+    # get information on size and location differences between multi-synaptic connections
+    multi_inds = syn_numbers_tc > 1
+    multi_conn_cells = targeted_cell_ids[multi_inds]
+    if len(multi_conn_cells) == 0:
+        return res_dict
+    multi_inds2 = np.any(np.in1d(cell_ssv_partners, multi_conn_cells), axis = 1)
+    multi_ssv_partners = cell_ssv_partners[multi_inds2]
+    multi_coords = cell_syn_coords[multi_inds2]
+    multi_sizes = cell_syn_sizes[multi_inds2]
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    multi_conn_dists = cell.shortestpath2soma(multi_coords)
+    res_dict['cellid']['multi conn pairwise size difference'] = []
+    res_dict['cellid']['multi conn pairwise dist difference cell'] = []
+    res_dict['cellid']['multi conn pairwise dist difference target cell'] = []
+    for mc_id in multi_conn_cells:
+        mc_inds = np.where(multi_ssv_partners == mc_id)[0]
+        conn_sizes = multi_sizes[mc_inds]
+        conn_distances = multi_conn_dists[mc_inds]
+        conn_coords = multi_coords[mc_inds]
+        mc = SuperSegmentationObject(mc_id)
+        mc.load_skeleton()
+        mc_dists = mc.shortestpath2soma(conn_coords)
+        comb_conns = list(combinations(range(len(conn_sizes)), 2))
+        for cc in comb_conns:
+            size_diff = np.abs(conn_sizes[cc[0]] - conn_sizes[cc[1]])
+            dist_diff_cell = np.abs(conn_distances[cc[0]] - conn_distances[cc[1]])
+            dist_diff_mc = np.abs(mc_dists[cc[0]] - mc_dists[cc[1]])
+            res_dict['cellid']['multi conn pairwise size difference'].append(size_diff)
+            res_dict['cellid']['multi conn pairwise dist difference cell'].append(dist_diff_cell)
+            res_dict['cellid']['multi conn pairwise dist difference target cell'].append(dist_diff_mc)
+    return res_dict
+
+
+
+
 
 
 

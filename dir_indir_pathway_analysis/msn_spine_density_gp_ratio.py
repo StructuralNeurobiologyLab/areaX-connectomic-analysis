@@ -67,7 +67,7 @@ if __name__ == '__main__':
     msn_result_df = pd.DataFrame(columns=columns, index=range(len(MSN_ids)))
     MSN_ids = np.sort(MSN_ids)
     msn_result_df['cellid'] = MSN_ids
-    '''
+
     log.info('Step 2/7: Get spine density of all MSN cells')
     msn_input = [[msn_id, min_comp_len, MSN_dict] for msn_id in MSN_ids]
     spine_density = start_multiprocess_imap(get_spine_density, msn_input)
@@ -90,12 +90,11 @@ if __name__ == '__main__':
     dendrite_lengths = msn_dendrite_results[:, 0]
     number_primary_dendrites = msn_dendrite_results[:, 1]
     number_branching_points = msn_dendrite_results[:, 2]
-    msn_result_df['dendritic length'] = dendrite_lengths
+    msn_result_df['dendritic length'] = dendrite_lengths/ 1000 #in mm
     msn_result_df['number primary dendrites'] = number_primary_dendrites
     msn_result_df['number branching points'] = number_branching_points
     msn_result_df['ratio branching points vs primary dendrites'] = number_branching_points/ number_primary_dendrites
     msn_result_df.to_csv(f'{f_name}/msn_morph_results.csv')
-    '''
 
     f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230830_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
         min_comp_len, syn_prob, kde)
@@ -405,7 +404,9 @@ if __name__ == '__main__':
             xhist = '(GPe + GPi)/GPi'
         elif 'syn size' in key or 'cs size' in key:
             xhist = f'{key} [µm2]'
-        elif 'length' in key or 'diameter' in key:
+        elif 'length' in key:
+            xhist = f'{key} [mm]'
+        elif 'diameter' in key:
             xhist = f'{key} [µm]'
         elif 'density' in key:
             xhist = f'{key} [1/µm]'
@@ -439,7 +440,9 @@ if __name__ == '__main__':
             continue
         if 'syn size' in key:
             xhist = f'{key} [µm2]'
-        elif 'length' in key or 'diameter' in key:
+        elif 'length' in key:
+            xhist = f'{key} [mm]'
+        elif'diameter' in key:
             xhist = f'{key} [µm]'
         elif 'density' in key:
             xhist = f'{key} [1/µm]'
@@ -475,6 +478,25 @@ if __name__ == '__main__':
             spear_res = spearmanr(msn_result_df[key], msn_result_df[rkey], nan_policy='omit')
             spearman_result_df.loc[f'{key} vs {rkey}', 'stats'] = spear_res[0]
             spearman_result_df.loc[f'{key} vs {rkey}', 'p-value'] = spear_res[1]
+
+    #plot spine density vs dendritic length
+    g = sns.JointGrid(data=msn_result_df, x='dendritic length', y='spine density')
+    g.plot_joint(sns.kdeplot, color="#EAAE34")
+    g.plot_joint(sns.scatterplot, color='black', alpha=0.3)
+    g.plot_marginals(sns.histplot, fill=False,
+                     kde=False, bins='auto', color='black')
+    g.ax_joint.set_xticks(g.ax_joint.get_xticks())
+    g.ax_joint.set_yticks(g.ax_joint.get_yticks())
+    g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize_jointplot)
+    g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=fontsize_jointplot)
+    g.ax_joint.set_xlabel('dendritic length [mm]')
+    g.ax_joint.set_ylabel('spine density [1/µm]')
+    plt.savefig(f'{f_name}/den_len_spine_den_all.png')
+    plt.savefig(f'{f_name}/den_len_spine_den_all.svg')
+    plt.close()
+    spear_res = spearmanr(msn_result_df['spine density'], msn_result_df['dendritic length'], nan_policy='omit')
+    spearman_result_df.loc[f'spine density vs dendritic length', 'stats'] = spear_res[0]
+    spearman_result_df.loc[f'spine density vs dendritic length', 'p-value'] = spear_res[1]
     '''
     #plot also GP syn ratio vs GP cs ratio
     g = sns.JointGrid(data=msn_result_df, x='GP ratio cs number', y='GP ratio syn number')

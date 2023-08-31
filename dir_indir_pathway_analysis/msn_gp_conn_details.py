@@ -19,6 +19,7 @@ if __name__ == '__main__':
     from scipy.stats import ranksums, kruskal, spearmanr
     from itertools import combinations
     from collections import ChainMap
+    from tqdm import tqdm
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
@@ -104,28 +105,249 @@ if __name__ == '__main__':
     msn_gpe_ids = msn_result_df['cellid'][msn_result_df['syn number to GPe'] > 0]
     gpe_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, gpe_ct] for cellid in msn_gpe_ids]
     gpe_output = start_multiprocess_imap(get_multi_syn_info_per_cell, input)
-    gpe_output_dict = dict(ChainMap(*gpe_output))
+    gpe_output = np.array(gpe_output, dtype=object)
+    number_target_gpe = gpe_output[:, 0]
+    perc_single_conn_gpe = gpe_output[:, 1]
+    perc_single_syns_gpe = gpe_output[:, 2]
+    perc_single_syn_area_gpe = gpe_output[: 3]
+    gpe_output_dict = dict(ChainMap(*gpe_output[:, 4]))
     write_obj2pkl(f'{f_name}/msn_gpe_indiv_conns_dict.pkl', gpe_output_dict)
-    #add per cell information to dictionary
+
     log.info('Get GPi parameter information per MSN cell')
     msn_gpi_ids = msn_result_df['cellid'][msn_result_df['syn number to GPi'] > 0]
     gpi_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, gpi_ct] for cellid in msn_gpi_ids]
     gpi_output = start_multiprocess_imap(get_multi_syn_info_per_cell, input)
-    gpi_output_dict = dict(ChainMap(*gpe_output))
+    gpi_output = np.array(gpi_output, dtype=object)
+    number_target_gpi = gpi_output[:, 0]
+    perc_single_conn_gpi = gpi_output[:, 1]
+    perc_single_syns_gpi = gpi_output[:, 2]
+    perc_single_syn_area_gpi = gpi_output[: 3]
+    gpi_output_dict = dict(ChainMap(*gpi_output[:, 4]))
     write_obj2pkl(f'{f_name}/msn_gpi_indiv_conns_dict.pkl', gpi_output_dict)
+
+    log.info('Step 3/5: Sort and plot per cell information')
     # add per cell information to dictionary
-    #make result df only for multi_synaptic connections
+    msn_gpe_inds = np.in1d(msn_result_df['cellid'], msn_gpe_ids)
+    msn_result_df.loc[msn_gpe_inds, 'number of GPe cells'] = number_target_gpe
+    msn_result_df.loc[msn_gpe_inds, 'percent GPe monosynaptic'] = perc_single_conn_gpe
+    msn_result_df.loc[msn_gpe_inds, 'percent syns monosynaptic GPe'] = perc_single_syns_gpe
+    msn_result_df.loc[msn_gpe_inds, 'percent syn area monosynaptic GPe'] = perc_single_syn_area_gpe
+    # add per cell information to dictionary
+    msn_gpi_inds = np.in1d(msn_result_df['cellid'], msn_gpi_ids)
+    msn_result_df.loc[msn_gpi_inds, 'number of GPi cells'] = number_target_gpi
+    msn_result_df.loc[msn_gpi_inds, 'percent GPi monosynaptic'] = perc_single_conn_gpi
+    msn_result_df.loc[msn_gpi_inds, 'percent syns monosynaptic GPi'] = perc_single_syns_gpi
+    msn_result_df.loc[msn_gpi_inds, 'percent syn area monosynaptic GPi'] = perc_single_syn_area_gpi
+    gp_nonzero = np.any([msn_result_df['number of GPe cells'] > 0, msn_result_df['number of GPi cells'] > 0], axis = 1)
+    msn_result_df.loc[gp_nonzero, 'number of GP cells'] = msn_result_df[gp_nonzero, 'number of GPe cells'] + \
+                                                          msn_result_df[gp_nonzero, 'number of GPi cells']
+    msn_result_df.to_csv(f'{f_name}/msn_per_cell_GP_info.csv')
+    #make statistics and plot results
+    #also plot for different MSN groups
+    msn_colors = ["#EAAE34", "black", "#707070", '#2F86A8']
+    msn_groups_str = np.unique(msn_result_df['celltype'])
+    msn_palette = {ct: msn_colors[i] for i, ct in enumerate(msn_groups_str)}
+    for key in msn_result_df.keys():
+        if 'cellid' in key or 'celltype' in key or 'GP ratio' in key:
+            continue
+        if not 'number of GP' in key or 'percent' in key:
+            continue
+        sns.histplot(x=key, data=msn_result_df, color='black', common_norm=False,
+                     fill=False, element="step", linewidth=3)
+        plt.ylabel('count of cells')
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist.png')
+        plt.close()
+        sns.histplot(x=key, data=msn_result_df, color='black', common_norm=False,
+                     fill=False, element="step", linewidth=3, stat='percent')
+        plt.ylabel('percent of cells')
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist_perc.png')
+        plt.close()
+        sns.histplot(x=key, data=msn_result_df, color='black', common_norm=False,
+                     fill=False, element="step", linewidth=3)
+        plt.ylabel('count of cells')
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist.png')
+        plt.close()
+        sns.histplot(x=key, data=msn_result_df, color='black', common_norm=False,
+                     fill=False, element="step", linewidth=3, stat='percent')
+        plt.ylabel('percent of cells')
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist_perc.png')
+        plt.close()
+        sns.boxplot(data=msn_result_df, x='celltype', y=key, palette=msn_palette)
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_overview_box.png')
+        plt.savefig(f'{f_name}/{key}_overview_box.svg')
+        plt.close()
+        sns.stripplot(x='celltype', y=key, data=msn_result_df, color='black', alpha=0.2,
+                      dodge=True, size=2)
+        sns.violinplot(x='celltype', y=key, data=msn_result_df, inner="box",
+                       palette=msn_palette)
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_overview_violin.png')
+        plt.savefig(f'{f_name}/{key}_overview_violin.svg')
+        plt.close()
+        sns.histplot(x=key, data=msn_result_df, hue='celltype', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True)
+        plt.ylabel('number of cells')
+        plt.savefig(f'{f_name}/{key}_celltype_hist.png')
+        plt.savefig(f'{f_name}/{key}_celltype_hist.svg')
+        plt.close()
+        sns.histplot(x=key, data=msn_result_df, hue='celltype', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        plt.ylabel('% of cells')
+        plt.savefig(f'{f_name}/{key}_celltype_hist_perc.png')
+        plt.savefig(f'{f_name}/{key}_celltype_hist_perc.svg')
+        plt.close()
 
-    #make per cell dictionary 
-    #% of GP cells targeted are monosynaptic
-    #% 2, 3 etc. -> histogram
-    #distance and size between individual synapses (both from MSN side but also from GPe/ GPi side
-    
-    log.info('Step 3/5: Plot information about MSN to GP synapses in general')
-    
-    
-    log.info('Step 4/5: Calculate statistics between MSN cells')
+    log.info('Step 4/5: Sort information per connection of MSN and GP')
+    #create DataFrame for all connections between MSN and GP to see how many multisynaptic
+    gpe_conn_syn_numbers = []
+    gpe_conn_syn_sizes = []
+    gpe_multisyn_pair_size_diff = []
+    gpe_multisyn_pair_dist_msn = []
+    gpe_multisyn_pair_dist_gp = []
+    gpe_multisyn_pair_syn_number = []
+    gpe_multisyn_pair_axo = []
+    log.info('Get information from connections to GPe')
+    for cell_info in tqdm(gpe_output_dict):
+            gpe_conn_syn_numbers.append(cell_info['connected cell syn numbers'])
+            gpe_conn_syn_sizes.append(cell_info['connected cell sum syn sizes'])
+            try:
+                gpe_multisyn_pair_size_diff.append(cell_info['multi conn pairwise size difference'])
+                gpe_multisyn_pair_dist_msn.append(cell_info['multi conn pairwise dist cell'])
+                gpe_multisyn_pair_dist_gp.append(cell_info['multi conn pairwise dist target cell'])
+                gpe_multisyn_pair_syn_number.append(cell_info['multi conn pairwise number syns'])
+                gpe_multisyn_pair_axo.append(cell_info['multi conn pairwise comp'])
+            except KeyError:
+                continue
+    gpe_conn_syn_numbers = np.concatenate(gpe_conn_syn_numbers)
+    gpe_conn_syn_sizes = np.concatenate(gpe_conn_syn_sizes)
+    gpe_multisyn_pair_syn_number = np.concatenate(gpe_multisyn_pair_syn_number)
+    gpe_multisyn_pair_size_diff = np.concatenate(gpe_multisyn_pair_size_diff)
+    gpe_multisyn_pair_dist_msn = np.concatenate(gpe_multisyn_pair_dist_msn)
+    gpe_multisyn_pair_dist_gp = np.concatenate(gpe_multisyn_pair_dist_gp)
+    gpe_multisyn_pair_axo = np.concatenate(gpe_multisyn_pair_axo)
+    log.info('Get information from connections to GPi')
+    gpi_conn_syn_numbers = []
+    gpi_conn_syn_sizes = []
+    gpi_multisyn_pair_size_diff = []
+    gpi_multisyn_pair_dist_msn = []
+    gpi_multisyn_pair_dist_gp = []
+    gpi_multisyn_pair_syn_number = []
+    gpi_multisyn_pair_axo = []
+    for cell_info in gpi_output_dict:
+        gpi_conn_syn_numbers.append(cell_info['connected cell syn numbers'])
+        gpi_conn_syn_sizes.append(cell_info['connected cell sum syn sizes'])
+        try:
+            gpi_multisyn_pair_size_diff.append(cell_info['multi conn pairwise size difference'])
+            gpi_multisyn_pair_dist_msn.append(cell_info['multi conn pairwise dist cell'])
+            gpi_multisyn_pair_dist_gp.append(cell_info['multi conn pairwise dist target cell'])
+            gpi_multisyn_pair_syn_number.append(cell_info['multi conn pairwise number syns'])
+            gpi_multisyn_pair_axo.append(cell_info['multi conn pairwise comp'])
+        except KeyError:
+            continue
+    gpi_conn_syn_numbers = np.concatenate(gpi_conn_syn_numbers)
+    gpi_conn_syn_sizes = np.concatenate(gpi_conn_syn_sizes)
+    gpi_multisyn_pair_syn_number = np.concatenate(gpe_multisyn_pair_syn_number)
+    gpi_multisyn_pair_size_diff = np.concatenate(gpe_multisyn_pair_size_diff)
+    gpi_multisyn_pair_dist_msn = np.concatenate(gpe_multisyn_pair_dist_msn)
+    gpi_multisyn_pair_dist_gp = np.concatenate(gpe_multisyn_pair_dist_gp)
+    gpi_multisyn_pair_axo = np.concatenate(gpi_multisyn_pair_axo)
+    log.info('Sort information into df for MSN-GP pairs')
+    len_gpe_conn = len(gpe_conn_syn_numbers)
+    len_gp_conn = len_gpe_conn + len(gpi_conn_syn_numbers)
+    gp_conn_df = pd.DataFrame(columns = ['number of synapses', 'sum syn area', 'to celltype'], index = range(len_gp_conn))
+    gp_conn_df.loc[0: len_gpe_conn - 1, 'number of synapses'] = gpe_conn_syn_numbers
+    gp_conn_df.loc[0: len_gpe_conn - 1, 'sum syn area'] = gpe_conn_syn_sizes
+    gp_conn_df.loc[0: len_gpe_conn - 1, 'to celltype'] = 'to GPe'
+    gp_conn_df.loc[len_gpe_conn: len_gp_conn - 1, 'number of synapses'] = gpi_conn_syn_numbers
+    gp_conn_df.loc[len_gpe_conn: len_gp_conn - 1, 'sum syn area'] = gpi_conn_syn_numbers
+    gp_conn_df.loc[len_gpe_conn: len_gp_conn - 1, 'to celltype'] = 'to GPi'
+    gp_conn_df.to_csv(f'{f_name}/multi_syn_info_permsn_gp_conn.csv')
+    # make df per multisynaptic connections
+    log.info('Sprt information for pairs of synapses in multisynaptic connections')
+    len_gpe_multi = len(gpe_multisyn_pair_syn_number)
+    gp_multi_len = len_gpe_multi + len(gpi_multisyn_pair_syn_number)
+    multisyn_columns = ['size difference', 'distance on MSN', 'distance on GP', 'to celltype',
+                        'number of syns per connection']
+    multi_syn_df = pd.DataFrame(columns=[multisyn_columns], index = range(len(gp_multi_len)))
+    multi_syn_df.loc[0: len_gpe_multi - 1, 'size difference'] = gpe_multisyn_pair_size_diff
+    multi_syn_df.loc[0: len_gpe_multi - 1, 'distance on MSN'] = gpe_multisyn_pair_dist_msn
+    multi_syn_df.loc[0: len_gpe_multi - 1, 'distance on GP'] = gpe_multisyn_pair_dist_gp
+    multi_syn_df.loc[0: len_gpe_multi - 1, 'to celltype'] = 'to GPe'
+    multi_syn_df.loc[0: len_gpe_multi - 1, 'compartment 1'] = gpe_multisyn_pair_axo[:, 0]
+    multi_syn_df.loc[0: len_gpe_multi - 1, 'compartment 2'] = gpe_multisyn_pair_axo[:, 1]
+    multi_syn_df.loc[0: len_gpe_multi - 1, 'number of syns per connection'] = gpe_multisyn_pair_syn_number
+    multi_syn_df.loc[len_gpe_multi: gp_multi_len - 1, 'size difference'] = gpi_multisyn_pair_size_diff
+    multi_syn_df.loc[len_gpe_multi: gp_multi_len - 1, 'distance on MSN'] = gpi_multisyn_pair_dist_msn
+    multi_syn_df.loc[len_gpe_multi: gp_multi_len - 1, 'distance on GP'] = gpi_multisyn_pair_dist_gp
+    multi_syn_df.loc[len_gpe_multi: gp_multi_len - 1, 'to celltype'] = 'to GPi'
+    multi_syn_df.loc[len_gpe_multi: gp_multi_len - 1, 'number of syns per connection'] = gpi_multisyn_pair_syn_number
+    multi_syn_df.loc[len_gpe_multi: gp_multi_len - 1, 'compartment 1'] = gpi_multisyn_pair_axo[:, 0]
+    multi_syn_df.loc[len_gpe_multi: gp_multi_len - 1, 'compartment 2'] = gpi_multisyn_pair_axo[:, 1]
+    multi_syn_df['compartment 1'][msn_result_df['compartment 1'] == 0] = 'dendrite'
+    multi_syn_df['compartment 1'][msn_result_df['compartment 1'] == 2] = 'soma'
+    multi_syn_df['compartment 2'][msn_result_df['compartment 2'] == 0] = 'dendrite'
+    multi_syn_df['compartment 2'][msn_result_df['compartment 2'] == 2] = 'soma'
+    same_inds = np.in1d(multi_syn_df['compartment 1'], multi_syn_df['compartment 2'])
+    multi_syn_df.loc[same_inds, 'compartment'] = 'same compartment'
+    multi_syn_df.loc[same_inds == False, 'compartment'] = 'soma and dendrite'
+    multi_syn_df.to_csv(f'{f_name}/multi_syn_connection_pairs.csv')
 
-    log.info('Step 5/5: Plot information about MSN to GP synaspes dependend on MSN-GP groups')
+    log.info('Step 5/5: Make plots per MSN and GP connection and per synapse pair in multisynapse connections')
+    #make statistics and plot results
+
+    gp_palette = {'GPe': '#592A87', 'GPi': '#2AC644'}
+    for key in gp_conn_df.keys():
+        if 'celltype' in key:
+            continue
+        if 'sum syn' in key:
+            xhist = f'{key} [µm²]'
+        else:
+            xhist = key
+        sns.histplot(x=key, data=gp_conn_df, color='black', common_norm=False,
+                     fill=False, element="step", linewidth=3)
+        plt.ylabel('count of cells')
+        plt.xlabel(xhist)
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist_conns.png')
+        plt.close()
+        sns.histplot(x=key, data=gp_conn_df, color='black', common_norm=False,
+                     fill=False, element="step", linewidth=3, log_scale=True)
+        plt.ylabel('count of cells')
+        plt.xlabel(xhist)
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist_log_conns.png')
+        plt.close()
+        sns.histplot(x=key, data=gp_conn_df, color='black', common_norm=False,
+                     fill=False, element="step", linewidth=3, stat='percent')
+        plt.ylabel('percent of cells')
+        plt.xlabel(xhist)
+        plt.title(key)
+        plt.savefig(f'{f_name}/{key}_hist_perc_conns.png')
+        plt.close()
+        sns.histplot(x=key, data=gp_conn_df, hue='to celltype', palette=gp_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True)
+        plt.ylabel('number of cells')
+        plt.savefig(f'{f_name}/{key}_gptype_hist.png')
+        plt.savefig(f'{f_name}/{key}_gptype_hist.svg')
+        plt.close()
+        sns.histplot(x=key, data=msn_result_df, hue='celltype', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        plt.ylabel('% of cells')
+        plt.savefig(f'{f_name}/{key}_gptype_hist_perc.png')
+        plt.savefig(f'{f_name}/{key}_gptype_hist_perc.svg')
+        plt.close()
+        sns.histplot(x=key, data=msn_result_df, hue='celltype', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+        plt.ylabel('% of cells')
+        plt.savefig(f'{f_name}/{key}_gptype_hist_perc_log.png')
+        plt.savefig(f'{f_name}/{key}_log.svg')
+        plt.close()
+
+    #make plots for multisynaptic connections dependend on celltype and compartments
     
     log.info('Analysis finished')

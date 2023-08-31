@@ -1,3 +1,4 @@
+import networkx as nx
 import numpy as np
 import pandas as pd
 import scipy
@@ -635,21 +636,23 @@ def get_multi_syn_info_per_cell(input):
     Get information about multiple conections between cells for individual cells.
     Calculates distances between different synapses. Assumes synapses are filtered.
     Other ct is celltype not of cellid but cells it is connected to.
+    Calculate shortest path between synapses similar as in cell.shortestpath2soma
     :param input: Cellid, syn_ssv_partners, syn_ssv_sizes, syn_ssv_coords, syn_celltypes, other_ct
     :return:
     '''
-    cellid, syn_ssv_partners, syn_ssv_sizes, syn_ssv_coords, syn_celltypes, other_ct = input
+    cellid, syn_ssv_partners, syn_ssv_sizes, syn_ssv_coords, syn_celltypes, syn_axoness, other_ct = input
     cell_inds = np.where(syn_ssv_partners == cellid)[0]
     cell_ssv_partners = syn_ssv_partners[cell_inds]
     cell_syn_sizes = syn_ssv_sizes[cell_inds]
     cell_syn_coords = syn_ssv_coords[cell_inds]
     cell_syn_cts = syn_celltypes[cell_inds]
-    if other_ct is not None:
-        ct_inds = np.where(cell_syn_cts == other_ct)[0]
-        cell_ssv_partners = cell_ssv_partners[ct_inds]
-        cell_syn_sizes = cell_syn_sizes[ct_inds]
-        cell_syn_coords = cell_syn_coords[ct_inds]
-        cell_syn_cts = cell_syn_cts[ct_inds]
+    cell_axoness = syn_axoness[cell_inds]
+    ct_inds = np.where(cell_syn_cts == other_ct)[0]
+    cell_ssv_partners = cell_ssv_partners[ct_inds]
+    cell_syn_sizes = cell_syn_sizes[ct_inds]
+    cell_syn_coords = cell_syn_coords[ct_inds]
+    cell_syn_cts = cell_syn_cts[ct_inds]
+    cell_axoness = cell_axoness[ct_inds]
     #get number, sum size for each connected cell
     syn_numbers_tc, syn_sizes_tc, targeted_cell_ids = get_ct_syn_number_sumsize(cell_syn_sizes,
                                                                                 cell_ssv_partners,
@@ -681,29 +684,44 @@ def get_multi_syn_info_per_cell(input):
     multi_ssv_partners = cell_ssv_partners[multi_inds2]
     multi_coords = cell_syn_coords[multi_inds2]
     multi_sizes = cell_syn_sizes[multi_inds2]
+    multi_axoness = cell_axoness[multi_inds2]
+    multi_axoness = multi_axoness[np.where(multi_ssv_partners != cellid)]
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
-    multi_conn_dists = cell.shortestpath2soma(multi_coords)
+    cell_nodes = cell.skeleton['nodes'] * cell.scaling
+    cell_kdt = scipy.spatial.cKDTree(cell_nodes)
+    dist, multi_syn_nodes = cell_kdt.query(multi_coords * cell.scaling)
+    cell_graph = cell.weighted_graph()
     res_dict['cellid']['multi conn pairwise size difference'] = []
-    res_dict['cellid']['multi conn pairwise dist difference cell'] = []
-    res_dict['cellid']['multi conn pairwise dist difference target cell'] = []
+    res_dict['cellid']['multi conn pairwise dist cell'] = []
+    res_dict['cellid']['multi conn pairwise dist target cell'] = []
+    res_dict['cellid']['multi conn pairwise number syns'] = []
+    res_dict['cellid']['multi conn pairwise comp'] = []
     for mc_id in multi_conn_cells:
         mc_inds = np.where(multi_ssv_partners == mc_id)[0]
         conn_sizes = multi_sizes[mc_inds]
-        conn_distances = multi_conn_dists[mc_inds]
+        conn_nodes_cell = multi_syn_nodes[mc_inds]
         conn_coords = multi_coords[mc_inds]
+        conn_axoness = multi_axoness[mc_inds]
+        number_syns = len(conn_sizes)
         mc = SuperSegmentationObject(mc_id)
         mc.load_skeleton()
-        mc_dists = mc.shortestpath2soma(conn_coords)
+        mc_nodes = mc.skeleton['nodes'] * mc.scaling
+        mc_kdt = scipy.spatial.cKDTree(mc_nodes)
+        dist, mc_syn_nodes = mc_kdt.query(conn_coords * mc.scaling)
+        mc_graph = mc.weighted_graph()
         comb_conns = list(combinations(range(len(conn_sizes)), 2))
         for cc in comb_conns:
             size_diff = np.abs(conn_sizes[cc[0]] - conn_sizes[cc[1]])
-            dist_diff_cell = np.abs(conn_distances[cc[0]] - conn_distances[cc[1]])
-            dist_diff_mc = np.abs(mc_dists[cc[0]] - mc_dists[cc[1]])
+            dist_diff_cell = nx.dijkstra_path_length(cell_graph, conn_nodes_cell[cc[0], conn_nodes_cell[cc[1]]]) / 1000 #in nm
+            dist_diff_mc = nx.dijkstra_path_length(mc_graph, mc_syn_nodes[cc[0], mc_syn_nodes[cc[1]]]) / 1000 #in µm
+            comb_conn_axoness = np.array([conn_axoness[cc[0]], conn_axoness[cc[1]]])
             res_dict['cellid']['multi conn pairwise size difference'].append(size_diff)
-            res_dict['cellid']['multi conn pairwise dist difference cell'].append(dist_diff_cell)
-            res_dict['cellid']['multi conn pairwise dist difference target cell'].append(dist_diff_mc)
-    return res_dict
+            res_dict['cellid']['multi conn pairwise dist cell'].append(dist_diff_cell)
+            res_dict['cellid']['multi conn pairwise dist target cell'].append(dist_diff_mc)
+            res_dict['cellid']['multi conn pairwise number syns'].append(number_syns)
+            res_dict['cellid']['multi conn pairwise comp'].append(comb_conn_axoness)
+    return [len(targeted_cell_ids), perc_single_conn_cells, perc_single_conn_syns, perc_single_con_sizes, res_dict]
 
 
 

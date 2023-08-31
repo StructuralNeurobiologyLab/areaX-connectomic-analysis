@@ -92,7 +92,7 @@ if __name__ == '__main__':
     msn_result_df['dendritic length'] = dendrite_lengths
     msn_result_df['number primary dendrites'] = number_primary_dendrites
     msn_result_df['number branching points'] = number_branching_points
-    msn_result_df['ratio branching points / primary dendrites'] = number_branching_points/ number_primary_dendrites
+    msn_result_df['ratio branching points vs primary dendrites'] = number_branching_points/ number_primary_dendrites
     msn_result_df.to_csv(f'{f_name}/msn_morph_results.csv')
     '''
     f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230825_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
@@ -229,6 +229,20 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/synsizes_to_GP_log.png')
     plt.savefig(f'{f_name}/synsizes_to_GP_hist_log.svg')
     plt.close()
+    sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=gp_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, stat='percent')
+    plt.ylabel('% of cells')
+    plt.xlabel('synaptic mesh area [µm²]')
+    plt.savefig(f'{f_name}/synsizes_to_GP_hist_perc.png')
+    plt.savefig(f'{f_name}/synsizes_to_GP_hist_perc.svg')
+    plt.close()
+    sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=gp_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
+    plt.ylabel('% of cells')
+    plt.xlabel('synaptic mesh area [µm²]')
+    plt.savefig(f'{f_name}/synsizes_to_GP_log_perc.png')
+    plt.savefig(f'{f_name}/synsizes_to_GP_hist_log_perc.svg')
+    plt.close()
     sns.boxplot(data=syn_sizes_df, x='to celltype', y='syn sizes', palette=gp_palette)
     plt.ylabel('synaptic mesh area [µm²]')
     plt.savefig(f'{f_name}/synsizes_to_GP_box.png')
@@ -348,10 +362,24 @@ if __name__ == '__main__':
     plt.close()
     sns.histplot(x=key, data=syn_sizes_df, hue='to celltype', palette=gp_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale = True)
-    plt.ylabel('fraction of cells')
+    plt.ylabel('number of cells')
     plt.xlabel('contact site mesh area [µm²]')
     plt.savefig(f'{f_name}/cssizes_to_GP_log.png')
     plt.savefig(f'{f_name}/cssizes_to_GP_hist_log.svg')
+    plt.close()
+    sns.histplot(x='cs sizes', data=cs_sizes_df, hue='to celltype', palette=gp_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, stat = 'percent')
+    plt.ylabel('% of cells')
+    plt.xlabel('contact site mesh area [µm²]')
+    plt.savefig(f'{f_name}/cssizes_to_GP_hist_perc.png')
+    plt.savefig(f'{f_name}/cssizes_to_GP_hist_perc.svg')
+    plt.close()
+    sns.histplot(x=key, data=syn_sizes_df, hue='to celltype', palette=gp_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, log_scale = True, stat = 'percent')
+    plt.ylabel('% of cells')
+    plt.xlabel('contact site mesh area [µm²]')
+    plt.savefig(f'{f_name}/cssizes_to_GP_log_perc.png')
+    plt.savefig(f'{f_name}/cssizes_to_GP_hist_log_perc.svg')
     plt.close()
     sns.boxplot(data=msn_result_df, x='to celltype', y='syn sizes', palette=gp_palette)
     plt.ylabel('contact site mesh area [µm²]')
@@ -371,7 +399,7 @@ if __name__ == '__main__':
     log.info('Step 6/7: Plot morphological parameters vs GP ratio as joint plot')
     # plot histograms for all cells, GP ratio only for those connected to GP
     for key in msn_result_df.keys():
-        if 'cellid' in key or 'celltype' in key:
+        if 'cellid' in key or 'celltype' in key or 'cs' in key:
             continue
         if 'GP ratio' in key:
             xhist = '(GPe + GPi)/GPi'
@@ -405,7 +433,7 @@ if __name__ == '__main__':
     for key in msn_result_df.keys():
         if 'cellid' in key or 'celltype' in key:
             continue
-        if 'GP ratio' in key and 'syn' in key:
+        if 'GP ratio' in key and 'syn' in key and 'cs' in key:
             continue
         if 'GPe' in key or 'GPi' in key:
             continue

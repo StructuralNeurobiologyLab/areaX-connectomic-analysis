@@ -1,18 +1,6 @@
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-import networkx as nx
 import pandas as pd
-import os as os
 import scipy
-from collections import defaultdict
-import time
-from syconn.handler.config import initialize_logging
-from syconn.handler.basics import load_pkl2obj
-from tqdm import tqdm
-from syconn.handler.basics import write_obj2pkl
-from scipy.stats import ranksums
-from syconn.proc.meshes import mesh_area_calc, compartmentalize_mesh_fromskel
 from syconn.reps.super_segmentation import SuperSegmentationObject
 
 def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size = 0.1):
@@ -26,32 +14,32 @@ def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size
     '''
 
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
-    m_ids = sd_synssv.ids
+    #m_ids = sd_synssv.ids
     m_axs = sd_synssv.load_numpy_data("partner_axoness")
     m_cts = sd_synssv.load_numpy_data("partner_celltypes")
     m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")
     m_sizes = sd_synssv.load_numpy_data("mesh_area") / 2
-    m_spiness = sd_synssv.load_numpy_data("partner_spiness")
+    #m_spiness = sd_synssv.load_numpy_data("partner_spiness")
     m_rep_coord = sd_synssv.load_numpy_data("rep_coord")
     m = syn_prob > syn_prob_thresh
-    m_ids = m_ids[m]
+    #m_ids = m_ids[m]
     m_axs = m_axs[m]
     m_cts = m_cts[m]
     m_ssv_partners = m_ssv_partners[m]
     syn_prob = syn_prob[m]
     m_sizes = m_sizes[m]
-    m_spiness = m_spiness[m]
+    #m_spiness = m_spiness[m]
     m_rep_coord = m_rep_coord[m]
     size_inds = m_sizes > min_syn_size
     m_cts = m_cts[size_inds]
-    m_ids = m_ids[size_inds]
+    #m_ids = m_ids[size_inds]
     m_axs = m_axs[size_inds]
     m_ssv_partners = m_ssv_partners[size_inds]
     m_sizes = m_sizes[size_inds]
-    m_spiness = m_spiness[size_inds]
+    #m_spiness = m_spiness[size_inds]
     m_rep_coord = m_rep_coord[size_inds]
     syn_prob = syn_prob[size_inds]
-    return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob
+    return m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob
 
 
 def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8, min_syn_size = 0.1, axo_den_so = True, sd_synssv = None, synapses_caches = None, return_syn_prob = None):
@@ -81,7 +69,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         #m_spiness = sd_synssv.load_numpy_data("partner_spiness")
         m_rep_coord = sd_synssv.load_numpy_data("rep_coord")
     else:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = synapses_caches
+        #m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = synapses_caches
+        m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob = synapses_caches
     m_axs[m_axs == 3] = 1
     m_axs[m_axs == 4] = 1
     #filter for synanpse probabilty threshold
@@ -425,7 +414,7 @@ def get_contact_size_axoness_per_cell(input):
     :param cs_ids: all cs_ids that axoness information is required
     :param cs_coords: all cs coords where axoness information in required
     :param cs_partners: all cs to be processed with information about neuron_partners
-    :return: dictionary with cs_ids sorted into each compartment
+    :return: dictionary with cs_ssv_ids and position [0, 1] in ararys as key: axoness as value
     '''
     cellid, cs_ids, cs_coords, cs_partners = input
     #set up dictionary
@@ -465,12 +454,11 @@ def get_percell_number_sumsize(ssvs, syn_sizes):
     return syn_numbers, syn_ssv_sizes, unique_ssv_ids
 
 
-def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, ct, cellids, filter_ax = None,
+def get_number_sum_size_synapses(syn_sizes, syn_ssv_partners, syn_axs, syn_cts, ct, cellids, filter_ax = None,
                                  filter_ids = None, return_syn_arrays = True, filter_pre_ids = None, filter_post_ids = None):
     '''
     Get number of synapses and sum of synapses sizes for each cell in array. If filter_ax then only the compartment wanted;
     if filter_ids then only from specific cellids.
-    :param syn_ids: array of synapse ids
     :param syn_sizes: array with synapse sizes
     :param syn_ssv_partners: synaptic partner cellids
     :param syn_axs: synaptic axoness parameters, 0 = dendrite, 1 = axon, 2 = soma
@@ -489,7 +477,6 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
         comp_inds = np.in1d(syn_axs, filter_ax).reshape(len(syn_cts), 2)
         filtered_inds = np.any(ct_inds == comp_inds, axis=1)
         syn_cts = syn_cts[filtered_inds]
-        syn_ids = syn_ids[filtered_inds]
         syn_axs = syn_axs[filtered_inds]
         syn_ssv_partners = syn_ssv_partners[filtered_inds]
         syn_sizes = syn_sizes[filtered_inds]
@@ -497,7 +484,6 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
         id_inds = np.all(np.in1d(syn_ssv_partners, filter_ids).reshape(len(syn_ssv_partners), 2),
                               axis=1)
         syn_cts = syn_cts[id_inds]
-        syn_ids = syn_ids[id_inds]
         syn_ssv_partners = syn_ssv_partners[id_inds]
         syn_sizes = syn_sizes[id_inds]
         syn_axs = syn_axs[id_inds]
@@ -506,7 +492,6 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
         comp_inds = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
         filtered_inds = np.all(ct_inds == comp_inds, axis=1)
         syn_cts = syn_cts[filtered_inds]
-        syn_ids = syn_ids[filtered_inds]
         syn_axs = syn_axs[filtered_inds]
         syn_ssv_partners = syn_ssv_partners[filtered_inds]
         syn_sizes = syn_sizes[filtered_inds]
@@ -515,7 +500,6 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
         comp_inds = np.in1d(syn_axs, [0,2]).reshape(len(syn_ssv_partners), 2)
         filtered_inds = np.all(ct_inds == comp_inds, axis=1)
         syn_cts = syn_cts[filtered_inds]
-        syn_ids = syn_ids[filtered_inds]
         syn_axs = syn_axs[filtered_inds]
         syn_ssv_partners = syn_ssv_partners[filtered_inds]
         syn_sizes = syn_sizes[filtered_inds]
@@ -531,7 +515,7 @@ def get_number_sum_size_synapses(syn_ids, syn_sizes, syn_ssv_partners, syn_axs, 
     ssvs = syn_ssv_partners[sort_inds]
     syn_numbers, syn_ssv_sizes, unique_ssv_ids = get_percell_number_sumsize(ssvs = ssvs, syn_sizes = syn_sizes)
     if return_syn_arrays:
-        return syn_ids, syn_sizes, syn_ssv_partners, syn_axs, syn_cts, unique_ssv_ids, syn_ssv_sizes, syn_numbers
+        return syn_sizes, syn_ssv_partners, syn_axs, syn_cts, unique_ssv_ids, syn_ssv_sizes, syn_numbers
     else:
         return unique_ssv_ids, syn_ssv_sizes, syn_numbers
 

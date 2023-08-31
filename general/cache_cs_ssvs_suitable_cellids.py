@@ -110,26 +110,26 @@ if __name__ == '__main__':
     log.info('Created celltype array')
     log.info('Will start getting information to map axoness values to each cs')
     #get axoness information  for full cells and save it
+    raise ValueError
     input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
     comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, input)
     log.info('Per cell axoness information processed via multiprocessing, will now start writing it '
              'in one numpy array.')
+    comp_output = np.array(comp_output, dtype=object)
     comp_output_dict = dict(ChainMap(*comp_output))
     cs_ssv_axoness = np.zeros((len(cs_ssv_ids), 2)) - 1
     compartments = {0: 'dendrite cs ids', 1:'axon cs ids', 2:'soma cs ids'}
-    for cellid in tqdm(all_suitable_ids):
-        if cellid in full_cell_suitable_ids:
-            for comp in compartments.keys():
-                comp_cell_cs_ssv_ids = comp_output_dict[cellid][compartments[comp]]
-                comp_cell_inds = np.in1d(cs_ssv_ids, comp_cell_cs_ssv_ids)
-                comp_cell_ssv_partners = cs_ssv_partners[comp_cell_inds]
-                partner_inds = np.where(comp_cell_ssv_partners == cellid)
-                cs_ssv_axoness[comp_cell_inds, partner_inds[1]] = comp
-        else:
-            #if whole celltype is axon set to 1 where cellid is
-            assert(cellid in axon_ct_suitable_ids)
-            cell_inds = np.where(cs_ssv_partners == cellid)
-            cs_ssv_axoness[cell_inds] == 1
+    #first fill in ids for all axon fragments
+    axon_inds = np.in1d(cs_ssv_partners, axon_ct_suitable_ids).reshape(len(cs_ssv_partners), 2)
+    axon_ind_inds = np.where(axon_inds == True)
+    cs_ssv_axoness[axon_ind_inds] = 1
+    for cellid in tqdm(full_cell_suitable_ids):
+        for comp in compartments.keys():
+            comp_cell_cs_ssv_ids = comp_output_dict[cellid][compartments[comp]]
+            comp_cell_inds = np.in1d(cs_ssv_ids, comp_cell_cs_ssv_ids)
+            comp_cell_ssv_partners = cs_ssv_partners[comp_cell_inds]
+            partner_inds = np.where(comp_cell_ssv_partners == cellid)
+            cs_ssv_axoness[comp_cell_inds, partner_inds[1]] = comp
     unique_cs_ssv_axoness = np.unique(cs_ssv_axoness)
     assert(len(unique_cs_ssv_axoness) == 3)
     assert(-1 not in unique_cs_ssv_axoness)

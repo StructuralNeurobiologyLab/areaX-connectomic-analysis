@@ -12,6 +12,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.mp.mp_utils import start_multiprocess_imap
     from collections import ChainMap
+    from syconn.handler.basics import write_obj2pkl
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
@@ -110,25 +111,28 @@ if __name__ == '__main__':
     log.info('Created celltype array')
     log.info('Will start getting information to map axoness values to each cs')
     #get axoness information  for full cells and save it
+    raise ValueError
     input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
     comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, input)
     log.info('Per cell axoness information processed via multiprocessing, will now start writing it '
              'in one numpy array.')
     comp_output = np.array(comp_output, dtype=object)
-    comp_output_dict = dict(ChainMap(*comp_output))
+    np.save(f'{analysis_params.file_locations}/perfullcell_axoness_cs_ssv_arrays.npy', comp_output)
+    axon_output = comp_output[:, 0]
+    dendrite_output = comp_output[:, 1]
+    soma_output = comp_output[:, 2]
     cs_ssv_axoness = np.zeros((len(cs_ssv_ids), 2)) - 1
-    compartments = {0: 'dendrite cs ids', 1:'axon cs ids', 2:'soma cs ids'}
     #first fill in ids for all axon fragments
     axon_inds = np.in1d(cs_ssv_partners, axon_ct_suitable_ids).reshape(len(cs_ssv_partners), 2)
     axon_ind_inds = np.where(axon_inds == True)
     cs_ssv_axoness[axon_ind_inds] = 1
-    for cellid in tqdm(full_cell_suitable_ids):
-        for comp in compartments.keys():
-            comp_cell_cs_ssv_ids = comp_output_dict[cellid][compartments[comp]]
-            comp_cell_inds = np.in1d(cs_ssv_ids, comp_cell_cs_ssv_ids)
-            comp_cell_ssv_partners = cs_ssv_partners[comp_cell_inds]
-            partner_inds = np.where(comp_cell_ssv_partners == cellid)
-            cs_ssv_axoness[comp_cell_inds, partner_inds[1]] = comp
+    for i in range(tqdm(len(full_cell_suitable_ids))):
+        cell_axon_inds = axon_output[i]
+        cell_dendrite_inds = dendrite_output[i]
+        cell_soma_inds = soma_output[i]
+        cs_ssv_axoness[cell_axon_inds[0], cell_axon_inds[1]] = 1
+        cs_ssv_axoness[cell_dendrite_inds[0], cell_dendrite_inds[1]] = 0
+        cs_ssv_axoness[cell_soma_inds[0], cell_soma_inds[1]] = 2
     unique_cs_ssv_axoness = np.unique(cs_ssv_axoness)
     assert(len(unique_cs_ssv_axoness) == 3)
     assert(-1 not in unique_cs_ssv_axoness)

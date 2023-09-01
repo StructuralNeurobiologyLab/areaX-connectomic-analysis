@@ -422,7 +422,8 @@ def get_contact_size_axoness_per_cell(input):
     #set up dictionary
     cell_dict = {cellid: {}}
     #get cs which cellid is a part of
-    cell_inds = np.any(np.in1d(cs_partners, cellid).reshape(len(cs_partners), 2), axis = 1)
+    cell_inds2d = (np.in1d(cs_partners, cellid).reshape(len(cs_partners), 2))
+    cell_inds = np.any(cell_inds2d, axis = 1)
     cell_cs_ids = cs_ids[cell_inds]
     cell_cs_coords = cs_coords[cell_inds]
     #get axoness information from cell
@@ -438,10 +439,20 @@ def get_contact_size_axoness_per_cell(input):
     axon_cs_ids = cell_cs_ids[axoness_close_node_ids == 1]
     dendrite_cs_ids = cell_cs_ids[axoness_close_node_ids == 0]
     soma_cs_ids = cell_cs_ids[axoness_close_node_ids == 2]
-    cell_dict[cellid]['axon cs ids'] = axon_cs_ids
-    cell_dict[cellid]['dendrite cs ids'] = dendrite_cs_ids
-    cell_dict[cellid]['soma cs ids'] = soma_cs_ids
-    return cell_dict
+    cell_where = np.where(cell_inds2d == True)
+    axon_inds = np.in1d(cs_ids, axon_cs_ids)
+    axon_where = np.where(axon_inds == True)[0]
+    axon_ind_inds = np.in1d(cell_where[0], axon_where)
+    cell_axon_inds = np.array([axon_where, cell_where[1][axon_ind_inds]])
+    dendrite_inds = np.in1d(cs_ids, dendrite_cs_ids)
+    dendrite_where = np.where(dendrite_inds == True)[0]
+    dendrite_ind_inds = np.in1d(cell_where[0], dendrite_where)
+    cell_dendrite_inds = np.array([dendrite_where, cell_where[1][dendrite_ind_inds]])
+    soma_inds = np.in1d(cs_ids, soma_cs_ids)
+    soma_where = np.where(soma_inds == True)[0]
+    soma_ind_inds = np.in1d(cell_where[0], soma_where)
+    cell_soma_inds = np.array([soma_where, cell_where[1][soma_ind_inds]])
+    return [cell_axon_inds, cell_dendrite_inds, cell_soma_inds]
 
 def get_percell_number_sumsize(ssvs, syn_sizes):
     '''
@@ -697,6 +708,7 @@ def get_multi_syn_info_per_cell(input):
     res_dict['cellid']['multi conn pairwise dist target cell'] = []
     res_dict['cellid']['multi conn pairwise number syns'] = []
     res_dict['cellid']['multi conn pairwise comp'] = []
+    res_dict['cellid']['multi conn pairwise size diff frac'] = []
     for mc_id in multi_conn_cells:
         mc_inds = np.where(multi_ssv_partners == mc_id)[0]
         conn_sizes = multi_sizes[mc_inds]
@@ -713,6 +725,7 @@ def get_multi_syn_info_per_cell(input):
         comb_conns = list(combinations(range(len(conn_sizes)), 2))
         for cc in comb_conns:
             size_diff = np.abs(conn_sizes[cc[0]] - conn_sizes[cc[1]])
+            frac_size_diff = size_diff / np.max([conn_sizes[cc[0]], conn_sizes[cc[1]]])
             dist_diff_cell = nx.dijkstra_path_length(cell_graph, conn_nodes_cell[cc[0], conn_nodes_cell[cc[1]]]) / 1000 #in nm
             dist_diff_mc = nx.dijkstra_path_length(mc_graph, mc_syn_nodes[cc[0], mc_syn_nodes[cc[1]]]) / 1000 #in µm
             comb_conn_axoness = np.array([conn_axoness[cc[0]], conn_axoness[cc[1]]])
@@ -721,6 +734,8 @@ def get_multi_syn_info_per_cell(input):
             res_dict['cellid']['multi conn pairwise dist target cell'].append(dist_diff_mc)
             res_dict['cellid']['multi conn pairwise number syns'].append(number_syns)
             res_dict['cellid']['multi conn pairwise comp'].append(comb_conn_axoness)
+            res_dict['cellid']['multi conn pairwise comp'].append(comb_conn_axoness)
+            res_dict['cellid']['multi conn pairwise size diff frac'].append(frac_size_diff)
     return [len(targeted_cell_ids), perc_single_conn_cells, perc_single_conn_syns, perc_single_con_sizes, res_dict]
 
 

@@ -12,7 +12,7 @@ if __name__ == '__main__':
     f_name = analysis_params.file_locations
     log = initialize_logging('sort single vesicles into celltypes',
                              log_dir=f_name + '/logs/')
-    with_glia = False
+    with_glia = True
     log.info(f'Sort single vesicles into celltypes v1 of single vesicles, with_glia = {with_glia}')
 
     ves_wd = f'{global_params.wd}/single_vesicles'

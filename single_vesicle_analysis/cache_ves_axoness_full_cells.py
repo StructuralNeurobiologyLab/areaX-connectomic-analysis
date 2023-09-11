@@ -15,7 +15,7 @@ if __name__ == '__main__':
                              log_dir=f_name + '/logs/')
     with_glia = False
     log.info(f'Cache axoness of celltypes that are not projecting axons (DA, LMAN, HVC), with_glia = {with_glia}')
-    log.info('Cahce only for full cells')
+    log.info('Cache only for full cells')
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     #only use celltypes that are not projecting axons
@@ -40,8 +40,12 @@ if __name__ == '__main__':
         ct_ves_coords = ves_coords[ct_ind]
         ct_ves_dist2matrix = ves_dist2matrix[ct_ind]
         log.info('Get axoness for each vesicle in cells')
-        input = [[cellid, ct_ves_ids, ct_ves_coords, ct_ves_map2ssvids] for cellid in ct_ids]
-        output = start_multiprocess_imap(map_axoness2ves, input)
+        ves_input = [[cellid, ct_ves_ids, ct_ves_coords, ct_ves_map2ssvids] for cellid in ct_ids]
+        if ct == 2 or ct >= 8:
+            # for unknown reason gives error in this case that i should be between -2**31 < i < 2**31 if not only running on one cpu
+            output = start_multiprocess_imap(map_axoness2ves, ves_input, nb_cpus=1)
+        else:
+            output = start_multiprocess_imap(map_axoness2ves, ves_input)
         output = np.array(output, dtype='object')
         ves_ids_reordered = np.concatenate(output[:, 0])
         ves_axoness_reordered = np.concatenate(output[:, 1])

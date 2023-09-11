@@ -190,7 +190,7 @@ def get_ves_synsize_percell(cell_input):
         output_df['number of membrane-close vesicles'] = number_close_per_synapse
     return output_df
 
-def get_vesicle_distance_information_per_cell(input):
+def get_vesicle_distance_information_per_cell(params):
     '''
     filter vesicles if they are in axon of the cell and saves information about distance to
     membrane. Filters synapses that are in axon of cell and calculates distance to
@@ -199,14 +199,14 @@ def get_vesicle_distance_information_per_cell(input):
     :param input: cellid, vesicle_coords, vesicle_distance2membrane, ves_ssv_mapping, synapse_ssv_partners, synapse_axoness, synapse_coords
     :return: all vesicles with coords in Dataframe
     '''
-    cellid = input[0]
-    ves_coords = input[1]
-    mapped_ssv_ids = input[2]
-    ves_dist2matrix = input[3]
-    syn_coords = input[4]
-    syn_axs = input[5]
-    syn_ssv_partners = input[6]
-    celltype = input[7]
+    cellid = params[0]
+    ves_coords = params[1]
+    mapped_ssv_ids = params[2]
+    ves_dist2matrix = params[3]
+    syn_coords = params[4]
+    syn_axs = params[5]
+    syn_ssv_partners = params[6]
+    celltype = params[7]
     # filter synapses, similar to filtering in analysis_conn_helper
     ct_inds = np.in1d(syn_ssv_partners, cellid).reshape(len(syn_ssv_partners), 2)
     comp_inds = np.in1d(syn_axs, 1).reshape(len(syn_ssv_partners), 2)
@@ -243,14 +243,14 @@ def get_vesicle_distance_information_per_cell(input):
         output_df['dist 2 synapse'] = ves_dist2syn
     return output_df
 
-def map_axoness2ves(input):
+def map_axoness2ves(params):
     '''
     Map axoness (axon, dendrite, soma) of a cellid to the vesicles associated with it
     :param input: cellid, vesicle_ids, vesicle_coords, ssv_ids mapped to vesicles
     :return: vesicle_ids and axoness per cell
     '''
 
-    cellid, ves_ids, ves_coords, mapped_ssv_ids = input
+    cellid, ves_ids, ves_coords, mapped_ssv_ids = params
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
     cell_ves_ind = np.in1d(mapped_ssv_ids, cellid)

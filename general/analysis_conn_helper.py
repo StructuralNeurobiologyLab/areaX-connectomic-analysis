@@ -409,7 +409,7 @@ def get_contact_site_compartment_axoness_percell(cs_dict, compartment):
     cs_dict["cs ids"] = cs_ids[close_node_comp_inds]
     return cs_dict
 
-def get_contact_size_axoness_per_cell(input):
+def get_contact_size_axoness_per_cell(params):
     '''
     get information about which cs_ids is in which compartment per cell.
     :param cellid: id of the cell
@@ -418,9 +418,8 @@ def get_contact_size_axoness_per_cell(input):
     :param cs_partners: all cs to be processed with information about neuron_partners
     :return: dictionary with cs_ssv_ids and position [0, 1] in ararys as key: axoness as value
     '''
-    cellid, cs_ids, cs_coords, cs_partners = input
+    cellid, cs_ids, cs_coords, cs_partners = params
     #set up dictionary
-    cell_dict = {cellid: {}}
     #get cs which cellid is a part of
     cell_inds2d = (np.in1d(cs_partners, cellid).reshape(len(cs_partners), 2))
     cell_inds = np.any(cell_inds2d, axis = 1)
@@ -642,7 +641,7 @@ def get_ct_information_npy(ssv_partners, cellids_array_full, celltype_array_full
     assert(np.all(np.unique(celltype_partners) == celltypes))
     return celltype_partners
 
-def get_multi_syn_info_per_cell(input):
+def get_multi_syn_info_per_cell(params):
     '''
     Get information about multiple conections between cells for individual cells.
     Calculates distances between different synapses. Assumes synapses are filtered.
@@ -651,7 +650,7 @@ def get_multi_syn_info_per_cell(input):
     :param input: Cellid, syn_ssv_partners, syn_ssv_sizes, syn_ssv_coords, syn_celltypes, other_ct
     :return:
     '''
-    cellid, syn_ssv_partners, syn_ssv_sizes, syn_ssv_coords, syn_celltypes, syn_axoness, other_ct = input
+    cellid, syn_ssv_partners, syn_ssv_sizes, syn_ssv_coords, syn_celltypes, syn_axoness, other_ct = params
     cell_inds = np.where(syn_ssv_partners == cellid)[0]
     cell_ssv_partners = syn_ssv_partners[cell_inds]
     cell_syn_sizes = syn_ssv_sizes[cell_inds]
@@ -669,29 +668,29 @@ def get_multi_syn_info_per_cell(input):
                                                                                 cell_ssv_partners,
                                                                                 cell_syn_cts,
                                                                                 other_ct)
-    res_dict = {'cellid':{}}
+    res_dict = {cellid:{}}
     #save info for parameters per connected cell in dictionary
-    res_dict['cellid']['target cell ids'] = targeted_cell_ids
-    res_dict['cellid']['number of connected cells'] = len(targeted_cell_ids)
-    res_dict['cellid']['connected cell syn numbers'] = syn_numbers_tc
-    res_dict['cellid']['connected cell sum syn sizes'] = syn_sizes_tc
+    res_dict[cellid]['target cell ids'] = targeted_cell_ids
+    res_dict[cellid]['number of connected cells'] = len(targeted_cell_ids)
+    res_dict[cellid]['connected cell syn numbers'] = syn_numbers_tc
+    res_dict[cellid]['connected cell sum syn sizes'] = syn_sizes_tc
     # get % of how many cells and synapses make monosynaptic connections
     mono_inds = syn_numbers_tc == 1
     mono_conn_cells = targeted_cell_ids[mono_inds]
     mono_conn_numbers = syn_numbers_tc[mono_inds]
     mono_sum_sizes = syn_sizes_tc[mono_inds]
     perc_single_conn_cells = 100 * len(mono_conn_cells) / len(targeted_cell_ids)
-    res_dict['cellid']['% cells monosynaptic'] = perc_single_conn_cells
+    res_dict[cellid]['% cells monosynaptic'] = perc_single_conn_cells
     perc_single_conn_syns = 100 * mono_conn_numbers.sum() / syn_numbers_tc.sum()
-    res_dict['cellid']['% syn numbers monosynaptic'] = perc_single_conn_syns
-    perc_single_con_sizes = 100 * mono_sum_sizes.sum() / syn_numbers_tc.sum()
-    res_dict['cellid']['% syn sum size monosynaptic'] = perc_single_con_sizes
+    res_dict[cellid]['% syn numbers monosynaptic'] = perc_single_conn_syns
+    perc_single_con_sizes = 100 * mono_sum_sizes.sum() / syn_sizes_tc.sum()
+    res_dict[cellid]['% syn sum size monosynaptic'] = perc_single_con_sizes
     # get information on size and location differences between multi-synaptic connections
     multi_inds = syn_numbers_tc > 1
     multi_conn_cells = targeted_cell_ids[multi_inds]
     if len(multi_conn_cells) == 0:
-        return res_dict
-    multi_inds2 = np.any(np.in1d(cell_ssv_partners, multi_conn_cells), axis = 1)
+        return [len(targeted_cell_ids), perc_single_conn_cells, perc_single_conn_syns, perc_single_con_sizes, res_dict]
+    multi_inds2 = np.any(np.in1d(cell_ssv_partners, multi_conn_cells).reshape(len(cell_ssv_partners), 2), axis = 1)
     multi_ssv_partners = cell_ssv_partners[multi_inds2]
     multi_coords = cell_syn_coords[multi_inds2]
     multi_sizes = cell_syn_sizes[multi_inds2]
@@ -703,12 +702,12 @@ def get_multi_syn_info_per_cell(input):
     cell_kdt = scipy.spatial.cKDTree(cell_nodes)
     dist, multi_syn_nodes = cell_kdt.query(multi_coords * cell.scaling)
     cell_graph = cell.weighted_graph()
-    res_dict['cellid']['multi conn pairwise size difference'] = []
-    res_dict['cellid']['multi conn pairwise dist cell'] = []
-    res_dict['cellid']['multi conn pairwise dist target cell'] = []
-    res_dict['cellid']['multi conn pairwise number syns'] = []
-    res_dict['cellid']['multi conn pairwise comp'] = []
-    res_dict['cellid']['multi conn pairwise size diff frac'] = []
+    res_dict[cellid]['multi conn pairwise size difference'] = []
+    res_dict[cellid]['multi conn pairwise dist cell'] = []
+    res_dict[cellid]['multi conn pairwise dist target cell'] = []
+    res_dict[cellid]['multi conn pairwise number syns'] = []
+    res_dict[cellid]['multi conn pairwise comp'] = []
+    res_dict[cellid]['multi conn pairwise size diff frac'] = []
     for mc_id in multi_conn_cells:
         mc_inds = np.where(multi_ssv_partners == mc_id)[0]
         conn_sizes = multi_sizes[mc_inds]
@@ -726,16 +725,15 @@ def get_multi_syn_info_per_cell(input):
         for cc in comb_conns:
             size_diff = np.abs(conn_sizes[cc[0]] - conn_sizes[cc[1]])
             frac_size_diff = size_diff / np.max([conn_sizes[cc[0]], conn_sizes[cc[1]]])
-            dist_diff_cell = nx.dijkstra_path_length(cell_graph, conn_nodes_cell[cc[0], conn_nodes_cell[cc[1]]]) / 1000 #in nm
-            dist_diff_mc = nx.dijkstra_path_length(mc_graph, mc_syn_nodes[cc[0], mc_syn_nodes[cc[1]]]) / 1000 #in µm
+            dist_diff_cell = nx.dijkstra_path_length(cell_graph, conn_nodes_cell[cc[0]], conn_nodes_cell[cc[1]]) / 1000 #in µm
+            dist_diff_mc = nx.dijkstra_path_length(mc_graph, mc_syn_nodes[cc[0]], mc_syn_nodes[cc[1]]) / 1000 #in µm
             comb_conn_axoness = np.array([conn_axoness[cc[0]], conn_axoness[cc[1]]])
-            res_dict['cellid']['multi conn pairwise size difference'].append(size_diff)
-            res_dict['cellid']['multi conn pairwise dist cell'].append(dist_diff_cell)
-            res_dict['cellid']['multi conn pairwise dist target cell'].append(dist_diff_mc)
-            res_dict['cellid']['multi conn pairwise number syns'].append(number_syns)
-            res_dict['cellid']['multi conn pairwise comp'].append(comb_conn_axoness)
-            res_dict['cellid']['multi conn pairwise comp'].append(comb_conn_axoness)
-            res_dict['cellid']['multi conn pairwise size diff frac'].append(frac_size_diff)
+            res_dict[cellid]['multi conn pairwise size difference'].append(size_diff)
+            res_dict[cellid]['multi conn pairwise dist cell'].append(dist_diff_cell)
+            res_dict[cellid]['multi conn pairwise dist target cell'].append(dist_diff_mc)
+            res_dict[cellid]['multi conn pairwise number syns'].append(number_syns)
+            res_dict[cellid]['multi conn pairwise comp'].append(comb_conn_axoness)
+            res_dict[cellid]['multi conn pairwise size diff frac'].append(frac_size_diff)
     return [len(targeted_cell_ids), perc_single_conn_cells, perc_single_conn_syns, perc_single_con_sizes, res_dict]
 
 

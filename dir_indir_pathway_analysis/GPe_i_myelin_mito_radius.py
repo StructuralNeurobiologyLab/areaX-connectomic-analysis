@@ -32,7 +32,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230830_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230911_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -77,6 +77,7 @@ if __name__ == '__main__':
 
 
     log.info("Step 1/3: Get information from GPe")
+    log.info('Get mito mylein, radius, volume info from GPe')
     gpe_input = [[gpe_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, GPe_full_cell_dict] for gpe_id in GPe_ids]
     gpe_output = start_multiprocess_imap(get_per_cell_mito_myelin_info, gpe_input)
     gpe_output = np.array(gpe_output)
@@ -84,14 +85,17 @@ if __name__ == '__main__':
     axon_median_radius_gpe = gpe_output[:, 0]
     axon_mito_volume_density_gpe = gpe_output[:, 1]
     axon_myelin_gpe = gpe_output[:, 2]
+    gpe_volume = gpe_output[:, 3]
 
     gpe_nonzero = axon_median_radius_gpe > 0
     # get soma diameter from all GPe
+    log.info('Get soma diameters from GPe')
     gpe_soma_results = start_multiprocess_imap(get_cell_soma_radius, GPe_ids)
     gpe_soma_results = np.array(gpe_soma_results, dtype='object')
     gpe_diameters = gpe_soma_results[:, 1].astype(float) * 2
     GPe_params = {"axon median radius": axon_median_radius_gpe[gpe_nonzero], "axon mitochondria volume density": axon_mito_volume_density_gpe[gpe_nonzero],
-                  "axon myelin fraction": axon_myelin_gpe[gpe_nonzero], 'soma diameter': gpe_diameters[gpe_nonzero], "cellids": GPe_ids[gpe_nonzero]}
+                  "axon myelin fraction": axon_myelin_gpe[gpe_nonzero], 'soma diameter': gpe_diameters[gpe_nonzero], 'cell volume': gpe_volume[gpe_nonzero],
+                  "cellids": GPe_ids[gpe_nonzero]}
     GPe_param_df = pd.DataFrame(GPe_params)
     GPe_param_df.to_csv("%s/GPe_params.csv" % f_name)
     write_obj2pkl("%s/GPe_dict.pkl" % f_name, GPe_params)
@@ -100,6 +104,7 @@ if __name__ == '__main__':
     step_idents = ["GPe axon parameters collected"]
 
     log.info("Step 2/3: Get information from GPi")
+    log.info('Get mito mylein, radius, volume info from GPi')
     gpi_input = [
         [gpi_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, GPi_full_cell_dict] for
         gpi_id in GPi_ids]
@@ -109,16 +114,19 @@ if __name__ == '__main__':
     axon_median_radius_gpi = gpi_output[:, 0]
     axon_mito_volume_density_gpi = gpi_output[:, 1]
     axon_myelin_gpi = gpi_output[:, 2]
+    gpi_volume = gpi_output[:, 3]
 
     gpi_nonzero = axon_median_radius_gpi > 0
-    # get soma diameter from all GPi
+    # get soma diameter from all
+    log.info('Get soma diameters from GPi')
     gpi_soma_results = start_multiprocess_imap(get_cell_soma_radius, GPi_ids)
     gpi_soma_results = np.array(gpi_soma_results, dtype='object')
     gpi_diameters = gpi_soma_results[:, 1].astype(float) * 2
     GPi_params = {"axon median radius": axon_median_radius_gpi[gpi_nonzero],
                   "axon mitochondria volume density": axon_mito_volume_density_gpi[gpi_nonzero],
                   "axon myelin fraction": axon_myelin_gpi[gpi_nonzero],
-                  'soma diameter': gpi_diameters[gpi_nonzero], "cellids": GPi_ids[gpi_nonzero]}
+                  'soma diameter': gpi_diameters[gpi_nonzero], 'cell volume': gpi_volume[gpi_nonzero],
+                  "cellids": GPi_ids[gpi_nonzero]}
     GPi_param_df = pd.DataFrame(GPi_params)
     GPi_param_df.to_csv("%s/GPi_params.csv" % f_name)
     write_obj2pkl("%s/GPi_dict.pkl" % f_name, GPi_params)
@@ -170,6 +178,23 @@ if __name__ == '__main__':
     for comb in combinations:
         x = key_list[comb[0]]
         y = key_list[comb[1]]
+        if "radius" in x or 'diameter' in x:
+            scatter_x = "%s [µm]" % x
+        elif "volume density" in x:
+            scatter_x = "%s [µm³/µm]" % x
+        elif 'cell volume' in x:
+            scatter_x = f'{x} [µm³]'
+        else:
+            scatter_x = x
+
+        if "radius" in y or 'diameter' in y:
+            scatter_y = "%s [µm]" % y
+        elif "volume density" in y:
+            scatter_y = "%s [µm³/µm]" % y
+        elif 'cell volume' in y:
+            scatter_y = f'{x} [µm³]'
+        else:
+            scatter_y = y
         g = sns.JointGrid(data= all_param_df, x = x, y = y, hue = "celltype", palette = results_comparison.color_palette)
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot,  fill = True, alpha = 0.3,
@@ -182,26 +207,62 @@ if __name__ == '__main__':
             g.ax_marg_y.set_ylim(0)
         g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize = fontsize_jointplot)
         g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize= fontsize_jointplot)
-        if "radius" in x or 'diameter' in x:
-            g.ax_joint.set_xlabel("%s [µm]" % x)
-            scatter_x = "%s [µm]" % x
-        elif "volume density" in x:
-            g.ax_joint.set_xlabel("%s [µm³/µm]" % x)
-            scatter_x = "%s [µm³/µm]" % x
-        else:
-            scatter_x = x
-
-        if "radius" in y or 'diameter' in y:
-            g.ax_joint.set_ylabel("%s [µm]" % y)
-            scatter_y = "%s [µm]" % y
-        elif "volume density" in y:
-            g.ax_joint.set_xlabel("%s [µm³/µm]" % y)
-            scatter_y = "%s [µm³/µm]" % y
-        else:
-            scatter_y = y
-
-        plt.savefig("%s/%s_%s_joinplot.svg" % (f_name, x, y))
-        plt.savefig("%s/%s_%s_joinplot.png" % (f_name, x, y))
+        g.ax_joint.set_xlabel(scatter_x)
+        g.ax_joint.set_ylabel(scatter_y)
+        plt.savefig("%s/%s_%s_joinplot_celltypes.svg" % (f_name, x, y))
+        plt.savefig("%s/%s_%s_joinplot_celltypes.png" % (f_name, x, y))
+        plt.close()
+        g = sns.JointGrid(data=all_param_df, x=x, y=y, hue="celltype", palette=results_comparison.color_palette)
+        g.plot_joint(sns.scatterplot)
+        g.plot_marginals(sns.histplot, fill=False, alpha=0.3, element = 'step',
+                         kde=False, palette=results_comparison.color_palette)
+        g.ax_joint.set_xticks(g.ax_joint.get_xticks())
+        g.ax_joint.set_yticks(g.ax_joint.get_yticks())
+        if g.ax_joint.get_xticks()[0] < 0:
+            g.ax_marg_x.set_xlim(0)
+        if g.ax_joint.get_yticks()[0] < 0:
+            g.ax_marg_y.set_ylim(0)
+        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize_jointplot)
+        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=fontsize_jointplot)
+        g.ax_joint.set_xlabel(scatter_x)
+        g.ax_joint.set_ylabel(scatter_y)
+        plt.savefig("%s/%s_%s_joinplot_celltypes_step.svg" % (f_name, x, y))
+        plt.savefig("%s/%s_%s_joinplot_celltypes_step.png" % (f_name, x, y))
+        plt.close()
+        g = sns.JointGrid(data=all_param_df, x=x, y=y)
+        g.plot_joint(sns.scatterplot, alpha = 0.5,  color = 'black')
+        g.plot_marginals(sns.histplot, fill=False, alpha=0.3,
+                         kde=False, color = 'black', element = 'step')
+        g.ax_joint.set_xticks(g.ax_joint.get_xticks())
+        g.ax_joint.set_yticks(g.ax_joint.get_yticks())
+        if g.ax_joint.get_xticks()[0] < 0:
+            g.ax_marg_x.set_xlim(0)
+        if g.ax_joint.get_yticks()[0] < 0:
+            g.ax_marg_y.set_ylim(0)
+        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize_jointplot)
+        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=fontsize_jointplot)
+        g.ax_joint.set_xlabel(scatter_x)
+        g.ax_joint.set_ylabel(scatter_y)
+        plt.savefig("%s/%s_%s_joinplot_all.svg" % (f_name, x, y))
+        plt.savefig("%s/%s_%s_joinplot_all.png" % (f_name, x, y))
+        plt.close()
+        g = sns.JointGrid(data=all_param_df, x=x, y=y)
+        g.plot_joint(sns.scatterplot, alpha=0.5, color='black')
+        g.plot_joint(sns.kdeplot,color = 'gray')
+        g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
+                         kde=False, color='black', element = 'step')
+        g.ax_joint.set_xticks(g.ax_joint.get_xticks())
+        g.ax_joint.set_yticks(g.ax_joint.get_yticks())
+        if g.ax_joint.get_xticks()[0] < 0:
+            g.ax_marg_x.set_xlim(0)
+        if g.ax_joint.get_yticks()[0] < 0:
+            g.ax_marg_y.set_ylim(0)
+        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize_jointplot)
+        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize=fontsize_jointplot)
+        g.ax_joint.set_xlabel(scatter_x)
+        g.ax_joint.set_ylabel(scatter_y)
+        plt.savefig("%s/%s_%s_joinplot_kde_ov.svg" % (f_name, x, y))
+        plt.savefig("%s/%s_%s_joinplot_kde_ov.png" % (f_name, x, y))
         plt.close()
         example_x = all_param_df[x][example_inds]
         example_y = all_param_df[y][example_inds]

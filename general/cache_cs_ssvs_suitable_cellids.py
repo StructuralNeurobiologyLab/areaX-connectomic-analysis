@@ -12,7 +12,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.mp.mp_utils import start_multiprocess_imap
     from collections import ChainMap
-    from syconn.handler.basics import write_obj2pkl
+    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
@@ -21,12 +21,12 @@ if __name__ == '__main__':
     min_comp_len_ax = 50
     min_comp_len_cells = 200
     exclude_known_mergers = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230831_cache_cs_ssv_mcl_%i_ax%i" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230905_cache_cs_ssv_mcl_%i_ax%i" % (
     min_comp_len_cells, min_comp_len_ax)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     save_svg = True
-    log = initialize_logging('cache current cs_ssv for full cells', log_dir=f_name + '/logs/')
+    log = initialize_logging('cache current cs_ssv for full cells pt2', log_dir=f_name + '/logs/')
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, mergers excluded = %s" % (
         min_comp_len_cells, min_comp_len_ax, exclude_known_mergers))
@@ -111,22 +111,22 @@ if __name__ == '__main__':
     log.info('Created celltype array')
     log.info('Will start getting information to map axoness values to each cs')
     #get axoness information  for full cells and save it
-    raise ValueError
-    input = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
-    comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, input)
-    log.info('Per cell axoness information processed via multiprocessing, will now start writing it '
-             'in one numpy array.')
-    comp_output = np.array(comp_output, dtype=object)
-    np.save(f'{analysis_params.file_locations}/perfullcell_axoness_cs_ssv_arrays.npy', comp_output)
-    axon_output = comp_output[:, 0]
-    dendrite_output = comp_output[:, 1]
-    soma_output = comp_output[:, 2]
+    #params = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
+    #comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, params)
+    #log.info('Per cell axoness information processed via multiprocessing, will now start writing it '
+    #         'in one numpy array.')
+    #write_obj2pkl(f'{analysis_params.file_locations}/perfullcell_axoness_cs_ssv_arrays.pkl', comp_output)
+    log.info('Load results from last run 04/09/23')
+    comp_output = load_pkl2obj(f'{analysis_params.file_locations}/perfullcell_axoness_cs_ssv_arrays.pkl')
+    axon_output = [co[0] for co in comp_output]
+    dendrite_output = [co[1] for co in comp_output]
+    soma_output = [co[2] for co in comp_output]
     cs_ssv_axoness = np.zeros((len(cs_ssv_ids), 2)) - 1
     #first fill in ids for all axon fragments
     axon_inds = np.in1d(cs_ssv_partners, axon_ct_suitable_ids).reshape(len(cs_ssv_partners), 2)
     axon_ind_inds = np.where(axon_inds == True)
     cs_ssv_axoness[axon_ind_inds] = 1
-    for i in range(tqdm(len(full_cell_suitable_ids))):
+    for i in tqdm(range(len(full_cell_suitable_ids))):
         cell_axon_inds = axon_output[i]
         cell_dendrite_inds = dendrite_output[i]
         cell_soma_inds = soma_output[i]

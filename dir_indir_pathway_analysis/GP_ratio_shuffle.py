@@ -8,6 +8,7 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
     import numpy as np
+    from syconn.reps.segmentation import SegmentationDataset
     import matplotlib.pyplot as plt
     from scipy.stats import ranksums, kruskal
     from itertools import combinations
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     gpe_ct = 6
     gpi_ct = 7
     n_bootstrap = 1000
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230911_j0251v5_MSN_GP_ratio_shuffle_boots%i" % n_bootstrap
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230912_j0251v5_MSN_GP_ratio_shuffle_boots%i" % n_bootstrap
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -31,7 +32,7 @@ if __name__ == '__main__':
 
     # load information about MSN groups and GP ratio
     kde = True
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230831_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
+    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230911_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
         min_comp_len, syn_prob, kde)
     log.info(f'Use morph parameters from {f_name_saving1}')
     msn_result_df = pd.read_csv(f'{f_name_saving1}/msn_spine_density_GPratio.csv', index_col=0)
@@ -44,10 +45,15 @@ if __name__ == '__main__':
     log.info(f'Use morph parameters from {f_name_saving2}')
     gp_morph_df = pd.read_csv(f'{f_name_saving2}/GPe_GPi_params.csv', index_col=0)
 
-    log.info('Step 1/6: Create new dataframe with real data and bootstrapping results')
+    # get the synapses between MSN and GP from syn_sizes_df Dataframe
+    log.info(f'Use syn sizes info from {f_name_saving1}')
+    syn_sizes_df = pd.read_csv(f'{f_name_saving1}/syn_sizes_toGP.csv', index_col=0)
+
+    log.info('Step 1/6: Calculate probabilites to use for shuffling')
     len_msn_df = len(msn_result_df)
-    bt_cats = ['observed', 'random', 'random with syn ratio', 'random GPi/GPe cell number ratio',
+    shuffle_cats = ['observed', 'random', 'random with syn ratio', 'random with syn area ratio', 'random GPi/GPe cell number ratio',
                  'random GPi/GPe cell volume ratio']
+    syn_sizes_df['observed'] = syn_sizes_df['to celltype']
     #get different probabilites
     #probability depending on synapse number
     syn_number_GPe = msn_result_df['syn number to GPe']
@@ -55,22 +61,93 @@ if __name__ == '__main__':
     sum_syn_number_GPe = syn_number_GPe.sum()
     sum_syn_number_GPi = syn_number_GPi.sum()
     syn_number_GPtotal = sum_syn_number_GPe + sum_syn_number_GPi
-    p_syn_GPe_number = sum_syn_number_GPe / syn_number_GPtotal
     p_syn_GPi_number = sum_syn_number_GPi / syn_number_GPtotal
     #probability depending on total synaptic area
-
+    sum_syn_area_GPe = msn_result_df['syn size to GPe'].sum()
+    sum_syn_area_GPi = msn_result_df['syn size to GPi'].sum()
+    total_syn_area_GP = sum_syn_area_GPe + sum_syn_area_GPi
+    p_syn_GPi_area = sum_syn_area_GPi/ total_syn_area_GP
     # probability depending on cell number
     number_GPe = len(gp_morph_df[gp_morph_df['celltype'] == 'GPe'])
     number_GPi = len(gp_morph_df[gp_morph_df['celltype'] == 'GPi'])
     GP_number = number_GPi + number_GPe
-    p_GPe_number = number_GPe / GP_number
     p_GPi_number = number_GPi / GP_number
     #probability depending on cell volume
     volume_GPe = gp_morph_df['cell volume'][gp_morph_df['celltype'] == 'GPe'].sum()
     volume_GPi = gp_morph_df['cell volume'][gp_morph_df['celltype'] == 'GPi'].sum()
     GP_total_volume = volume_GPi + volume_GPe
-    p_GPe_volume = volume_GPe / GP_total_volume
     p_GPi_volume = volume_GPi / GP_total_volume
+    bool_choice = [True, False]
+    len_sizes = len(syn_sizes_df)
+
+    log.info('Step 2/6: Shuffle syn sizes with different probabilities')
+    #random
+    rndm_inds = np.random.choice(bool_choice, len_sizes)
+    syn_sizes_df.loc[rndm_inds, 'random'] = 'GPi'
+    syn_sizes_df.loc[rndm_inds == False, 'random'] = 'GPe'
+    #respect to synapse number
+    rndm_inds = np.random.choice(bool_choice, len_sizes, p = [p_syn_GPi_number, 1 - p_syn_GPi_number])
+    syn_sizes_df.loc[rndm_inds, 'random with syn ratio'] = 'GPi'
+    syn_sizes_df.loc[rndm_inds == False, 'random with syn ratio'] = 'GPe'
+    #respect to synapse syn area
+    rndm_inds = np.random.choice(bool_choice, len_sizes, p=[p_syn_GPi_area, 1 - p_syn_GPi_area])
+    syn_sizes_df.loc[rndm_inds, 'random with syn area ratio'] = 'GPi'
+    syn_sizes_df.loc[rndm_inds == False, 'random with syn area ratio'] = 'GPe'
+    #according to cell number
+    rndm_inds = np.random.choice(bool_choice, len_sizes, p=[p_GPi_number, 1 - p_GPi_number])
+    syn_sizes_df.loc[rndm_inds, 'random GPi/GPe cell number ratio'] = 'GPi'
+    syn_sizes_df.loc[rndm_inds == False, 'random GPi/GPe cell number ratio'] = 'GPe'
+    # according to cell volume
+    rndm_inds = np.random.choice(bool_choice, len_sizes, p=[p_GPi_volume, 1 - p_GPi_volume])
+    syn_sizes_df.loc[rndm_inds, 'random GPi/GPe cell volume ratio'] = 'GPi'
+    syn_sizes_df.loc[rndm_inds == False, 'random GPi/GPe cell volume ratio'] = 'GPe'
+
+    log.info('Step 3/6: Plot size distributions for observed and shuffled data')
+    gp_palette = {'GPe': '#592A87', 'GPi': '#2AC644'}
+    for sc in shuffle_cats:
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue=sc, palette=gp_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        plt.ylabel('% of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_hist_perc.png')
+        plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_hist_perc.svg')
+        plt.title(sc)
+        plt.close()
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue=sc, palette=gp_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
+        plt.ylabel('% of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(sc)
+        plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_hist_log_perc.png')
+        plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_hist_log_perc.svg')
+        plt.close()
+
+    log.info('Step 4/6: Calculate per MSN GP syn area ratio')
+    shuffle_df = pd.DataFrame(columns=['cellid', 'GP ratio sum syn area', 'shuffle category'], index = range(len_msn_df * len(shuffle_cats)))
+    msn_ids = np.sort(np.unique(syn_sizes_df['cellid']))
+    for i, sc in enumerate(shuffle_cats):
+        gpe_syn_info = syn_sizes_df[syn_sizes_df[sc] == 'GPe']
+        gpi_syn_info = syn_sizes_df[syn_sizes_df[sc] == 'GPe']
+        for sh in shuffle_cats:
+            if sh == sc:
+                continue
+            gpi_syn_info.drop(sh)
+            gpe_syn_info.drop(sh)
+        gpe_msn_inds, unique_msngpe_ids = pd.factorize(gpe_syn_info['cellid'])
+        gpe_syn_msn_sizes = np.bincount(gpe_msn_inds, gpe_syn_info['syn sizes'])
+        gpi_msn_inds, unique_msngpi_ids = pd.factorize(gpi_syn_info['cellid'])
+        gpi_syn_msn_sizes = np.bincount(gpi_msn_inds, gpi_syn_info['syn sizes'])
+        raise ValueError
+
+
+
+
+
+
+
+
+
+
 
 
 

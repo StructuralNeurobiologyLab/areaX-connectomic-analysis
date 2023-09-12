@@ -493,7 +493,7 @@ def get_per_cell_mito_myelin_info(input):
     axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
     axon_radii_cell = get_compartment_radii(cell, comp_inds=axon_inds)
     ax_median_radius_cell = np.median(axon_radii_cell)
-    cell_volume = cell.size * np.prod(cell.scaling) * 10**(-9) #in µm³
+    cell_volume = np.abs(cell.size) * np.prod(cell.scaling) * 10**(-9) #in µm³
     return [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell, cell_volume]
 
 def get_cell_comp_vert_coords(cellid, comp):

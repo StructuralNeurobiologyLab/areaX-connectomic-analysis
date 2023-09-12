@@ -67,7 +67,7 @@ if __name__ == '__main__':
     msn_result_df = pd.DataFrame(columns=columns, index=range(len(MSN_ids)))
     MSN_ids = np.sort(MSN_ids)
     msn_result_df['cellid'] = MSN_ids
-
+    '''
     log.info('Step 2/7: Get spine density of all MSN cells')
     msn_input = [[msn_id, min_comp_len, MSN_dict] for msn_id in MSN_ids]
     spine_density = start_multiprocess_imap(get_spine_density, msn_input)
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         if 'cs' in key:
             msn_result_df = msn_result_df.drop(key, axis = 1)
     msn_result_df['dendritic length'] = msn_result_df['dendritic length'] / 1000 #in mm
-    '''
+
     log.info('Step 4/7: Get GP syn ratio for MSNs')
     msn_result_df['syn number to GPe'] = 0
     msn_result_df['syn size to GPe'] = 0
@@ -150,7 +150,6 @@ if __name__ == '__main__':
         min_syn_size=min_syn_size,
         axo_den_so=True,
         synapses_caches=None)
-    raise ValueError
     #filter synapses to only include full cells
     all_suitable_ids = np.hstack([MSN_ids, GPe_ids, GPi_ids])
     suit_ct_inds = np.all(np.in1d(m_ssv_partners, all_suitable_ids).reshape(len(m_ssv_partners), 2), axis=1)
@@ -197,6 +196,8 @@ if __name__ == '__main__':
                                                              (msn_result_df.loc[nonzero_inds, 'syn number to GPi']  + msn_result_df.loc[nonzero_inds, 'syn number to GPe'])
     msn_result_df.loc[nonzero_inds, 'GP ratio sum syn size'] =  msn_result_df.loc[nonzero_inds, 'syn size to GPi']/ \
                                                                  (msn_result_df.loc[nonzero_inds, 'syn size to GPe'] + msn_result_df.loc[nonzero_inds, 'syn size to GPi'])
+    msn_result_df.loc[nonzero_inds, 'GP ratio mean syn size'] = msn_result_df.loc[nonzero_inds, 'mean syn size to GPi']/ \
+                                                                 (msn_result_df.loc[nonzero_inds, 'mean syn size to GPe'] + msn_result_df.loc[nonzero_inds, 'mean syn size to GPi'])
 
     msn_result_df.to_csv(f'{f_name}/msn_morph_GPratio.csv')
     #get syn sizes for all cells

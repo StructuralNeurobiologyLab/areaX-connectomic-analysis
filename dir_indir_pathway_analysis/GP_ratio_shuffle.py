@@ -23,7 +23,7 @@ if __name__ == '__main__':
     gpe_ct = 6
     gpi_ct = 7
     n_bootstrap = 1000
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230912_j0251v5_MSN_GP_ratio_shuffle_boots%i" % n_bootstrap
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230913_j0251v5_MSN_GP_ratio_shuffle_boots%i" % n_bootstrap
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -49,10 +49,9 @@ if __name__ == '__main__':
     log.info(f'Use syn sizes info from {f_name_saving1}')
     syn_sizes_df = pd.read_csv(f'{f_name_saving1}/syn_sizes_toGP.csv', index_col=0)
 
-    log.info('Step 1/6: Calculate probabilites to use for shuffling')
-    len_msn_df = len(msn_result_df)
-    shuffle_cats = ['observed', 'random', 'random with syn ratio', 'random with syn area ratio', 'random GPi/GPe cell number ratio',
-                 'random GPi/GPe cell volume ratio']
+    log.info('Step 1/5: Calculate probabilites to use for shuffling')
+    shuffle_cats = np.array(['observed', 'random', 'random with syn ratio', 'random with syn area ratio', 'random GP cell number ratio',
+                 'random GP cell volume ratio'])
     syn_sizes_df['observed'] = syn_sizes_df['to celltype']
     #get different probabilites
     #probability depending on synapse number
@@ -80,7 +79,7 @@ if __name__ == '__main__':
     bool_choice = [True, False]
     len_sizes = len(syn_sizes_df)
 
-    log.info('Step 2/6: Shuffle syn sizes with different probabilities')
+    log.info('Step 2/5: Shuffle syn sizes with different probabilities')
     #random
     rndm_inds = np.random.choice(bool_choice, len_sizes)
     syn_sizes_df.loc[rndm_inds, 'random'] = 'GPi'
@@ -95,12 +94,12 @@ if __name__ == '__main__':
     syn_sizes_df.loc[rndm_inds == False, 'random with syn area ratio'] = 'GPe'
     #according to cell number
     rndm_inds = np.random.choice(bool_choice, len_sizes, p=[p_GPi_number, 1 - p_GPi_number])
-    syn_sizes_df.loc[rndm_inds, 'random GPi/GPe cell number ratio'] = 'GPi'
-    syn_sizes_df.loc[rndm_inds == False, 'random GPi/GPe cell number ratio'] = 'GPe'
+    syn_sizes_df.loc[rndm_inds, 'random GP cell number ratio'] = 'GPi'
+    syn_sizes_df.loc[rndm_inds == False, 'random GP cell number ratio'] = 'GPe'
     # according to cell volume
     rndm_inds = np.random.choice(bool_choice, len_sizes, p=[p_GPi_volume, 1 - p_GPi_volume])
-    syn_sizes_df.loc[rndm_inds, 'random GPi/GPe cell volume ratio'] = 'GPi'
-    syn_sizes_df.loc[rndm_inds == False, 'random GPi/GPe cell volume ratio'] = 'GPe'
+    syn_sizes_df.loc[rndm_inds, 'random GP cell volume ratio'] = 'GPi'
+    syn_sizes_df.loc[rndm_inds == False, 'random GP cell volume ratio'] = 'GPe'
 
     log.info('Step 3/6: Plot size distributions for observed and shuffled data')
     gp_palette = {'GPe': '#592A87', 'GPi': '#2AC644'}
@@ -122,22 +121,44 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_hist_log_perc.svg')
         plt.close()
 
-    log.info('Step 4/6: Calculate per MSN GP syn area ratio')
-    shuffle_df = pd.DataFrame(columns=['cellid', 'GP ratio sum syn area', 'shuffle category'], index = range(len_msn_df * len(shuffle_cats)))
+    log.info('Step 4/5: Calculate per MSN GP syn area ratio')
     msn_ids = np.sort(np.unique(syn_sizes_df['cellid']))
+    num_msn = len(msn_ids)
+    shuffle_df = pd.DataFrame(columns=['cellid', 'GP ratio sum syn area', 'shuffle category'], index = range(num_msn * len(shuffle_cats)))
+
     for i, sc in enumerate(shuffle_cats):
         gpe_syn_info = syn_sizes_df[syn_sizes_df[sc] == 'GPe']
-        gpi_syn_info = syn_sizes_df[syn_sizes_df[sc] == 'GPe']
-        for sh in shuffle_cats:
-            if sh == sc:
-                continue
-            gpi_syn_info.drop(sh)
-            gpe_syn_info.drop(sh)
+        gpi_syn_info = syn_sizes_df[syn_sizes_df[sc] == 'GPi']
+        rem_columns = shuffle_cats[shuffle_cats != sc]
+        gpi_syn_info = gpi_syn_info.drop(columns=rem_columns)
+        gpe_syn_info = gpe_syn_info.drop(columns=rem_columns)
         gpe_msn_inds, unique_msngpe_ids = pd.factorize(gpe_syn_info['cellid'])
         gpe_syn_msn_sizes = np.bincount(gpe_msn_inds, gpe_syn_info['syn sizes'])
+        gpe_argsort = np.argsort(unique_msngpe_ids)
+        sorted_msngpe_ids = unique_msngpe_ids[gpe_argsort]
+        sorted_gpe_syn_sizes = gpe_syn_msn_sizes[gpe_argsort]
         gpi_msn_inds, unique_msngpi_ids = pd.factorize(gpi_syn_info['cellid'])
         gpi_syn_msn_sizes = np.bincount(gpi_msn_inds, gpi_syn_info['syn sizes'])
-        raise ValueError
+        gpi_argsort = np.argsort(unique_msngpi_ids)
+        sorted_msngpi_ids = unique_msngpi_ids[gpi_argsort]
+        sorted_gpi_syn_sizes = gpi_syn_msn_sizes[gpi_argsort]
+        gpe_syn_area = np.zeros(len(msn_ids))
+        gpe_syn_area[np.in1d(msn_ids, sorted_msngpe_ids)] = sorted_gpe_syn_sizes
+        gpi_syn_area = np.zeros(len(msn_ids))
+        gpi_syn_area[np.in1d(msn_ids, sorted_msngpi_ids)] = sorted_gpi_syn_sizes
+        GP_syn_area_ratio = gpi_syn_area / (gpe_syn_area + gpi_syn_area)
+        shuffle_df.loc[i * num_msn: (i + 1) * num_msn - 1, 'cellid'] = msn_ids
+        shuffle_df.loc[i * num_msn: (i + 1) * num_msn - 1, 'GP ratio sum syn area'] = GP_syn_area_ratio
+        shuffle_df.loc[i * num_msn: (i + 1) * num_msn - 1, 'shuffle category'] = sc
+
+    shuffle_df.to_csv(f'{f_name}/shuffle_results.csv')
+
+    log.info('Step 5/5: Plot results')
+    #plot results for different categories
+    cat_palette = {'observed': "#EAAE34", 'random':, 'random with syn ratio':,
+        'random with syn area ratio': , 'random GP cell number ratio':,
+                 'random GP cell volume ratio'}
+
 
 
 

@@ -23,7 +23,7 @@ if __name__ == '__main__':
     gpe_ct = 6
     gpi_ct = 7
     n_bootstrap = 1000
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230913_j0251v5_MSN_GP_ratio_shuffle_boots%i" % n_bootstrap
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230913_j0251v5_MSN_GP_ratio_shuffle_boots%i_2" % n_bootstrap
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -53,6 +53,8 @@ if __name__ == '__main__':
     shuffle_cats = np.array(['observed', 'random', 'random with syn ratio', 'random with syn area ratio', 'random GP cell number ratio',
                  'random GP cell volume ratio'])
     syn_sizes_df['observed'] = syn_sizes_df['to celltype']
+    #make shuffling analysis also with median synapse size
+    syn_sizes_df['med syn size'] = np.zeros(len(syn_sizes_df)) + np.median(syn_sizes_df['syn sizes'])
     #get different probabilites
     #probability depending on synapse number
     syn_number_GPe = msn_result_df['syn number to GPe']
@@ -122,6 +124,7 @@ if __name__ == '__main__':
         plt.close()
 
     log.info('Step 4/5: Calculate per MSN GP syn area ratio')
+    #calculate ratio for actual synapses but also for synapses of univariante size
     msn_ids = np.sort(np.unique(syn_sizes_df['cellid']))
     num_msn = len(msn_ids)
     shuffle_df = pd.DataFrame(columns=['cellid', 'GP ratio sum syn area', 'shuffle category'], index = range(num_msn * len(shuffle_cats)))
@@ -134,30 +137,62 @@ if __name__ == '__main__':
         gpe_syn_info = gpe_syn_info.drop(columns=rem_columns)
         gpe_msn_inds, unique_msngpe_ids = pd.factorize(gpe_syn_info['cellid'])
         gpe_syn_msn_sizes = np.bincount(gpe_msn_inds, gpe_syn_info['syn sizes'])
+        gpe_uni_syn_sizes = np.bincount(gpe_msn_inds, gpe_syn_info['med syn size'])
         gpe_argsort = np.argsort(unique_msngpe_ids)
         sorted_msngpe_ids = unique_msngpe_ids[gpe_argsort]
         sorted_gpe_syn_sizes = gpe_syn_msn_sizes[gpe_argsort]
+        sorted_gpe_uni_sizes = gpe_uni_syn_sizes[gpe_argsort]
         gpi_msn_inds, unique_msngpi_ids = pd.factorize(gpi_syn_info['cellid'])
         gpi_syn_msn_sizes = np.bincount(gpi_msn_inds, gpi_syn_info['syn sizes'])
+        gpi_uni_syn_sizes = np.bincount(gpi_msn_inds, gpi_syn_info['med syn size'])
         gpi_argsort = np.argsort(unique_msngpi_ids)
         sorted_msngpi_ids = unique_msngpi_ids[gpi_argsort]
         sorted_gpi_syn_sizes = gpi_syn_msn_sizes[gpi_argsort]
+        sorted_gpi_uni_sizes = gpi_uni_syn_sizes[gpi_argsort]
         gpe_syn_area = np.zeros(len(msn_ids))
-        gpe_syn_area[np.in1d(msn_ids, sorted_msngpe_ids)] = sorted_gpe_syn_sizes
+        gpe_uni_area = np.zeros(len(msn_ids))
+        gpe_msn_inds = np.in1d(msn_ids, sorted_msngpe_ids)
+        gpe_syn_area[gpe_msn_inds] = sorted_gpe_syn_sizes
+        gpe_uni_area[gpe_msn_inds] = sorted_gpe_uni_sizes
         gpi_syn_area = np.zeros(len(msn_ids))
-        gpi_syn_area[np.in1d(msn_ids, sorted_msngpi_ids)] = sorted_gpi_syn_sizes
+        gpi_uni_area = np.zeros(len(msn_ids))
+        gpi_msn_inds = np.in1d(msn_ids, sorted_msngpi_ids)
+        gpi_syn_area[gpi_msn_inds] = sorted_gpi_syn_sizes
+        gpi_uni_area[gpi_msn_inds] = sorted_gpi_uni_sizes
         GP_syn_area_ratio = gpi_syn_area / (gpe_syn_area + gpi_syn_area)
+        GP_uni_area_ratio = gpi_uni_area/(gpe_uni_area + gpi_uni_area)
         shuffle_df.loc[i * num_msn: (i + 1) * num_msn - 1, 'cellid'] = msn_ids
         shuffle_df.loc[i * num_msn: (i + 1) * num_msn - 1, 'GP ratio sum syn area'] = GP_syn_area_ratio
         shuffle_df.loc[i * num_msn: (i + 1) * num_msn - 1, 'shuffle category'] = sc
+        shuffle_df.loc[i * num_msn: (i + 1) * num_msn - 1, 'GP ratio uni syn area'] = GP_uni_area_ratio
 
     shuffle_df.to_csv(f'{f_name}/shuffle_results.csv')
 
     log.info('Step 5/5: Plot results')
     #plot results for different categories
-    cat_palette = {'observed': "#EAAE34", 'random':, 'random with syn ratio':,
-        'random with syn area ratio': , 'random GP cell number ratio':,
-                 'random GP cell volume ratio'}
+    cat_palette = {'observed': "#EAAE34", 'random': '#D9D9D9', 'random with syn ratio':'#A6A6A6',
+        'random with syn area ratio': '#595959', 'random GP cell number ratio': '#262626',
+                 'random GP cell volume ratio': '#0D0D0D'}
+    sns.histplot(x='GP ratio sum syn area', data=shuffle_df, hue='shuffle category', palette=cat_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, stat='percent')
+    plt.ylabel('% of cells')
+    plt.xlabel('GPi/(GPe + GPi) syn area')
+    plt.title('GP area ratio with real synapse sizes')
+    plt.savefig(f'{f_name}/GP_area_ratio_cats_hist_perc.png')
+    plt.savefig(f'{f_name}/GP_area_ratio_cats_hist_perc.svg')
+    plt.close()
+    sns.histplot(x='GP ratio uni syn area', data=shuffle_df, hue='shuffle category', palette=cat_palette,
+                 common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, stat='percent')
+    plt.ylabel('% of cells')
+    plt.xlabel('GPi/(GPe + GPi) syn area with median syn size')
+    plt.title('GP area ratio with univariante synapse size')
+    plt.savefig(f'{f_name}/GP_uni_ratio_cats_hist_perc.png')
+    plt.savefig(f'{f_name}/GP_uni_ratio_cats_hist_perc.svg')
+    plt.close()
+
+    log.info('Analysis done')
+
 
 
 

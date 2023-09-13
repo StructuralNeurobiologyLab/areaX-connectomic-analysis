@@ -23,7 +23,7 @@ if __name__ == '__main__':
     gpe_ct = 6
     gpi_ct = 7
     n_bootstrap = 1000
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230913_j0251v5_MSN_GP_ratio_shuffle_boots%i_2" % n_bootstrap
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230913_j0251v5_MSN_GP_ratio_shuffle_boots%i" % n_bootstrap
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -186,7 +186,7 @@ if __name__ == '__main__':
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
     plt.ylabel('% of cells')
     plt.xlabel('GPi/(GPe + GPi) syn area with median syn size')
-    plt.title('GP area ratio with univariante synapse size')
+    plt.title('GP area ratio with univariat synapse size')
     plt.savefig(f'{f_name}/GP_uni_ratio_cats_hist_perc.png')
     plt.savefig(f'{f_name}/GP_uni_ratio_cats_hist_perc.svg')
     plt.close()

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     gpi_ct = 7
     fontsize_jointplot = 12
     kde = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230905_j0251v5_MSN_GP_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230919_j0251v5_MSN_GP_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
         min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -212,6 +212,7 @@ if __name__ == '__main__':
     #create DataFrame for all connections between MSN and GP to see how many multisynaptic
     gpe_conn_syn_numbers = []
     gpe_conn_syn_sizes = []
+    gpe_conn_msn_ids = []
     gpe_multisyn_pair_size_diff = []
     gpe_multisyn_pair_dist_msn = []
     gpe_multisyn_pair_dist_gp = []
@@ -223,6 +224,7 @@ if __name__ == '__main__':
         cell_info = gpe_output_dict[cellid]
         gpe_conn_syn_numbers.append(cell_info['connected cell syn numbers'])
         gpe_conn_syn_sizes.append(cell_info['connected cell sum syn sizes'])
+        gpe_conn_msn_ids.append(np.zeros(len(cell_info['connected cell syn numbers'])) + cellid)
         try:
             gpe_multisyn_pair_size_diff.append(cell_info['multi conn pairwise size difference'])
             gpe_multisyn_pair_dist_msn.append(cell_info['multi conn pairwise dist cell'])
@@ -234,6 +236,7 @@ if __name__ == '__main__':
             continue
     gpe_conn_syn_numbers = np.concatenate(gpe_conn_syn_numbers)
     gpe_conn_syn_sizes = np.concatenate(gpe_conn_syn_sizes)
+    gpe_conn_msn_ids = np.concatenate(gpe_conn_msn_ids).astype(int)
     gpe_multisyn_pair_syn_number = np.concatenate(gpe_multisyn_pair_syn_number)
     gpe_multisyn_pair_size_diff = np.concatenate(gpe_multisyn_pair_size_diff)
     gpe_multisyn_pair_dist_msn = np.concatenate(gpe_multisyn_pair_dist_msn)
@@ -243,6 +246,7 @@ if __name__ == '__main__':
     log.info('Get information from connections to GPi')
     gpi_conn_syn_numbers = []
     gpi_conn_syn_sizes = []
+    gpi_conn_msn_ids = []
     gpi_multisyn_pair_size_diff = []
     gpi_multisyn_pair_dist_msn = []
     gpi_multisyn_pair_dist_gp = []
@@ -253,6 +257,7 @@ if __name__ == '__main__':
         cell_info = gpi_output_dict[cell_id]
         gpi_conn_syn_numbers.append(cell_info['connected cell syn numbers'])
         gpi_conn_syn_sizes.append(cell_info['connected cell sum syn sizes'])
+        gpi_conn_msn_ids.append(np.zeros(len(cell_info['connected cell syn numbers'])) + cell_id)
         try:
             gpi_multisyn_pair_size_diff.append(cell_info['multi conn pairwise size difference'])
             gpi_multisyn_pair_dist_msn.append(cell_info['multi conn pairwise dist cell'])
@@ -264,6 +269,7 @@ if __name__ == '__main__':
             continue
     gpi_conn_syn_numbers = np.concatenate(gpi_conn_syn_numbers)
     gpi_conn_syn_sizes = np.concatenate(gpi_conn_syn_sizes)
+    gpi_conn_msn_ids = np.concatenate(gpi_conn_msn_ids).astype(int)
     gpi_multisyn_pair_syn_number = np.concatenate(gpi_multisyn_pair_syn_number)
     gpi_multisyn_pair_size_diff = np.concatenate(gpi_multisyn_pair_size_diff)
     gpi_multisyn_pair_dist_msn = np.concatenate(gpi_multisyn_pair_dist_msn)
@@ -273,13 +279,19 @@ if __name__ == '__main__':
     log.info('Sort information into df for MSN-GP pairs')
     len_gpe_conn = len(gpe_conn_syn_numbers)
     len_gp_conn = len_gpe_conn + len(gpi_conn_syn_numbers)
-    gp_conn_df = pd.DataFrame(columns = ['number of synapses', 'sum syn area', 'to celltype'], index = range(len_gp_conn))
+    gp_conn_df = pd.DataFrame(columns = ['number of synapses', 'sum syn area', 'to celltype', 'cellid', 'MSN group'], index = range(len_gp_conn))
     gp_conn_df.loc[0: len_gpe_conn - 1, 'number of synapses'] = gpe_conn_syn_numbers
     gp_conn_df.loc[0: len_gpe_conn - 1, 'sum syn area'] = gpe_conn_syn_sizes
     gp_conn_df.loc[0: len_gpe_conn - 1, 'to celltype'] = 'to GPe'
+    gp_conn_df.loc[0: len_gpe_conn - 1, 'cellid'] = gpe_conn_msn_ids
     gp_conn_df.loc[len_gpe_conn: len_gp_conn - 1, 'number of synapses'] = gpi_conn_syn_numbers
     gp_conn_df.loc[len_gpe_conn: len_gp_conn - 1, 'sum syn area'] = gpi_conn_syn_sizes
     gp_conn_df.loc[len_gpe_conn: len_gp_conn - 1, 'to celltype'] = 'to GPi'
+    gp_conn_df.loc[len_gpe_conn: len_gp_conn - 1, 'cellid'] = gpi_conn_msn_ids
+    #information about msn groups
+    for msn_str in msn_groups_str:
+        inds = np.in1d(gp_conn_df['cellid'], msn_result_df['cellid'][msn_result_df['celltype'] == msn_str])
+        gp_conn_df.loc[inds, 'MSN group'] = msn_str
     gp_conn_df = gp_conn_df.astype({'number of synapses':int, 'sum syn area': float})
     gp_conn_df.to_csv(f'{f_name}/multi_syn_info_permsn_gp_conn.csv')
     # make df per multisynaptic connections
@@ -318,8 +330,10 @@ if __name__ == '__main__':
     log.info('Step 5/5: Make plots per MSN and GP connection and per synapse pair in multisynapse connections')
     #make statistics and plot results
     gp_palette = {'to GPe': '#592A87', 'to GPi': '#2AC644'}
+    gpe_conn_df = gp_conn_df[gp_conn_df['to celltype'] == 'to GPe']
+    gpi_conn_df = gp_conn_df[gp_conn_df['to celltype'] == 'to GPi']
     for key in gp_conn_df.keys():
-        if 'celltype' in key:
+        if 'celltype' in key or 'cellid' in key or 'MSN group' in key:
             continue
         if 'sum syn' in key:
             xhist = f'{key} [µm²]'
@@ -364,6 +378,122 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_gptype_hist_perc_log.png')
         plt.savefig(f'{f_name}/{key}_gptype_hist_per_log.svg')
         plt.close()
+        sns.histplot(x=key, data=gpe_conn_df, hue='MSN group', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        plt.ylabel('% of cell-pairs')
+        plt.title(f'{key} to GPe')
+        plt.savefig(f'{f_name}/{key}_gpe_msn_groups_hist_perc.png')
+        plt.savefig(f'{f_name}/{key}_gpe_msn_groups_hist_perc.svg')
+        plt.close()
+        sns.histplot(x=key, data=gpe_conn_df, hue='MSN group', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+        plt.ylabel('% of cell-pairs')
+        plt.title(f'{key} to GPe')
+        plt.savefig(f'{f_name}/{key}_gpe_msn_group_hist_perc_log.png')
+        plt.savefig(f'{f_name}/{key}_gpe_msn_group_hist_per_log.svg')
+        plt.close()
+        sns.histplot(x=key, data=gpi_conn_df, hue='MSN group', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        plt.ylabel('% of cell-pairs')
+        plt.title(f'{key} to GPi')
+        plt.savefig(f'{f_name}/{key}_gpi_msn_group_hist_perc.png')
+        plt.savefig(f'{f_name}/{key}_gpi_msn_group_perc.svg')
+        plt.close()
+        sns.histplot(x=key, data=gpi_conn_df, hue='MSN group', palette=msn_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+        plt.ylabel('% of cell-pairs')
+        plt.title(f'{key} to GPi')
+        plt.savefig(f'{f_name}/{key}_gpi_msn_group_hist_perc_log.png')
+        plt.savefig(f'{f_name}/{key}_gpi_msn_group_per_log.svg')
+        plt.close()
+
+    #plot number of synapses again as barplot
+    #make bins for each number, seperated by GPe and GPi
+    gpe_inds, gpe_bins = pd.factorize(np.sort(gpe_conn_df['number of synapses']))
+    gpe_counts = np.bincount(gpe_inds)
+    gpi_inds, gpi_bins = pd.factorize(np.sort(gpi_conn_df['number of synapses']))
+    gpi_counts = np.bincount(gpi_inds)
+    len_bins = len(gpe_bins) + len(gpi_bins)
+    hist_df = pd.DataFrame(columns = ['count of cell-pairs', 'percent of cell-pairs', 'bins', 'to celltype'], index = range(len_bins))
+    hist_df.loc[0: len(gpe_bins) - 1, 'count of cell-pairs'] = gpe_counts
+    hist_df.loc[0: len(gpe_bins) - 1, 'percent of cell-pairs'] = 100 * gpe_counts / np.sum(gpe_counts)
+    hist_df.loc[0: len(gpe_bins) - 1, 'bins'] = gpe_bins
+    hist_df.loc[0: len(gpe_bins) - 1, 'to celltype'] = 'GPe'
+    hist_df.loc[len(gpe_bins): len_bins - 1, 'count of cell-pairs'] = gpi_counts
+    hist_df.loc[len(gpe_bins): len_bins - 1, 'percent of cell-pairs'] = 100 * gpi_counts / np.sum(gpi_counts)
+    hist_df.loc[len(gpe_bins): len_bins - 1, 'bins'] = gpe_bins
+    hist_df.loc[len(gpe_bins): len_bins - 1, 'to celltype'] = 'GPi'
+    sns.barplot(data = hist_df, x = 'bins', y = 'count of cell-pairs', hue = 'to celltype', palette=gp_palette)
+    plt.xlabel('number of synapses')
+    plt.savefig(f'{f_name}/bar_syn_number_gptype_hist.svg')
+    plt.savefig(f'{f_name}/bar_syn_number_gptype_hist.png')
+    plt.close()
+    sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='to celltype', palette=gp_palette)
+    plt.xlabel('number of synapses')
+    plt.savefig(f'{f_name}/bar_syn_number_gptype_hist_perc.svg')
+    plt.savefig(f'{f_name}/bar_syn_number_gptype_hist_perc.png')
+    plt.close()
+    hist_df.to_csv(f'{f_name}/GP_num_syn_cellpairs_hist.csv')
+    # then again seperate for GPe and MSN groups, GPi and MSN groups
+    gpe_only_df = gpe_conn_df[gpe_conn_df['MSN group'] == 'MSN only GPe']
+    gpe_only_inds, gpe_only_bins = pd.factorize(np.sort(gpe_only_df['number of synapses']))
+    gpe_msnonlygpe_counts = np.bincount(gpe_only_inds)
+    gpe_both_df = gpe_conn_df[gpe_conn_df['MSN group'] == 'MSN both GPs']
+    gpe_both_inds, gpe_both_bins = pd.factorize(np.sort(gpe_both_df['number of synapses']))
+    gpe_both_counts = np.bincount(gpe_both_inds)
+    len_bins = len(gpe_only_bins) + len(gpe_both_bins)
+    hist_df = pd.DataFrame(columns=['count of cell-pairs', 'percent of cell-pairs', 'bins', 'MSN group'],
+                           index=range(len_bins))
+    hist_df.loc[0: len(gpe_only_bins) - 1, 'count of cell-pairs'] = gpe_msnonlygpe_counts
+    hist_df.loc[0: len(gpe_only_bins) - 1, 'percent of cell-pairs'] = 100 * gpe_msnonlygpe_counts / np.sum(gpe_msnonlygpe_counts)
+    hist_df.loc[0: len(gpe_only_bins) - 1, 'bins'] = gpe_only_bins
+    hist_df.loc[0: len(gpe_only_bins) - 1, 'MSN group'] = 'MSN only GPe'
+    hist_df.loc[len(gpe_only_bins): len_bins - 1, 'count of cell-pairs'] = gpe_both_counts
+    hist_df.loc[len(gpe_only_bins): len_bins - 1, 'percent of cell-pairs'] = 100 * gpe_both_counts / np.sum(gpe_both_counts)
+    hist_df.loc[len(gpe_only_bins): len_bins - 1, 'bins'] = gpe_both_bins
+    hist_df.loc[len(gpe_only_bins): len_bins - 1, 'MSN group'] = 'MSN both GPs'
+    sns.barplot(data=hist_df, x='bins', y='count of cell-pairs', hue='MSN group', palette=msn_palette)
+    plt.xlabel('number of synapses')
+    plt.savefig(f'{f_name}/bar_syn_number_gpe_msns_hist.svg')
+    plt.savefig(f'{f_name}/bar_syn_number_gpe_msns_hist.png')
+    plt.close()
+    sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='MSN group', palette=msn_palette)
+    plt.xlabel('number of synapses')
+    plt.savefig(f'{f_name}/bar_syn_number_gpe_msns_hist_perc.svg')
+    plt.savefig(f'{f_name}/bar_syn_number_gpe_msns_hist_perc.png')
+    plt.close()
+    hist_df.to_csv(f'{f_name}/GPe_num_syn_cellpairs_msn_groups_hist.csv')
+    gpi_only_df = gpi_conn_df[gpi_conn_df['MSN group'] == 'MSN only GPi']
+    gpi_only_inds, gpi_only_bins = pd.factorize(np.sort(gpi_only_df['number of synapses']))
+    gpi_msnonlygpi_counts = np.bincount(gpi_only_inds)
+    gpi_both_df = gpi_conn_df[gpi_conn_df['MSN group'] == 'MSN both GPs']
+    gpi_both_inds, gpi_both_bins = pd.factorize(np.sort(gpi_both_df['number of synapses']))
+    gpi_both_counts = np.bincount(gpi_both_inds)
+    len_bins = len(gpi_only_bins) + len(gpi_both_bins)
+    hist_df = pd.DataFrame(columns=['count of cell-pairs', 'percent of cell-pairs', 'bins', 'MSN group'],
+                           index=range(len_bins))
+    hist_df.loc[0: len(gpi_only_bins) - 1, 'count of cell-pairs'] = gpi_msnonlygpi_counts
+    hist_df.loc[0: len(gpi_only_bins) - 1, 'percent of cell-pairs'] = 100 * gpi_msnonlygpi_counts / np.sum(
+        gpi_msnonlygpi_counts)
+    hist_df.loc[0: len(gpi_only_bins) - 1, 'bins'] = gpi_only_bins
+    hist_df.loc[0: len(gpi_only_bins) - 1, 'MSN group'] = 'MSN only GPi'
+    hist_df.loc[len(gpi_only_bins): len_bins - 1, 'count of cell-pairs'] = gpi_both_counts
+    hist_df.loc[len(gpi_only_bins): len_bins - 1,
+    'percent of cell-pairs'] = 100 * gpi_both_counts / np.sum(gpi_both_counts)
+    hist_df.loc[len(gpi_only_bins): len_bins - 1, 'bins'] = gpi_both_bins
+    hist_df.loc[len(gpi_only_bins): len_bins - 1, 'MSN group'] = 'MSN both GPs'
+    sns.barplot(data=hist_df, x='bins', y='count of cell-pairs', hue='MSN group', palette=msn_palette)
+    plt.xlabel('number of synapses')
+    plt.savefig(f'{f_name}/bar_syn_number_gpi_msns_hist.svg')
+    plt.savefig(f'{f_name}/bar_syn_number_gpi_msns_hist.png')
+    plt.close()
+    sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='MSN group', palette=msn_palette)
+    plt.xlabel('number of synapses')
+    plt.savefig(f'{f_name}/bar_syn_number_gpi_msns_hist_perc.svg')
+    plt.savefig(f'{f_name}/bar_syn_number_gpi_msns_hist_perc.png')
+    plt.close()
+    hist_df.to_csv(f'{f_name}/GPi_num_syn_cellpairs_msn_groups_hist.csv')
+
 
     #make plots for multisynaptic connections dependend on celltype and compartments
     size_key = ['size difference', 'fraction size difference']

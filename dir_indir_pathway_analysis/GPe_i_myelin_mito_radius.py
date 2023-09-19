@@ -10,10 +10,10 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from scipy.stats import ranksums
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, get_cell_soma_radius
+    from general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, get_cell_soma_radius
     from syconn.handler.basics import write_obj2pkl
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import  ComparingResultsForPLotting
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from general.result_helper import  ComparingResultsForPLotting
+    from general.analysis_params import Analysis_Params
     import itertools
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230911_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230914_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -215,7 +215,7 @@ if __name__ == '__main__':
         g = sns.JointGrid(data=all_param_df, x=x, y=y, hue="celltype", palette=results_comparison.color_palette)
         g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot, fill=False, alpha=0.3, element = 'step',
-                         kde=False, palette=results_comparison.color_palette)
+                         kde=False, palette=results_comparison.color_palette, linewidth=3)
         g.ax_joint.set_xticks(g.ax_joint.get_xticks())
         g.ax_joint.set_yticks(g.ax_joint.get_yticks())
         if g.ax_joint.get_xticks()[0] < 0:
@@ -232,7 +232,7 @@ if __name__ == '__main__':
         g = sns.JointGrid(data=all_param_df, x=x, y=y)
         g.plot_joint(sns.scatterplot, alpha = 0.5,  color = 'black')
         g.plot_marginals(sns.histplot, fill=False, alpha=0.3,
-                         kde=False, color = 'black', element = 'step')
+                         kde=False, color = 'black', element = 'step', linewidth=3)
         g.ax_joint.set_xticks(g.ax_joint.get_xticks())
         g.ax_joint.set_yticks(g.ax_joint.get_yticks())
         if g.ax_joint.get_xticks()[0] < 0:

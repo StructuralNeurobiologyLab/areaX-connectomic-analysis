@@ -34,7 +34,7 @@ if __name__ == '__main__':
     gpi_ct = 7
     fontsize_jointplot = 12
     kde = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230912_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230919_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
     min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -407,6 +407,7 @@ if __name__ == '__main__':
     '''
     log.info('Step 6/7: Plot morphological parameters vs GP ratio as joint plot')
     # plot histograms for all cells, GP ratio only for those connected to GP
+    raise ValueError
     for key in msn_result_df.keys():
         if 'cellid' in key or 'celltype' in key or 'cs' in key:
             continue

@@ -13,10 +13,11 @@ if __name__ == '__main__':
 
     bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = bio_params.ct_dict()
-    whole_cell = False
-    get_mitos = True
+    whole_cell = True
+    get_mitos = False
 
-    cellids = [ 126798179, 1155532413, 15724767, 24397945, 32356701, 26790127, 379072583]
+    #cellids = [ 126798179, 1155532413, 15724767, 24397945, 32356701, 26790127, 379072583]
+    cellids = [15521116, 10157981]
 
     if whole_cell:
         for cellid in tqdm(cellids):

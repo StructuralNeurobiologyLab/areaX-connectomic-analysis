@@ -407,7 +407,6 @@ if __name__ == '__main__':
     '''
     log.info('Step 6/7: Plot morphological parameters vs GP ratio as joint plot')
     # plot histograms for all cells, GP ratio only for those connected to GP
-    raise ValueError
     for key in msn_result_df.keys():
         if 'cellid' in key or 'celltype' in key or 'cs' in key:
             continue
@@ -440,8 +439,12 @@ if __name__ == '__main__':
 
     example_cellids = [662789385, 542544908, 1340425305,  728819856, 1200237873, 27161078]
     example_inds = np.in1d(msn_result_df['cellid'], example_cellids)
+    #plot correlation between morphological parameters and GP ratio
+    #calculate spearman corr
     ratio_key_list = ['GP ratio syn number', 'GP ratio sum syn size']
     spearman_result_df = pd.DataFrame(columns = ['stats', 'p-value'])
+    zero_inds = np.all([msn_result_df['syn number to GPi'] == 0, msn_result_df['syn number to GPe'] == 0], axis = 0)
+    plot_corr_df = msn_result_df[zero_inds == False]
     for key in msn_result_df.keys():
         if 'cellid' in key or 'celltype' in key or 'mean' in key:
             continue
@@ -460,7 +463,7 @@ if __name__ == '__main__':
         else:
             xhist = key
         for rkey in ratio_key_list:
-            g = sns.JointGrid(data=msn_result_df, x=key, y=rkey)
+            g = sns.JointGrid(data=plot_corr_df, x=key, y=rkey)
             g.plot_joint(sns.kdeplot, color = "#EAAE34")
             g.plot_joint(sns.scatterplot, color = 'black', alpha = 0.3)
             g.plot_marginals(sns.histplot, fill=False, element = 'step',
@@ -486,7 +489,7 @@ if __name__ == '__main__':
             plt.ylabel(ylabel)
             plt.savefig(f'{f_name}/{key}_{rkey}_scatter_examplecells.png')
             plt.close()
-            spear_res = spearmanr(msn_result_df[key], msn_result_df[rkey], nan_policy='omit')
+            spear_res = spearmanr(plot_corr_df[key], plot_corr_df[rkey], nan_policy='omit')
             spearman_result_df.loc[f'{key} vs {rkey}', 'stats'] = spear_res[0]
             spearman_result_df.loc[f'{key} vs {rkey}', 'p-value'] = spear_res[1]
 

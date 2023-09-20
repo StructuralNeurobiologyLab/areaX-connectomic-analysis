@@ -155,6 +155,12 @@ if __name__ == '__main__':
     msn_colors = ["#EAAE34", "black", "#707070", '#2F86A8']
     msn_groups_str = np.unique(msn_result_df['celltype'])
     msn_palette = {ct: msn_colors[i] for i, ct in enumerate(msn_groups_str)}
+    # get kruskal-wallis (non-parametric test) for all keys
+    kruskal_results_df = pd.DataFrame(columns=['stats', 'p-value'])
+    # get ranksum results for parameters compared between groups
+    group_comps = list(combinations(range(len(msn_groups_str)), 2))
+    ranksum_columns = [f'{msn_groups_str[gc[0]]} vs {msn_groups_str[gc[1]]}' for gc in group_comps]
+    ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
     for key in msn_result_df.keys():
         if 'cellid' in key or 'celltype' in key or 'GP ratio' in key:
             continue
@@ -207,6 +213,17 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_celltype_hist_perc.png')
         plt.savefig(f'{f_name}/{key}_celltype_hist_perc.svg')
         plt.close()
+        msn_key_groups = [group[key].values for name, group in
+                            msn_result_df.groupby('celltype')]
+        kruskal_res = kruskal(*msn_key_groups, nan_policy='omit')
+        kruskal_results_df.loc[key, 'stats'] = kruskal_res[0]
+        kruskal_results_df.loc[key, 'p-value'] = kruskal_res[1]
+        for gc in group_comps:
+            ranksum_res = ranksums(msn_key_groups[gc[0]], msn_key_groups[gc[1]])
+            ranksum_group_df.loc[f' {key} stats', f'{msn_groups_str[gc[0]]} vs {msn_groups_str[gc[1]]}'] = ranksum_res[0]
+            ranksum_group_df.loc[f' {key} p-value', f'{msn_groups_str[gc[0]]} vs {msn_groups_str[gc[1]]}'] = ranksum_res[1]
+
+    kruskal_results_df.to_csv(f'{f_name}/kruskal_results_percell.csv')
 
     log.info('Step 4/5: Sort information per connection of MSN and GP')
     #create DataFrame for all connections between MSN and GP to see how many multisynaptic
@@ -332,6 +349,7 @@ if __name__ == '__main__':
     gp_palette = {'to GPe': '#592A87', 'to GPi': '#2AC644'}
     gpe_conn_df = gp_conn_df[gp_conn_df['to celltype'] == 'to GPe']
     gpi_conn_df = gp_conn_df[gp_conn_df['to celltype'] == 'to GPi']
+    ranksum_gp_df = pd.DataFrame(columns=['GPe vs GPi'])
     for key in gp_conn_df.keys():
         if 'celltype' in key or 'cellid' in key or 'MSN group' in key:
             continue
@@ -406,6 +424,25 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_gpi_msn_group_hist_perc_log.png')
         plt.savefig(f'{f_name}/{key}_gpi_msn_group_per_log.svg')
         plt.close()
+        #get ranksum results for GPe vs GPi
+        key_group = [group[key].values for name, group in
+                         gp_conn_df.groupby('to celltype')]
+        ranksum_res = ranksums(key_group[0], key_group[1])
+        ranksum_gp_df.loc[f' {key} cell-pair stats', 'GPe vs GPi'] = ranksum_res[0]
+        ranksum_gp_df.loc[f' {key} cell-pair p-value', 'GPe vs GPi'] = ranksum_res[1]
+        #get ranksum results for MSN groups
+        gpe_key_group = [group[key].values for name, group in
+                               gpe_conn_df.groupby('MSN group')]
+        ranksum_res = ranksums(gpe_key_group[0], gpe_key_group[1])
+        ranksum_group_df.loc[f' {key} cell-pairs stats', 'MSN both GPs vs MSN only GPe'] = ranksum_res[0]
+        ranksum_group_df.loc[f' {key} cell-pairs p-value', 'MSN both GPs vs MSN only GPe'] = ranksum_res[1]
+        gpi_key_group = [group[key].values for name, group in
+                         gpi_conn_df.groupby('MSN group')]
+        ranksum_res = ranksums(gpi_key_group[0], gpi_key_group[1])
+        ranksum_group_df.loc[f' {key} cell-pairs stats', 'MSN both GPs vs MSN only GPi'] = ranksum_res[0]
+        ranksum_group_df.loc[f' {key} cell-pairs p-value', 'MSN both GPs vs MSN only GPi'] = ranksum_res[1]
+
+    ranksum_group_df.to_csv(f'{f_name}/ranksum_results_MSN_groups.csv')
 
     #plot number of synapses again as barplot
     #make bins for each number, seperated by GPe and GPi
@@ -418,11 +455,11 @@ if __name__ == '__main__':
     hist_df.loc[0: len(gpe_bins) - 1, 'count of cell-pairs'] = gpe_counts
     hist_df.loc[0: len(gpe_bins) - 1, 'percent of cell-pairs'] = 100 * gpe_counts / np.sum(gpe_counts)
     hist_df.loc[0: len(gpe_bins) - 1, 'bins'] = gpe_bins
-    hist_df.loc[0: len(gpe_bins) - 1, 'to celltype'] = 'GPe'
+    hist_df.loc[0: len(gpe_bins) - 1, 'to celltype'] = 'to GPe'
     hist_df.loc[len(gpe_bins): len_bins - 1, 'count of cell-pairs'] = gpi_counts
     hist_df.loc[len(gpe_bins): len_bins - 1, 'percent of cell-pairs'] = 100 * gpi_counts / np.sum(gpi_counts)
-    hist_df.loc[len(gpe_bins): len_bins - 1, 'bins'] = gpe_bins
-    hist_df.loc[len(gpe_bins): len_bins - 1, 'to celltype'] = 'GPi'
+    hist_df.loc[len(gpe_bins): len_bins - 1, 'bins'] = gpi_bins
+    hist_df.loc[len(gpe_bins): len_bins - 1, 'to celltype'] = 'to GPi'
     sns.barplot(data = hist_df, x = 'bins', y = 'count of cell-pairs', hue = 'to celltype', palette=gp_palette)
     plt.xlabel('number of synapses')
     plt.savefig(f'{f_name}/bar_syn_number_gptype_hist.svg')
@@ -560,6 +597,12 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_gptype_comps_violin.png')
         plt.savefig(f'{f_name}/{key}_gptype_comps_violin.svg')
         plt.close()
+        # get ranksum results for GPe vs GPi
+        key_group = [group[key].values for name, group in
+                     multi_syn_df.groupby('to celltype')]
+        ranksum_res = ranksums(key_group[0], key_group[1])
+        ranksum_gp_df.loc[f' {key} syn-pair stats', 'GPe vs GPi'] = ranksum_res[0]
+        ranksum_gp_df.loc[f' {key} syn-pair p-value', 'GPe vs GPi'] = ranksum_res[1]
         if 'size' in key:
             continue
         for skey in size_key:
@@ -594,5 +637,7 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_{skey}_multisyn_gptype.png')
             plt.savefig(f'{f_name}/{key}_{skey}_multisyn_gptype.svg')
             plt.close()
+
+    ranksum_gp_df.to_csv(f'{f_name}/ranksum_results_GP.csv')
 
     log.info('Analysis finished')

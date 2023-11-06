@@ -1,5 +1,5 @@
 #plot syn_prob values for different versions
-import pandas as pd
+
 
 if __name__ == '__main__':
     from syconn.reps.segmentation import SegmentationDataset
@@ -8,6 +8,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from syconn.handler.config import initialize_logging
     import os as os
+    import pandas as pd
 
     f_name = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/231106_syn_prob/'
     if not os.path.exists(f_name):

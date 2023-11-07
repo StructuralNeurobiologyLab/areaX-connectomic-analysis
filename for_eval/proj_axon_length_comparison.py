@@ -9,8 +9,8 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     import os as os
     import pandas as pd
-    from general.analysis_params import Analysis_Params
-    from general.analysis_morph_helper import get_cell_length
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_cell_length
     from syconn.mp.mp_utils import start_multiprocess_imap
     from scipy.stats import kruskal, ranksums
     from itertools import combinations
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     bio_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = bio_params.ct_dict()
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231107_j0251v5_ax_fraglengths"
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231107_j0251v5_ax_fraglengths"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         ct_ids = cellids[ct_inds]
         log.info(f'{len(ct_ids)} axons for {ct_dict[ct]}')
         all_ax_ids.append(ct_ids)
-        all_ax_cts.append(np.zeros(len(ct_ids)) + ct_dict['ct'])
+        all_ax_cts.append([ct_dict[ct] for i in ct_ids])
 
 
     all_ax_ids = np.hstack(all_ax_ids)
@@ -51,6 +51,9 @@ if __name__ == '__main__':
     all_lengths = start_multiprocess_imap(get_cell_length, all_ax_ids)
     axon_df['skeleton length'] = np.array(all_lengths)
     axon_df.to_csv(f'{f_name}/proj_axon_lengths.csv')
+    for ct in ax_cts:
+        ct_lengths = axon_df[axon_df['celltype'] == ct_dict[ct]]
+        ct_lengths.to_csv(f'{f_name}/pro')
 
     log.info('Step 3/4: Calculate statistics')
     lengths_groups = [group['skeleton length'].values for name, group in
@@ -65,38 +68,38 @@ if __name__ == '__main__':
         for gc in group_comps:
             ranksum_res = ranksums(lengths_groups[gc[0]], lengths_groups[gc[1]])
             ranksum_res_df.loc[f'stats', f'{ax_groups_str[gc[0]]} vs {ax_groups_str[gc[1]]}'] = ranksum_res[0]
-            ranksum_res_df.loc[f'p-value', f'{axon_df[gc[0]]} vs {ax_groups_str[gc[1]]}'] = ranksum_res[1]
+            ranksum_res_df.loc[f'p-value', f'{ax_groups_str[gc[0]]} vs {ax_groups_str[gc[1]]}'] = ranksum_res[1]
         ranksum_res_df.to_csv(f'{f_name}/ranksum_results.csv')
 
     log.info('Step 4/4: Plot results')
-    sns.histplot(data = axon_df, x = 'skeleton length', hue = celltypes, fill=False,
+    sns.histplot(data = axon_df, x = 'skeleton length', hue = 'celltype', fill=False,
                  kde=False, element='step')
     plt.ylabel('number of axons')
     plt.xlabel('skeleton length [µm]')
-    plt.tile('Lengths of axon fragments')
+    plt.title('Lengths of axon fragments')
     plt.savefig(f'{f_name}/proj_axons_lengths.png')
     plt.savefig(f'{f_name}/proj_axons_lengths.svg')
     plt.close()
-    sns.histplot(data=axon_df, x='skeleton length', hue=celltypes, fill=False,
+    sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
                  kde=False, element='step', stat='percent')
     plt.xlabel('skeleton length [µm]')
-    plt.tile('Lengths of axon fragments')
+    plt.title('Lengths of axon fragments')
     plt.savefig(f'{f_name}/proj_axons_lengths_perc.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_perc.svg')
     plt.close()
-    sns.histplot(data=axon_df, x='skeleton length', hue=celltypes, fill=False,
+    sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
                  kde=False, element='step', log_scale=True)
     plt.ylabel('number of axons')
     plt.xlabel('skeleton length [µm]')
-    plt.tile('Lengths of axon fragments')
+    plt.title('Lengths of axon fragments')
     plt.savefig(f'{f_name}/proj_axons_lengths_log.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_log.svg')
     plt.close()
-    sns.histplot(data=axon_df, x='skeleton length', hue=celltypes, fill=False,
+    sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
                  kde=False, element='step', log_scale=True, stat='percent')
     plt.ylabel('number of axons')
     plt.xlabel('skeleton length [µm]')
-    plt.tile('Lengths of axon fragments')
+    plt.title('Lengths of axon fragments')
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.svg')
     plt.close()

@@ -1,13 +1,16 @@
 #plot lengths of axonic fragments for HVC, LMAN, DA
 
 if __name__ == '__main__':
-    from syconn.reps.segmentation import SegmentationDataset
+    from syconn import global_params
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
     import numpy as np
     import seaborn as sns
     import matplotlib.pyplot as plt
     from syconn.handler.config import initialize_logging
     import os as os
     import pandas as pd
+    from general.analysis_params import Analysis_Params
+    from general.analysis_morph_helper import
 
     #load HVC, LMAN, DA cellids
 
@@ -20,5 +23,4 @@ if __name__ == '__main__':
 
     #run kruskal wallis and ranksum test on their distributions
 
-    #do same for agglo2
 

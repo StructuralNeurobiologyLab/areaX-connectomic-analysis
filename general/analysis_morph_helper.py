@@ -11,6 +11,18 @@ from syconn.proc.meshes import write_mesh2kzip
 import pandas as pd
 
 
+def get_cell_length(cellid):
+    '''
+    Calculate total length of cell or fragment from cell graph
+    :param cellid: id of the cell
+    :return: total length in µm
+    '''
+
+    cell = SuperSegmentationObject(cellid)
+    cell_graph = cell.weighted_graph()
+    total_length = cell_graph.size(weight="weight") / 1000  # in µm
+    return total_length
+
 def get_compartment_length(sso, compartment, cell_graph):
     """
             calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
@@ -608,6 +620,8 @@ def get_dendrite_info_cell(input):
                     branching_points.append(b)
     number_branching_points = len(branching_points)
     return dendrite_length, primary_dendrite_number, number_branching_points
+
+
 
 
 

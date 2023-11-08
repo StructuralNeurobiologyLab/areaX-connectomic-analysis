@@ -89,11 +89,14 @@ if __name__ == '__main__':
         syn_ssv_partners = syn_ssv_partners[ct_ax_inds]
         #get cellids on presynaptic side
         ax_inds = np.where(syn_axs == 1)
-        pre_cellids = np.unique(syn_ssv_partners[ax_inds])
-        filtered_inds = np.in1d(all_ax_ids, pre_cellids)
+        pre_cellids = syn_ssv_partners[ax_inds]
+        unique_pre_cellids = np.unique(pre_cellids)
+        filtered_inds = np.in1d(all_ax_ids, unique_pre_cellids)
         axon_df = axon_df[filtered_inds]
+        all_ax_ids = all_ax_ids[filtered_inds]
         axon_df = axon_df.reset_index()
         ct_group_sizes = axon_df.groupby('celltype').size()
+        raise ValueError
         log.info(f'After synapse filtering: total of {len(axon_df)} axons with the following sizes {ct_group_sizes}')
 
     log.info('Step 2/4: Get total length from all cellids')
@@ -172,6 +175,34 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.svg')
     plt.close()
+
+    if filter_syns:
+        log.info('Step 4b: Plot synapse density dependent on fragment length')
+        #get number of synapses for each cellid
+        ssv_inds, unique_ssv_ids = pd.factorize(pre_cellids)
+        syn_numbers = np.bincount(ssv_inds)
+        nonzero_inds = np.in1d(unique_ssv_ids, axon_df['cellid'])
+        unique_ssv_ids = unique_ssv_ids[nonzero_inds]
+        syn_numbers = syn_numbers[nonzero_inds]
+        sort_inds = np.argsort(unique_ssv_ids)
+        sorted_unique_ids = unique_ssv_ids[sort_inds]
+        sorted_syn_numbers = syn_numbers[sort_inds]
+        axon_df = axon_df.sort_values(by = 'cellid')
+        # calculate synapse density
+        axon_df['syn number'] = sorted_syn_numbers
+        axon_df['synapse density'] = axon_df['syn number'] / axon_df['skeleton length']
+        #split into bins of different length
+        raise ValueError
+        cats = [0.0, 10, 50, 100, 500, 1000, 5000]
+        length_cats = np.array(pd.cut(axon_df['skeleton length'], cats, right=False, labels=cats))
+        axon_df['lengths bins'] = length_cats
+        axon_df.to_csv(f'{f_name}/proj_axon_lengths.csv')
+        #make boxplot with hue
+        sns.boxplot(data = axon_df, x = 'length bins', y= 'synapse density', hue = 'celltype')
+        plt.ylabel('synapse density [1/µm]')
+        plt.savefig(f'{f_name}/syn_density_length_bins.png')
+        plt.savefig(f'{f_name}/syn_density_length_bins.svg')
+        plt.close()
 
     log.info('Analysis done')
 

@@ -120,7 +120,7 @@ if __name__ == '__main__':
         ct2_result_df = pd.DataFrame(columns=['cellid', f'syn number to {ct_dict[ct3]}', f'sum syn size to {ct_dict[ct3]}'])
         ct3_result_df = pd.DataFrame(
             columns=['cellid', f'syn number to {ct_dict[ct2]}', f'sum syn size to {ct_dict[ct2]}'])
-        #fill up that information here
+        #get per cell information
         #sort into cells going to ct2 and cells going to ct3
         axon_inds = np.in1d(m_axs, 1).reshape(len(m_axs), 2)
         ct2_inds = np.in1d(m_cts, ct2).reshape(len(m_axs), 2)
@@ -153,6 +153,7 @@ if __name__ == '__main__':
         write_obj2pkl(f'{f_name}/{ct_dict[ct3]}_{ct_dict[ct2]}_indiv_conns_dict.pkl', ct3_output_dict)
         #get sizes independent from cellids
         ct3_output_sizes = m_sizes[ct3_ax_inds]
+        #also get information about synapses within celltypes
 
     else:
         log.info(f'Get {ct_dict[ct2]} parameter information per {ct_dict[conn_ct]} cell')

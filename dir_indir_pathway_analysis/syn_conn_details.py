@@ -31,14 +31,18 @@ if __name__ == '__main__':
     syn_prob = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    msn_ct = 2
+    conn_ct = 2
     #celltypes that are compared
-    gpe_ct = 6
-    gpi_ct = 7
+    ct2 = 6
+    ct3 = 7
     fontsize_jointplot = 12
     kde = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231107_j0251v5_MSN_GP_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
-        min_comp_len, syn_prob, kde)
+    if conn_ct == None:
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231107_j0251v5_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+            ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob, kde)
+    else:
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231107_j0251v5_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+            ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN GP connectivity details', log_dir=f_name + '/logs/')
@@ -46,90 +50,138 @@ if __name__ == '__main__':
     
     log.info('Step 1/5: Load and check all cells')
     known_mergers = analysis_params.load_known_mergers()
-    MSN_dict = analysis_params.load_cell_dict(celltype=msn_ct)
-    MSN_ids = np.array(list(MSN_dict.keys()))
-    merger_inds = np.in1d(MSN_ids, known_mergers) == False
-    MSN_ids = MSN_ids[merger_inds]
-    misclassified_asto_ids = analysis_params.load_potential_astros()
-    astro_inds = np.in1d(MSN_ids, misclassified_asto_ids) == False
-    MSN_ids = MSN_ids[astro_inds]
-    MSN_ids = check_comp_lengths_ct(cellids=MSN_ids, fullcelldict=MSN_dict, min_comp_len=min_comp_len,
-                                    axon_only=False,
-                                    max_path_len=None)
-    GPe_dict = analysis_params.load_cell_dict(gpe_ct)
-    GPe_ids = np.array(list(GPe_dict.keys()))
-    merger_inds = np.in1d(GPe_ids, known_mergers) == False
-    GPe_ids = GPe_ids[merger_inds]
-    GPe_ids = check_comp_lengths_ct(cellids=GPe_ids, fullcelldict=GPe_dict, min_comp_len=min_comp_len,
-                                    axon_only=False,
-                                    max_path_len=None)
+    misclassified_astro_ids = analysis_params.load_potential_astros()
+    if conn_ct is not None:
+        cts = [conn_ct, ct2, ct3]
+    else:
+        cts = [ct2, ct3]
+    suitable_ids_dict = {}
+    all_suitable_ids = []
+    for ct in cts:
+        ct_dict = analysis_params.load_cell_dict(celltype=ct)
+        ct_ids = np.array(list(ct_dict.keys()))
+        merger_inds = np.in1d(ct_ids, known_mergers) == False
+        ct_ids = ct_ids[merger_inds]
+        astro_inds = np.in1d(ct_ids, misclassified_astro_ids) == False
+        ct_ids = ct_ids[astro_inds]
+        ct_ids = check_comp_lengths_ct(cellids=ct_ids, fullcelldict=ct_dict, min_comp_len=min_comp_len,
+                                        axon_only=False,
+                                        max_path_len=None)
+        suitable_ids_dict[ct] = ct_ids
+        all_suitable_ids.append[ct_ids]
+        log.info(f'{len(ct_ids)} suitable cells for celltype {ct_dict[ct]}')
 
-    GPi_dict = analysis_params.load_cell_dict(gpi_ct)
-    GPi_ids = np.array(list(GPi_dict.keys()))
-    merger_inds = np.in1d(GPi_ids, known_mergers) == False
-    GPi_ids = GPi_ids[merger_inds]
-    GPi_ids = check_comp_lengths_ct(cellids=GPi_ids, fullcelldict=GPi_dict, min_comp_len=min_comp_len,
-                                    axon_only=False,
-                                    max_path_len=None)
-    # load information about MSN groups
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230831_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
-        min_comp_len, syn_prob, kde)
-    log.info(f'Use morph parameters from {f_name_saving1}')
-    msn_result_df = pd.read_csv(f'{f_name_saving1}/msn_spine_density_GPratio.csv', index_col=0)
-    for key in msn_result_df.keys():
-        if 'cellid' in key or 'celltype' in key:
-            continue
-        if 'GP' in key:
-            continue
-        msn_result_df = msn_result_df.drop(key, axis=1)
-    msn_ids_table = msn_result_df['cellid']
-    msn_id_check = np.in1d(msn_ids_table, MSN_ids)
-    if np.any(msn_id_check == False):
-        msn_result_df = msn_result_df[msn_id_check]
-    log.info(f'{len(MSN_ids)} MSN cells, {len(GPe_ids)} GPes and {len(GPi_ids)} GPis suitable for analysis')
+    all_suitable_ids = np.hstack(all_suitable_ids)
     
-    log.info('Step 2/5: Get synapses from MSN to GPe and GPi')
+    log.info('Step 2/5: Get synapses between celltypes')
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
-    m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord = filter_synapse_caches_for_ct(
-        sd_synssv=sd_synssv,
-        pre_cts=[msn_ct],
-        post_cts=[gpe_ct, gpi_ct],
-        syn_prob_thresh=syn_prob,
-        min_syn_size=min_syn_size,
-        axo_den_so=True,
-        synapses_caches=None)
-    all_suitable_ids = np.hstack([MSN_ids, GPe_ids, GPi_ids])
+    if conn_ct is None:
+        m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord = filter_synapse_caches_for_ct(
+            sd_synssv=sd_synssv,
+            pre_cts=[ct2, ct3],
+            post_cts= None,
+            syn_prob_thresh=syn_prob,
+            min_syn_size=min_syn_size,
+            axo_den_so=True,
+            synapses_caches=None)
+    else:
+        #compare outgoing synapses
+        m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord = filter_synapse_caches_for_ct(
+            sd_synssv=sd_synssv,
+            pre_cts=[conn_ct],
+            post_cts=[ct2, ct3],
+            syn_prob_thresh=syn_prob,
+            min_syn_size=min_syn_size,
+            axo_den_so=True,
+            synapses_caches=None)
+        #compare incoming synapses
+        in_m_cts, in_m_axs, in_m_ssv_partners, in_m_sizes, in_m_rep_coord = filter_synapse_caches_for_ct(
+            sd_synssv=sd_synssv,
+            pre_cts=[ct2, ct3],
+            post_cts=[conn_ct],
+            syn_prob_thresh=syn_prob,
+            min_syn_size=min_syn_size,
+            axo_den_so=True,
+            synapses_caches=None)
+
     suit_ct_inds = np.all(np.in1d(m_ssv_partners, all_suitable_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_cts = m_cts[suit_ct_inds]
     m_ssv_partners = m_ssv_partners[suit_ct_inds]
     m_sizes = m_sizes[suit_ct_inds]
     m_axs = m_axs[suit_ct_inds]
     m_rep_coord = m_rep_coord[suit_ct_inds]
-    log.info('Get GPe parameter information per MSN cell')
-    # get number of GP partner cells per cell and information about syn size for each of them
-    #get msn cells connected to gpe
-    msn_gpe_ids = msn_result_df['cellid'][msn_result_df['syn number to GPe'] > 0]
-    gpe_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, gpe_ct] for cellid in msn_gpe_ids]
-    gpe_output = start_multiprocess_imap(get_multi_syn_info_per_cell, gpe_input)
-    gpe_output = np.array(gpe_output, dtype=object)
-    number_target_gpe = gpe_output[:, 0]
-    perc_single_conn_gpe = gpe_output[:, 1]
-    perc_single_syns_gpe = gpe_output[:, 2]
-    perc_single_syn_area_gpe = gpe_output[:, 3]
-    gpe_output_dict = dict(ChainMap(*gpe_output[:, 4]))
-    write_obj2pkl(f'{f_name}/msn_gpe_indiv_conns_dict.pkl', gpe_output_dict)
+    if conn_ct is not None:
+        suit_ct_inds = np.all(np.in1d(in_m_ssv_partners, all_suitable_ids).reshape(len(in_m_ssv_partners), 2), axis=1)
+        in_m_cts = in_m_cts[suit_ct_inds]
+        in_m_ssv_partners = in_m_ssv_partners[suit_ct_inds]
+        in_m_sizes = in_m_sizes[suit_ct_inds]
+        in_m_axs = in_m_axs[suit_ct_inds]
+        in_m_rep_coord = in_m_rep_coord[suit_ct_inds]
+    if conn_ct is None:
+        # make result df for each outgoing celltype
+        ct2_result_df = pd.DataFrame(columns=['cellid', f'syn number to {ct_dict[ct3]}', f'sum syn size to {ct_dict[ct3]}'])
+        ct3_result_df = pd.DataFrame(
+            columns=['cellid', f'syn number to {ct_dict[ct2]}', f'sum syn size to {ct_dict[ct2]}'])
+        #fill up that information here
+        #sort into cells going to ct2 and cells going to ct3
+        axon_inds = np.in1d(m_axs, 1).reshape(len(m_axs), 2)
+        ct2_inds = np.in1d(m_cts, ct2).reshape(len(m_axs), 2)
+        ct3_inds = np.in1d(m_cts, ct3).reshape(len(m_axs), 2)
+        ct2_ax_inds = np.any(ct2_inds == axon_inds, axis=1)
+        ct3_ax_inds = np.any(ct2_inds == axon_inds, axis=1)
+        ct2_cellids = np.unique(m_ssv_partners[ct2_ax_inds])
+        ct3_cellids = np.unique(m_ssv_partners[ct3_ax_inds])
+        log.info(f'Get information outgoing from {ct_dict[ct2]}')
+        ct2_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, ct3] for cellid in ct2_cellids]
+        ct2_output = start_multiprocess_imap(get_multi_syn_info_per_cell, ct2_input)
+        ct2_output = np.array(ct2_output, dtype=object)
+        number_target_ct2 = ct2_output[:, 0]
+        perc_single_conn_ct2 = ct2_output[:, 1]
+        perc_single_syns_ct2 = ct2_output[:, 2]
+        perc_single_syn_area_ct2 = ct2_output[:, 3]
+        ct2_output_dict = dict(ChainMap(*ct2_output[:, 4]))
+        write_obj2pkl(f'{f_name}/{ct_dict[ct2]}_{ct_dict[ct3]}_indiv_conns_dict.pkl', ct2_output_dict)
+        #get sizes independent from cellids
+        ct2_output_sizes = m_sizes[ct2_ax_inds]
+        log.info(f'Get information outgoing from {ct_dict[ct3]}')
+        ct3_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, ct2] for cellid in ct3_cellids]
+        ct3_output = start_multiprocess_imap(get_multi_syn_info_per_cell, ct3_input)
+        ct3_output = np.array(ct3_output, dtype=object)
+        number_target_ct3 = ct3_output[:, 0]
+        perc_single_conn_ct3 = ct3_output[:, 1]
+        perc_single_syns_ct3 = ct3_output[:, 2]
+        perc_single_syn_area_ct3 = ct3_output[:, 3]
+        ct3_output_dict = dict(ChainMap(*ct3_output[:, 4]))
+        write_obj2pkl(f'{f_name}/{ct_dict[ct3]}_{ct_dict[ct2]}_indiv_conns_dict.pkl', ct3_output_dict)
+        #get sizes independent from cellids
+        ct3_output_sizes = m_sizes[ct3_ax_inds]
 
-    log.info('Get GPi parameter information per MSN cell')
-    msn_gpi_ids = msn_result_df['cellid'][msn_result_df['syn number to GPi'] > 0]
-    gpi_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, gpi_ct] for cellid in msn_gpi_ids]
-    gpi_output = start_multiprocess_imap(get_multi_syn_info_per_cell, gpi_input)
-    gpi_output = np.array(gpi_output, dtype=object)
-    number_target_gpi = gpi_output[:, 0]
-    perc_single_conn_gpi = gpi_output[:, 1]
-    perc_single_syns_gpi = gpi_output[:, 2]
-    perc_single_syn_area_gpi = gpi_output[:, 3]
-    gpi_output_dict = dict(ChainMap(*gpi_output[:, 4]))
-    write_obj2pkl(f'{f_name}/msn_gpi_indiv_conns_dict.pkl', gpi_output_dict)
+    else:
+        log.info(f'Get {ct_dict[ct2]} parameter information per {ct_dict[conn_ct]} cell')
+        # get number of ct2 partner cells and size information for all of them
+        #get msn cells connected to gpe
+        msn_gpe_ids = msn_result_df['cellid'][msn_result_df['syn number to GPe'] > 0]
+        gpe_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, gpe_ct] for cellid in msn_gpe_ids]
+        gpe_output = start_multiprocess_imap(get_multi_syn_info_per_cell, gpe_input)
+        gpe_output = np.array(gpe_output, dtype=object)
+        number_target_gpe = gpe_output[:, 0]
+        perc_single_conn_gpe = gpe_output[:, 1]
+        perc_single_syns_gpe = gpe_output[:, 2]
+        perc_single_syn_area_gpe = gpe_output[:, 3]
+        gpe_output_dict = dict(ChainMap(*gpe_output[:, 4]))
+        write_obj2pkl(f'{f_name}/msn_gpe_indiv_conns_dict.pkl', gpe_output_dict)
+
+        log.info(f'Get {ct_dict[ct3]} parameter information per {ct_dict[conn_ct]} cell')
+        msn_gpi_ids = msn_result_df['cellid'][msn_result_df['syn number to GPi'] > 0]
+        gpi_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, gpi_ct] for cellid in msn_gpi_ids]
+        gpi_output = start_multiprocess_imap(get_multi_syn_info_per_cell, gpi_input)
+        gpi_output = np.array(gpi_output, dtype=object)
+        number_target_gpi = gpi_output[:, 0]
+        perc_single_conn_gpi = gpi_output[:, 1]
+        perc_single_syns_gpi = gpi_output[:, 2]
+        perc_single_syn_area_gpi = gpi_output[:, 3]
+        gpi_output_dict = dict(ChainMap(*gpi_output[:, 4]))
+        write_obj2pkl(f'{f_name}/msn_gpi_indiv_conns_dict.pkl', gpi_output_dict)
 
     log.info('Step 3/5: Sort and plot per cell information')
     # add per cell information to dictionary

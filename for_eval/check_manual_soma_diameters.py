@@ -85,6 +85,12 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/method_comp_box.png')
     plt.savefig(f'{f_name}/method_comp_box.svg')
     plt.close()
+    sns.swarmplot(data=diameter_results_df, y='diameter', x='celltype', hue='method')
+    plt.ylabel('diameter [µm]')
+    plt.title('Comparison of diamter values for different measurement methods')
+    plt.savefig(f'{f_name}/method_comp_cts.png')
+    plt.savefig(f'{f_name}/method_comp_cts.svg')
+    plt.close()
     #plot differences
     diff_res_df = diameter_results_df[diameter_results_df['method'] != methods[0]]
     sns.boxplot(data=diff_res_df, y='diff µm', x='method')
@@ -101,12 +107,7 @@ if __name__ == '__main__':
     plt.close()
 
     #make plot with different methods and different celltypes
-    sns.swarmplot(data=diff_res_df, y='diameter', x='celltype', hue = 'method')
-    plt.ylabel('diameter [µm]')
-    plt.title('Comparison of diamter values for different measurement methods')
-    plt.savefig(f'{f_name}/method_comp_cts.png')
-    plt.savefig(f'{f_name}/method_comp_cts.svg')
-    plt.close()
+
     sns.swarmplot(data=diff_res_df, y='diff µm', x='celltype', hue = 'method')
     plt.ylabel('difference to manual [µm]')
     plt.title('Difference to manual measurement')

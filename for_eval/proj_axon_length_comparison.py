@@ -70,9 +70,10 @@ if __name__ == '__main__':
     for ct in ax_cts:
         ct_lengths = axon_df[axon_df['celltype'] == ct_dict[ct]]
         ct_lengths.to_csv(f'{f_name}/lengths_{ct_dict[ct]}.csv')
+        ct_lengths_values = ct_lengths['skeleton length']
         param_df.loc['total number', ct_dict[ct]] = len(ct_lengths)
-        param_df.loc['mean length', ct_dict[ct]] = np.mean(ct_lengths)
-        param_df.loc['median length', ct_dict[ct]] = np.median(ct_lengths)
+        param_df.loc['mean length', ct_dict[ct]] = np.mean(np.array(ct_lengths_values))
+        param_df.loc['median length', ct_dict[ct]] = np.median(np.array(ct_lengths_values))
 
     param_df.to_csv(f'{f_name}/summary_params.csv')
 

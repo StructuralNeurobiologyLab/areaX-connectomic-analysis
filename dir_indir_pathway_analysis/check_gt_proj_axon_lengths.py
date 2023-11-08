@@ -1,9 +1,8 @@
-#plot lengths of axonic fragments for HVC, LMAN, DA
+#check length of LMAN, HVC, DA gt fragments
 
 if __name__ == '__main__':
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset
-    from syconn.reps.segmentation import SegmentationDataset
     import numpy as np
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -18,104 +17,53 @@ if __name__ == '__main__':
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
-
+    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     bio_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = bio_params.ct_dict()
-    use_gt = False
-    filter_syns = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231108_j0251v5_ax_fraglengths"
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231108_j0251v5_ax_fraglengths_gt"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
-    if use_gt:
-        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv"
-        v6_gt = pd.read_csv(gt_path,names=["cellids", "celltype"])
-        log.info(f'Ground truth cells from {gt_path} used for analysis')
-    else:
-        ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-        cellids = ssd.ssv_ids
-        celltypes = ssd.load_numpy_data('celltype_pts_e3')
-        log.info(f'Axons used from {global_params.wd}')
-    if filter_syns:
-        log.info('Only axons used that have one axo-somatic or axo-dendritic outgoing synapse')
-        log.info('No filter was applied to syn_prob or min_syn_size')
+    log = initialize_logging('Projecting axon lengths from gt', log_dir=f_name + '/logs/')
 
-    #get cellids of all HVC. LMAN and DA fragments
-    log.info('Step 1/4: Get cellids from all projecting axons (HVC, LMAN, DA)')
+    log.info('Step 1/1: Load gt cells')
+    v6_gt = pd.read_csv(
+        "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv",
+        names=["cellids", "celltype"])
     ax_cts = bio_params.axon_cts()
-
     all_ax_ids = []
     all_ax_cts = []
     for ct in ax_cts:
-        if use_gt:
-            ct_ids = v6_gt['cellids'][v6_gt['celltype'] == ct_dict[ct]]
-        else:
-            ct_inds = np.where(celltypes == ct)[0]
-            ct_ids = cellids[ct_inds]
-        log.info(f'{len(ct_ids)} axons for {ct_dict[ct]}')
-        all_ax_ids.append(ct_ids)
-        all_ax_cts.append([ct_dict[ct] for i in ct_ids])
+        gt_ids = v6_gt['cellids'][v6_gt['celltype'] == ct_dict[ct]]
+        log.info(f'The ground truth contains {len(gt_ids)} {ct_dict[ct]} axons')
+        all_ax_ids.append(gt_ids)
+        all_ax_cts.append([ct_dict[ct] for i in gt_ids])
 
     all_ax_ids = np.hstack(all_ax_ids)
-    all_ax_cts = np.hstack(all_ax_cts)
-    number_axons = len(all_ax_ids)
-    axon_df = pd.DataFrame(columns = ['cellid', 'celltype', 'skeleton length'], index = range(number_axons))
+    axon_df = pd.DataFrame(columns=['cellid', 'celltype', 'skeleton length'], index=range(number_axons))
     axon_df['cellid'] = all_ax_ids
-    axon_df['celltype'] = all_ax_cts
+    for ct in ax_cts:
 
-    if filter_syns:
-        log.info('Step 1b: Filter for fragments with synapses')
-        sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
-        syn_axs = sd_synssv.load_numpy_data('partner_axoness')
-        syn_axs[syn_axs == 3] = 1
-        syn_axs[syn_axs == 4] = 1
-        syn_ssv_partners = sd_synssv.load_numpy_data('neuron_partners')
-        syn_cts = sd_synssv.load_numpy_data('partner_celltypes')
-        #filter for axo-dendritic or axo-somatic
-        ax_inds = np.any(np.in1d(syn_axs, 1).reshape(len(syn_axs), 2), axis = 1)
-        syn_axs = syn_axs[ax_inds]
-        syn_cts = syn_cts[ax_inds]
-        syn_ssv_partners = syn_ssv_partners[ax_inds]
-        denso_inds = np.any(np.in1d(syn_axs, [0,2]).reshape(len(syn_axs), 2), axis = 1)
-        syn_axs = syn_axs[denso_inds]
-        syn_cts = syn_cts[denso_inds]
-        syn_ssv_partners = syn_ssv_partners[denso_inds]
-        # filter for ax_cts at axon
-        ax_inds = np.in1d(syn_axs, 1).reshape(len(syn_axs), 2)
-        ct_inds = np.in1d(syn_cts, ax_cts).reshape(len(syn_cts), 2)
-        ct_ax_inds = np.all(ax_inds == ct_inds, axis = 1)
-        syn_axs = syn_axs[ct_ax_inds]
-        syn_cts = syn_cts[ct_ax_inds]
-        syn_ssv_partners = syn_ssv_partners[ct_ax_inds]
-        #get cellids on presynaptic side
-        ax_inds = np.where(syn_axs == 1)
-        pre_cellids = np.unique(syn_ssv_partners[ax_inds])
-        filtered_inds = np.in1d(all_ax_ids, pre_cellids)
-        axon_df = axon_df[filtered_inds]
-        axon_df = axon_df.reset_index()
-        ct_group_sizes = axon_df.groupby('celltype').size()
-        log.info(f'After synapse filtering: total of {len(axon_df)} axons with the following sizes {ct_group_sizes}')
 
     log.info('Step 2/4: Get total length from all cellids')
     all_lengths = start_multiprocess_imap(get_cell_length, all_ax_ids)
     axon_df['skeleton length'] = np.array(all_lengths)
-    #remove fragments with length = 0
+    # remove fragments with length = 0
     zero_lengths_ind = np.where(np.array(all_lengths) == 0)[0]
     zero_lengths_df = axon_df.loc[zero_lengths_ind]
     zero_lengths_df.to_csv(f'{f_name}/zero_lengths.csv')
     nonzero_axon_df = axon_df.replace(0, np.nan)
     nonzero_axon_df = nonzero_axon_df.dropna()
     nonzero_axon_df = nonzero_axon_df.reset_index()
-    assert(len(axon_df) == len(zero_lengths_df) + len(nonzero_axon_df))
+    assert (len(axon_df) == len(zero_lengths_df) + len(nonzero_axon_df))
     da_0 = len(zero_lengths_df[zero_lengths_df['celltype'] == 'DA'])
     hvc_0 = len(zero_lengths_df[zero_lengths_df['celltype'] == 'HVC'])
     lman_0 = len(zero_lengths_df[zero_lengths_df['celltype'] == 'LMAN'])
     log.info(f'{len(zero_lengths_df)} ids were removed because length was 0; {da_0} DA, {hvc_0} HVC, {lman_0} LMAN')
     axon_df = nonzero_axon_df
     axon_df.to_csv(f'{f_name}/proj_axon_lengths.csv')
-    #get parameters for cell ids
+    # get parameters for cell ids
     ax_groups_str = np.unique(axon_df['celltype'])
-    param_df = pd.DataFrame(columns = ax_groups_str, index = ['total number', 'mean length', 'median length'])
+    param_df = pd.DataFrame(columns=ax_groups_str, index=['total number', 'mean length', 'median length'])
     for ct in ax_cts:
         ct_lengths = axon_df[axon_df['celltype'] == ct_dict[ct]]
         ct_lengths.to_csv(f'{f_name}/lengths_{ct_dict[ct]}.csv')
@@ -128,13 +76,13 @@ if __name__ == '__main__':
 
     log.info('Step 3/4: Calculate statistics')
     lengths_groups = [group['skeleton length'].values for name, group in
-                    axon_df.groupby('celltype')]
+                      axon_df.groupby('celltype')]
     kruskal_res = kruskal(*lengths_groups, nan_policy='omit')
     log.info(f'Kruskal results: stats = {kruskal_res[0]}, p-value = {kruskal_res[1]}')
     if kruskal_res[1] < 0.05:
         group_comps = list(combinations(range(len(ax_groups_str)), 2))
         ranksum_columns = [f'{ax_groups_str[gc[0]]} vs {ax_groups_str[gc[1]]}' for gc in group_comps]
-        ranksum_res_df = pd.DataFrame(columns=ranksum_columns, index = ['stats', 'p-value'])
+        ranksum_res_df = pd.DataFrame(columns=ranksum_columns, index=['stats', 'p-value'])
         for gc in group_comps:
             ranksum_res = ranksums(lengths_groups[gc[0]], lengths_groups[gc[1]])
             ranksum_res_df.loc[f'stats', f'{ax_groups_str[gc[0]]} vs {ax_groups_str[gc[1]]}'] = ranksum_res[0]
@@ -142,7 +90,7 @@ if __name__ == '__main__':
         ranksum_res_df.to_csv(f'{f_name}/ranksum_results.csv')
 
     log.info('Step 4/4: Plot results')
-    sns.histplot(data = axon_df, x = 'skeleton length', hue = 'celltype', fill=False,
+    sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
                  kde=False, element='step')
     plt.ylabel('number of axons')
     plt.xlabel('skeleton length [µm]')
@@ -172,11 +120,3 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.svg')
     plt.close()
-
-    log.info('Analysis done')
-
-
-
-
-
-

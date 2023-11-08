@@ -6,7 +6,6 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_multi_syn_info_per_cell
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from syconn.reps.super_segmentation import SuperSegmentationDataset
     from syconn.reps.segmentation import SegmentationDataset
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
@@ -23,7 +22,6 @@ if __name__ == '__main__':
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
-    ssd = SuperSegmentationDataset(working_dir=global_params.wd)
     version = 'v5'
     analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = analysis_params.ct_dict(with_glia=False)

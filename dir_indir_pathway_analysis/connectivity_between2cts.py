@@ -769,6 +769,7 @@ def compare_connectivity(comp_ct1, filename, comp_ct2 = None, connected_ct = Non
         ct2_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct2, conn_ct_str, ct2_str))
         ct1_syn_dict = load_pkl2obj("%s/%s_2_%s_dict.pkl" % (foldername_ct1, conn_ct_str, ct1_str))
     else:
+    #it means that cell labels plotted will be indicating postsynaptic cell for two celltypes
         ct2_syn_dict = load_pkl2obj(
             "%s/%s_2_%s_dict.pkl" % (foldername_ct2, ct1_str, ct2_str))
         ct1_syn_dict = load_pkl2obj(

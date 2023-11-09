@@ -96,7 +96,6 @@ if __name__ == '__main__':
         all_ax_ids = all_ax_ids[filtered_inds]
         axon_df = axon_df.reset_index()
         ct_group_sizes = axon_df.groupby('celltype').size()
-        raise ValueError
         log.info(f'After synapse filtering: total of {len(axon_df)} axons with the following sizes {ct_group_sizes}')
 
     log.info('Step 2/4: Get total length from all cellids')
@@ -192,16 +191,41 @@ if __name__ == '__main__':
         axon_df['syn number'] = sorted_syn_numbers
         axon_df['synapse density'] = axon_df['syn number'] / axon_df['skeleton length']
         #split into bins of different length
-        raise ValueError
-        cats = [0.0, 10, 50, 100, 500, 1000, 5000]
-        length_cats = np.array(pd.cut(axon_df['skeleton length'], cats, right=False, labels=cats))
-        axon_df['lengths bins'] = length_cats
+        cats = [0.0, 10, 50, 100, 500, 1000, 5000, np.max(axon_df['skeleton length'])]
+        length_cats = np.array(pd.cut(axon_df['skeleton length'], cats, right=False, labels=cats[:-1]))
+        axon_df['length bins'] = length_cats
         axon_df.to_csv(f'{f_name}/proj_axon_lengths.csv')
         #make boxplot with hue
         sns.boxplot(data = axon_df, x = 'length bins', y= 'synapse density', hue = 'celltype')
         plt.ylabel('synapse density [1/µm]')
         plt.savefig(f'{f_name}/syn_density_length_bins.png')
         plt.savefig(f'{f_name}/syn_density_length_bins.svg')
+        plt.close()
+        #make boxplot again with only skeleton lengths larger than one
+        axon_df_one = axon_df[axon_df['skeleton length'] > 1]
+        sns.boxplot(data=axon_df_one, x='length bins', y='synapse density', hue='celltype')
+        plt.ylabel('synapse density [1/µm]')
+        plt.title('Synapse density for fragment with length of > 1 µm')
+        plt.savefig(f'{f_name}/filtered_syn_density_length_bins.png')
+        plt.savefig(f'{f_name}/filtered_syn_density_length_bins.svg')
+        plt.close()
+        axon_df_cut = axon_df[axon_df['synapse density'] <= 1]
+        sns.boxplot(data=axon_df_cut, x='length bins', y='synapse density', hue='celltype')
+        plt.ylabel('synapse density [1/µm]')
+        plt.title('Synapse density up to 1 with fragments > 1 µm')
+        plt.savefig(f'{f_name}/cut_syn_density_length_bins.png')
+        plt.savefig(f'{f_name}/cut_syn_density_length_bins.svg')
+        plt.close()
+        #make histogram with lengths bins to see number
+        sns.histplot(data=axon_df, x='length bins', hue='celltype',fill=False,
+                 kde=False, element='step')
+        plt.savefig(f'{f_name}/length_bins_hist.png')
+        plt.savefig(f'{f_name}/length_bins_hist.svg')
+        plt.close()
+        sns.histplot(data=axon_df, x='length bins', hue='celltype',fill=False,
+                 kde=False, element='step')
+        plt.savefig(f'{f_name}/length_bins_hist_perc.png')
+        plt.savefig(f'{f_name}/length_bins_hist_perc.svg')
         plt.close()
 
     log.info('Analysis done')

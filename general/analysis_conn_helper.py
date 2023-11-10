@@ -88,14 +88,27 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
     # select only those of given_celltypes
     # if post and pre not specified both celltypes can be on both sides
     if post_cts is None:
-        for ct in pre_cts:
-            ct_inds = np.any(m_cts == ct, axis=1)
+        if len(pre_cts) > 1:
+            for ct in pre_cts:
+                ct_inds = np.any(m_cts == ct, axis=1)
+                m_cts = m_cts[ct_inds]
+               # m_ids = m_ids[ct_inds]
+                m_axs = m_axs[ct_inds]
+                m_ssv_partners = m_ssv_partners[ct_inds]
+                m_sizes = m_sizes[ct_inds]
+                #m_spiness = m_spiness[ct_inds]
+                m_rep_coord = m_rep_coord[ct_inds]
+                if return_syn_prob:
+                    syn_prob = syn_prob[ct_inds]
+        else:
+            ct = pre_cts[0]
+            ct_inds = np.all(m_cts == ct, axis=1)
             m_cts = m_cts[ct_inds]
-           # m_ids = m_ids[ct_inds]
+            # m_ids = m_ids[ct_inds]
             m_axs = m_axs[ct_inds]
             m_ssv_partners = m_ssv_partners[ct_inds]
             m_sizes = m_sizes[ct_inds]
-            #m_spiness = m_spiness[ct_inds]
+            # m_spiness = m_spiness[ct_inds]
             m_rep_coord = m_rep_coord[ct_inds]
             if return_syn_prob:
                 syn_prob = syn_prob[ct_inds]

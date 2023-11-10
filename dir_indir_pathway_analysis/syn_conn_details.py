@@ -4,7 +4,7 @@
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper \
-        import filter_synapse_caches_for_ct, get_multi_syn_info_per_cell, get_percell_number_sumsize
+        import filter_synapse_caches_for_ct, get_multi_syn_info_per_cell, get_percell_number_sumsize, filter_synapse_caches_general
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len = 200
-    syn_prob = 0.6
+    syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
     conn_ct = None
@@ -39,11 +39,11 @@ if __name__ == '__main__':
     fontsize_jointplot = 12
     kde = True
     if conn_ct == None:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231107_j0251v5_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
-            ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob, kde)
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231110_j0251v5_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+            ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     else:
         f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231107_j0251v5_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
-            ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob, kde)
+            ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN GP connectivity details', log_dir=f_name + '/logs/')
@@ -61,72 +61,69 @@ if __name__ == '__main__':
     suitable_ids_dict = {}
     all_suitable_ids = []
     for ct in cts:
-        ct_dict = analysis_params.load_cell_dict(celltype=ct)
-        ct_ids = np.array(list(ct_dict.keys()))
+        cell_info_dict = analysis_params.load_cell_dict(celltype=ct)
+        ct_ids = np.array(list(cell_info_dict.keys()))
         merger_inds = np.in1d(ct_ids, known_mergers) == False
         ct_ids = ct_ids[merger_inds]
         astro_inds = np.in1d(ct_ids, misclassified_astro_ids) == False
         ct_ids = ct_ids[astro_inds]
-        ct_ids = check_comp_lengths_ct(cellids=ct_ids, fullcelldict=ct_dict, min_comp_len=min_comp_len,
+        ct_ids = check_comp_lengths_ct(cellids=ct_ids, fullcelldict=cell_info_dict, min_comp_len=min_comp_len,
                                         axon_only=False,
                                         max_path_len=None)
         #need to be sorted to link to ones from synapses
         ct_ids = np.sort(ct_ids)
         suitable_ids_dict[ct] = ct_ids
-        all_suitable_ids.append[ct_ids]
+        all_suitable_ids.append(ct_ids)
         log.info(f'{len(ct_ids)} suitable cells for celltype {ct_dict[ct]}')
 
     all_suitable_ids = np.hstack(all_suitable_ids)
     
     log.info('Step 2/5: Get synapses between celltypes')
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
+    m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob = filter_synapse_caches_general(sd_synssv, syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size)
+    synapse_caches = [m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob]
     if conn_ct is None:
         #synapses between celltypes
         m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord = filter_synapse_caches_for_ct(
-            sd_synssv=sd_synssv,
             pre_cts=[ct2, ct3],
             post_cts= None,
-            syn_prob_thresh=syn_prob,
-            min_syn_size=min_syn_size,
+            syn_prob_thresh=None,
+            min_syn_size=None,
             axo_den_so=True,
-            synapses_caches=None)
+            synapses_caches=synapse_caches)
         #synapses within each celltype, this filter only makes sure ct2 is there, not that it is only ct2 to ct2
         ct2_m_cts, ct2_m_axs, ct2_m_ssv_partners, ct2_m_sizes, ct2_m_rep_coord = filter_synapse_caches_for_ct(
-            sd_synssv=sd_synssv,
             pre_cts=[ct2],
             post_cts=None,
-            syn_prob_thresh=syn_prob,
-            min_syn_size=min_syn_size,
+            syn_prob_thresh=None,
+            min_syn_size=None,
             axo_den_so=True,
-            synapses_caches=None)
+            synapses_caches=synapse_caches)
         ct3_m_cts, ct3_m_axs, ct3_m_ssv_partners, ct3_m_sizes, ct3_m_rep_coord = filter_synapse_caches_for_ct(
-            sd_synssv=sd_synssv,
             pre_cts=[ct3],
             post_cts=None,
-            syn_prob_thresh=syn_prob,
-            min_syn_size=min_syn_size,
+            syn_prob_thresh=None,
+            min_syn_size=None,
             axo_den_so=True,
-            synapses_caches=None)
+            synapses_caches=synapse_caches)
 
     else:
         #compare outgoing synapses
         m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord = filter_synapse_caches_for_ct(
-            sd_synssv=sd_synssv,
             pre_cts=[conn_ct],
             post_cts=[ct2, ct3],
-            syn_prob_thresh=syn_prob,
-            min_syn_size=min_syn_size,
+            syn_prob_thresh=None,
+            min_syn_size=None,
             axo_den_so=True,
-            synapses_caches=None)
+            synapses_caches=synapse_caches)
         #compare incoming synapses
         in_m_cts, in_m_axs, in_m_ssv_partners, in_m_sizes, in_m_rep_coord = filter_synapse_caches_for_ct(
-            sd_synssv=sd_synssv,
             pre_cts=[ct2, ct3],
             post_cts=[conn_ct],
-            syn_prob_thresh=syn_prob,
-            min_syn_size=min_syn_size,
+            syn_prob_thresh=None,
+            min_syn_size=None,
             axo_den_so=True,
-            synapses_caches=None)
+            synapses_caches=synapse_caches)
 
     suit_ct_inds = np.all(np.in1d(m_ssv_partners, all_suitable_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_cts = m_cts[suit_ct_inds]
@@ -134,20 +131,13 @@ if __name__ == '__main__':
     m_sizes = m_sizes[suit_ct_inds]
     m_axs = m_axs[suit_ct_inds]
     m_rep_coord = m_rep_coord[suit_ct_inds]
-    if conn_ct is not None:
-        suit_ct_inds = np.all(np.in1d(in_m_ssv_partners, all_suitable_ids).reshape(len(in_m_ssv_partners), 2), axis=1)
-        in_m_cts = in_m_cts[suit_ct_inds]
-        in_m_ssv_partners = in_m_ssv_partners[suit_ct_inds]
-        in_m_sizes = in_m_sizes[suit_ct_inds]
-        in_m_axs = in_m_axs[suit_ct_inds]
-        in_m_rep_coord = in_m_rep_coord[suit_ct_inds]
     if conn_ct is None:
         # make result df for celltype per postsynaptic celltype
         log.info('Step 3/X: Get information to other celltype and plot per cell information')
         log.info('Get per cell information to other celltype')
         #celltype indicates postsynaptic celltype
         percell_columns = ['cellid', f'syn number', f'sum syn size', 'mean syn size', 'celltype']
-        percell_result_df = pd.DataFrame(columns=percell_columns, index = range(all_suitable_ids))
+        percell_result_df = pd.DataFrame(columns=percell_columns, index = range(len(all_suitable_ids)))
         percell_result_df['cellid'] = all_suitable_ids
         percell_result_df.loc[0: len(suitable_ids_dict[ct2]) -1, 'celltype'] = ct_dict[ct2]
         percell_result_df.loc[len(suitable_ids_dict[ct2]): len(all_suitable_ids) - 1, 'celltype'] = ct_dict[ct3]
@@ -156,12 +146,14 @@ if __name__ == '__main__':
         ct2_inds = np.in1d(m_cts, ct2).reshape(len(m_axs), 2)
         ct3_inds = np.in1d(m_cts, ct3).reshape(len(m_axs), 2)
         ct2_den_inds = np.any(ct2_inds == denso_inds, axis=1)
-        ct3_den_inds = np.any(ct2_inds == denso_inds, axis=1)
+        ct3_den_inds = np.any(ct3_inds == denso_inds, axis=1)
         # get number synapses and sum size per cells to other celltype
-        ct2_ssv_ids = m_ssv_partners[ct2_den_inds]
+        ct2_ssv_partners = m_ssv_partners[ct2_den_inds]
+        ct2_cts = m_cts[ct2_den_inds]
+        ct2_ssv_ids = ct2_ssv_partners[np.where(ct2_cts == ct2)]
         ct2_den_syn_sizes = m_sizes[ct2_den_inds]
         ct2_syn_numbers, ct2_syn_sizes, unique_ct2_cellids = get_percell_number_sumsize(ct2_ssv_ids, ct2_den_syn_sizes)
-        log.info(f'{len(unique_ct2_cellids)} out of {len(suitable_ids_dict[ct2])} {ct_dict[ct2]} make synapses with {ct_dict[ct3]}')
+        log.info(f'{len(unique_ct2_cellids)} out of {len(suitable_ids_dict[ct2])} {ct_dict[ct2]} get synapses from {ct_dict[ct3]}')
         sort_inds = np.argsort(unique_ct2_cellids)
         sorted_unique_ct2_cellids = unique_ct2_cellids[sort_inds]
         sorted_ct2_syn_numbers = ct2_syn_numbers[sort_inds]
@@ -170,11 +162,13 @@ if __name__ == '__main__':
         percell_result_df.loc[id_inds, 'syn number'] = ct2_syn_numbers
         percell_result_df.loc[id_inds, 'sum syn size'] = ct2_syn_sizes
         percell_result_df.loc[id_inds, 'mean syn size'] = ct2_syn_sizes / ct2_syn_numbers
-        ct3_ssv_ids = m_ssv_partners[ct3_den_inds]
+        ct3_ssv_partners = m_ssv_partners[ct3_den_inds]
+        ct3_cts = m_cts[ct3_den_inds]
+        ct3_ssv_ids = ct3_ssv_partners[np.where(ct3_cts == ct3)]
         ct3_den_syn_sizes = m_sizes[ct3_den_inds]
         ct3_syn_numbers, ct3_syn_sizes, unique_ct3_cellids = get_percell_number_sumsize(ct3_ssv_ids, ct3_den_syn_sizes)
         log.info(
-            f'{len(unique_ct3_cellids)} out of {len(suitable_ids_dict[ct3])} {ct_dict[ct3]} make synapses with {ct_dict[ct2]}')
+            f'{len(unique_ct3_cellids)} out of {len(suitable_ids_dict[ct3])} {ct_dict[ct3]} get synapses from {ct_dict[ct2]}')
         sort_inds = np.argsort(unique_ct3_cellids)
         sorted_unique_ct3_cellids = unique_ct3_cellids[sort_inds]
         sorted_ct3_syn_numbers = ct3_syn_numbers[sort_inds]
@@ -183,9 +177,13 @@ if __name__ == '__main__':
         percell_result_df.loc[id_inds, 'syn number'] = ct3_syn_numbers
         percell_result_df.loc[id_inds, 'sum syn size'] = ct3_syn_sizes
         percell_result_df.loc[id_inds, 'mean syn size'] = ct3_syn_sizes / ct3_syn_numbers
+        percell_result_df = percell_result_df.dropna()
+        percell_result_df = percell_result_df.reset_index(drop = True)
         percell_result_df.to_csv(f'{f_name}/{ct_dict[ct2]}_{ct_dict[ct3]}_percell_results.csv')
         log.info('Make per cell statistics of synapses between celltypes and plots')
-        ranksum_results = pd.DataFrame(columns = [f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'])
+        ranksum_columns =  [f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra',
+                            f'{ct_dict[ct2]} inter vs intra', f'{ct_dict[ct3]} inter vs intra']
+        ranksum_results = pd.DataFrame(columns = ranksum_columns)
         for key in percell_result_df.keys():
             if 'cellid' in key or 'celltype' in key:
                 continue
@@ -202,6 +200,7 @@ if __name__ == '__main__':
                          fill=False, element="step", linewidth=3, legend=True)
             plt.ylabel('number of cells')
             plt.xlabel(xlabel)
+            plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
             plt.savefig(f'{f_name}/percell_{key}_inter_hist.png')
             plt.savefig(f'{f_name}/percell_{key}_inter_hist.svg')
             plt.close()
@@ -209,17 +208,28 @@ if __name__ == '__main__':
                          fill=False, element="step", linewidth=3, legend=True, stat='percent')
             plt.ylabel('% of cells')
             plt.xlabel(xlabel)
+            plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
             plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc.png')
             plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc.svg')
             plt.close()
+            if len(percell_result_df) <= 200:
+                sns.stripplot(x='celltype', y=key, data=percell_result_df, color = 'black',
+                              alpha=0.4,
+                              dodge=True, size=3)
+                sns.boxplot(x = 'celltype', y = key, data = percell_result_df, palette=ct_palette)
+                plt.ylabel(xlabel)
+                plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+                plt.savefig(f'{f_name}/percell_{key}_inter_box.png')
+                plt.savefig(f'{f_name}/percell_{key}_inter_box.svg')
+                plt.close()
         log.info('Get syn sizes of all cells between celltypes and plot them')
         number_syns = len(ct2_den_syn_sizes) + len(ct3_den_syn_sizes)
         syn_sizes_df = pd.DataFrame(columns=['syn sizes', 'celltype'],
                                     index=range(number_syns))
-        syn_sizes_df[0:len(ct2_den_syn_sizes) - 1, 'syn sizes'] = ct2_den_syn_sizes
-        syn_sizes_df[0:len(ct2_den_syn_sizes) - 1, 'celltype'] = ct_dict[ct2]
-        syn_sizes_df[len(ct2_den_syn_sizes): number_syns - 1, 'syn sizes'] = ct3_den_syn_sizes
-        syn_sizes_df[len(ct2_den_syn_sizes): number_syns - 1, 'syn sizes'] = ct_dict[ct3]
+        syn_sizes_df.loc[0:len(ct2_den_syn_sizes) - 1, 'syn sizes'] = ct2_den_syn_sizes
+        syn_sizes_df.loc[0:len(ct2_den_syn_sizes) - 1, 'celltype'] = ct_dict[ct2]
+        syn_sizes_df.loc[len(ct2_den_syn_sizes): number_syns - 1, 'syn sizes'] = ct3_den_syn_sizes
+        syn_sizes_df.loc[len(ct2_den_syn_sizes): number_syns - 1, 'celltype'] = ct_dict[ct3]
         syn_sizes_df.to_csv(f'{f_name}/all_syn_sizes_between_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
         stats, p_value = ranksums(ct2_den_syn_sizes, ct3_den_syn_sizes)
         ranksum_results.loc['all syn sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter'] = stats
@@ -230,6 +240,7 @@ if __name__ == '__main__':
                      fill=False, element="step", linewidth=3, legend=True)
         plt.ylabel('number of synapses')
         plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist.png')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist.svg')
         plt.close()
@@ -239,11 +250,13 @@ if __name__ == '__main__':
         plt.xlabel('synaptic mesh area [µm²]')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_log.png')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_log.svg')
+        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
         plt.close()
         sns.histplot(x='syn sizes', data=syn_sizes_df, hue='celltype', palette=ct_palette, common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True, stat='percent')
         plt.ylabel('% of synapses')
         plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_perc.png')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_perc.svg')
         plt.close()
@@ -251,26 +264,201 @@ if __name__ == '__main__':
                      fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
         plt.ylabel('% of synapses')
         plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_log_perc.png')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_log_perc.svg')
         plt.close()
         log.info('Step 4/X: Get information to same celltype and plot per cell information')
         #get number synapses and sum size per cells to same celltype
         #make sure only suitable cells are used in all synapses
-        suit_ct_inds = np.all(np.in1d(ct2_m_ssv_partners, suit_ct_inds[ct2]).reshape(len(ct2_m_ssv_partners), 2), axis=1)
+        percell_intra_result_df = pd.DataFrame(columns=percell_columns, index=range(len(all_suitable_ids)))
+        percell_intra_result_df['cellid'] = all_suitable_ids
+        percell_intra_result_df.loc[0: len(suitable_ids_dict[ct2]) - 1, 'celltype'] = ct_dict[ct2]
+        percell_intra_result_df.loc[len(suitable_ids_dict[ct2]): len(all_suitable_ids) - 1, 'celltype'] = ct_dict[ct3]
+        #prepare dataframe for all syns
+        max_syn_number = len(ct2_m_sizes) + len(ct3_m_sizes)
+        syn_sizes_intra_df = pd.DataFrame(columns=['syn sizes', 'celltype'],
+                                    index=range(max_syn_number))
+        suit_ct_inds = np.all(np.in1d(ct2_m_ssv_partners, suitable_ids_dict[ct2]).reshape(len(ct2_m_ssv_partners), 2), axis=1)
         ct2_m_cts = ct2_m_cts[suit_ct_inds]
         ct2_m_axs = ct2_m_axs[suit_ct_inds]
         ct2_m_sizes = ct2_m_sizes[suit_ct_inds]
         ct2_m_ssv_partners = ct2_m_ssv_partners[suit_ct_inds]
-        assert(len(np.unqiue(ct2_m_cts)) == 1 and np.unique(ct2_m_cts)[0] == ct2)
-        suit_ct_inds = np.all(np.in1d(ct3_m_ssv_partners, suit_ct_inds[ct3]).reshape(len(ct3_m_ssv_partners), 2),
+        max_number_syns = len(ct2_m_sizes) + len(ct3_m_sizes)
+        if len(ct2_m_cts) > 0:
+            assert(len(np.unique(ct2_m_cts)) == 1 and np.unique(ct2_m_cts)[0] == ct2)
+            #get percell information
+            log.info(f'Get percell information for synapses within {ct_dict[ct2]}')
+            denso_inds = np.in1d(ct2_m_axs, [0, 2]).reshape(len(ct2_m_axs), 2)
+            # get number synapses and sum size per cells to same celltype
+            ct2_ssv_ids = ct2_m_ssv_partners[denso_inds]
+            ct2_syn_numbers, ct2_syn_sizes, unique_ct2_cellids = get_percell_number_sumsize(ct2_ssv_ids,
+                                                                                            ct2_m_sizes)
+            log.info(
+                f'{len(unique_ct2_cellids)} out of {len(suitable_ids_dict[ct2])} {ct_dict[ct2]} get synapses from {ct_dict[ct2]}')
+            sort_inds = np.argsort(unique_ct2_cellids)
+            sorted_unique_ct2_cellids = unique_ct2_cellids[sort_inds]
+            sorted_ct2_syn_numbers = ct2_syn_numbers[sort_inds]
+            sorted_ct2_syn_sizes = ct2_syn_sizes[sort_inds]
+            id_inds = np.in1d(percell_intra_result_df['cellid'], sorted_unique_ct2_cellids)
+            percell_intra_result_df.loc[id_inds, 'syn number'] = ct2_syn_numbers
+            percell_intra_result_df.loc[id_inds, 'sum syn size'] = ct2_syn_sizes
+            percell_intra_result_df.loc[id_inds, 'mean syn size'] = ct2_syn_sizes / ct2_syn_numbers
+            #fill in all synapse size
+            syn_sizes_intra_df.loc[0:len(ct2_m_sizes) - 1, 'syn sizes'] = ct2_m_sizes
+            syn_sizes_intra_df.loc[0:len(ct2_m_sizes) - 1, 'celltype'] = ct_dict[ct2]
+        else:
+            log.info(f'There are no synapses between cells of {ct_dict[ct2]} which follow the filter criteria')
+        suit_ct_inds = np.all(np.in1d(ct3_m_ssv_partners, suitable_ids_dict[ct3]).reshape(len(ct3_m_ssv_partners), 2),
                               axis=1)
         ct3_m_cts = ct3_m_cts[suit_ct_inds]
         ct3_m_axs = ct3_m_axs[suit_ct_inds]
         ct3_m_sizes = ct3_m_sizes[suit_ct_inds]
         ct3_m_ssv_partners = ct3_m_ssv_partners[suit_ct_inds]
-        assert (len(np.unqiue(ct3_m_cts)) == 1 and np.unique(ct3_m_cts)[0] == ct3)
+        if len(ct3_m_cts) > 0:
+            assert (len(np.unique(ct3_m_cts)) == 1 and np.unique(ct3_m_cts)[0] == ct3)
+            denso_inds = np.in1d(ct3_m_axs, [0, 2]).reshape(len(ct3_m_axs), 2)
+            # get number synapses and sum size per cells to same celltype
+            ct3_ssv_ids = ct3_m_ssv_partners[denso_inds]
+            ct3_syn_numbers, ct3_syn_sizes, unique_ct3_cellids = get_percell_number_sumsize(ct3_ssv_ids,
+                                                                                            ct3_m_sizes)
+            log.info(
+                f'{len(unique_ct3_cellids)} out of {len(suitable_ids_dict[ct3])} {ct_dict[ct3]} get synapses from {ct_dict[ct3]}')
+            sort_inds = np.argsort(unique_ct3_cellids)
+            sorted_unique_ct3_cellids = unique_ct3_cellids[sort_inds]
+            sorted_ct3_syn_numbers = ct3_syn_numbers[sort_inds]
+            sorted_ct3_syn_sizes = ct3_syn_sizes[sort_inds]
+            id_inds = np.in1d(percell_intra_result_df['cellid'], sorted_unique_ct3_cellids)
+            percell_intra_result_df.loc[id_inds, 'syn number'] = ct3_syn_numbers
+            percell_intra_result_df.loc[id_inds, 'sum syn size'] = ct3_syn_sizes
+            percell_intra_result_df.loc[id_inds, 'mean syn size'] = ct3_syn_sizes / ct3_syn_numbers
+            # fill in all synapse size
+            syn_sizes_intra_df.loc[len(ct2_m_sizes):len(ct2_m_sizes) + len(ct3_m_sizes) - 1, 'syn sizes'] = ct3_m_sizes
+            syn_sizes_intra_df.loc[len(ct2_m_sizes):len(ct2_m_sizes) + len(ct3_m_sizes) - 1, 'celltype'] = ct_dict[ct3]
+        else:
+            log.info(f'There are no synapses between cells of {ct_dict[ct3]} which follow the filter criteria')
+        percell_intra_result_df = percell_intra_result_df.dropna()
+        percell_intra_result_df = percell_intra_result_df.dropna()
+        percell_intra_result_df = percell_intra_result_df.reset_index(drop=True)
+        percell_intra_result_df.to_csv(f'{f_name}/{ct_dict[ct2]}_{ct_dict[ct3]}_percell_intra_results.csv')
+        log.info('Get statistics and plot results of intra celltype synapses')
+        syn_sizes_intra_df = syn_sizes_intra_df.dropna()
+        syn_sizes_intra_df = syn_sizes_intra_df.reset_index(drop = True)
+        syn_sizes_intra_df.to_csv(f'{f_name}/all_syn_sizes_intra_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+        if len(ct2_m_sizes) > 0 or len(ct3_m_sizes) > 0:
+            for key in percell_intra_result_df.keys():
+                if 'cellid' in key or 'celltype' in key:
+                    continue
+                if len(ct2_m_sizes) > 0:
+                    ct2_percell_results = percell_result_df[key][percell_result_df['celltype'] == ct_dict[ct2]]
+                    ct2_intra_results = percell_intra_result_df[key][percell_intra_result_df['celltype'] == ct_dict[ct2]]
+                    stats, p_value = ranksums(ct2_percell_results, ct2_intra_results)
+                    ranksum_results.loc[
+                        f'{key} per post-cell stats', f'{ct_dict[ct2]} inter vs intra'] = stats
+                    ranksum_results.loc[
+                        f'{key} per post-cell p-value', f'{ct_dict[ct2]} inter vs intra'] = p_value
+                if len(ct3_m_sizes) > 0:
+                    ct3_percell_results = percell_result_df[key][percell_result_df['celltype'] == ct_dict[ct3]]
+                    ct3_intra_results = percell_intra_result_df[key][
+                        percell_intra_result_df['celltype'] == ct_dict[ct3]]
+                    stats, p_value = ranksums(ct3_percell_results, ct3_intra_results)
+                    ranksum_results.loc[
+                        f'{key} per post-cell stats', f'{ct_dict[ct3]} inter vs intra'] = stats
+                    ranksum_results.loc[
+                        f'{key} per post-cell p-value', f'{ct_dict[ct3]} inter vs intra'] = p_value
+                if len(ct2_m_sizes) > 0 and len(ct3_m_sizes) > 0:
+                    key_groups = [group[key].values for name, group in
+                                  percell_intra_result_df.groupby('celltype')]
+                    stats, p_value = ranksums(key_groups[0], key_groups[1])
+                    ranksum_results.loc[
+                        f'{key} per post-cell stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = stats
+                    ranksum_results.loc[
+                        f'{key} per post-cell p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = p_value
+                if 'size' in key:
+                    xlabel = f'{key} [µm²]'
+                else:
+                    xlabel = key
+                sns.histplot(x=key, data=percell_intra_result_df, hue='celltype', palette=ct_palette, common_norm=False,
+                             fill=False, element="step", linewidth=3, legend=True)
+                plt.ylabel('number of cells')
+                plt.xlabel(xlabel)
+                plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+                plt.savefig(f'{f_name}/percell_{key}_intra_hist.png')
+                plt.savefig(f'{f_name}/percell_{key}_intra_hist.svg')
+                plt.close()
+                sns.histplot(x=key, data=percell_intra_result_df, hue='celltype', palette=ct_palette, common_norm=False,
+                             fill=False, element="step", linewidth=3, legend=True, stat='percent')
+                plt.ylabel('% of cells')
+                plt.xlabel(xlabel)
+                plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+                plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc.png')
+                plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc.svg')
+                plt.close()
+                if len(percell_intra_result_df) <= 200:
+                    sns.stripplot(x='celltype', y=key, data=percell_intra_result_df, color = 'black',
+                                  alpha=0.4,
+                                  dodge=True, size=3)
+                    sns.boxplot(x='celltype', y = key, data=percell_intra_result_df, palette=ct_palette)
+                    plt.ylabel(xlabel)
+                    plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+                    plt.savefig(f'{f_name}/percell_{key}_intra_box.png')
+                    plt.savefig(f'{f_name}/percell_{key}_intra_box.svg')
+                    plt.close()
+            if len(ct2_m_sizes) > 0:
+                stats, p_value = ranksums(ct2_den_syn_sizes, ct2_m_sizes)
+                ranksum_results.loc['all syn sizes stats', f'{ct_dict[ct2]} inter vs intra'] = stats
+                ranksum_results.loc['all syn sizes p-value', f'{ct_dict[ct2]} inter vs intra'] = p_value
+            if len(ct3_m_sizes) > 0:
+                stats, p_value = ranksums(ct3_den_syn_sizes, ct3_m_sizes)
+                ranksum_results.loc['all syn sizes stats', f'{ct_dict[ct3]} inter vs intra'] = stats
+                ranksum_results.loc['all syn sizes p-value', f'{ct_dict[ct3]} inter vs intra'] = p_value
+            if len(ct2_m_sizes) > 0 and len(ct3_m_sizes) > 0:
+                stats, p_value = ranksums(ct2_den_syn_sizes, ct3_den_syn_sizes)
+                ranksum_results.loc['all syn sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = stats
+                ranksum_results.loc['all syn sizes p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = p_value
+            ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+            # plot all syn sizes values
+            sns.histplot(x='syn sizes', data=syn_sizes_intra_df, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True)
+            plt.ylabel('number of synapses')
+            plt.xlabel('synaptic mesh area [µm²]')
+            plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
+            plt.savefig(f'{f_name}/all_synsizes_intra_hist.png')
+            plt.savefig(f'{f_name}/all_synsizes_intra_hist.svg')
+            plt.close()
+            sns.histplot(x='syn sizes', data=syn_sizes_intra_df, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+            plt.ylabel('number of synapses')
+            plt.xlabel('synaptic mesh area [µm²]')
+            plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
+            plt.savefig(f'{f_name}/all_synsizes_intra_hist_log.png')
+            plt.savefig(f'{f_name}/all_synsizes_intra_hist_log.svg')
+            plt.close()
+            sns.histplot(x='syn sizes', data=syn_sizes_intra_df, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
+            plt.ylabel('% of synapses')
+            plt.xlabel('synaptic mesh area [µm²]')
+            plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
+            plt.savefig(f'{f_name}/all_synsizes_intra_hist_perc.png')
+            plt.savefig(f'{f_name}/all_synsizes_intra_hist_perc.svg')
+            plt.close()
+            sns.histplot(x='syn sizes', data=syn_sizes_intra_df, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
+            plt.ylabel('% of synapses')
+            plt.xlabel('synaptic mesh area [µm²]')
+            plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
+            plt.savefig(f'{f_name}/all_synsizes_intra_hist_log_perc.png')
+            plt.savefig(f'{f_name}/all_synsizes_intra_hist_log_perc.svg')
+            plt.close()
         raise ValueError
+    else:
+        suit_ct_inds = np.all(np.in1d(in_m_ssv_partners, all_suitable_ids).reshape(len(in_m_ssv_partners), 2), axis=1)
+        in_m_cts = in_m_cts[suit_ct_inds]
+        in_m_ssv_partners = in_m_ssv_partners[suit_ct_inds]
+        in_m_sizes = in_m_sizes[suit_ct_inds]
+        in_m_axs = in_m_axs[suit_ct_inds]
+        in_m_rep_coord = in_m_rep_coord[suit_ct_inds]
+        log.info(f'Step 3/X: Get information outgoing from {ct_dict[conn_ct}')
 
 
 

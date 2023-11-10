@@ -4,7 +4,7 @@
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper \
-        import filter_synapse_caches_for_ct, get_multi_syn_info_per_cell, get_percell_number_sumsize, filter_synapse_caches_general
+        import filter_synapse_caches_for_ct, get_multi_syn_info_per_cell, get_percell_number_sumsize, filter_synapse_caches_general, get_ct_syn_number_sumsize
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    conn_ct = None
+    conn_ct = 0
     #celltypes that are compared
     ct2 = 6
     ct3 = 7
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231110_j0251v5_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
             ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231107_j0251v5_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231110_j0251v5_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
             ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -212,7 +212,23 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc.png')
             plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc.svg')
             plt.close()
-            if len(percell_result_df) <= 200:
+            sns.histplot(x=key, data=percell_result_df, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+            plt.ylabel('number of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+            plt.savefig(f'{f_name}/percell_{key}_inter_hist_log.png')
+            plt.savefig(f'{f_name}/percell_{key}_inter_hist_log.svg')
+            plt.close()
+            sns.histplot(x=key, data=percell_result_df, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+            plt.ylabel('% of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+            plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc_log.png')
+            plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc_log.svg')
+            plt.close()
+            if len(percell_result_df) <= 500:
                 sns.stripplot(x='celltype', y=key, data=percell_result_df, color = 'black',
                               alpha=0.4,
                               dodge=True, size=3)
@@ -248,6 +264,7 @@ if __name__ == '__main__':
                      fill=False, element="step", linewidth=3, legend=True, log_scale=True)
         plt.ylabel('number of synapses')
         plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_log.png')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_log.svg')
         plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
@@ -394,7 +411,23 @@ if __name__ == '__main__':
                 plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc.png')
                 plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc.svg')
                 plt.close()
-                if len(percell_intra_result_df) <= 200:
+                sns.histplot(x=key, data=percell_intra_result_df, hue='celltype', palette=ct_palette, common_norm=False,
+                             fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+                plt.ylabel('number of cells')
+                plt.xlabel(xlabel)
+                plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+                plt.savefig(f'{f_name}/percell_{key}_intra_hist_log.png')
+                plt.savefig(f'{f_name}/percell_{key}_intra_hist_log.svg')
+                plt.close()
+                sns.histplot(x=key, data=percell_intra_result_df, hue='celltype', palette=ct_palette, common_norm=False,
+                             fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+                plt.ylabel('% of cells')
+                plt.xlabel(xlabel)
+                plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+                plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc_log.png')
+                plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc_log.svg')
+                plt.close()
+                if len(percell_intra_result_df) <= 500:
                     sns.stripplot(x='celltype', y=key, data=percell_intra_result_df, color = 'black',
                                   alpha=0.4,
                                   dodge=True, size=3)
@@ -450,50 +483,332 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/all_synsizes_intra_hist_log_perc.png')
             plt.savefig(f'{f_name}/all_synsizes_intra_hist_log_perc.svg')
             plt.close()
-        raise ValueError
+            raise ValueError
     else:
+        log.info(f'Step 3/X: Get information outgoing from {ct_dict[conn_ct]}')
+        log.info('Get per cell information to other celltype')
+        # celltype indicates postsynaptic celltype
+        percell_columns = ['cellid', 'celltype', f'syn number', f'sum syn size',
+                           f'mean syn size', 'to celltype']
+        num_conn_ct_ids = len(suitable_ids_dict[conn_ct])
+        percell_result_df = pd.DataFrame(columns=percell_columns, index=range(num_conn_ct_ids*2))
+        percell_result_df['cellid'] = np.hstack([suitable_ids_dict[conn_ct], suitable_ids_dict[conn_ct]])
+        percell_result_df['celltype'] = ct_dict[conn_ct]
+        # get number synapses and sum size per cells to other celltype
+        #get information per cell about synapses to ct2
+        #from function 'msn_spine_density_gp_ratio'
+        log.info(f'Get per cell information to {ct_dict[ct2]}')
+        ct2_inds = np.where(m_cts == ct2)[0]
+        ct2_ssv_partners = m_ssv_partners[ct2_inds]
+        ct2_sizes = m_sizes[ct2_inds]
+        ct2_cts = m_cts[ct2_inds]
+        ct2_syn_numbers, ct2_sum_sizes, unique_ssv_ids = get_ct_syn_number_sumsize(syn_sizes=ct2_sizes,
+                                                                                   syn_ssv_partners=ct2_ssv_partners,
+                                                                                   syn_cts=ct2_cts, ct=conn_ct)
+        sort_inds_ct2 = np.argsort(unique_ssv_ids)
+        unique_ssv_ids_sorted = unique_ssv_ids[sort_inds_ct2]
+        ct2_syn_numbers_sorted = ct2_syn_numbers[sort_inds_ct2]
+        ct2_sum_sizes_sorted = ct2_sum_sizes[sort_inds_ct2]
+        sort_inds_ct2 = np.in1d(percell_result_df['cellid'], unique_ssv_ids_sorted)
+        sort_inds_ct2[-num_conn_ct_ids:] = False
+        percell_result_df.loc[sort_inds_ct2, 'syn number'] = ct2_syn_numbers_sorted
+        percell_result_df.loc[sort_inds_ct2, 'sum syn size'] = ct2_sum_sizes_sorted
+        percell_result_df.loc[sort_inds_ct2, 'mean syn size'] = ct2_sum_sizes_sorted / ct2_syn_numbers_sorted
+        percell_result_df.loc[sort_inds_ct2, 'to celltype'] = ct_dict[ct2]
+        log.info(
+            f'{len(unique_ssv_ids_sorted)} out of {num_conn_ct_ids} {ct_dict[conn_ct]} make synapses to {ct_dict[ct2]}')
+        log.info(f'Get per cell information to {ct_dict[ct3]}')
+        ct3_inds = np.where(m_cts == ct3)[0]
+        ct3_ssv_partners = m_ssv_partners[ct3_inds]
+        ct3_sizes = m_sizes[ct3_inds]
+        ct3_cts = m_cts[ct3_inds]
+        ct3_syn_numbers, ct3_sum_sizes, unique_ssv_ids = get_ct_syn_number_sumsize(syn_sizes=ct3_sizes,
+                                                                                   syn_ssv_partners=ct3_ssv_partners,
+                                                                                   syn_cts=ct3_cts, ct=conn_ct)
+        sort_inds_ct3 = np.argsort(unique_ssv_ids)
+        unique_ssv_ids_sorted = unique_ssv_ids[sort_inds_ct3]
+        ct3_syn_numbers_sorted = ct3_syn_numbers[sort_inds_ct3]
+        ct3_sum_sizes_sorted = ct3_sum_sizes[sort_inds_ct3]
+        sort_inds_ct3 = np.in1d(percell_result_df['cellid'], unique_ssv_ids_sorted)
+        sort_inds_ct3[num_conn_ct_ids:] = False
+        percell_result_df.loc[sort_inds_ct3, 'syn number'] = ct3_syn_numbers_sorted
+        percell_result_df.loc[sort_inds_ct3, 'sum syn size'] = ct3_sum_sizes_sorted
+        percell_result_df.loc[sort_inds_ct3, 'mean syn size'] = ct3_sum_sizes_sorted / ct3_syn_numbers_sorted
+        percell_result_df.loc[sort_inds_ct3, 'to celltype'] = ct_dict[ct3]
+        percell_result_df = percell_result_df.dropna()
+        percell_result_df = percell_result_df.reset_index(drop = True)
+        percell_result_df.to_csv(f'{f_name}/percell_{ct_dict[conn_ct]}_outgoing_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+        log.info(
+            f'{len(unique_ssv_ids_sorted)} out of {num_conn_ct_ids} {ct_dict[conn_ct]} make synapses to {ct_dict[ct3]}')
+        log.info('Plot and get stats')
+        ranksum_columns = [f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}',
+                           f'from {ct_dict[ct2]} vs from {ct_dict[ct3]}']
+        ranksum_results = pd.DataFrame(columns=ranksum_columns)
+        for key in percell_result_df.keys():
+            if 'cellid' in key or 'celltype' in key:
+                continue
+            key_groups = [group[key].values for name, group in
+                          percell_result_df.groupby('to celltype')]
+            stats, p_value = ranksums(key_groups[0], key_groups[1])
+            ranksum_results.loc[f'{key} per cell stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = stats
+            ranksum_results.loc[
+                f'{key} per cell p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = p_value
+            if 'size' in key:
+                xlabel = f'{key} [µm²]'
+            else:
+                xlabel = key
+            sns.histplot(x=key, data=percell_result_df, hue='to celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True)
+            plt.ylabel('number of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist.png')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist.svg')
+            plt.close()
+            sns.histplot(x=key, data=percell_result_df, hue='to celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
+            plt.ylabel('% of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_perc.png')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_perc.svg')
+            plt.close()
+            sns.histplot(x=key, data=percell_result_df, hue='to celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+            plt.ylabel('number of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_log.png')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_log.svg')
+            plt.close()
+            sns.histplot(x=key, data=percell_result_df, hue='to celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+            plt.ylabel('% of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_perc_log.png')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_perc_log.svg')
+            plt.close()
+            if len(percell_result_df) <= 500:
+                sns.stripplot(x='to celltype', y=key, data=percell_result_df, color='black',
+                              alpha=0.4,
+                              dodge=True, size=3)
+                sns.boxplot(x='to celltype', y=key, data=percell_result_df, palette=ct_palette)
+                plt.ylabel(xlabel)
+                plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
+                plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_box.png')
+                plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_box.svg')
+                plt.close()
+        log.info('Get information about all synapses, make statistics and plot')
+        len_syns = len(ct2_sizes) + len(ct3_sizes)
+        syn_sizes_df = pd.DataFrame(columns=['syn sizes', 'to celltype'],
+                                    index=range(len_syns))
+        syn_sizes_df.loc[0: len(ct2_sizes) - 1, 'syn sizes'] = ct2_sizes
+        syn_sizes_df.loc[0: len(ct2_sizes) - 1, 'to celltype'] = ct_dict[ct2]
+        syn_sizes_df.loc[len(ct2_sizes): len_syns - 1, 'syn sizes'] = ct3_sizes
+        syn_sizes_df.loc[len(ct2_sizes): len_syns - 1, 'to celltype'] = ct_dict[ct3]
+        syn_sizes_df.to_csv(f'{f_name}/all_syn_sizes_{ct_dict[conn_ct]}_outgoing_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+        stats, p_value = ranksums(ct2_sizes, ct3_sizes)
+        ranksum_results.loc['all syn sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = stats
+        ranksum_results.loc['all syn sizes p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = p_value
+        ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[conn_ct]}_{ct_dict[ct3]}_{ct_dict[ct3]}.csv')
+        # plot all syn sizes values
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True)
+        plt.ylabel('number of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
+        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist.png')
+        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist.svg')
+        plt.close()
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+        plt.ylabel('number of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
+        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_log.png')
+        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_log.svg')
+        plt.close()
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        plt.ylabel('% of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
+        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_perc.png')
+        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_perc.svg')
+        plt.close()
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
+        plt.ylabel('% of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
+        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_log_perc.png')
+        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_log_perc.svg')
+        plt.close()
+        log.info(f'Step 4/X: Get information incoming to {ct_dict[conn_ct]}')
         suit_ct_inds = np.all(np.in1d(in_m_ssv_partners, all_suitable_ids).reshape(len(in_m_ssv_partners), 2), axis=1)
         in_m_cts = in_m_cts[suit_ct_inds]
         in_m_ssv_partners = in_m_ssv_partners[suit_ct_inds]
         in_m_sizes = in_m_sizes[suit_ct_inds]
         in_m_axs = in_m_axs[suit_ct_inds]
         in_m_rep_coord = in_m_rep_coord[suit_ct_inds]
-        log.info(f'Step 3/X: Get information outgoing from {ct_dict[conn_ct}')
+        percell_columns = ['cellid', 'celltype', f'syn number', f'sum syn size',
+                           f'mean syn size', 'from celltype']
+        percell_result_df = pd.DataFrame(columns=percell_columns, index=range(num_conn_ct_ids * 2))
+        percell_result_df['cellid'] = np.hstack([suitable_ids_dict[conn_ct], suitable_ids_dict[conn_ct]])
+        percell_result_df['celltype'] = ct_dict[conn_ct]
+        # get number synapses and sum size per cells to other celltype
+        # get information per cell about synapses to ct2
+        # from function 'msn_spine_density_gp_ratio'
+        log.info(f'Get per cell information from {ct_dict[ct2]}')
+        ct2_inds = np.where(in_m_cts == ct2)[0]
+        ct2_ssv_partners = in_m_ssv_partners[ct2_inds]
+        ct2_sizes = in_m_sizes[ct2_inds]
+        ct2_cts = in_m_cts[ct2_inds]
+        ct2_syn_numbers, ct2_sum_sizes, unique_ssv_ids = get_ct_syn_number_sumsize(syn_sizes=ct2_sizes,
+                                                                                   syn_ssv_partners=ct2_ssv_partners,
+                                                                                   syn_cts=ct2_cts, ct=conn_ct)
+        sort_inds_ct2 = np.argsort(unique_ssv_ids)
+        unique_ssv_ids_sorted = unique_ssv_ids[sort_inds_ct2]
+        ct2_syn_numbers_sorted = ct2_syn_numbers[sort_inds_ct2]
+        ct2_sum_sizes_sorted = ct2_sum_sizes[sort_inds_ct2]
+        sort_inds_ct2 = np.in1d(percell_result_df['cellid'], unique_ssv_ids_sorted)
+        sort_inds_ct2[-num_conn_ct_ids:] = False
+        percell_result_df.loc[sort_inds_ct2, 'syn number'] = ct2_syn_numbers_sorted
+        percell_result_df.loc[sort_inds_ct2, 'sum syn size'] = ct2_sum_sizes_sorted
+        percell_result_df.loc[sort_inds_ct2, 'mean syn size'] = ct2_sum_sizes_sorted / ct2_syn_numbers_sorted
+        percell_result_df.loc[sort_inds_ct2, 'from celltype'] = ct_dict[ct2]
+        log.info(
+            f'{len(unique_ssv_ids_sorted)} out of {num_conn_ct_ids} {ct_dict[conn_ct]} get synapses from {ct_dict[ct2]}')
+        log.info(f'Get per cell information from {ct_dict[ct3]}')
+        ct3_inds = np.where(m_cts == ct3)[0]
+        ct3_ssv_partners = m_ssv_partners[ct3_inds]
+        ct3_sizes = m_sizes[ct3_inds]
+        ct3_cts = m_cts[ct3_inds]
+        ct3_syn_numbers, ct3_sum_sizes, unique_ssv_ids = get_ct_syn_number_sumsize(syn_sizes=ct3_sizes,
+                                                                                   syn_ssv_partners=ct3_ssv_partners,
+                                                                                   syn_cts=ct3_cts, ct=conn_ct)
+        sort_inds_ct3 = np.argsort(unique_ssv_ids)
+        unique_ssv_ids_sorted = unique_ssv_ids[sort_inds_ct3]
+        ct3_syn_numbers_sorted = ct3_syn_numbers[sort_inds_ct3]
+        ct3_sum_sizes_sorted = ct3_sum_sizes[sort_inds_ct3]
+        sort_inds_ct3 = np.in1d(percell_result_df['cellid'], unique_ssv_ids_sorted)
+        sort_inds_ct3[num_conn_ct_ids:] = False
+        percell_result_df.loc[sort_inds_ct3, 'syn number'] = ct3_syn_numbers_sorted
+        percell_result_df.loc[sort_inds_ct3, 'sum syn size'] = ct3_sum_sizes_sorted
+        percell_result_df.loc[sort_inds_ct3, 'mean syn size'] = ct3_sum_sizes_sorted / ct3_syn_numbers_sorted
+        percell_result_df.loc[sort_inds_ct3, 'from celltype'] = ct_dict[ct3]
+        percell_result_df = percell_result_df.dropna()
+        percell_result_df = percell_result_df.reset_index(drop=True)
+        percell_result_df.to_csv(f'{f_name}/percell_{ct_dict[conn_ct]}_incoming_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+        log.info(
+            f'{len(unique_ssv_ids_sorted)} out of {num_conn_ct_ids} {ct_dict[conn_ct]} get synapses from {ct_dict[ct3]}')
+        log.info('Plot and get stats')
+        for key in percell_result_df.keys():
+            if 'cellid' in key or 'celltype' in key:
+                continue
+            key_groups = [group[key].values for name, group in
+                          percell_result_df.groupby('from celltype')]
+            stats, p_value = ranksums(key_groups[0], key_groups[1])
+            ranksum_results.loc[f'{key} per cell stats', f'from {ct_dict[ct2]} vs from {ct_dict[ct3]}'] = stats
+            ranksum_results.loc[
+                f'{key} per cell p-value', f'from {ct_dict[ct2]} vs from {ct_dict[ct3]}'] = p_value
+            if 'size' in key:
+                xlabel = f'{key} [µm²]'
+            else:
+                xlabel = key
+            sns.histplot(x=key, data=percell_result_df, hue='from celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True)
+            plt.ylabel('number of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist.png')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist.svg')
+            plt.close()
+            sns.histplot(x=key, data=percell_result_df, hue='from celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
+            plt.ylabel('% of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_perc.png')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_perc.svg')
+            plt.close()
+            sns.histplot(x=key, data=percell_result_df, hue='from celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+            plt.ylabel('number of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_log.png')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_log.svg')
+            plt.close()
+            sns.histplot(x=key, data=percell_result_df, hue='from celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+            plt.ylabel('% of cells')
+            plt.xlabel(xlabel)
+            plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_perc_log.png')
+            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_perc_log.svg')
+            plt.close()
+            if len(percell_result_df) <= 500:
+                sns.stripplot(x='from celltype', y=key, data=percell_result_df, color='black',
+                              alpha=0.4,
+                              dodge=True, size=3)
+                sns.boxplot(x='from celltype', y=key, data=percell_result_df, palette=ct_palette)
+                plt.ylabel(xlabel)
+                plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
+                plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_box.png')
+                plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_box.svg')
+                plt.close()
+        log.info('Get information about all synapses, make statistics and plot')
+        len_syns = len(ct2_sizes) + len(ct3_sizes)
+        syn_sizes_df = pd.DataFrame(columns=['syn sizes', 'from celltype'],
+                                    index=range(len_syns))
+        syn_sizes_df.loc[0: len(ct2_sizes) - 1, 'syn sizes'] = ct2_sizes
+        syn_sizes_df.loc[0: len(ct2_sizes) - 1, 'from celltype'] = ct_dict[ct2]
+        syn_sizes_df.loc[len(ct2_sizes): len_syns - 1, 'syn sizes'] = ct3_sizes
+        syn_sizes_df.loc[len(ct2_sizes): len_syns - 1, 'from celltype'] = ct_dict[ct3]
+        syn_sizes_df.to_csv(f'{f_name}/all_syn_sizes_{ct_dict[conn_ct]}_incoming_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+        stats, p_value = ranksums(ct2_sizes, ct3_sizes)
+        ranksum_results.loc['all syn sizes stats', f'from {ct_dict[ct2]} vs from {ct_dict[ct3]}'] = stats
+        ranksum_results.loc['all syn sizes p-value', f'from {ct_dict[ct2]} vs from {ct_dict[ct3]}'] = p_value
+        ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[conn_ct]}_{ct_dict[ct3]}_{ct_dict[ct3]}.csv')
+        # plot all syn sizes values
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='from celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True)
+        plt.ylabel('number of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes incoming to {ct_dict[conn_ct]} cells')
+        plt.savefig(f'{f_name}/all_synsizes_incoming_hist.png')
+        plt.savefig(f'{f_name}/all_synsizes_incoming_hist.svg')
+        plt.close()
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='from celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+        plt.ylabel('number of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes incoming from {ct_dict[conn_ct]} cells')
+        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_log.png')
+        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_log.svg')
+        plt.close()
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='from celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        plt.ylabel('% of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes incoming to {ct_dict[conn_ct]} cells')
+        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_perc.png')
+        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_perc.svg')
+        plt.close()
+        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='from celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
+        plt.ylabel('% of synapses')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Synapse sizes incoming to {ct_dict[conn_ct]} cells')
+        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_log_perc.png')
+        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_log_perc.svg')
+        plt.close()
+        raise ValueError
 
-
-
-
-        log.info(f'Get information outgoing from {ct_dict[ct2]}')
-        ct2_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, ct3] for cellid in ct2_cellids]
-        ct2_output = start_multiprocess_imap(get_multi_syn_info_per_cell, ct2_input)
-        ct2_output = np.array(ct2_output, dtype=object)
-        number_target_ct2 = ct2_output[:, 0]
-        perc_single_conn_ct2 = ct2_output[:, 1]
-        perc_single_syns_ct2 = ct2_output[:, 2]
-        perc_single_syn_area_ct2 = ct2_output[:, 3]
-        ct2_output_dict = dict(ChainMap(*ct2_output[:, 4]))
-        write_obj2pkl(f'{f_name}/{ct_dict[ct2]}_{ct_dict[ct3]}_indiv_conns_dict.pkl', ct2_output_dict)
-        #get sizes independent from cellids
-        ct2_output_sizes = m_sizes[ct2_ax_inds]
-        log.info(f'Get information outgoing from {ct_dict[ct3]}')
-        ct3_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, ct2] for cellid in ct3_cellids]
-        ct3_output = start_multiprocess_imap(get_multi_syn_info_per_cell, ct3_input)
-        ct3_output = np.array(ct3_output, dtype=object)
-        number_target_ct3 = ct3_output[:, 0]
-        perc_single_conn_ct3 = ct3_output[:, 1]
-        perc_single_syns_ct3 = ct3_output[:, 2]
-        perc_single_syn_area_ct3 = ct3_output[:, 3]
-        ct3_output_dict = dict(ChainMap(*ct3_output[:, 4]))
-        write_obj2pkl(f'{f_name}/{ct_dict[ct3]}_{ct_dict[ct2]}_indiv_conns_dict.pkl', ct3_output_dict)
-        #get sizes independent from cellids
-        ct3_output_sizes = m_sizes[ct3_ax_inds]
-        #also get information about synapses within celltypes
-
-    else:
-        log.info(f'Get {ct_dict[ct2]} parameter information per {ct_dict[conn_ct]} cell')
         # get number of ct2 partner cells and size information for all of them
         #get msn cells connected to gpe
-        msn_gpe_ids = msn_result_df['cellid'][msn_result_df['syn number to GPe'] > 0]
         gpe_input = [[cellid, m_ssv_partners, m_sizes, m_rep_coord, m_cts, m_axs, gpe_ct] for cellid in msn_gpe_ids]
         gpe_output = start_multiprocess_imap(get_multi_syn_info_per_cell, gpe_input)
         gpe_output = np.array(gpe_output, dtype=object)

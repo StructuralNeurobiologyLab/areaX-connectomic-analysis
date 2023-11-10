@@ -1,5 +1,5 @@
-#script to plot spine density for all msns
-#plot spine density with msn subgroups overlayed
+#script to plot spine density for all msns or other celltype
+#plot spine density with msn subgroups overlayed or other celltype
 #plot spine density as jointplot vs GPe/ GPi ratio in synapse number and synapse sum size
 #GPe/GPi ratios = (GPe + GPi)/GPi
 
@@ -29,16 +29,16 @@ if __name__ == '__main__':
     min_comp_len = 50
     syn_prob = 0.6
     min_syn_size = 0.1
-    msn_ct = 2
+    conn_ct = 0
     gpe_ct = 6
     gpi_ct = 7
     fontsize_jointplot = 12
     kde = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230919_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
-    min_comp_len, syn_prob, kde)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231110_j0251v5_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
+    ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('MSN spine density vs GP ratio', log_dir=f_name + '/logs/')
+    log = initialize_logging(f'{ct_dict[conn_ct]} spine density vs GP ratio', log_dir=f_name + '/logs/')
     log.info("Analysis of spine density vs GP ratio starts")
     if kde:
         log.info('Centre of jointplot will be kdeplot')
@@ -46,16 +46,16 @@ if __name__ == '__main__':
         log.info('Centre of jointplot will be scatter')
 
 
-    log.info('Step 1/7: Load and check all MSN cells')
+    log.info(f'Step 1/7: Load and check all {ct_dict[conn_ct]} cells')
     known_mergers = analysis_params.load_known_mergers()
-    MSN_dict = analysis_params.load_cell_dict(celltype=msn_ct)
-    MSN_ids = np.array(list(MSN_dict.keys()))
-    merger_inds = np.in1d(MSN_ids, known_mergers) == False
-    MSN_ids = MSN_ids[merger_inds]
+    cell_dict = analysis_params.load_cell_dict(celltype=conn_ct)
+    cell_ids = np.array(list(cell_dict.keys()))
+    merger_inds = np.in1d(cell_ids, known_mergers) == False
+    cell_ids = cell_ids[merger_inds]
     misclassified_asto_ids = analysis_params.load_potential_astros()
-    astro_inds = np.in1d(MSN_ids, misclassified_asto_ids) == False
-    MSN_ids = MSN_ids[astro_inds]
-    MSN_ids = check_comp_lengths_ct(cellids=MSN_ids, fullcelldict=MSN_dict, min_comp_len=min_comp_len,
+    astro_inds = np.in1d(cell_ids, misclassified_asto_ids) == False
+    cell_ids = cell_ids[astro_inds]
+    cell_ids = check_comp_lengths_ct(cellids=cell_ids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                     axon_only=False,
                                     max_path_len=None)
 
@@ -64,55 +64,61 @@ if __name__ == '__main__':
                'GP ratio sum syn size', 'syn number to GPe', 'syn size to GPe', 'syn number to GPi', 'syn size to GPi',
                'GP ratio cs number', 'GP ratio sum cs size', 'cs number to GPe', 'cs size to GPe',
                'cs number to GPi', 'cs size to GPi']
-    msn_result_df = pd.DataFrame(columns=columns, index=range(len(MSN_ids)))
-    MSN_ids = np.sort(MSN_ids)
-    msn_result_df['cellid'] = MSN_ids
+    conn_result_df = pd.DataFrame(columns=columns, index=range(len(cell_ids)))
+    cell_ids = np.sort(cell_ids)
+    conn_result_df['cellid'] = cell_ids
 
-    log.info('Step 2/7: Get spine density of all MSN cells')
-    msn_input = [[msn_id, min_comp_len, MSN_dict] for msn_id in MSN_ids]
-    spine_density = start_multiprocess_imap(get_spine_density, msn_input)
+    log.info(f'Step 2/7: Get spine density of all {ct_dict[conn_ct]} cells')
+    cell_input = [[cell_id, min_comp_len, cell_dict] for cell_id in cell_ids]
+    spine_density = start_multiprocess_imap(get_spine_density, cell_input)
     spine_density = np.array(spine_density)
-    msn_result_df['spine density'] = spine_density
-    msn_result_df.to_csv(f'{f_name}/msn_spine_density_results.csv')
+    conn_result_df['spine density'] = spine_density
+    conn_result_df.to_csv(f'{f_name}/{ct_dict[conn_ct]}_spine_density_results.csv')
 
-    log.info('Step 3/7: Get soma diameter for MSNs')
-    msn_soma_results = start_multiprocess_imap(get_cell_soma_radius, MSN_ids)
-    msn_soma_results = np.array(msn_soma_results, dtype='object')
-    msn_diameters = msn_soma_results[:, 1].astype(float) * 2
-    msn_result_df['soma diameter'] = msn_diameters
+    log.info(f'Step 3/7: Get soma diameter for {ct_dict[conn_ct]} cells')
+    cell_soma_results = start_multiprocess_imap(get_cell_soma_radius, cell_ids)
+    cell_soma_results = np.array(cell_soma_results, dtype='object')
+    cell_diameters = cell_soma_results[:, 1].astype(float) * 2
+    conn_result_df['soma diameter'] = cell_diameters
 
 
     log.info('Step 4/7: Get number of primary dendrites and dendritic lengths')
     #can also add number of branching points but currently difficult with skeleton parameter
-    input = [[msn_id, min_comp_len] for msn_id in MSN_ids]
-    msn_dendrite_results = start_multiprocess_imap(get_dendrite_info_cell, input)
-    msn_dendrite_results = np.array(msn_dendrite_results, dtype='object')
-    dendrite_lengths = msn_dendrite_results[:, 0]
-    number_primary_dendrites = msn_dendrite_results[:, 1]
-    number_branching_points = msn_dendrite_results[:, 2]
-    msn_result_df['dendritic length'] = dendrite_lengths/ 1000 #in mm
-    msn_result_df['number primary dendrites'] = number_primary_dendrites
-    msn_result_df['number branching points'] = number_branching_points
-    msn_result_df['ratio branching points vs primary dendrites'] = number_branching_points/ number_primary_dendrites
-    msn_result_df.to_csv(f'{f_name}/msn_morph_results.csv')
+    input = [[cell_id, min_comp_len] for cell_id in cell_ids]
+    cell_dendrite_results = start_multiprocess_imap(get_dendrite_info_cell, input)
+    cell_dendrite_results = np.array(cell_dendrite_results, dtype='object')
+    dendrite_lengths = cell_dendrite_results[:, 0]
+    number_primary_dendrites = cell_dendrite_results[:, 1]
+    number_branching_points = cell_dendrite_results[:, 2]
+    conn_result_df['dendritic length'] = dendrite_lengths/ 1000 #in mm
+    conn_result_df['number primary dendrites'] = number_primary_dendrites
+    conn_result_df['number branching points'] = number_branching_points
+    conn_result_df['ratio branching points vs primary dendrites'] = number_branching_points/ number_primary_dendrites
+    conn_result_df.to_csv(f'{f_name}/{ct_dict[conn_ct]}_morph_results.csv')
     '''
 
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230830_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
-        min_comp_len, syn_prob, kde)
+    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230830_j0251v5_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
+        ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     log.info(f'Use morph parameters from {f_name_saving1}')
-    msn_result_df = pd.read_csv(f'{f_name_saving1}/msn_morph_results.csv', index_col = 0)
-    for key in msn_result_df.keys():
+    conn_result_df
+     = pd.read_csv(f'{f_name_saving1}/{ct_dict[conn_ct]}_morph_results.csv', index_col = 0)
+    for key in conn_result_df
+    .keys():
         if 'cs' in key:
-            msn_result_df = msn_result_df.drop(key, axis = 1)
-    msn_result_df['dendritic length'] = msn_result_df['dendritic length'] / 1000 #in mm
+            conn_result_df
+             = conn_result_df
+             .drop(key, axis = 1)
+    conn_result_df
+    ['dendritic length'] = conn_result_df
+    ['dendritic length'] / 1000 #in mm
     '''
-    log.info('Step 4/7: Get GP syn ratio for MSNs')
-    msn_result_df['syn number to GPe'] = 0
-    msn_result_df['syn size to GPe'] = 0
-    msn_result_df['mean syn size to GPe'] = 0
-    msn_result_df['syn number to GPi'] = 0
-    msn_result_df['syn size to GPi'] = 0
-    msn_result_df['mean syn size to GPi'] = 0
+    log.info(f'Step 4/7: Get GP syn ratio for {ct_dict[conn_ct]} cells')
+    conn_result_df['syn number to GPe'] = 0
+    conn_result_df['syn size to GPe'] = 0
+    conn_result_df['mean syn size to GPe'] = 0
+    conn_result_df['syn number to GPi'] = 0
+    conn_result_df['syn size to GPi'] = 0
+    conn_result_df['mean syn size to GPi'] = 0
     log.info('Get suitable cellids from GPe and GPi')
     GPe_dict = analysis_params.load_cell_dict(gpe_ct)
     GPe_ids = np.array(list(GPe_dict.keys()))
@@ -137,7 +143,7 @@ if __name__ == '__main__':
     #use different version of function as long as m_ids not available
     '''
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv =sd_synssv,
-                                                                                                            pre_cts=[msn_ct],
+                                                                                                            pre_cts=[conn_ct],
                                                                                                             post_cts=[gpe_ct, gpi_ct],
                                                                                                             syn_prob_thresh=syn_prob,
                                                                                                             min_syn_size=min_syn_size,
@@ -146,14 +152,14 @@ if __name__ == '__main__':
     '''
     m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord = filter_synapse_caches_for_ct(
         sd_synssv=sd_synssv,
-        pre_cts=[msn_ct],
+        pre_cts=[conn_ct],
         post_cts=[gpe_ct, gpi_ct],
         syn_prob_thresh=syn_prob,
         min_syn_size=min_syn_size,
         axo_den_so=True,
         synapses_caches=None)
     #filter synapses to only include full cells
-    all_suitable_ids = np.hstack([MSN_ids, GPe_ids, GPi_ids])
+    all_suitable_ids = np.hstack([cell_ids, GPe_ids, GPi_ids])
     suit_ct_inds = np.all(np.in1d(m_ssv_partners, all_suitable_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_cts = m_cts[suit_ct_inds]
     m_ssv_partners = m_ssv_partners[suit_ct_inds]
@@ -164,55 +170,55 @@ if __name__ == '__main__':
     gpe_ssv_partners = m_ssv_partners[gpe_inds]
     gpe_sizes = m_sizes[gpe_inds]
     gpe_cts = m_cts[gpe_inds]
-    gpe_syn_numbers, gpe_sum_sizes, unique_msn_gpe = get_ct_syn_number_sumsize(syn_sizes = gpe_sizes,
+    gpe_syn_numbers, gpe_sum_sizes, unique_conn_gpe = get_ct_syn_number_sumsize(syn_sizes = gpe_sizes,
                                                                                syn_ssv_partners = gpe_ssv_partners,
-                                                                               syn_cts= gpe_cts, ct = msn_ct)
-    sort_inds_gpe = np.argsort(unique_msn_gpe)
-    unique_msn_gpe_sorted = unique_msn_gpe[sort_inds_gpe]
+                                                                               syn_cts= gpe_cts, ct = conn_ct)
+    sort_inds_gpe = np.argsort(unique_conn_gpe)
+    unique_conn_gpe_sorted = unique_conn_gpe[sort_inds_gpe]
     gpe_syn_numbers_sorted = gpe_syn_numbers[sort_inds_gpe]
     gpe_sum_sizes_sorted = gpe_sum_sizes[sort_inds_gpe]
-    gpe_df_inds = np.in1d(msn_result_df['cellid'], unique_msn_gpe_sorted)
-    msn_result_df.loc[gpe_df_inds, 'syn number to GPe'] = gpe_syn_numbers_sorted
-    msn_result_df.loc[gpe_df_inds, 'syn size to GPe'] = gpe_sum_sizes_sorted
-    msn_result_df.loc[gpe_df_inds, 'mean syn size to GPe'] = gpe_sum_sizes_sorted/ gpe_syn_numbers_sorted
+    gpe_df_inds = np.in1d(conn_result_df['cellid'], unique_conn_gpe_sorted)
+    conn_result_df.loc[gpe_df_inds, 'syn number to GPe'] = gpe_syn_numbers_sorted
+    conn_result_df.loc[gpe_df_inds, 'syn size to GPe'] = gpe_sum_sizes_sorted
+    conn_result_df.loc[gpe_df_inds, 'mean syn size to GPe'] = gpe_sum_sizes_sorted/ gpe_syn_numbers_sorted
 
     #get per cell information about synapses to GPi
     gpi_inds = np.where(m_cts == gpi_ct)[0]
     gpi_ssv_partners = m_ssv_partners[gpi_inds]
     gpi_sizes = m_sizes[gpi_inds]
     gpi_cts = m_cts[gpi_inds]
-    gpi_syn_numbers, gpi_sum_sizes, unique_msn_gpi = get_ct_syn_number_sumsize(syn_sizes=gpi_sizes,
+    gpi_syn_numbers, gpi_sum_sizes, unique_conn_gpi = get_ct_syn_number_sumsize(syn_sizes=gpi_sizes,
                                                                                syn_ssv_partners=gpi_ssv_partners,
-                                                                               syn_cts=gpi_cts, ct=msn_ct)
-    sort_inds_gpi = np.argsort(unique_msn_gpi)
-    unique_msn_gpi_sorted = unique_msn_gpi[sort_inds_gpi]
+                                                                               syn_cts=gpi_cts, ct=conn_ct)
+    sort_inds_gpi = np.argsort(unique_conn_gpi)
+    unique_conn_gpi_sorted = unique_conn_gpi[sort_inds_gpi]
     gpi_syn_numbers_sorted = gpi_syn_numbers[sort_inds_gpi]
     gpi_sum_sizes_sorted = gpi_sum_sizes[sort_inds_gpi]
-    gpi_df_inds = np.in1d(msn_result_df['cellid'], unique_msn_gpi_sorted)
-    msn_result_df.loc[gpi_df_inds, 'syn number to GPi'] = gpi_syn_numbers_sorted
-    msn_result_df.loc[gpi_df_inds, 'syn size to GPi'] = gpi_sum_sizes_sorted
-    msn_result_df.loc[gpi_df_inds, 'mean syn size to GPi'] = gpi_sum_sizes_sorted / gpi_syn_numbers_sorted
-    #get GP ratio per msn cell and put in dataframe: GPi/(GPi + GPe)
-    nonzero_inds = np.any([msn_result_df['syn number to GPi'] > 0, msn_result_df['syn number to GPe'] > 0], axis = 0)
-    msn_result_df.loc[nonzero_inds, 'GP ratio syn number'] = msn_result_df.loc[nonzero_inds, 'syn number to GPi'] / \
-                                                             (msn_result_df.loc[nonzero_inds, 'syn number to GPi']  + msn_result_df.loc[nonzero_inds, 'syn number to GPe'])
-    msn_result_df.loc[nonzero_inds, 'GP ratio sum syn size'] =  msn_result_df.loc[nonzero_inds, 'syn size to GPi']/ \
-                                                                 (msn_result_df.loc[nonzero_inds, 'syn size to GPe'] + msn_result_df.loc[nonzero_inds, 'syn size to GPi'])
-    msn_result_df.loc[nonzero_inds, 'GP ratio mean syn size'] = msn_result_df.loc[nonzero_inds, 'mean syn size to GPi']/ \
-                                                                 (msn_result_df.loc[nonzero_inds, 'mean syn size to GPe'] + msn_result_df.loc[nonzero_inds, 'mean syn size to GPi'])
+    gpi_df_inds = np.in1d(conn_result_df['cellid'], unique_conn_gpi_sorted)
+    conn_result_df.loc[gpi_df_inds, 'syn number to GPi'] = gpi_syn_numbers_sorted
+    conn_result_df.loc[gpi_df_inds, 'syn size to GPi'] = gpi_sum_sizes_sorted
+    conn_result_df.loc[gpi_df_inds, 'mean syn size to GPi'] = gpi_sum_sizes_sorted / gpi_syn_numbers_sorted
+    #get GP ratio per conn ct cell and put in dataframe: GPi/(GPi + GPe)
+    nonzero_inds = np.any([conn_result_df['syn number to GPi'] > 0, conn_result_df['syn number to GPe'] > 0], axis = 0)
+    conn_result_df.loc[nonzero_inds, 'GP ratio syn number'] = conn_result_df.loc[nonzero_inds, 'syn number to GPi'] / \
+                                                             (conn_result_df.loc[nonzero_inds, 'syn number to GPi']  + conn_result_df.loc[nonzero_inds, 'syn number to GPe'])
+    conn_result_df.loc[nonzero_inds, 'GP ratio sum syn size'] =  conn_result_df.loc[nonzero_inds, 'syn size to GPi']/ \
+                                                                 (conn_result_df.loc[nonzero_inds, 'syn size to GPe'] + conn_result_df.loc[nonzero_inds, 'syn size to GPi'])
+    conn_result_df.loc[nonzero_inds, 'GP ratio mean syn size'] = conn_result_df.loc[nonzero_inds, 'mean syn size to GPi']/ \
+                                                                 (conn_result_df.loc[nonzero_inds, 'mean syn size to GPe'] + conn_result_df.loc[nonzero_inds, 'mean syn size to GPi'])
 
-    msn_result_df.to_csv(f'{f_name}/msn_morph_GPratio.csv')
+    conn_result_df.to_csv(f'{f_name}/{ct_dict[conn_ct]}_morph_GPratio.csv')
     #get syn sizes for all cells
     lengp_syns = len(gpe_sizes) + len(gpi_sizes)
-    msn_gpe_partners = gpe_ssv_partners[np.where(gpe_cts == msn_ct)]
-    syn_sizes_df = pd.DataFrame(columns=['syn sizes', 'to celltype', 'cellid', 'MSN group'], index=range(lengp_syns))
+    conn_gpe_partners = gpe_ssv_partners[np.where(gpe_cts == conn_ct)]
+    syn_sizes_df = pd.DataFrame(columns=['syn sizes', 'to celltype', 'cellid', f'{ct_dict[conn_ct]} group'], index=range(lengp_syns))
     syn_sizes_df.loc[0: len(gpe_sizes) - 1, 'syn sizes'] = gpe_sizes
     syn_sizes_df.loc[0: len(gpe_sizes) - 1, 'to celltype'] = 'GPe'
-    syn_sizes_df.loc[0: len(gpe_sizes) - 1, 'cellid'] = msn_gpe_partners
-    msn_gpi_partners = gpi_ssv_partners[np.where(gpi_cts == msn_ct)]
+    syn_sizes_df.loc[0: len(gpe_sizes) - 1, 'cellid'] = conn_gpe_partners
+    conn_gpi_partners = gpi_ssv_partners[np.where(gpi_cts == conn_ct)]
     syn_sizes_df.loc[len(gpe_sizes): lengp_syns - 1, 'syn sizes'] = gpi_sizes
     syn_sizes_df.loc[len(gpe_sizes): lengp_syns - 1, 'to celltype'] = 'GPi'
-    syn_sizes_df.loc[len(gpe_sizes): lengp_syns - 1, 'cellid'] = msn_gpi_partners
+    syn_sizes_df.loc[len(gpe_sizes): lengp_syns - 1, 'cellid'] = conn_gpi_partners
     syn_sizes_df = syn_sizes_df.astype({'syn sizes': float})
     syn_sizes_df.to_csv(f'{f_name}/syn_sizes_toGP.csv')
     #get statistics for all sizes
@@ -276,7 +282,8 @@ if __name__ == '__main__':
     cs_ssv_celltypes, cs_ssv_axoness, cs_ssv_neuron_partners, cs_ssv_mesh_areas, cs_ssv_coords = filter_contact_sites_axoness(
         cs_ssv_mesh_areas=cs_ssv_mesh_areas, cs_ssv_celltypes=cs_ssv_celltypes,
         cs_ssv_neuron_partners=cs_ssv_neuron_partners, cs_ssv_axoness=cs_ssv_axoness,
-        cs_ssv_coords=cs_ssv_coords, pre_cts=[msn_ct], post_cts=[gpe_ct, gpi_ct], axo_den_so=True, min_size=0.1)
+        cs_ssv_coords=cs_ssv_coords, pre_cts=[conn_ct
+        ], post_cts=[gpe_ct, gpi_ct], axo_den_so=True, min_size=0.1)
     #filter so that only suitable ids left
     suit_ct_inds = np.all(np.in1d(cs_ssv_neuron_partners, all_suitable_ids).reshape(len(cs_ssv_neuron_partners), 2), axis=1)
     cs_ssv_celltypes = cs_ssv_celltypes[suit_ct_inds]
@@ -290,15 +297,20 @@ if __name__ == '__main__':
     gpe_cs_cts = cs_ssv_celltypes[gpe_inds]
     gpe_cs_numbers, gpe_cs_sum_sizes, unique_cs_msn_gpe = get_ct_syn_number_sumsize(syn_sizes=gpe_cs_sizes,
                                                                                syn_ssv_partners=gpe_cs_ssv_partners,
-                                                                               syn_cts=gpe_cs_cts, ct=msn_ct)
+                                                                               syn_cts=gpe_cs_cts, ct=conn_ct
+                                                                               )
     sort_inds_gpe = np.argsort(unique_cs_msn_gpe)
     unique_cs_msn_gpe_sorted = unique_cs_msn_gpe[sort_inds_gpe]
     gpe_cs_numbers_sorted = gpe_cs_numbers[sort_inds_gpe]
     gpe_cs_sum_sizes_sorted = gpe_cs_sum_sizes[sort_inds_gpe]
-    gpe_df_inds = np.in1d(msn_result_df['cellid'], unique_cs_msn_gpe_sorted)
-    msn_result_df.loc[gpe_df_inds, 'cs number to GPe'] = gpe_cs_numbers_sorted
-    msn_result_df.loc[gpe_df_inds, 'cs size to GPe'] = gpe_cs_sum_sizes_sorted
-    msn_result_df.loc[gpe_df_inds, 'mean cs size to GPe'] = gpe_cs_sum_sizes_sorted / gpe_cs_numbers_sorted
+    gpe_df_inds = np.in1d(conn_result_df
+    ['cellid'], unique_cs_msn_gpe_sorted)
+    conn_result_df
+    .loc[gpe_df_inds, 'cs number to GPe'] = gpe_cs_numbers_sorted
+    conn_result_df
+    .loc[gpe_df_inds, 'cs size to GPe'] = gpe_cs_sum_sizes_sorted
+    conn_result_df
+    .loc[gpe_df_inds, 'mean cs size to GPe'] = gpe_cs_sum_sizes_sorted / gpe_cs_numbers_sorted
 
     # get per cell information about synapses to GPi
     gpi_inds = np.where(cs_ssv_celltypes == gpi_ct)[0]
@@ -307,46 +319,80 @@ if __name__ == '__main__':
     gpi_cs_cts = cs_ssv_celltypes[gpi_inds]
     gpi_cs_numbers, gpi_cs_sum_sizes, unique_cs_msn_gpi = get_ct_syn_number_sumsize(syn_sizes=gpi_cs_sizes,
                                                                                syn_ssv_partners=gpi_cs_ssv_partners,
-                                                                               syn_cts=gpi_cs_cts, ct=msn_ct)
+                                                                               syn_cts=gpi_cs_cts, ct=conn_ct
+                                                                               )
     sort_inds_gpi = np.argsort(unique_cs_msn_gpi)
     unique_cs_msn_gpi_sorted = unique_cs_msn_gpi[sort_inds_gpi]
     gpi_cs_numbers_sorted = gpi_cs_numbers[sort_inds_gpi]
     gpi_cs_sum_sizes_sorted = gpi_cs_sum_sizes[sort_inds_gpi]
-    gpi_df_inds = np.in1d(msn_result_df['cellid'], unique_cs_msn_gpi_sorted)
-    msn_result_df.loc[gpi_df_inds, 'cs number to GPi'] = gpi_cs_numbers_sorted
-    msn_result_df.loc[gpi_df_inds, 'cs size to GPi'] = gpi_cs_sum_sizes_sorted
-    msn_result_df.loc[gpi_df_inds, 'mean cs size to GPi'] = gpi_cs_sum_sizes_sorted / gpi_cs_numbers_sorted
+    gpi_df_inds = np.in1d(conn_result_df
+    ['cellid'], unique_cs_msn_gpi_sorted)
+    conn_result_df
+    .loc[gpi_df_inds, 'cs number to GPi'] = gpi_cs_numbers_sorted
+    conn_result_df
+    .loc[gpi_df_inds, 'cs size to GPi'] = gpi_cs_sum_sizes_sorted
+    conn_result_df
+    .loc[gpi_df_inds, 'mean cs size to GPi'] = gpi_cs_sum_sizes_sorted / gpi_cs_numbers_sorted
     # get GP ratio per msn cell and put in dataframe: GPi/(GPi + GPe)
-    nonzero_inds = np.any([msn_result_df['cs number to GPi'] > 0, msn_result_df['cs number to GPe'] > 0], axis = 0)
-    msn_result_df.loc[nonzero_inds, 'GP ratio cs number'] = msn_result_df.loc[nonzero_inds, 'cs number to GPi'] / \
-                                                             (msn_result_df.loc[nonzero_inds, 'cs number to GPi'] +
-                                                              msn_result_df.loc[nonzero_inds, 'cs number to GPe'])
-    msn_result_df.loc[nonzero_inds, 'GP ratio sum cs size'] = msn_result_df.loc[nonzero_inds, 'cs size to GPi'] / \
-                                                               (msn_result_df.loc[nonzero_inds, 'cs size to GPe'] +
-                                                                msn_result_df.loc[nonzero_inds, 'cs size to GPi'])
+    nonzero_inds = np.any([conn_result_df
+    ['cs number to GPi'] > 0, conn_result_df
+    ['cs number to GPe'] > 0], axis = 0)
+    conn_result_df
+    .loc[nonzero_inds, 'GP ratio cs number'] = conn_result_df
+    .loc[nonzero_inds, 'cs number to GPi'] / \
+                                                             (conn_result_df
+                                                             .loc[nonzero_inds, 'cs number to GPi'] +
+                                                              conn_result_df
+                                                              .loc[nonzero_inds, 'cs number to GPe'])
+    conn_result_df
+    .loc[nonzero_inds, 'GP ratio sum cs size'] = conn_result_df
+    .loc[nonzero_inds, 'cs size to GPi'] / \
+                                                               (conn_result_df
+                                                               .loc[nonzero_inds, 'cs size to GPe'] +
+                                                                conn_result_df
+                                                                .loc[nonzero_inds, 'cs size to GPi'])
     # get cs size in relation to syn size
     #check that number of cs lager than that of syns
-    assert (msn_result_df['cs number to GPe'].sum() >= msn_result_df['syn number to GPe'].sum())
-    assert (msn_result_df['cs number to GPi'].sum() >= msn_result_df['syn number to GPi'].sum())
+    assert (conn_result_df
+    ['cs number to GPe'].sum() >= conn_result_df
+    ['syn number to GPe'].sum())
+    assert (conn_result_df
+    ['cs number to GPi'].sum() >= conn_result_df
+    ['syn number to GPi'].sum())
     #get cs number and size in relation to syn number and size
-    gpe_nonzero_inds = msn_result_df['syn number to GPe'] > 0
-    gpi_nonzero_inds = msn_result_df['syn number to GPi'] > 0
-    msn_result_df.loc[gpe_nonzero_inds, 'GPe syn vs cs fraction number'] = msn_result_df.loc[gpe_nonzero_inds, 'syn number to GPe']/ \
-                                                                        msn_result_df.loc[gpe_nonzero_inds, 'cs number to GPe']
-    msn_result_df.loc[gpe_nonzero_inds, 'GPe syn vs cs fraction sum size'] = msn_result_df.loc[
+    gpe_nonzero_inds = conn_result_df
+    ['syn number to GPe'] > 0
+    gpi_nonzero_inds = conn_result_df
+    ['syn number to GPi'] > 0
+    conn_result_df
+    .loc[gpe_nonzero_inds, 'GPe syn vs cs fraction number'] = conn_result_df
+    .loc[gpe_nonzero_inds, 'syn number to GPe']/ \
+                                                                        conn_result_df
+                                                                        .loc[gpe_nonzero_inds, 'cs number to GPe']
+    conn_result_df
+    .loc[gpe_nonzero_inds, 'GPe syn vs cs fraction sum size'] = conn_result_df
+    .loc[
                                                                                gpe_nonzero_inds, 'syn size to GPe'] / \
-                                                                           msn_result_df.loc[
+                                                                           conn_result_df
+                                                                           .loc[
                                                                                gpe_nonzero_inds, 'cs size to GPe']
-    msn_result_df.loc[gpi_nonzero_inds, 'GPi syn vs cs fraction number'] = msn_result_df.loc[
+    conn_result_df
+    .loc[gpi_nonzero_inds, 'GPi syn vs cs fraction number'] = conn_result_df
+    .loc[
                                                                                gpi_nonzero_inds, 'syn number to GPi'] / \
-                                                                           msn_result_df.loc[
+                                                                           conn_result_df
+                                                                           .loc[
                                                                                gpi_nonzero_inds, 'cs number to GPi']
-    msn_result_df.loc[gpi_nonzero_inds, 'GPi syn vs cs fraction sum size'] = msn_result_df.loc[
+    conn_result_df
+    .loc[gpi_nonzero_inds, 'GPi syn vs cs fraction sum size'] = conn_result_df
+    .loc[
                                                                              gpi_nonzero_inds, 'syn size to GPi'] / \
-                                                                         msn_result_df.loc[
+                                                                         conn_result_df
+                                                                         .loc[
                                                                              gpi_nonzero_inds, 'cs size to GPi']
 
-    msn_result_df.to_csv(f'{f_name}/msn_morph_GPratio_cs.csv')
+    conn_result_df
+    .to_csv(f'{f_name}/msn_morph_GPratio_cs.csv')
     # get cs sizes for all cells
     lengp_cs = len(gpe_cs_sizes) + len(gpi_cs_sizes)
     cs_sizes_df = pd.DataFrame(columns=['cs sizes', 'to celltype'], index=range(lengp_cs))
@@ -407,7 +453,8 @@ if __name__ == '__main__':
     '''
     log.info('Step 6/7: Plot morphological parameters vs GP ratio as joint plot')
     # plot histograms for all cells, GP ratio only for those connected to GP
-    for key in msn_result_df.keys():
+    for key in conn_result_df\
+            .keys():
         if 'cellid' in key or 'celltype' in key or 'cs' in key:
             continue
         if 'GP ratio' in key:
@@ -422,14 +469,16 @@ if __name__ == '__main__':
             xhist = f'{key} [1/µm]'
         else:
             xhist = key
-        sns.histplot(x=key, data=msn_result_df, color='black', common_norm=False,
+        sns.histplot(x=key, data=conn_result_df
+                     , color='black', common_norm=False,
                      fill=False, element="step", linewidth=3)
         plt.ylabel('count of cells')
         plt.xlabel(xhist)
         plt.title(key)
         plt.savefig(f'{f_name}/{key}_hist.png')
         plt.close()
-        sns.histplot(x=key, data=msn_result_df, color='black', common_norm=False,
+        sns.histplot(x=key, data=conn_result_df
+                     , color='black', common_norm=False,
                      fill=False, element="step", linewidth=3, stat='percent')
         plt.ylabel('percent of cells')
         plt.xlabel(xhist)
@@ -438,14 +487,19 @@ if __name__ == '__main__':
         plt.close()
 
     example_cellids = [662789385, 542544908, 1340425305,  728819856, 1200237873, 27161078]
-    example_inds = np.in1d(msn_result_df['cellid'], example_cellids)
+    example_inds = np.in1d(conn_result_df
+                           ['cellid'], example_cellids)
     #plot correlation between morphological parameters and GP ratio
     #calculate spearman corr
     ratio_key_list = ['GP ratio syn number', 'GP ratio sum syn size']
     spearman_result_df = pd.DataFrame(columns = ['stats', 'p-value'])
-    zero_inds = np.all([msn_result_df['syn number to GPi'] == 0, msn_result_df['syn number to GPe'] == 0], axis = 0)
-    plot_corr_df = msn_result_df[zero_inds == False]
-    for key in msn_result_df.keys():
+    zero_inds = np.all([conn_result_df
+                        ['syn number to GPi'] == 0, conn_result_df
+    ['syn number to GPe'] == 0], axis = 0)
+    plot_corr_df = conn_result_df
+    [zero_inds == False]
+    for key in conn_result_df\
+            .keys():
         if 'cellid' in key or 'celltype' in key or 'mean' in key:
             continue
         if 'GP ratio' in key and 'syn' in key and 'cs' in key:
@@ -481,9 +535,13 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_{rkey}_all.png')
             plt.savefig(f'{f_name}/{key}_{rkey}_all.svg')
             plt.close()
-            example_x = msn_result_df[key][example_inds]
-            example_y = msn_result_df[rkey][example_inds]
-            plt.scatter(msn_result_df[key], msn_result_df[rkey], color='gray')
+            example_x = conn_result_df
+            [key][example_inds]
+            example_y = conn_result_df
+            [rkey][example_inds]
+            plt.scatter(conn_result_df
+                        [key], conn_result_df
+            [rkey], color='gray')
             plt.scatter(example_x, example_y, color='red')
             plt.xlabel(xhist)
             plt.ylabel(ylabel)
@@ -494,7 +552,8 @@ if __name__ == '__main__':
             spearman_result_df.loc[f'{key} vs {rkey}', 'p-value'] = spear_res[1]
 
     #plot spine density vs dendritic length
-    g = sns.JointGrid(data=msn_result_df, x='dendritic length', y='spine density')
+    g = sns.JointGrid(data=conn_result_df
+                      , x='dendritic length', y='spine density')
     g.plot_joint(sns.kdeplot, color="#EAAE34")
     g.plot_joint(sns.scatterplot, color='black', alpha=0.3)
     g.plot_marginals(sns.histplot, fill=False, element = 'step',
@@ -508,12 +567,15 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/den_len_spine_den_all.png')
     plt.savefig(f'{f_name}/den_len_spine_den_all.svg')
     plt.close()
-    spear_res = spearmanr(msn_result_df['spine density'], msn_result_df['dendritic length'], nan_policy='omit')
+    spear_res = spearmanr(conn_result_df
+                          ['spine density'], conn_result_df
+    ['dendritic length'], nan_policy='omit')
     spearman_result_df.loc[f'spine density vs dendritic length', 'stats'] = spear_res[0]
     spearman_result_df.loc[f'spine density vs dendritic length', 'p-value'] = spear_res[1]
     '''
     #plot also GP syn ratio vs GP cs ratio
-    g = sns.JointGrid(data=msn_result_df, x='GP ratio cs number', y='GP ratio syn number')
+    g = sns.JointGrid(data=conn_result_df
+    , x='GP ratio cs number', y='GP ratio syn number')
     g.plot_joint(sns.kdeplot, color="#EAAE34")
     g.plot_joint(sns.scatterplot, color='black', alpha=0.3)
     g.plot_marginals(sns.histplot, fill=False, element = 'step',
@@ -527,7 +589,8 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/GP_ratio_cs_vs_syn_numbers_all.png')
     plt.savefig(f'{f_name}/GP_ratio_cs_vs_syn_numbers_all.svg')
     plt.close()
-    g = sns.JointGrid(data=msn_result_df, x='GP ratio sum cs size', y='GP ratio sum syn size')
+    g = sns.JointGrid(data=conn_result_df
+    , x='GP ratio sum cs size', y='GP ratio sum syn size')
     g.plot_joint(sns.kdeplot, color="#EAAE34")
     g.plot_joint(sns.scatterplot, color='black', alpha=0.3)
     g.plot_marginals(sns.histplot, fill=False,
@@ -541,88 +604,97 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/GP_ratio_cs_vs_syn_sum_size_all.png')
     plt.savefig(f'{f_name}/GP_ratio_cs_vs_syn_sum size_all.svg')
     plt.close()
-    spear_res = spearmanr(msn_result_df['GP ratio syn number'], msn_result_df['GP ratio cs number'], nan_policy='omit')
+    spear_res = spearmanr(conn_result_df
+    ['GP ratio syn number'], conn_result_df
+    ['GP ratio cs number'], nan_policy='omit')
     spearman_result_df.loc['GP ratio cs vs syn number', 'stats'] = spear_res[0]
     spearman_result_df.loc['GP ratio cs vs syn number', 'p-value'] = spear_res[1]
-    spear_res = spearmanr(msn_result_df['GP ratio sum syn size'], msn_result_df['GP ratio sum cs size'], nan_policy='omit')
+    spear_res = spearmanr(conn_result_df
+    ['GP ratio sum syn size'], conn_result_df
+    ['GP ratio sum cs size'], nan_policy='omit')
     spearman_result_df.loc['GP ratio cs vs sum sizes', 'stats'] = spear_res[0]
     spearman_result_df.loc['GP ratio cs vs sum sizes', 'p-value'] = spear_res[1]
     '''
 
     spearman_result_df.to_csv(f'{f_name}/spearman_corr_results.csv')
 
-    log.info('Step 7/7: Divide MSN into groups depending on connectivity, plot again and compare groups')
-    gpe_zero = msn_result_df['syn number to GPe'] == 0
-    gpi_zero = msn_result_df['syn number to GPi'] == 0
+    log.info(f'Step 7/7: Divide {ct_dict[conn_ct]} into groups depending on connectivity, plot again and compare groups')
+    gpe_zero = conn_result_df
+    ['syn number to GPe'] == 0
+    gpi_zero = conn_result_df
+    ['syn number to GPi'] == 0
     no_gp = np.all([gpe_zero, gpi_zero], axis = 0)
-    msn_result_df.loc[no_gp, 'celltype'] = 'MSN no GP'
+    conn_result_df.loc[no_gp, 'celltype'] = f'{ct_dict[conn_ct]} no GP'
     both_GP = np.any([gpe_zero, gpi_zero], axis = 0) == False
-    msn_result_df.loc[both_GP, 'celltype'] = 'MSN both GPs'
+    conn_result_df.loc[both_GP, 'celltype'] = f'{ct_dict[conn_ct]} both GPs'
     only_GPe = np.all([gpe_zero == False, gpi_zero], axis = 0)
-    msn_result_df.loc[only_GPe, 'celltype'] = 'MSN only GPe'
+    conn_result_df.loc[only_GPe, 'celltype'] = f'{ct_dict[conn_ct]} only GPe'
     only_GPi = np.all([gpe_zero, gpi_zero == False], axis=0)
-    msn_result_df.loc[only_GPi, 'celltype'] = 'MSN only GPi'
-    msn_result_df.to_csv(f'{f_name}/msn_spine_density_GPratio.csv')
-    celltype_groups = msn_result_df.groupby('celltype')
-    msn_subgroup_size = celltype_groups.size()
-    log.info(f'There are the following MSN subgroups with corresponding sizes: {msn_subgroup_size}')
+    conn_result_df.loc[only_GPi, 'celltype'] = f'{ct_dict[conn_ct]} only GPi'
+    conn_result_df.to_csv(f'{f_name}/{ct_dict[conn_ct]}_spine_density_GPratio.csv')
+    celltype_groups = conn_result_df.groupby('celltype')
+    conn_subgroup_size = celltype_groups.size()
+    log.info(f'There are the following {ct_dict[conn_ct]} subgroups with corresponding sizes: {conn_subgroup_size}')
     #create summary for number of subgroup and create plot
-    msn_subgroup_percent = msn_subgroup_size * 100 / len(MSN_ids)
-    msn_groups_str = np.unique(msn_result_df['celltype'])
-    msn_subgroup_df = pd.DataFrame(columns = ['celltype', 'number of MSN cells', '% of MSN cells'], index = range(len(msn_groups_str)))
-    msn_subgroup_df['celltype'] = msn_groups_str
-    msn_subgroup_df['number of MSN cells'] = np.array(msn_subgroup_size)
-    msn_subgroup_df['% of MSN cells'] = np.array(msn_subgroup_percent)
-    msn_subgroup_df.to_csv(f'{f_name}/msn_subgroup_numbers.csv')
-    msn_colors = ["#EAAE34", "black", "#707070", '#2F86A8']
-    sns.barplot(data = msn_subgroup_df, x = 'celltype', y = 'number of MSN cells', palette=msn_colors)
-    plt.savefig(f'{f_name}/number_msn_cells_subgroup_bar.png')
-    plt.savefig(f'{f_name}/number_msn_cells_subgroup_bar.svg')
+    conn_subgroup_percent = conn_subgroup_size * 100 / len(cell_ids)
+    conn_groups_str = np.unique(conn_result_df['celltype'])
+    conn_subgroup_df = pd.DataFrame(columns = ['celltype', f'number of {ct_dict[conn_ct]}cells', '% of {ct_dict[conn_ct]} cells'], index = range(len(conn_groups_str)))
+    conn_subgroup_df['celltype'] = conn_groups_str
+    conn_subgroup_df[f'number of {ct_dict[conn_ct]} cells'] = np.array(conn_subgroup_size)
+    conn_subgroup_df[f'% of {ct_dict[conn_ct]}cells'] = np.array(conn_subgroup_percent)
+    conn_subgroup_df.to_csv(f'{f_name}/conn_subgroup_numbers.csv')
+    conn_colors = ["#EAAE34", "black", "#707070", '#2F86A8']
+    sns.barplot(data = conn_subgroup_df, x = 'celltype', y = f'number of {ct_dict[conn_ct]} cells', palette=conn_colors)
+    plt.savefig(f'{f_name}/number_{ct_dict[conn_ct]}_cells_subgroup_bar.png')
+    plt.savefig(f'{f_name}/number_{ct_dict[conn_ct]}_cells_subgroup_bar.svg')
     plt.close()
-    # also add MSN group to syn sizes df
-    for msn_str in msn_groups_str:
-        inds = np.in1d(syn_sizes_df['cellid'], msn_result_df['cellid'][msn_result_df['celltype'] == msn_str])
-        syn_sizes_df.loc[inds, 'MSN group'] = msn_str
+    # also add conn ct group to syn sizes df
+    for conn_str in conn_groups_str:
+        inds = np.in1d(syn_sizes_df['cellid'], conn_result_df
+        ['cellid'][conn_result_df['celltype'] == conn_str])
+        syn_sizes_df.loc[inds, f'{ct_dict[conn_ct]} group'] = conn_str
     syn_sizes_df.to_csv(f'{f_name}/syn_sizes_toGP.csv')
     #get kruskal-wallis (non-parametric test) for all keys
     kruskal_results_df = pd.DataFrame(columns = ['stats', 'p-value'])
     # get kruskal for all syn sizes between groups
     syn_sizes_groups = [group['syn sizes'].values for name, group in
-                           syn_sizes_df.groupby('MSN group')]
+                           syn_sizes_df.groupby(f'{ct_dict[conn_ct]} group')]
     kruskal_res = kruskal(*syn_sizes_groups, nan_policy='omit')
     kruskal_results_df.loc['syn sizes', 'stats'] = kruskal_res[0]
     kruskal_results_df.loc['syn sizes', 'p-value'] = kruskal_res[1]
     #get kruskal for all syn sizes dependend on if to GPe or to GPi
     gpe_syn_sizes_df = syn_sizes_df[syn_sizes_df['to celltype'] == 'GPe']
     gpe_syn_sizes_groups = [group['syn sizes'].values for name, group in
-                        gpe_syn_sizes_df.groupby('MSN group')]
+                        gpe_syn_sizes_df.groupby(f'{ct_dict[conn_ct]} group')]
     gpi_syn_sizes_df = syn_sizes_df[syn_sizes_df['to celltype'] == 'GPi']
     gpi_syn_sizes_groups = [group['syn sizes'].values for name, group in
-                            gpi_syn_sizes_df.groupby('MSN group')]
+                            gpi_syn_sizes_df.groupby(f'{ct_dict[conn_ct]} group')]
     #get ranksum results for parameters compared between groups
-    group_comps = list(combinations(range(len(msn_groups_str)), 2))
-    ranksum_columns = [f'{msn_groups_str[gc[0]]} vs {msn_groups_str[gc[1]]}' for gc in group_comps]
+    group_comps = list(combinations(range(len(conn_groups_str)), 2))
+    ranksum_columns = [f'{conn_groups_str[gc[0]]} vs {conn_groups_str[gc[1]]}' for gc in group_comps]
     ranksum_group_df = pd.DataFrame(columns= ranksum_columns)
     #also do ranksum on syn sizes
-    syn_sizes_group_str = np.unique(syn_sizes_df['MSN group'])
+    syn_sizes_group_str = np.unique(syn_sizes_df[f'{ct_dict[conn_ct]} group'])
     syn_group_combs = list(combinations(range(len(syn_sizes_group_str)), 2))
     for sg in syn_group_combs:
         ranksum_res = ranksums(syn_sizes_groups[sg[0]], syn_sizes_groups[sg[1]])
         ranksum_group_df.loc[f'syn sizes stats', f'{syn_sizes_group_str[sg[0]]} vs {syn_sizes_group_str[sg[1]]}'] = ranksum_res[0]
         ranksum_group_df.loc[f'syn sizes p-value', f'{syn_sizes_group_str[sg[0]]} vs {syn_sizes_group_str[sg[1]]}'] = ranksum_res[1]
     ranksum_res_gpe = ranksums(gpe_syn_sizes_groups[0], gpe_syn_sizes_groups[1])
-    ranksum_group_df.loc[f'indiv syn sizes to GPe stats', f'{msn_groups_str[0]} vs {msn_groups_str[2]}'] = ranksum_res_gpe[0]
-    ranksum_group_df.loc[f'indiv syn sizes to GPe syn sizes p-value', f'{msn_groups_str[0]} vs {msn_groups_str[2]}'] = ranksum_res_gpe[
+    ranksum_group_df.loc[f'indiv syn sizes to GPe stats', f'{conn_groups_str[0]} vs {conn_groups_str[2]}'] = ranksum_res_gpe[0]
+    ranksum_group_df.loc[f'indiv syn sizes to GPe syn sizes p-value', f'{conn_groups_str[0]} vs {conn_groups_str[2]}'] = ranksum_res_gpe[
         1]
     ranksum_res_gpi = ranksums(gpi_syn_sizes_groups[0], gpi_syn_sizes_groups[1])
-    ranksum_group_df.loc[f'indiv syn sizes to GPi stats', f'{msn_groups_str[0]} vs {msn_groups_str[3]}'] = \
+    ranksum_group_df.loc[f'indiv syn sizes to GPi stats', f'{conn_groups_str[0]} vs {conn_groups_str[3]}'] = \
     ranksum_res_gpi[0]
     ranksum_group_df.loc[
-        f'indiv syn sizes to GPi syn sizes p-value', f'{msn_groups_str[0]} vs {msn_groups_str[3]}'] = \
+        f'indiv syn sizes to GPi syn sizes p-value', f'{conn_groups_str[0]} vs {conn_groups_str[3]}'] = \
     ranksum_res_gpi[
         1]
-    msn_palette = {ct: msn_colors[i] for i, ct in enumerate(msn_groups_str)}
-    for key in msn_result_df.keys():
+    conn_palette\
+        = {ct: conn_colors[i] for i, ct in enumerate(conn_groups_str)}
+    for key in conn_result_df\
+            .keys():
         if 'celltype' in key or 'cellid' in key:
             continue
         if 'GP ratio' in key:
@@ -637,43 +709,55 @@ if __name__ == '__main__':
             axis_label = key
         #get kruskal results for key
         celltype_key_groups = [group[key].values for name, group in
-                                    msn_result_df.groupby('celltype')]
+                                    conn_result_df
+                                        .groupby('celltype')]
         kruskal_res = kruskal(*celltype_key_groups, nan_policy='omit')
         kruskal_results_df.loc[key, 'stats'] = kruskal_res[0]
         kruskal_results_df.loc[key, 'p-value'] = kruskal_res[1]
         for gc in group_comps:
             ranksum_res = ranksums(celltype_key_groups[gc[0]], celltype_key_groups[gc[1]])
-            ranksum_group_df.loc[f' {key} stats', f'{msn_groups_str[gc[0]]} vs {msn_groups_str[gc[1]]}'] = ranksum_res[0]
-            ranksum_group_df.loc[f' {key} p-value', f'{msn_groups_str[gc[0]]} vs {msn_groups_str[gc[1]]}'] = ranksum_res[1]
-        sns.barplot(data = msn_result_df, x = 'celltype', y = key, palette=msn_palette)
+            ranksum_group_df.loc[f' {key} stats', f'{conn_groups_str[gc[0]]} vs {conn_groups_str[gc[1]]}'] = ranksum_res[0]
+            ranksum_group_df.loc[f' {key} p-value', f'{conn_groups_str[gc[0]]} vs {conn_groups_str[gc[1]]}'] = ranksum_res[1]
+        sns.barplot(data = conn_result_df
+                    , x = 'celltype', y = key, palette=conn_palette
+                    )
         plt.title(key)
         plt.ylabel(axis_label)
         plt.savefig(f'{f_name}/{key}_overview_bar.png')
         plt.savefig(f'{f_name}/{key}_overview_bar.svg')
         plt.close()
-        sns.boxplot(data=msn_result_df, x='celltype', y=key, palette=msn_palette)
+        sns.boxplot(data=conn_result_df
+                    , x='celltype', y=key, palette=conn_palette
+                    )
         plt.title(key)
         plt.savefig(f'{f_name}/{key}_overview_box.png')
         plt.savefig(f'{f_name}/{key}_overview_box.svg')
         plt.ylabel(axis_label)
         plt.close()
-        sns.stripplot(x='celltype', y=key, data=msn_result_df, color='black', alpha=0.2,
+        sns.stripplot(x='celltype', y=key, data=conn_result_df
+                      , color='black', alpha=0.2,
                       dodge=True, size=2)
-        sns.violinplot(x='celltype', y=key, data=msn_result_df, inner="box",
-                       palette=msn_palette)
+        sns.violinplot(x='celltype', y=key, data=conn_result_df
+                       , inner="box",
+                       palette=conn_palette
+                       )
         plt.title(key)
         plt.ylabel(axis_label)
         plt.savefig(f'{f_name}/{key}_overview_violin.png')
         plt.savefig(f'{f_name}/{key}_overview_violin.svg')
         plt.close()
-        sns.histplot(x=key, data=msn_result_df, hue = 'celltype', palette=msn_palette, common_norm=False,
+        sns.histplot(x=key, data=conn_result_df
+                     , hue = 'celltype', palette=conn_palette
+                     , common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True)
         plt.ylabel('number of cells')
         plt.xlabel(axis_label)
         plt.savefig(f'{f_name}/{key}_celltype_hist.png')
         plt.savefig(f'{f_name}/{key}_celltype_hist.svg')
         plt.close()
-        sns.histplot(x=key, data=msn_result_df, hue='celltype', palette=msn_palette, common_norm=False,
+        sns.histplot(x=key, data=conn_result_df
+                     , hue='celltype', palette=conn_palette
+                     , common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True, stat='percent')
         plt.ylabel('% of cells')
         plt.xlabel(axis_label)
@@ -682,16 +766,20 @@ if __name__ == '__main__':
         plt.close()
 
     kruskal_results_df.to_csv(f'{f_name}/kruskal_results.csv')
-    ranksum_group_df.to_csv(f'{f_name}/ranksums_msn_groups_results.csv')
+    ranksum_group_df.to_csv(f'{f_name}/ranksums_{ct_dict[conn_ct]}_groups_results.csv')
     '''
     #overlay jointplot with density plot and plot again
     ratio_key_list = ['GP ratio syn number', 'GP ratio sum syn size']
     for rkey in ratio_key_list:
-        g = sns.JointGrid(data=msn_result_df, x='spine density', y=rkey, hue="celltype", palette=msn_palette)
-        g.plot_joint(sns.kdeplot, hue = 'celltype', palette = msn_palette)
+        g = sns.JointGrid(data=conn_result_df
+        , x='spine density', y=rkey, hue="celltype", palette=conn_palette
+        )
+        g.plot_joint(sns.kdeplot, hue = 'celltype', palette = conn_palette
+        )
         g.plot_joint(sns.scatterplot, color = 'black', alpha = 0.3)
         g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
-                         kde=False, bins='auto', palette=msn_palette)
+                         kde=False, bins='auto', palette=conn_palette
+                         )
         g.ax_joint.set_xticks(g.ax_joint.get_xticks())
         g.ax_joint.set_yticks(g.ax_joint.get_yticks())
         g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize_jointplot)
@@ -706,53 +794,59 @@ if __name__ == '__main__':
         plt.close()
         '''
     #plot syn sizes of individual synapses for these groups
-    sns.histplot(x='syn sizes', data=syn_sizes_df, hue='MSN group', palette=msn_palette, common_norm=False,
+    sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
+                 , common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
-    plt.savefig(f'{f_name}/synsizes_to_GP_msn_groups_hist_perc.png')
-    plt.savefig(f'{f_name}/synsizes_to_GP_msn_groups_hist_perc.svg')
+    plt.savefig(f'{f_name}/synsizes_to_GP_{ct_dict[conn_ct]}_groups_hist_perc.png')
+    plt.savefig(f'{f_name}/synsizes_to_GP_{ct_dict[conn_ct]}_groups_hist_perc.svg')
     plt.close()
-    sns.histplot(x='syn sizes', data=syn_sizes_df, hue='MSN group', palette=msn_palette, common_norm=False,
+    sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{ct_dict[conn_ct]}group', palette=conn_palette
+                 , common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
-    plt.savefig(f'{f_name}/synsizes_to_GP_msn_groups_hist_log_perc.png')
-    plt.savefig(f'{f_name}/synsizes_to_GP_msn_groups_hist_log_perc.svg')
+    plt.savefig(f'{f_name}/synsizes_to_GP_{ct_dict[conn_ct]}_groups_hist_log_perc.png')
+    plt.savefig(f'{f_name}/synsizes_to_GP_{ct_dict[conn_ct]}_groups_hist_log_perc.svg')
     plt.close()
     #only to GPe
-    sns.histplot(x='syn sizes', data=gpe_syn_sizes_df, hue='MSN group', palette=msn_palette, common_norm=False,
+    sns.histplot(x='syn sizes', data=gpe_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
+                 , common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
     plt.title('Syn sizes to GPe')
-    plt.savefig(f'{f_name}/synsizes_to_GPe_msn_groups_hist_perc.png')
-    plt.savefig(f'{f_name}/synsizes_to_GPe_msn_groups_hist_perc.svg')
+    plt.savefig(f'{f_name}/synsizes_to_GPe_{ct_dict[conn_ct]}_groups_hist_perc.png')
+    plt.savefig(f'{f_name}/synsizes_to_GPe_{ct_dict[conn_ct]}_groups_hist_perc.svg')
     plt.close()
-    sns.histplot(x='syn sizes', data=gpe_syn_sizes_df, hue='MSN group', palette=msn_palette, common_norm=False,
+    sns.histplot(x='syn sizes', data=gpe_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
+                 , common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
     plt.title('Syn sizes to GPe')
-    plt.savefig(f'{f_name}/synsizes_to_GPe_msn_groups_hist_log_perc.png')
-    plt.savefig(f'{f_name}/synsizes_to_GPe_msn_groups_hist_log_perc.svg')
+    plt.savefig(f'{f_name}/synsizes_to_GPe_{ct_dict[conn_ct]}_groups_hist_log_perc.png')
+    plt.savefig(f'{f_name}/synsizes_to_GPe_{ct_dict[conn_ct]}_groups_hist_log_perc.svg')
     plt.close()
     # only to GPi
-    sns.histplot(x='syn sizes', data=gpi_syn_sizes_df, hue='MSN group', palette=msn_palette, common_norm=False,
+    sns.histplot(x='syn sizes', data=gpi_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
+                 , common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
     plt.title('Syn sizes to GPi')
-    plt.savefig(f'{f_name}/synsizes_to_GPi_msn_groups_hist_perc.png')
-    plt.savefig(f'{f_name}/synsizes_to_GPi_msn_groups_hist_perc.svg')
+    plt.savefig(f'{f_name}/synsizes_to_GPi_{ct_dict[conn_ct]}_groups_hist_perc.png')
+    plt.savefig(f'{f_name}/synsizes_to_GPi_{ct_dict[conn_ct]}_groups_hist_perc.svg')
     plt.close()
-    sns.histplot(x='syn sizes', data=gpi_syn_sizes_df, hue='MSN group', palette=msn_palette, common_norm=False,
+    sns.histplot(x='syn sizes', data=gpi_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
+                 , common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
     plt.title('Syn sizes to GPi')
-    plt.savefig(f'{f_name}/synsizes_to_GPi_msn_groups_hist_log_perc.png')
-    plt.savefig(f'{f_name}/synsizes_to_GPi_msn_groups_hist_log_perc.svg')
+    plt.savefig(f'{f_name}/synsizes_to_GPi_{ct_dict[conn_ct]}_groups_hist_log_perc.png')
+    plt.savefig(f'{f_name}/synsizes_to_GPi_{ct_dict[conn_ct]}_groups_hist_log_perc.svg')
     plt.close()
 
-    log.info('MSN subgroup analysis of spine density and GP ratio done')
+    log.info(f'{ct_dict[conn_ct]} subgroup analysis of spine density and GP ratio done')

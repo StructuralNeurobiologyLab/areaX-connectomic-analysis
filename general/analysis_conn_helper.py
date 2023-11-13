@@ -656,7 +656,7 @@ def get_ct_information_npy(ssv_partners, cellids_array_full, celltype_array_full
 
 def get_multi_syn_info_per_cell(params):
     '''
-    Get information about multiple conections between cells for individual cells.
+    Get information about multiple connections between cells for individual cells.
     Calculates distances between different synapses. Assumes synapses are filtered.
     Other ct is celltype not of cellid but cells it is connected to.
     Calculate shortest path between synapses similar as in cell.shortestpath2soma

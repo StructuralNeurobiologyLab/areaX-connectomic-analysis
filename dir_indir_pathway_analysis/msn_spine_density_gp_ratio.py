@@ -100,17 +100,11 @@ if __name__ == '__main__':
     f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230830_j0251v5_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
         ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     log.info(f'Use morph parameters from {f_name_saving1}')
-    conn_result_df
-     = pd.read_csv(f'{f_name_saving1}/{ct_dict[conn_ct]}_morph_results.csv', index_col = 0)
-    for key in conn_result_df
-    .keys():
+    conn_result_df= pd.read_csv(f'{f_name_saving1}/{ct_dict[conn_ct]}_morph_results.csv', index_col = 0)
+    for key in conn_result_df.keys():
         if 'cs' in key:
-            conn_result_df
-             = conn_result_df
-             .drop(key, axis = 1)
-    conn_result_df
-    ['dendritic length'] = conn_result_df
-    ['dendritic length'] / 1000 #in mm
+            conn_result_df= conn_result_df.drop(key, axis = 1)
+    conn_result_df['dendritic length'] = conn_result_df['dendritic length'] / 1000 #in mm
     '''
     log.info(f'Step 4/7: Get GP syn ratio for {ct_dict[conn_ct]} cells')
     conn_result_df['syn number to GPe'] = 0
@@ -469,16 +463,14 @@ if __name__ == '__main__':
             xhist = f'{key} [1/µm]'
         else:
             xhist = key
-        sns.histplot(x=key, data=conn_result_df
-                     , color='black', common_norm=False,
+        sns.histplot(x=key, data=conn_result_df, color='black', common_norm=False,
                      fill=False, element="step", linewidth=3)
         plt.ylabel('count of cells')
         plt.xlabel(xhist)
         plt.title(key)
         plt.savefig(f'{f_name}/{key}_hist.png')
         plt.close()
-        sns.histplot(x=key, data=conn_result_df
-                     , color='black', common_norm=False,
+        sns.histplot(x=key, data=conn_result_df, color='black', common_norm=False,
                      fill=False, element="step", linewidth=3, stat='percent')
         plt.ylabel('percent of cells')
         plt.xlabel(xhist)
@@ -487,20 +479,15 @@ if __name__ == '__main__':
         plt.close()
 
     example_cellids = [662789385, 542544908, 1340425305,  728819856, 1200237873, 27161078]
-    example_inds = np.in1d(conn_result_df
-                           ['cellid'], example_cellids)
+    example_inds = np.in1d(conn_result_df['cellid'], example_cellids)
     #plot correlation between morphological parameters and GP ratio
     #calculate spearman corr
     ratio_key_list = ['GP ratio syn number', 'GP ratio sum syn size']
     spearman_result_df = pd.DataFrame(columns = ['stats', 'p-value'])
-    zero_inds = np.all([conn_result_df
-                        ['syn number to GPi'] == 0, conn_result_df
-    ['syn number to GPe'] == 0], axis = 0)
-    plot_corr_df = conn_result_df
-    [zero_inds == False]
-    for key in conn_result_df\
-            .keys():
-        if 'cellid' in key or 'celltype' in key or 'mean' in key:
+    zero_inds = np.all([conn_result_df['syn number to GPi'] == 0, conn_result_df['syn number to GPe'] == 0], axis = 0)
+    plot_corr_df = conn_result_df[zero_inds == False]
+    for key in conn_result_df.keys():
+        if 'cellid' in key or 'celltype' in key or 'mean' in key or 'cs' in key:
             continue
         if 'GP ratio' in key and 'syn' in key and 'cs' in key:
             continue
@@ -535,13 +522,9 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_{rkey}_all.png')
             plt.savefig(f'{f_name}/{key}_{rkey}_all.svg')
             plt.close()
-            example_x = conn_result_df
-            [key][example_inds]
-            example_y = conn_result_df
-            [rkey][example_inds]
-            plt.scatter(conn_result_df
-                        [key], conn_result_df
-            [rkey], color='gray')
+            example_x = conn_result_df[key][example_inds]
+            example_y = conn_result_df[rkey][example_inds]
+            plt.scatter(conn_result_df[key], conn_result_df[rkey], color='gray')
             plt.scatter(example_x, example_y, color='red')
             plt.xlabel(xhist)
             plt.ylabel(ylabel)
@@ -552,8 +535,7 @@ if __name__ == '__main__':
             spearman_result_df.loc[f'{key} vs {rkey}', 'p-value'] = spear_res[1]
 
     #plot spine density vs dendritic length
-    g = sns.JointGrid(data=conn_result_df
-                      , x='dendritic length', y='spine density')
+    g = sns.JointGrid(data=conn_result_df, x='dendritic length', y='spine density')
     g.plot_joint(sns.kdeplot, color="#EAAE34")
     g.plot_joint(sns.scatterplot, color='black', alpha=0.3)
     g.plot_marginals(sns.histplot, fill=False, element = 'step',
@@ -567,15 +549,12 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/den_len_spine_den_all.png')
     plt.savefig(f'{f_name}/den_len_spine_den_all.svg')
     plt.close()
-    spear_res = spearmanr(conn_result_df
-                          ['spine density'], conn_result_df
-    ['dendritic length'], nan_policy='omit')
+    spear_res = spearmanr(conn_result_df['spine density'], conn_result_df['dendritic length'], nan_policy='omit')
     spearman_result_df.loc[f'spine density vs dendritic length', 'stats'] = spear_res[0]
     spearman_result_df.loc[f'spine density vs dendritic length', 'p-value'] = spear_res[1]
     '''
     #plot also GP syn ratio vs GP cs ratio
-    g = sns.JointGrid(data=conn_result_df
-    , x='GP ratio cs number', y='GP ratio syn number')
+    g = sns.JointGrid(data=conn_result_df, x='GP ratio cs number', y='GP ratio syn number')
     g.plot_joint(sns.kdeplot, color="#EAAE34")
     g.plot_joint(sns.scatterplot, color='black', alpha=0.3)
     g.plot_marginals(sns.histplot, fill=False, element = 'step',
@@ -589,8 +568,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/GP_ratio_cs_vs_syn_numbers_all.png')
     plt.savefig(f'{f_name}/GP_ratio_cs_vs_syn_numbers_all.svg')
     plt.close()
-    g = sns.JointGrid(data=conn_result_df
-    , x='GP ratio sum cs size', y='GP ratio sum syn size')
+    g = sns.JointGrid(data=conn_result_df, x='GP ratio sum cs size', y='GP ratio sum syn size')
     g.plot_joint(sns.kdeplot, color="#EAAE34")
     g.plot_joint(sns.scatterplot, color='black', alpha=0.3)
     g.plot_marginals(sns.histplot, fill=False,
@@ -604,14 +582,10 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/GP_ratio_cs_vs_syn_sum_size_all.png')
     plt.savefig(f'{f_name}/GP_ratio_cs_vs_syn_sum size_all.svg')
     plt.close()
-    spear_res = spearmanr(conn_result_df
-    ['GP ratio syn number'], conn_result_df
-    ['GP ratio cs number'], nan_policy='omit')
+    spear_res = spearmanr(conn_result_df['GP ratio syn number'], conn_result_df['GP ratio cs number'], nan_policy='omit')
     spearman_result_df.loc['GP ratio cs vs syn number', 'stats'] = spear_res[0]
     spearman_result_df.loc['GP ratio cs vs syn number', 'p-value'] = spear_res[1]
-    spear_res = spearmanr(conn_result_df
-    ['GP ratio sum syn size'], conn_result_df
-    ['GP ratio sum cs size'], nan_policy='omit')
+    spear_res = spearmanr(conn_result_df['GP ratio sum syn size'], conn_result_df['GP ratio sum cs size'], nan_policy='omit')
     spearman_result_df.loc['GP ratio cs vs sum sizes', 'stats'] = spear_res[0]
     spearman_result_df.loc['GP ratio cs vs sum sizes', 'p-value'] = spear_res[1]
     '''
@@ -619,10 +593,8 @@ if __name__ == '__main__':
     spearman_result_df.to_csv(f'{f_name}/spearman_corr_results.csv')
 
     log.info(f'Step 7/7: Divide {ct_dict[conn_ct]} into groups depending on connectivity, plot again and compare groups')
-    gpe_zero = conn_result_df
-    ['syn number to GPe'] == 0
-    gpi_zero = conn_result_df
-    ['syn number to GPi'] == 0
+    gpe_zero = conn_result_df['syn number to GPe'] == 0
+    gpi_zero = conn_result_df['syn number to GPi'] == 0
     no_gp = np.all([gpe_zero, gpi_zero], axis = 0)
     conn_result_df.loc[no_gp, 'celltype'] = f'{ct_dict[conn_ct]} no GP'
     both_GP = np.any([gpe_zero, gpi_zero], axis = 0) == False
@@ -650,8 +622,7 @@ if __name__ == '__main__':
     plt.close()
     # also add conn ct group to syn sizes df
     for conn_str in conn_groups_str:
-        inds = np.in1d(syn_sizes_df['cellid'], conn_result_df
-        ['cellid'][conn_result_df['celltype'] == conn_str])
+        inds = np.in1d(syn_sizes_df['cellid'], conn_result_df['cellid'][conn_result_df['celltype'] == conn_str])
         syn_sizes_df.loc[inds, f'{ct_dict[conn_ct]} group'] = conn_str
     syn_sizes_df.to_csv(f'{f_name}/syn_sizes_toGP.csv')
     #get kruskal-wallis (non-parametric test) for all keys
@@ -687,15 +658,15 @@ if __name__ == '__main__':
     ranksum_res_gpi = ranksums(gpi_syn_sizes_groups[0], gpi_syn_sizes_groups[1])
     ranksum_group_df.loc[f'indiv syn sizes to GPi stats', f'{conn_groups_str[0]} vs {conn_groups_str[3]}'] = \
     ranksum_res_gpi[0]
-    ranksum_group_df.loc[
-        f'indiv syn sizes to GPi syn sizes p-value', f'{conn_groups_str[0]} vs {conn_groups_str[3]}'] = \
-    ranksum_res_gpi[
-        1]
-    conn_palette\
-        = {ct: conn_colors[i] for i, ct in enumerate(conn_groups_str)}
-    for key in conn_result_df\
-            .keys():
-        if 'celltype' in key or 'cellid' in key:
+    ranksum_group_df.loc[f'indiv syn sizes to GPi syn sizes p-value', f'{conn_groups_str[0]} vs {conn_groups_str[3]}'] = \
+    ranksum_res_gpi[1]
+    conn_palette = {ct: conn_colors[i] for i, ct in enumerate(conn_groups_str)}
+    conn_result_df = conn_result_df.astype({'spine density': float, 'dendritic length': float,
+                                            'number primary dendrites': int, 'number branching points': int,
+                                            'ratio branching points vs primary dendrites': float,
+                                            'GP ratio syn number': float, 'GP ratio sum syn size': float})
+    for key in conn_result_df.keys():
+        if 'celltype' in key or 'cellid' in key or 'cs' in key:
             continue
         if 'GP ratio' in key:
             axis_label = '(GPe + GPi)/GPi'
@@ -709,8 +680,7 @@ if __name__ == '__main__':
             axis_label = key
         #get kruskal results for key
         celltype_key_groups = [group[key].values for name, group in
-                                    conn_result_df
-                                        .groupby('celltype')]
+                               conn_result_df.groupby('celltype')]
         kruskal_res = kruskal(*celltype_key_groups, nan_policy='omit')
         kruskal_results_df.loc[key, 'stats'] = kruskal_res[0]
         kruskal_results_df.loc[key, 'p-value'] = kruskal_res[1]
@@ -718,46 +688,35 @@ if __name__ == '__main__':
             ranksum_res = ranksums(celltype_key_groups[gc[0]], celltype_key_groups[gc[1]])
             ranksum_group_df.loc[f' {key} stats', f'{conn_groups_str[gc[0]]} vs {conn_groups_str[gc[1]]}'] = ranksum_res[0]
             ranksum_group_df.loc[f' {key} p-value', f'{conn_groups_str[gc[0]]} vs {conn_groups_str[gc[1]]}'] = ranksum_res[1]
-        sns.barplot(data = conn_result_df
-                    , x = 'celltype', y = key, palette=conn_palette
-                    )
+        sns.barplot(data = conn_result_df, x = 'celltype', y = key, palette=conn_palette)
         plt.title(key)
         plt.ylabel(axis_label)
         plt.savefig(f'{f_name}/{key}_overview_bar.png')
         plt.savefig(f'{f_name}/{key}_overview_bar.svg')
         plt.close()
-        sns.boxplot(data=conn_result_df
-                    , x='celltype', y=key, palette=conn_palette
-                    )
+        sns.boxplot(data=conn_result_df, x='celltype', y=key, palette=conn_palette)
         plt.title(key)
         plt.savefig(f'{f_name}/{key}_overview_box.png')
         plt.savefig(f'{f_name}/{key}_overview_box.svg')
         plt.ylabel(axis_label)
         plt.close()
-        sns.stripplot(x='celltype', y=key, data=conn_result_df
-                      , color='black', alpha=0.2,
+        sns.stripplot(x='celltype', y=key, data=conn_result_df, color='black', alpha=0.2,
                       dodge=True, size=2)
-        sns.violinplot(x='celltype', y=key, data=conn_result_df
-                       , inner="box",
-                       palette=conn_palette
-                       )
+        sns.violinplot(x='celltype', y=key, data=conn_result_df, inner="box",
+                           palette=conn_palette)
         plt.title(key)
         plt.ylabel(axis_label)
         plt.savefig(f'{f_name}/{key}_overview_violin.png')
         plt.savefig(f'{f_name}/{key}_overview_violin.svg')
         plt.close()
-        sns.histplot(x=key, data=conn_result_df
-                     , hue = 'celltype', palette=conn_palette
-                     , common_norm=False,
+        sns.histplot(x=key, data=conn_result_df, hue = 'celltype', palette=conn_palette, common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True)
         plt.ylabel('number of cells')
         plt.xlabel(axis_label)
         plt.savefig(f'{f_name}/{key}_celltype_hist.png')
         plt.savefig(f'{f_name}/{key}_celltype_hist.svg')
         plt.close()
-        sns.histplot(x=key, data=conn_result_df
-                     , hue='celltype', palette=conn_palette
-                     , common_norm=False,
+        sns.histplot(x=key, data=conn_result_df, hue='celltype', palette=conn_palette, common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True, stat='percent')
         plt.ylabel('% of cells')
         plt.xlabel(axis_label)
@@ -771,8 +730,7 @@ if __name__ == '__main__':
     #overlay jointplot with density plot and plot again
     ratio_key_list = ['GP ratio syn number', 'GP ratio sum syn size']
     for rkey in ratio_key_list:
-        g = sns.JointGrid(data=conn_result_df
-        , x='spine density', y=rkey, hue="celltype", palette=conn_palette
+        g = sns.JointGrid(data=conn_result_df, x='spine density', y=rkey, hue="celltype", palette=conn_palette
         )
         g.plot_joint(sns.kdeplot, hue = 'celltype', palette = conn_palette
         )
@@ -794,16 +752,14 @@ if __name__ == '__main__':
         plt.close()
         '''
     #plot syn sizes of individual synapses for these groups
-    sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
-                 , common_norm=False,
+    sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
     plt.savefig(f'{f_name}/synsizes_to_GP_{ct_dict[conn_ct]}_groups_hist_perc.png')
     plt.savefig(f'{f_name}/synsizes_to_GP_{ct_dict[conn_ct]}_groups_hist_perc.svg')
     plt.close()
-    sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{ct_dict[conn_ct]}group', palette=conn_palette
-                 , common_norm=False,
+    sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
@@ -811,8 +767,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/synsizes_to_GP_{ct_dict[conn_ct]}_groups_hist_log_perc.svg')
     plt.close()
     #only to GPe
-    sns.histplot(x='syn sizes', data=gpe_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
-                 , common_norm=False,
+    sns.histplot(x='syn sizes', data=gpe_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
@@ -820,8 +775,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/synsizes_to_GPe_{ct_dict[conn_ct]}_groups_hist_perc.png')
     plt.savefig(f'{f_name}/synsizes_to_GPe_{ct_dict[conn_ct]}_groups_hist_perc.svg')
     plt.close()
-    sns.histplot(x='syn sizes', data=gpe_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
-                 , common_norm=False,
+    sns.histplot(x='syn sizes', data=gpe_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
@@ -830,8 +784,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/synsizes_to_GPe_{ct_dict[conn_ct]}_groups_hist_log_perc.svg')
     plt.close()
     # only to GPi
-    sns.histplot(x='syn sizes', data=gpi_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
-                 , common_norm=False,
+    sns.histplot(x='syn sizes', data=gpi_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')
@@ -839,8 +792,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/synsizes_to_GPi_{ct_dict[conn_ct]}_groups_hist_perc.png')
     plt.savefig(f'{f_name}/synsizes_to_GPi_{ct_dict[conn_ct]}_groups_hist_perc.svg')
     plt.close()
-    sns.histplot(x='syn sizes', data=gpi_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette
-                 , common_norm=False,
+    sns.histplot(x='syn sizes', data=gpi_syn_sizes_df, hue=f'{ct_dict[conn_ct]} group', palette=conn_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
     plt.ylabel('% of synapses')
     plt.xlabel('synaptic mesh area [µm²]')

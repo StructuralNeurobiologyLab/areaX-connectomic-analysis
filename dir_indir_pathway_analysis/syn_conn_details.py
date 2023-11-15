@@ -4,12 +4,13 @@
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper \
-        import filter_synapse_caches_for_ct, get_multi_syn_info_per_cell, get_percell_number_sumsize, filter_synapse_caches_general, get_ct_syn_number_sumsize
+        import filter_synapse_caches_for_ct, get_percell_number_sumsize, filter_synapse_caches_general, get_ct_syn_number_sumsize
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_histogram_selection
     import os as os
     import pandas as pd
     import numpy as np
@@ -200,42 +201,11 @@ if __name__ == '__main__':
             stats, p_value = ranksums(key_groups[0], key_groups[1])
             ranksum_results.loc[f'{key} per post-cell stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter'] = stats
             ranksum_results.loc[f'{key} per post-cell p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter'] = p_value
-            if 'size' in key:
-                xlabel = f'{key} [µm²]'
-            else:
-                xlabel = key
-            sns.histplot(x=key, data=percell_result_df, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True)
-            plt.ylabel('number of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
-            plt.savefig(f'{f_name}/percell_{key}_inter_hist.png')
-            plt.savefig(f'{f_name}/percell_{key}_inter_hist.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
-            plt.ylabel('% of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
-            plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc.png')
-            plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-            plt.ylabel('number of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
-            plt.savefig(f'{f_name}/percell_{key}_inter_hist_log.png')
-            plt.savefig(f'{f_name}/percell_{key}_inter_hist_log.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
-            plt.ylabel('% of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
-            plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc_log.png')
-            plt.savefig(f'{f_name}/percell_{key}_inter_hist_perc_log.svg')
-            plt.close()
+            #plot histograms
+            plot_histogram_selection(dataframe=percell_result_df, x_data=key, color_palette=ct_palette,
+                                     label=f'percell_{key}_inter', count='cells', foldername=f_name,
+                                     hue_data='celltype',
+                                     title=f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
             if len(percell_result_df) <= 500:
                 sns.stripplot(x='celltype', y=key, data=percell_result_df, color = 'black',
                               alpha=0.4,
@@ -264,40 +234,11 @@ if __name__ == '__main__':
         ranksum_results.loc['all syn sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter'] = stats
         ranksum_results.loc['all syn sizes p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter'] = p_value
         ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
-        #plot all syn sizes values
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True)
-        plt.ylabel('number of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-        plt.savefig(f'{f_name}/all_synsizes_inter_hist.png')
-        plt.savefig(f'{f_name}/all_synsizes_inter_hist.svg')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-        plt.ylabel('number of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-        plt.savefig(f'{f_name}/all_synsizes_inter_hist_log.png')
-        plt.savefig(f'{f_name}/all_synsizes_inter_hist_log.svg')
-        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-        plt.savefig(f'{f_name}/all_synsizes_inter_hist_perc.png')
-        plt.savefig(f'{f_name}/all_synsizes_inter_hist_perc.svg')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
-        plt.ylabel('% of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-        plt.savefig(f'{f_name}/all_synsizes_inter_hist_log_perc.png')
-        plt.savefig(f'{f_name}/all_synsizes_inter_hist_log_perc.svg')
-        plt.close()
+        #plot all syn sizes values as histogram
+        plot_histogram_selection(dataframe=syn_sizes_df, x_data='syn sizes', color_palette=ct_palette,
+                                 label='all_synsizes_inter', count='synapses', foldername=f_name,
+                                 hue_data='celltype',
+                                 title=f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
         log.info('Get information about multi-syn connections between celltypes')
         # get number of partner cells and size information for all of them
         # use syn_sizes df for information
@@ -352,38 +293,10 @@ if __name__ == '__main__':
         ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
         # plot results
         # plot sum sizes for pairwise cells as histogram
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True)
-        plt.ylabel('number of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
-        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
-        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_perc.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_perc.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-        plt.ylabel('number of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
-        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_log.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_log.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
-        plt.ylabel('% of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
-        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_log_perc.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_log_perc.svg')
-        plt.close()
+        plot_histogram_selection(dataframe=multi_conn_df, x_data='sum syn area', color_palette=ct_palette,
+                                 label='multi_sum_sizes_inter', count='cell-pairs', foldername=f_name,
+                                 hue_data='celltype',
+                                 title=f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
         # plot again as barplot
         # plot number of synapses again as barplot
         # make bins for each number, seperated by ct2 and ct3
@@ -542,38 +455,10 @@ if __name__ == '__main__':
                     xlabel = f'{key} [µm²]'
                 else:
                     xlabel = key
-                sns.histplot(x=key, data=percell_intra_result_df, hue='celltype', palette=ct_palette, common_norm=False,
-                             fill=False, element="step", linewidth=3, legend=True)
-                plt.ylabel('number of cells')
-                plt.xlabel(xlabel)
-                plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
-                plt.savefig(f'{f_name}/percell_{key}_intra_hist.png')
-                plt.savefig(f'{f_name}/percell_{key}_intra_hist.svg')
-                plt.close()
-                sns.histplot(x=key, data=percell_intra_result_df, hue='celltype', palette=ct_palette, common_norm=False,
-                             fill=False, element="step", linewidth=3, legend=True, stat='percent')
-                plt.ylabel('% of cells')
-                plt.xlabel(xlabel)
-                plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
-                plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc.png')
-                plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc.svg')
-                plt.close()
-                sns.histplot(x=key, data=percell_intra_result_df, hue='celltype', palette=ct_palette, common_norm=False,
-                             fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-                plt.ylabel('number of cells')
-                plt.xlabel(xlabel)
-                plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
-                plt.savefig(f'{f_name}/percell_{key}_intra_hist_log.png')
-                plt.savefig(f'{f_name}/percell_{key}_intra_hist_log.svg')
-                plt.close()
-                sns.histplot(x=key, data=percell_intra_result_df, hue='celltype', palette=ct_palette, common_norm=False,
-                             fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
-                plt.ylabel('% of cells')
-                plt.xlabel(xlabel)
-                plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
-                plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc_log.png')
-                plt.savefig(f'{f_name}/percell_{key}_intra_hist_perc_log.svg')
-                plt.close()
+                plot_histogram_selection(dataframe=percell_intra_result_df, x_data=key, color_palette=ct_palette,
+                                         label=f'percell_{key}_intra', count='cells', foldername=f_name,
+                                         hue_data='celltype',
+                                         title=f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
                 if len(percell_intra_result_df) <= 500:
                     sns.stripplot(x='celltype', y=key, data=percell_intra_result_df, color = 'black',
                                   alpha=0.4,
@@ -598,38 +483,10 @@ if __name__ == '__main__':
                 ranksum_results.loc['all syn sizes p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = p_value
             ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
             # plot all syn sizes values
-            sns.histplot(x='syn sizes', data=syn_sizes_intra_df, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True)
-            plt.ylabel('number of synapses')
-            plt.xlabel('synaptic mesh area [µm²]')
-            plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-            plt.savefig(f'{f_name}/all_synsizes_intra_hist.png')
-            plt.savefig(f'{f_name}/all_synsizes_intra_hist.svg')
-            plt.close()
-            sns.histplot(x='syn sizes', data=syn_sizes_intra_df, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-            plt.ylabel('number of synapses')
-            plt.xlabel('synaptic mesh area [µm²]')
-            plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-            plt.savefig(f'{f_name}/all_synsizes_intra_hist_log.png')
-            plt.savefig(f'{f_name}/all_synsizes_intra_hist_log.svg')
-            plt.close()
-            sns.histplot(x='syn sizes', data=syn_sizes_intra_df, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
-            plt.ylabel('% of synapses')
-            plt.xlabel('synaptic mesh area [µm²]')
-            plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-            plt.savefig(f'{f_name}/all_synsizes_intra_hist_perc.png')
-            plt.savefig(f'{f_name}/all_synsizes_intra_hist_perc.svg')
-            plt.close()
-            sns.histplot(x='syn sizes', data=syn_sizes_intra_df, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
-            plt.ylabel('% of synapses')
-            plt.xlabel('synaptic mesh area [µm²]')
-            plt.title(f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
-            plt.savefig(f'{f_name}/all_synsizes_intra_hist_log_perc.png')
-            plt.savefig(f'{f_name}/all_synsizes_intra_hist_log_perc.svg')
-            plt.close()
+            plot_histogram_selection(dataframe=syn_sizes_intra_df, x_data='syn sizes', color_palette=ct_palette,
+                                     label='all_synsizes_intra', count='synapses', foldername=f_name,
+                                     hue_data='celltype',
+                                     title=f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
             log.info('Get number of multisynapses within celltypes')
             # use syn_sizes df for information
             all_unique_pre_ids = np.unique(syn_sizes_intra_df['cellid pre'])
@@ -705,38 +562,10 @@ if __name__ == '__main__':
             ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
             # plot results
             # plot sum sizes for pairwise cells as histogram
-            sns.histplot(x='sum syn area', data=multi_conn_df_intra, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True)
-            plt.ylabel('number of cell-pairs')
-            plt.xlabel('synaptic mesh area [µm²]')
-            plt.title(f'Sum of synapse sizes in multisyn connections within celltypes')
-            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist.png')
-            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist.svg')
-            plt.close()
-            sns.histplot(x='sum syn area', data=multi_conn_df_intra, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
-            plt.ylabel('% of cell-pairs')
-            plt.xlabel('synaptic mesh area [µm²]')
-            plt.title(f'Sum of synapse sizes in multisyn connections within celltypes')
-            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_perc.png')
-            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_perc.svg')
-            plt.close()
-            sns.histplot(x='sum syn area', data=multi_conn_df_intra, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-            plt.ylabel('number of cell-pairs')
-            plt.xlabel('synaptic mesh area [µm²]')
-            plt.title(f'Sum of synapse sizes in multisyn connections within celltypes')
-            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_log.png')
-            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_log.svg')
-            plt.close()
-            sns.histplot(x='sum syn area', data=multi_conn_df_intra, hue='celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
-            plt.ylabel('% of cell-pairs')
-            plt.xlabel('synaptic mesh area [µm²]')
-            plt.title(f'Sum of synapse sizes in multisyn connections within celltypes')
-            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_log_perc.png')
-            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_log_perc.svg')
-            plt.close()
+            plot_histogram_selection(dataframe=multi_conn_df_intra, x_data='sum syn area', color_palette=ct_palette,
+                                     label='multi_sum_sizes_intra', count='cell-pairs', foldername=f_name,
+                                     hue_data='celltype',
+                                     title='Sum of synapse sizes in multisyn connections within celltypes')
             # plot again as barplot
             # plot number of synapses again as barplot
             # make bins for each number, seperated by ct2 and ct3
@@ -871,38 +700,10 @@ if __name__ == '__main__':
                 xlabel = f'{key} [µm²]'
             else:
                 xlabel = key
-            sns.histplot(x=key, data=percell_result_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True)
-            plt.ylabel('number of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist.png')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
-            plt.ylabel('% of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_perc.png')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_perc.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-            plt.ylabel('number of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_log.png')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_log.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
-            plt.ylabel('% of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_perc_log.png')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_hist_perc_log.svg')
-            plt.close()
+            plot_histogram_selection(dataframe=percell_result_df, x_data=key, color_palette=ct_palette,
+                                     label=f'percell_{key}_outgoing', count='cells', foldername=f_name,
+                                     hue_data='to celltype',
+                                     title=f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
             if len(percell_result_df) <= 500:
                 sns.stripplot(x='to celltype', y=key, data=percell_result_df, color='black',
                               alpha=0.4,
@@ -931,38 +732,10 @@ if __name__ == '__main__':
         ranksum_results.loc['all syn sizes p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = p_value
         ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[conn_ct]}_{ct_dict[ct3]}_{ct_dict[ct3]}.csv')
         # plot all syn sizes values
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True)
-        plt.ylabel('number of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
-        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist.png')
-        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist.svg')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-        plt.ylabel('number of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
-        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_log.png')
-        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_log.svg')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
-        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_perc.png')
-        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_perc.svg')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
-        plt.ylabel('% of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
-        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_log_perc.png')
-        plt.savefig(f'{f_name}/all_synsizes_outgoing_hist_log_perc.svg')
-        plt.close()
+        plot_histogram_selection(dataframe=syn_sizes_df, x_data='syn sizes', color_palette=ct_palette,
+                                 label='all_synsizes_outgoing', count='synapses', foldername=f_name,
+                                 hue_data='to celltype',
+                                 title=f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
         log.info('Get information about multi-syn connections')
         # get number of ct2 partner cells and size information for all of them
         #use syn_sizes df for information
@@ -1016,38 +789,10 @@ if __name__ == '__main__':
         ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[conn_ct]}_{ct_dict[ct3]}_{ct_dict[ct3]}.csv')
         #plot results
         #plot sum sizes for pairwise cells as histogram
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True)
-        plt.ylabel('number of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes outgoing from {ct_dict[conn_ct]} multisyn connections')
-        plt.savefig(f'{f_name}/multi_sum_sizes_outgoing_hist.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_outgoing_hist.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat = 'percent')
-        plt.ylabel('% of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes outgoing from {ct_dict[conn_ct]} multisyn connections')
-        plt.savefig(f'{f_name}/multi_sum_sizes_outgoing_hist_perc.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_outgoing_hist_perc.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale = True)
-        plt.ylabel('number of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes outgoing from {ct_dict[conn_ct]} multisyn connections')
-        plt.savefig(f'{f_name}/multi_sum_sizes_outgoing_hist_log.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_outgoing_hist_log.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='to celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat = 'percent', log_scale=True)
-        plt.ylabel('% of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes outgoing from {ct_dict[conn_ct]} multisyn connections')
-        plt.savefig(f'{f_name}/multi_sum_sizes_outgoing_hist_log_perc.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_outgoing_hist_log_perc.svg')
-        plt.close()
+        plot_histogram_selection(dataframe=multi_conn_df, x_data='sum syn area', color_palette=ct_palette,
+                                 label='multi_sum_sizes_outgoing', count='cell-pairs', foldername=f_name,
+                                 hue_data='to celltype',
+                                 title=f'Sum of synapse sizes outgoing from {ct_dict[conn_ct]} multisyn connections')
         #plot again as barplot
         # plot number of synapses again as barplot
         # make bins for each number, seperated by ct2 and ct3
@@ -1179,38 +924,10 @@ if __name__ == '__main__':
                 xlabel = f'{key} [µm²]'
             else:
                 xlabel = key
-            sns.histplot(x=key, data=percell_result_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True)
-            plt.ylabel('number of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist.png')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
-            plt.ylabel('% of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_perc.png')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_perc.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-            plt.ylabel('number of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_log.png')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_log.svg')
-            plt.close()
-            sns.histplot(x=key, data=percell_result_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                         fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
-            plt.ylabel('% of cells')
-            plt.xlabel(xlabel)
-            plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_perc_log.png')
-            plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_hist_perc_log.svg')
-            plt.close()
+            plot_histogram_selection(dataframe=percell_result_df, x_data=key, color_palette=ct_palette,
+                                     label=f'percell_{key}_{ct_dict[conn_ct]}_incoming', count='cells', foldername=f_name,
+                                     hue_data='from celltype',
+                                     title=f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
             if len(percell_result_df) <= 500:
                 sns.stripplot(x='from celltype', y=key, data=percell_result_df, color='black',
                               alpha=0.4,
@@ -1239,38 +956,10 @@ if __name__ == '__main__':
         ranksum_results.loc['all syn sizes p-value', f'from {ct_dict[ct2]} vs from {ct_dict[ct3]}'] = p_value
         ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[conn_ct]}_{ct_dict[ct3]}_{ct_dict[ct3]}.csv')
         # plot all syn sizes values
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True)
-        plt.ylabel('number of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes incoming to {ct_dict[conn_ct]} cells')
-        plt.savefig(f'{f_name}/all_synsizes_incoming_hist.png')
-        plt.savefig(f'{f_name}/all_synsizes_incoming_hist.svg')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-        plt.ylabel('number of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes incoming from {ct_dict[conn_ct]} cells')
-        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_log.png')
-        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_log.svg')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes incoming to {ct_dict[conn_ct]} cells')
-        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_perc.png')
-        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_perc.svg')
-        plt.close()
-        sns.histplot(x='syn sizes', data=syn_sizes_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
-        plt.ylabel('% of synapses')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Synapse sizes incoming to {ct_dict[conn_ct]} cells')
-        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_log_perc.png')
-        plt.savefig(f'{f_name}/all_synsizes_incoming_hist_log_perc.svg')
-        plt.close()
+        plot_histogram_selection(dataframe=syn_sizes_df, x_data='syn sizes', color_palette=ct_palette,
+                                 label='all_synsizes_incoming', count='synapses', foldername=f_name,
+                                 hue_data='from celltype',
+                                 title=f'Synapse sizes incoming to {ct_dict[conn_ct]} cells')
         log.info('Get information about multi-syn connections')
         # get number of ct2 partner cells and size information for all of them
         # use syn_sizes df for information
@@ -1325,38 +1014,10 @@ if __name__ == '__main__':
         ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[conn_ct]}_{ct_dict[ct3]}_{ct_dict[ct3]}.csv')
         # plot results
         # plot sum sizes for pairwise cells as histogram
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True)
-        plt.ylabel('number of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes incoming to {ct_dict[conn_ct]} multisyn connections')
-        plt.savefig(f'{f_name}/multi_sum_sizes_incoming_hist.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_incoming_hist.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes outgoing from {ct_dict[conn_ct]} multisyn connections')
-        plt.savefig(f'{f_name}/multi_sum_sizes_incoming_hist_perc.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_incoming_hist_perc.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-        plt.ylabel('number of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes incoming from {ct_dict[conn_ct]} multisyn connections')
-        plt.savefig(f'{f_name}/multi_sum_sizes_incoming_hist_log.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_incoming_hist_log.svg')
-        plt.close()
-        sns.histplot(x='sum syn area', data=multi_conn_df, hue='from celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
-        plt.ylabel('% of cell-pairs')
-        plt.xlabel('synaptic mesh area [µm²]')
-        plt.title(f'Sum of synapse sizes incoming to {ct_dict[conn_ct]} multisyn connections')
-        plt.savefig(f'{f_name}/multi_sum_sizes_incoming_hist_log_perc.png')
-        plt.savefig(f'{f_name}/multi_sum_sizes_incoming_hist_log_perc.svg')
-        plt.close()
+        plot_histogram_selection(dataframe=multi_conn_df, x_data='sum syn area', color_palette=ct_palette,
+                                 label='multi_sum_sizes_incoming', count='cell-pairs', foldername=f_name,
+                                 hue_data='from celltype',
+                                 title=f'Sum of synapse sizes incoming to {ct_dict[conn_ct]} multisyn connections')
         # plot again as barplot
         # plot number of synapses again as barplot
         # make bins for each number, seperated by ct2 and ct3

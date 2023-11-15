@@ -21,9 +21,9 @@ if __name__ == '__main__':
 
     bio_params = Analysis_Params(working_dir=global_params.wd, version='v5')
     ct_dict = bio_params.ct_dict()
-    use_gt = False
-    filter_syns = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231108_j0251v5_ax_fraglengths"
+    use_gt = True
+    filter_syns = False
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231114_j0251v5_ax_fraglengths_gt"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
@@ -227,6 +227,20 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/length_bins_hist_perc.png')
         plt.savefig(f'{f_name}/length_bins_hist_perc.svg')
         plt.close()
+
+    if use_gt:
+        #make plot with different categories and how many cells are in there
+        cats = [0.0, 50, 100, 500, 1000, np.max(axon_df['skeleton length'])]
+        length_cats = np.array(pd.cut(axon_df['skeleton length'], cats, right=False, labels=cats[:-1]))
+        axon_df['lengths bins'] = length_cats
+        axon_df.to_csv(f'{f_name}/proj_axon_lengths.csv')
+        length_sizes_df = pd.DataFrame(columns=['HVC', 'LMAN', 'DA'], index = cats)
+        for ax_ct in ax_cts:
+            ax_axon_df = axon_df[axon_df['celltype'] == ct_dict[ax_ct]]
+            ax_length_sizes = ax_axon_df.groupby('lengths bins').size()
+            for cat in ax_length_sizes.keys():
+                length_sizes_df.loc[cat, ct_dict[ax_ct]] = ax_length_sizes[cat]
+        length_sizes_df.to_csv(f'{f_name}/length_bins_summary.csv')
 
     log.info('Analysis done')
 

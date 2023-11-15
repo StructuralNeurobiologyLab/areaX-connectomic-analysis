@@ -28,10 +28,10 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    conn_ct = 8
+    conn_ct = 10
     #celltypes that are compared
-    ct2 = 6
-    ct3 = 7
+    ct2 = 2
+    ct3 = 8
     color_key = 'STNGP'
     fontsize_jointplot = 12
     kde = True

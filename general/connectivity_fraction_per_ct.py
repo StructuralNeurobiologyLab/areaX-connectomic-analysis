@@ -73,21 +73,16 @@ if __name__ == '__main__':
     cts_numbers_perct = pd.DataFrame(columns=['total number of cells', 'number of suitable cells', 'percentage of suitable cells'], index=celltypes)
     for ct in tqdm(range(num_cts)):
         ct_str = ct_dict[ct]
-        if ct in axon_cts:
-            cell_dict = analysis_params.load_cell_dict(ct)
-            #get ids with min compartment length
-            cellids = np.array(list(cell_dict.keys()))
+        cell_dict = analysis_params.load_cell_dict(ct)
+        cellids = np.array(list(cell_dict.keys()))
+        if exclude_known_mergers:
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
+        if ct in axon_cts:
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax, axon_only=True,
                               max_path_len=None)
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(cellids)
         else:
-            cell_dict = analysis_params.load_cell_dict(ct)
-            cellids = np.array(list(cell_dict.keys()))
-            if exclude_known_mergers:
-                merger_inds = np.in1d(cellids, known_mergers) == False
-                cellids = cellids[merger_inds]
             if ct == 2:
                 misclassified_asto_ids = analysis_params.load_potential_astros()
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False

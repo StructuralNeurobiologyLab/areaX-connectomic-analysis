@@ -51,7 +51,7 @@ if __name__ == '__main__':
     ct_palette = ct_colors.ct_palette(key = color_key)
     log.info("Analysis of MSN connectivity to GP starts")
     
-    log.info('Step 1/5: Load and check all cells')
+    log.info('Step 1/4: Load and check all cells')
     known_mergers = analysis_params.load_known_mergers()
     misclassified_astro_ids = analysis_params.load_potential_astros()
     if conn_ct is not None:
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     all_suitable_ids = np.hstack(all_suitable_ids)
     
-    log.info('Step 2/5: Get synapses between celltypes')
+    log.info('Step 2/4: Get synapses between celltypes')
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
     m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob = filter_synapse_caches_general(sd_synssv, syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size)
     synapse_caches = [m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob]
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     m_rep_coord = m_rep_coord[suit_ct_inds]
     if conn_ct is None:
         # make result df for celltype per postsynaptic celltype
-        log.info('Step 3/X: Get information to other celltype and plot per cell information')
+        log.info('Step 3/4: Get information to other celltype and plot per cell information')
         log.info('Get per cell information to other celltype')
         #celltype indicates postsynaptic celltype
         percell_columns = ['cellid', f'syn number', f'sum syn size', 'mean syn size', 'celltype']
@@ -152,6 +152,10 @@ if __name__ == '__main__':
         ct2_cts = m_cts[ct2_den_inds]
         ct2_ssv_ids = ct2_ssv_partners[np.where(ct2_cts == ct2)]
         ct2_den_syn_sizes = m_sizes[ct2_den_inds]
+        #get pre and post ids of all synapses
+        post_ct2_ids = ct2_ssv_ids
+        pre_inds = np.where(ct2_cts == ct3)
+        pre_ct2_ids = ct2_ssv_partners[pre_inds]
         ct2_syn_numbers, ct2_syn_sizes, unique_ct2_cellids = get_percell_number_sumsize(ct2_ssv_ids, ct2_den_syn_sizes)
         log.info(f'{len(unique_ct2_cellids)} out of {len(suitable_ids_dict[ct2])} {ct_dict[ct2]} get synapses from {ct_dict[ct3]}')
         sort_inds = np.argsort(unique_ct2_cellids)
@@ -166,6 +170,10 @@ if __name__ == '__main__':
         ct3_cts = m_cts[ct3_den_inds]
         ct3_ssv_ids = ct3_ssv_partners[np.where(ct3_cts == ct3)]
         ct3_den_syn_sizes = m_sizes[ct3_den_inds]
+        # get pre and post ids of all synapses
+        post_ct3_ids = ct3_ssv_ids
+        pre_inds = np.where(ct3_cts == ct2)
+        pre_ct3_ids = ct3_ssv_partners[pre_inds]
         ct3_syn_numbers, ct3_syn_sizes, unique_ct3_cellids = get_percell_number_sumsize(ct3_ssv_ids, ct3_den_syn_sizes)
         log.info(
             f'{len(unique_ct3_cellids)} out of {len(suitable_ids_dict[ct3])} {ct_dict[ct3]} get synapses from {ct_dict[ct2]}')
@@ -239,13 +247,18 @@ if __name__ == '__main__':
                 plt.savefig(f'{f_name}/percell_{key}_inter_box.svg')
                 plt.close()
         log.info('Get syn sizes of all cells between celltypes and plot them')
-        number_syns = len(ct2_den_syn_sizes) + len(ct3_den_syn_sizes)
-        syn_sizes_df = pd.DataFrame(columns=['syn sizes', 'celltype'],
+        len_ct2 = len(ct2_den_syn_sizes)
+        number_syns = len_ct2 + len(ct3_den_syn_sizes)
+        syn_sizes_df = pd.DataFrame(columns=['syn sizes', 'celltype', 'cellids pre', 'cellids post'],
                                     index=range(number_syns))
-        syn_sizes_df.loc[0:len(ct2_den_syn_sizes) - 1, 'syn sizes'] = ct2_den_syn_sizes
-        syn_sizes_df.loc[0:len(ct2_den_syn_sizes) - 1, 'celltype'] = ct_dict[ct2]
-        syn_sizes_df.loc[len(ct2_den_syn_sizes): number_syns - 1, 'syn sizes'] = ct3_den_syn_sizes
-        syn_sizes_df.loc[len(ct2_den_syn_sizes): number_syns - 1, 'celltype'] = ct_dict[ct3]
+        syn_sizes_df.loc[0:len_ct2 - 1, 'syn sizes'] = ct2_den_syn_sizes
+        syn_sizes_df.loc[0:len_ct2 - 1, 'celltype'] = ct_dict[ct2]
+        syn_sizes_df.loc[0:len_ct2 - 1, 'cellids pre'] = pre_ct2_ids
+        syn_sizes_df.loc[0:len_ct2 - 1, 'cellids post'] = post_ct2_ids
+        syn_sizes_df.loc[len_ct2: number_syns - 1, 'syn sizes'] = ct3_den_syn_sizes
+        syn_sizes_df.loc[len_ct2: number_syns - 1, 'celltype'] = ct_dict[ct3]
+        syn_sizes_df.loc[len_ct2: number_syns - 1, 'cellids pre'] = pre_ct3_ids
+        syn_sizes_df.loc[len_ct2: number_syns - 1, 'cellids post'] = post_ct3_ids
         syn_sizes_df.to_csv(f'{f_name}/all_syn_sizes_between_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
         stats, p_value = ranksums(ct2_den_syn_sizes, ct3_den_syn_sizes)
         ranksum_results.loc['all syn sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter'] = stats
@@ -285,7 +298,124 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_log_perc.png')
         plt.savefig(f'{f_name}/all_synsizes_inter_hist_log_perc.svg')
         plt.close()
-        log.info('Step 4/X: Get information to same celltype and plot per cell information')
+        log.info('Get information about multi-syn connections between celltypes')
+        # get number of partner cells and size information for all of them
+        # use syn_sizes df for information
+        all_unique_pre_ids = np.unique(syn_sizes_df['cellid pre'])
+        num_pre_ids = len(all_unique_pre_ids)
+        all_unique_post_ids = np.unique(syn_sizes_df['cellid post'])
+        num_post_ids = len(all_unique_post_ids)
+        multi_conn_df = pd.DataFrame(
+            columns=['number of synapses', 'sum syn area', 'celltype', 'cellid pre', 'cellid post'],
+            index=range(num_pre_ids * num_post_ids))
+
+        for i, cell_id in enumerate(tqdm(all_unique_pre_ids)):
+            cell_syn_sizes_df = syn_sizes_df[syn_sizes_df['cellid pre'] == cell_id]
+            # for ct2
+            ct2_cell_syn_sizes_df = cell_syn_sizes_df[cell_syn_sizes_df['celltype'] == ct_dict[ct2]]
+            ct2_syn_numbers, ct2_sum_sizes, unique_ct2_ids = get_percell_number_sumsize(
+                ct2_cell_syn_sizes_df['cellid post'], ct2_cell_syn_sizes_df['syn sizes'])
+            len_multi_syns_ct2 = len(ct2_syn_numbers)
+            start_ct2 = i * num_post_ids
+            end_ct2 = start_ct2 + len_multi_syns_ct2 - 1
+            multi_conn_df.loc[start_ct2: end_ct2, 'number of synapses'] = ct2_syn_numbers
+            multi_conn_df.loc[start_ct2:end_ct2, 'sum syn area'] = ct2_sum_sizes
+            multi_conn_df.loc[start_ct2: end_ct2, 'celltype'] = ct_dict[ct2]
+            multi_conn_df.loc[start_ct2: end_ct2, 'cellid pre'] = cell_id
+            multi_conn_df.loc[start_ct2: end_ct2, 'cellid post'] = unique_ct2_ids
+            ct3_cell_syn_sizes_df = cell_syn_sizes_df[cell_syn_sizes_df['celltype'] == ct_dict[ct3]]
+            ct3_syn_numbers, ct3_sum_sizes, unique_ct3_ids = get_percell_number_sumsize(
+                ct3_cell_syn_sizes_df['cellid post'], ct3_cell_syn_sizes_df['syn sizes'])
+            len_multi_syns_ct3 = len(ct3_syn_numbers)
+            start_ct3 = i * num_post_ids + len_multi_syns_ct2
+            end_ct3 = start_ct3 + len_multi_syns_ct3 - 1
+            multi_conn_df.loc[start_ct3: end_ct3, 'number of synapses'] = ct3_syn_numbers
+            multi_conn_df.loc[start_ct3:end_ct3, 'sum syn area'] = ct3_sum_sizes
+            multi_conn_df.loc[start_ct3: end_ct3, 'celltype'] = ct_dict[ct3]
+            multi_conn_df.loc[start_ct3: end_ct3, 'cellid pre'] = cell_id
+            multi_conn_df.loc[start_ct3: end_ct3, 'cellid post'] = unique_ct3_ids
+
+        multi_conn_df = multi_conn_df.dropna()
+        multi_conn_df = multi_conn_df.reset_index(drop=True)
+        multi_conn_df.to_csv(f'{f_name}/multi_syns_between_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+        # make statistics and run results
+        multi_ct2_numbers = multi_conn_df['number of synapses'][multi_conn_df['celltype'] == ct_dict[ct2]]
+        multi_ct3_numbers = multi_conn_df['number of synapses'][multi_conn_df['celltype'] == ct_dict[ct3]]
+        stats, p_value = ranksums(multi_ct2_numbers, multi_ct3_numbers)
+        ranksum_results.loc['multi syn numbers stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = stats
+        ranksum_results.loc['multi syn numbers p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = p_value
+        multi_ct2_sizes = multi_conn_df['sum syn area'][multi_conn_df['celltype'] == ct_dict[ct2]]
+        multi_ct3_sizes = multi_conn_df['sum syn area'][multi_conn_df['celltype'] == ct_dict[ct3]]
+        stats, p_value = ranksums(multi_ct2_sizes, multi_ct3_sizes)
+        ranksum_results.loc['multi syn sum sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = stats
+        ranksum_results.loc['multi syn sum sizess p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]}'] = p_value
+        ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+        # plot results
+        # plot sum sizes for pairwise cells as histogram
+        sns.histplot(x='sum syn area', data=multi_conn_df, hue='celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True)
+        plt.ylabel('number of cell-pairs')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
+        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist.png')
+        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist.svg')
+        plt.close()
+        sns.histplot(x='sum syn area', data=multi_conn_df, hue='celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        plt.ylabel('% of cell-pairs')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
+        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_perc.png')
+        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_perc.svg')
+        plt.close()
+        sns.histplot(x='sum syn area', data=multi_conn_df, hue='celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+        plt.ylabel('number of cell-pairs')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
+        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_log.png')
+        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_log.svg')
+        plt.close()
+        sns.histplot(x='sum syn area', data=multi_conn_df, hue='celltype', palette=ct_palette, common_norm=False,
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+        plt.ylabel('% of cell-pairs')
+        plt.xlabel('synaptic mesh area [µm²]')
+        plt.title(f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
+        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_log_perc.png')
+        plt.savefig(f'{f_name}/multi_sum_sizes_inter_hist_log_perc.svg')
+        plt.close()
+        # plot again as barplot
+        # plot number of synapses again as barplot
+        # make bins for each number, seperated by ct2 and ct3
+        ct2_multi_df = multi_conn_df[multi_conn_df['celltype'] == ct_dict[ct2]]
+        ct2_inds, ct2_bins = pd.factorize(np.sort(ct2_multi_df['number of synapses']))
+        ct2_counts = np.bincount(ct2_inds)
+        ct3_multi_df = multi_conn_df[multi_conn_df['celltype'] == ct_dict[ct3]]
+        ct3_inds, ct3_bins = pd.factorize(np.sort(ct3_multi_df['number of synapses']))
+        ct3_counts = np.bincount(ct3_inds)
+        num_ct2_bins = len(ct2_bins)
+        len_bins = num_ct2_bins + len(ct3_bins)
+        hist_df = pd.DataFrame(columns=['count of cell-pairs', 'percent of cell-pairs', 'bins', 'to celltype'],
+                               index=range(len_bins))
+        hist_df.loc[0: num_ct2_bins - 1, 'count of cell-pairs'] = ct2_counts
+        hist_df.loc[0: num_ct2_bins - 1, 'percent of cell-pairs'] = 100 * ct2_counts / np.sum(ct2_counts)
+        hist_df.loc[0: num_ct2_bins - 1, 'bins'] = ct2_bins
+        hist_df.loc[0: num_ct2_bins - 1, 'celltype'] = ct_dict[ct2]
+        hist_df.loc[num_ct2_bins: len_bins - 1, 'count of cell-pairs'] = ct3_counts
+        hist_df.loc[num_ct2_bins: len_bins - 1, 'percent of cell-pairs'] = 100 * ct3_counts / np.sum(ct3_counts)
+        hist_df.loc[num_ct2_bins: len_bins - 1, 'bins'] = ct3_bins
+        hist_df.loc[num_ct2_bins: len_bins - 1, 'celltype'] = ct_dict[ct3]
+        sns.barplot(data=hist_df, x='bins', y='count of cell-pairs', hue='celltype', palette=ct_palette)
+        plt.xlabel('number of synapses')
+        plt.savefig(f'{f_name}/multi_bar_syn_num_inter.svg')
+        plt.savefig(f'{f_name}/multi_bar_syn_num_inter.png')
+        plt.close()
+        sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='celltype', palette=ct_palette)
+        plt.xlabel('number of synapses')
+        plt.savefig(f'{f_name}/multi_bar_syn_num_inter_perc.svg')
+        plt.savefig(f'{f_name}/multi_bar_syn_num_inter_perc.png')
+        plt.close()
+        log.info('Step 4/4: Get information to same celltype and plot per cell information')
         #get number synapses and sum size per cells to same celltype
         #make sure only suitable cells are used in all synapses
         percell_intra_result_df = pd.DataFrame(columns=percell_columns, index=range(len(all_suitable_ids)))
@@ -294,7 +424,7 @@ if __name__ == '__main__':
         percell_intra_result_df.loc[len(suitable_ids_dict[ct2]): len(all_suitable_ids) - 1, 'celltype'] = ct_dict[ct3]
         #prepare dataframe for all syns
         max_syn_number = len(ct2_m_sizes) + len(ct3_m_sizes)
-        syn_sizes_intra_df = pd.DataFrame(columns=['syn sizes', 'celltype'],
+        syn_sizes_intra_df = pd.DataFrame(columns=['syn sizes', 'celltype', 'cellids pre', 'cellids post'],
                                     index=range(max_syn_number))
         suit_ct_inds = np.all(np.in1d(ct2_m_ssv_partners, suitable_ids_dict[ct2]).reshape(len(ct2_m_ssv_partners), 2), axis=1)
         ct2_m_cts = ct2_m_cts[suit_ct_inds]
@@ -309,6 +439,11 @@ if __name__ == '__main__':
             denso_inds = np.in1d(ct2_m_axs, [0, 2]).reshape(len(ct2_m_axs), 2)
             # get number synapses and sum size per cells to same celltype
             ct2_ssv_ids = ct2_m_ssv_partners[denso_inds]
+            #get pre and post cellids for multi_syn_analysis
+            pre_inds = np.where(ct2_m_axs == 1)
+            pre_ct2_ids = ct2_m_ssv_partners[pre_inds]
+            post_inds = np.where(ct2_m_axs != 1)
+            post_ct2_ids = ct2_m_ssv_partners[post_inds]
             ct2_syn_numbers, ct2_syn_sizes, unique_ct2_cellids = get_percell_number_sumsize(ct2_ssv_ids,
                                                                                             ct2_m_sizes)
             log.info(
@@ -322,8 +457,11 @@ if __name__ == '__main__':
             percell_intra_result_df.loc[id_inds, 'sum syn size'] = ct2_syn_sizes
             percell_intra_result_df.loc[id_inds, 'mean syn size'] = ct2_syn_sizes / ct2_syn_numbers
             #fill in all synapse size
-            syn_sizes_intra_df.loc[0:len(ct2_m_sizes) - 1, 'syn sizes'] = ct2_m_sizes
-            syn_sizes_intra_df.loc[0:len(ct2_m_sizes) - 1, 'celltype'] = ct_dict[ct2]
+            len_ct2 = len(ct2_m_sizes)
+            syn_sizes_intra_df.loc[0:len_ct2 - 1, 'syn sizes'] = ct2_m_sizes
+            syn_sizes_intra_df.loc[0:len_ct2 - 1, 'celltype'] = ct_dict[ct2]
+            syn_sizes_intra_df.loc[0:len_ct2 - 1, 'cellids pre'] = pre_ct2_ids
+            syn_sizes_intra_df.loc[0:len_ct2 - 1, 'cellids post'] = post_ct2_ids
         else:
             log.info(f'There are no synapses between cells of {ct_dict[ct2]} which follow the filter criteria')
         suit_ct_inds = np.all(np.in1d(ct3_m_ssv_partners, suitable_ids_dict[ct3]).reshape(len(ct3_m_ssv_partners), 2),
@@ -337,6 +475,11 @@ if __name__ == '__main__':
             denso_inds = np.in1d(ct3_m_axs, [0, 2]).reshape(len(ct3_m_axs), 2)
             # get number synapses and sum size per cells to same celltype
             ct3_ssv_ids = ct3_m_ssv_partners[denso_inds]
+            # get pre and post cellids for multi_syn_analysis
+            pre_inds = np.where(ct3_m_axs == 1)
+            pre_ct3_ids = ct3_m_ssv_partners[pre_inds]
+            post_inds = np.where(ct2_m_axs != 1)
+            post_ct3_ids = ct3_m_ssv_partners[post_inds]
             ct3_syn_numbers, ct3_syn_sizes, unique_ct3_cellids = get_percell_number_sumsize(ct3_ssv_ids,
                                                                                             ct3_m_sizes)
             log.info(
@@ -350,8 +493,10 @@ if __name__ == '__main__':
             percell_intra_result_df.loc[id_inds, 'sum syn size'] = ct3_syn_sizes
             percell_intra_result_df.loc[id_inds, 'mean syn size'] = ct3_syn_sizes / ct3_syn_numbers
             # fill in all synapse size
-            syn_sizes_intra_df.loc[len(ct2_m_sizes):len(ct2_m_sizes) + len(ct3_m_sizes) - 1, 'syn sizes'] = ct3_m_sizes
-            syn_sizes_intra_df.loc[len(ct2_m_sizes):len(ct2_m_sizes) + len(ct3_m_sizes) - 1, 'celltype'] = ct_dict[ct3]
+
+            len_ct3 = len(ct3_m_sizes)
+            syn_sizes_intra_df.loc[len_ct2:len_ct2 + len_ct3 - 1, 'syn sizes'] = ct3_m_sizes
+            syn_sizes_intra_df.loc[len_ct2:len_ct2 + len_ct3 - 1, 'celltype'] = ct_dict[ct3]
         else:
             log.info(f'There are no synapses between cells of {ct_dict[ct3]} which follow the filter criteria')
         percell_intra_result_df = percell_intra_result_df.dropna()
@@ -362,11 +507,11 @@ if __name__ == '__main__':
         syn_sizes_intra_df = syn_sizes_intra_df.dropna()
         syn_sizes_intra_df = syn_sizes_intra_df.reset_index(drop = True)
         syn_sizes_intra_df.to_csv(f'{f_name}/all_syn_sizes_intra_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
-        if len(ct2_m_sizes) > 0 or len(ct3_m_sizes) > 0:
+        if len_ct2 > 0 or len_ct3 > 0:
             for key in percell_intra_result_df.keys():
                 if 'cellid' in key or 'celltype' in key:
                     continue
-                if len(ct2_m_sizes) > 0:
+                if len_ct2 > 0:
                     ct2_percell_results = percell_result_df[key][percell_result_df['celltype'] == ct_dict[ct2]]
                     ct2_intra_results = percell_intra_result_df[key][percell_intra_result_df['celltype'] == ct_dict[ct2]]
                     stats, p_value = ranksums(ct2_percell_results, ct2_intra_results)
@@ -374,7 +519,7 @@ if __name__ == '__main__':
                         f'{key} per post-cell stats', f'{ct_dict[ct2]} inter vs intra'] = stats
                     ranksum_results.loc[
                         f'{key} per post-cell p-value', f'{ct_dict[ct2]} inter vs intra'] = p_value
-                if len(ct3_m_sizes) > 0:
+                if len_ct3 > 0:
                     ct3_percell_results = percell_result_df[key][percell_result_df['celltype'] == ct_dict[ct3]]
                     ct3_intra_results = percell_intra_result_df[key][
                         percell_intra_result_df['celltype'] == ct_dict[ct3]]
@@ -383,7 +528,7 @@ if __name__ == '__main__':
                         f'{key} per post-cell stats', f'{ct_dict[ct3]} inter vs intra'] = stats
                     ranksum_results.loc[
                         f'{key} per post-cell p-value', f'{ct_dict[ct3]} inter vs intra'] = p_value
-                if len(ct2_m_sizes) > 0 and len(ct3_m_sizes) > 0:
+                if len_ct2 > 0 and len_ct3 > 0:
                     key_groups = [group[key].values for name, group in
                                   percell_intra_result_df.groupby('celltype')]
                     stats, p_value = ranksums(key_groups[0], key_groups[1])
@@ -483,6 +628,164 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/all_synsizes_intra_hist_log_perc.png')
             plt.savefig(f'{f_name}/all_synsizes_intra_hist_log_perc.svg')
             plt.close()
+            log.info('Get number of multisynapses within celltypes')
+            # use syn_sizes df for information
+            all_unique_pre_ids = np.unique(syn_sizes_intra_df['cellid pre'])
+            num_pre_ids = len(all_unique_pre_ids)
+            all_unique_post_ids = np.unique(syn_sizes_intra_df['cellid post'])
+            num_post_ids = len(all_unique_post_ids)
+            multi_conn_df_intra = pd.DataFrame(
+                columns=['number of synapses', 'sum syn area', 'celltype', 'cellid pre', 'cellid post'],
+                index=range(num_pre_ids * num_post_ids))
+            for i, cell_id in enumerate(tqdm(all_unique_pre_ids)):
+                cell_syn_sizes_df = syn_sizes_intra_df[syn_sizes_intra_df['cellid pre'] == cell_id]
+                # for ct2
+                if len_ct2 > 0:
+                    ct2_cell_syn_sizes_df = cell_syn_sizes_df[cell_syn_sizes_df['celltype'] == ct_dict[ct2]]
+                    ct2_syn_numbers, ct2_sum_sizes, unique_ct2_ids = get_percell_number_sumsize(
+                        ct2_cell_syn_sizes_df['cellid post'], ct2_cell_syn_sizes_df['syn sizes'])
+                    len_multi_syns_ct2 = len(ct2_syn_numbers)
+                    start_ct2 = i * num_post_ids
+                    end_ct2 = start_ct2 + len_multi_syns_ct2 - 1
+                    multi_conn_df_intra.loc[start_ct2: end_ct2, 'number of synapses'] = ct2_syn_numbers
+                    multi_conn_df_intra.loc[start_ct2:end_ct2, 'sum syn area'] = ct2_sum_sizes
+                    multi_conn_df_intra.loc[start_ct2: end_ct2, 'celltype'] = ct_dict[ct2]
+                    multi_conn_df_intra.loc[start_ct2: end_ct2, 'cellid pre'] = cell_id
+                    multi_conn_df_intra.loc[start_ct2: end_ct2, 'cellid post'] = unique_ct2_ids
+                if len_ct3 > 0:
+                    ct3_cell_syn_sizes_df = cell_syn_sizes_df[cell_syn_sizes_df['celltype'] == ct_dict[ct3]]
+                    ct3_syn_numbers, ct3_sum_sizes, unique_ct3_ids = get_percell_number_sumsize(
+                        ct3_cell_syn_sizes_df['cellid post'], ct3_cell_syn_sizes_df['syn sizes'])
+                    len_multi_syns_ct3 = len(ct3_syn_numbers)
+                    start_ct3 = i * num_post_ids + len_multi_syns_ct2
+                    end_ct3 = start_ct3 + len_multi_syns_ct3 - 1
+                    multi_conn_df_intra.loc[start_ct3: end_ct3, 'number of synapses'] = ct3_syn_numbers
+                    multi_conn_df_intra.loc[start_ct3:end_ct3, 'sum syn area'] = ct3_sum_sizes
+                    multi_conn_df_intra.loc[start_ct3: end_ct3, 'celltype'] = ct_dict[ct3]
+                    multi_conn_df_intra.loc[start_ct3: end_ct3, 'cellid pre'] = cell_id
+                    multi_conn_df_intra.loc[start_ct3: end_ct3, 'cellid post'] = unique_ct3_ids
+
+            multi_conn_df_intra = multi_conn_df_intra.dropna()
+            multi_conn_df_intra = multi_conn_df_intra.reset_index(drop=True)
+            multi_conn_df_intra.to_csv(f'{f_name}/multi_syns_intra_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+            # make statistics and run results
+            if len_ct2 > 0:
+                #compare ct2 inter with intra
+                ct2_multi_df = multi_conn_df[multi_conn_df['celltype'] == ct_dict[ct2]]
+                ct2_multi_df_intra = multi_conn_df_intra[multi_conn_df_intra['celltype'] == ct_dict[ct2]]
+                stats, p_vlaue = ranksums(ct2_multi_df['number of synapses'], ct2_multi_df_intra['number of synapses'])
+                ranksum_results.loc['multi syn numbers stats', f'{ct_dict[ct2]} inter vs intra'] = stats
+                ranksum_results.loc['multi syn numbers p-value', f'{ct_dict[ct2]} inter vs intra'] = p_value
+                stats, p_vlaue = ranksums(ct2_multi_df['sum syn area'], ct2_multi_df_intra['sum syn area'])
+                ranksum_results.loc['multi syn sum sizes stats', f'{ct_dict[ct2]} inter vs intra'] = stats
+                ranksum_results.loc['multi syn sum sizess p-value', f'{ct_dict[ct2]} inter vs intra'] = p_value
+            if len_ct3 > 0:
+                #compare ct3 inter with intra
+                ct3_multi_df = multi_conn_df[multi_conn_df['celltype'] == ct_dict[ct3]]
+                ct3_multi_df_intra = multi_conn_df_intra[multi_conn_df_intra['celltype'] == ct_dict[ct3]]
+                stats, p_vlaue = ranksums(ct3_multi_df['number of synapses'], ct3_multi_df_intra['number of synapses'])
+                ranksum_results.loc['multi syn numbers stats', f'{ct_dict[ct3]} inter vs intra'] = stats
+                ranksum_results.loc['multi syn numbers p-value', f'{ct_dict[ct3]} inter vs intra'] = p_value
+                stats, p_vlaue = ranksums(ct3_multi_df['sum syn area'], ct3_multi_df_intra['sum syn area'])
+                ranksum_results.loc['multi syn sum sizes stats', f'{ct_dict[ct3]} inter vs intra'] = stats
+                ranksum_results.loc['multi syn sum sizess p-value', f'{ct_dict[ct3]} inter vs intra'] = p_value
+            if len_ct2 > 0 and len_ct3 > 0:
+                multi_ct2_numbers = multi_conn_df_intra['number of synapses'][multi_conn_df_intra['celltype'] == ct_dict[ct2]]
+                multi_ct3_numbers = multi_conn_df_intra['number of synapses'][multi_conn_df_intra['celltype'] == ct_dict[ct3]]
+                stats, p_value = ranksums(multi_ct2_numbers, multi_ct3_numbers)
+                ranksum_results.loc['multi syn numbers stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = stats
+                ranksum_results.loc['multi syn numbers p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = p_value
+                multi_ct2_sizes = multi_conn_df_intra['sum syn area'][multi_conn_df_intra['celltype'] == ct_dict[ct2]]
+                multi_ct3_sizes = multi_conn_df_intra['sum syn area'][multi_conn_df_intra['celltype'] == ct_dict[ct3]]
+                stats, p_value = ranksums(multi_ct2_sizes, multi_ct3_sizes)
+            ranksum_results.loc['multi syn sum sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = stats
+            ranksum_results.loc['multi syn sum sizess p-value',f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = p_value
+            ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
+            # plot results
+            # plot sum sizes for pairwise cells as histogram
+            sns.histplot(x='sum syn area', data=multi_conn_df_intra, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True)
+            plt.ylabel('number of cell-pairs')
+            plt.xlabel('synaptic mesh area [µm²]')
+            plt.title(f'Sum of synapse sizes in multisyn connections within celltypes')
+            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist.png')
+            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist.svg')
+            plt.close()
+            sns.histplot(x='sum syn area', data=multi_conn_df_intra, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
+            plt.ylabel('% of cell-pairs')
+            plt.xlabel('synaptic mesh area [µm²]')
+            plt.title(f'Sum of synapse sizes in multisyn connections within celltypes')
+            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_perc.png')
+            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_perc.svg')
+            plt.close()
+            sns.histplot(x='sum syn area', data=multi_conn_df_intra, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+            plt.ylabel('number of cell-pairs')
+            plt.xlabel('synaptic mesh area [µm²]')
+            plt.title(f'Sum of synapse sizes in multisyn connections within celltypes')
+            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_log.png')
+            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_log.svg')
+            plt.close()
+            sns.histplot(x='sum syn area', data=multi_conn_df_intra, hue='celltype', palette=ct_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+            plt.ylabel('% of cell-pairs')
+            plt.xlabel('synaptic mesh area [µm²]')
+            plt.title(f'Sum of synapse sizes in multisyn connections within celltypes')
+            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_log_perc.png')
+            plt.savefig(f'{f_name}/multi_sum_sizes_intra_hist_log_perc.svg')
+            plt.close()
+            # plot again as barplot
+            # plot number of synapses again as barplot
+            # make bins for each number, seperated by ct2 and ct3
+            if len_ct2 > 0 and len_ct3 > 0:
+                ct2_multi_df = multi_conn_df_intra[multi_conn_df_intra['celltype'] == ct_dict[ct2]]
+                ct2_inds, ct2_bins = pd.factorize(np.sort(ct2_multi_df['number of synapses']))
+                ct2_counts = np.bincount(ct2_inds)
+                ct3_multi_df = multi_conn_df_intra[multi_conn_df_intra['celltype'] == ct_dict[ct3]]
+                ct3_inds, ct3_bins = pd.factorize(np.sort(ct3_multi_df['number of synapses']))
+                ct3_counts = np.bincount(ct3_inds)
+                num_ct2_bins = len(ct2_bins)
+                len_bins = num_ct2_bins + len(ct3_bins)
+                hist_df = pd.DataFrame(columns=['count of cell-pairs', 'percent of cell-pairs', 'bins', 'celltype'],
+                                       index=range(len_bins))
+                hist_df.loc[0: num_ct2_bins - 1, 'count of cell-pairs'] = ct2_counts
+                hist_df.loc[0: num_ct2_bins - 1, 'percent of cell-pairs'] = 100 * ct2_counts / np.sum(ct2_counts)
+                hist_df.loc[0: num_ct2_bins - 1, 'bins'] = ct2_bins
+                hist_df.loc[0: num_ct2_bins - 1, 'celltype'] = ct_dict[ct2]
+                hist_df.loc[num_ct2_bins: len_bins - 1, 'count of cell-pairs'] = ct3_counts
+                hist_df.loc[num_ct2_bins: len_bins - 1, 'percent of cell-pairs'] = 100 * ct3_counts / np.sum(ct3_counts)
+                hist_df.loc[num_ct2_bins: len_bins - 1, 'bins'] = ct3_bins
+                hist_df.loc[num_ct2_bins: len_bins - 1, 'celltype'] = ct_dict[ct3]
+                sns.barplot(data=hist_df, x='bins', y='count of cell-pairs', hue='celltype', palette=ct_palette)
+                plt.xlabel('number of synapses')
+                plt.savefig(f'{f_name}/multi_bar_syn_num_intra.svg')
+                plt.savefig(f'{f_name}/multi_bar_syn_num_intra.png')
+                plt.close()
+                sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='celltype', palette=ct_palette)
+                plt.xlabel('number of synapses')
+                plt.savefig(f'{f_name}/multi_bar_syn_num_intra_perc.svg')
+                plt.savefig(f'{f_name}/multi_bar_syn_num_intra_perc.png')
+                plt.close()
+                # plot also only up to numbers of 10, 15, 20
+                for num in [10, 15, 20]:
+                    hist_df10 = hist_df[hist_df['bins'] <= num]
+                    multi_conn_df11 = multi_conn_df_intra[multi_conn_df_intra['number of synapses'] > num]
+                    hist_df11_ct2 = multi_conn_df11[multi_conn_df11['celltype'] == ct_dict[ct2]]
+                    hist_df11_ct3 = multi_conn_df11[multi_conn_df11['celltype'] == ct_dict[ct3]]
+                    log.info(
+                        f'{len(multi_conn_df11)} cell-pairs out of {len(multi_conn_df_intra)} make multisynaptic connections with {num + 1} synapses or more, \n'
+                        f'{len(hist_df11_ct2)} within {ct_dict[ct2]}, {len(hist_df11_ct3)} within {ct_dict[ct3]}')
+                    sns.barplot(data=hist_df10, x='bins', y='count of cell-pairs', hue='celltype', palette=ct_palette)
+                    plt.xlabel('number of synapses')
+                    plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra.svg')
+                    plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra.png')
+                    plt.close()
+                    sns.barplot(data=hist_df10, x='bins', y='percent of cell-pairs', hue='celltype', palette=ct_palette)
+                    plt.xlabel('number of synapses')
+                    plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra_perc.svg')
+                    plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra_perc.png')
+                    plt.close()
             raise ValueError
     else:
         log.info(f'Step 3/4: Get information outgoing from {ct_dict[conn_ct]}')

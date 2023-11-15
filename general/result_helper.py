@@ -897,5 +897,63 @@ def plot_nx_graph(results_dictionary, filename, title):
     plt.savefig(filename)
     plt.close()
 
+def plot_histogram_selection(dataframe, x_data, color_palette, label, count, foldername, hue_data = None, title = None):
+    '''
+    Function to plot multiple histograms of the same data, preferebly with two or more groups
+    to compare.
+    :param dataframe: pandas dataframe with data to be plottet
+    :param x_data: column name for data to plot on x-axis
+    :param color_palette: color palette to use
+    :param label: additional information for title and saving
+    :param count: label of entities counted e.g. 'cells', 'synapses'
+    :param foldername: name of folder where plots are supposed to be stored
+    :param hue_data: if comparing several groups, name of column
+    :param title: if given used as plot title, otherwise x_dtaa and count used
+    :return: None
+    '''
+
+    if 'area' in x_data or 'size' in x_data:
+        xlabel = f'{x_data} [µm²]'
+    else:
+        xlabel = x_data
+
+    if title is None:
+        plottitle = f'{x_data} for {count}'
+    else:
+        plottitle = title
+
+    sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True)
+    plt.ylabel(f'number of {count}')
+    plt.xlabel(xlabel)
+    plt.title(plottitle)
+    plt.savefig(f'{foldername}/{label}_hist.png')
+    plt.savefig(f'{foldername}/{label}_hist.svg')
+    plt.close()
+    sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, stat='percent')
+    plt.ylabel(f'% of {count}')
+    plt.xlabel(xlabel)
+    plt.title(plottitle)
+    plt.savefig(f'{foldername}/{label}_hist_perc.png')
+    plt.savefig(f'{foldername}/{label}_hist_perc.svg')
+    plt.close()
+    sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, log_scale=True)
+    plt.ylabel(f'number of {count}')
+    plt.xlabel(xlabel)
+    plt.title(plottitle)
+    plt.savefig(f'{foldername}/{label}_hist_log.png')
+    plt.savefig(f'{foldername}/{label}_hist_log.svg')
+    plt.close()
+    sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
+    plt.ylabel(f'% of {count}')
+    plt.xlabel(xlabel)
+    plt.title(plottitle)
+    plt.savefig(f'{foldername}/{label}_hist_log_perc.png')
+    plt.savefig(f'{foldername}/{label}_hist_log_perc.svg')
+    plt.close()
+
 
 

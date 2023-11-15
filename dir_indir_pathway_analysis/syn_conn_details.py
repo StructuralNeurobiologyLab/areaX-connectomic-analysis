@@ -14,13 +14,9 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
     import numpy as np
-    from syconn.mp.mp_utils import start_multiprocess_imap
-    from syconn.handler.basics import write_obj2pkl
     import seaborn as sns
     import matplotlib.pyplot as plt
-    from scipy.stats import ranksums, kruskal, spearmanr
-    from itertools import combinations
-    from collections import ChainMap
+    from scipy.stats import ranksums
     from tqdm import tqdm
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
@@ -32,10 +28,10 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    conn_ct = None
+    conn_ct = 10
     #celltypes that are compared
-    ct2 = 6
-    ct3 = 7
+    ct2 = 2
+    ct3 = 8
     color_key = 'STNGP'
     fontsize_jointplot = 12
     kde = True
@@ -202,6 +198,10 @@ if __name__ == '__main__':
             ranksum_results.loc[f'{key} per post-cell stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter'] = stats
             ranksum_results.loc[f'{key} per post-cell p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} inter'] = p_value
             #plot histograms
+            if 'size' in key:
+                xlabel = f'{key} [µm²]'
+            else:
+                xlabel = key
             plot_histogram_selection(dataframe=percell_result_df, x_data=key, color_palette=ct_palette,
                                      label=f'percell_{key}_inter', count='cells', foldername=f_name,
                                      hue_data='celltype',
@@ -673,7 +673,7 @@ if __name__ == '__main__':
         ct3_syn_numbers_sorted = ct3_syn_numbers[sort_inds_ct3]
         ct3_sum_sizes_sorted = ct3_sum_sizes[sort_inds_ct3]
         sort_inds_ct3 = np.in1d(percell_result_df['cellid'], unique_ssv_ids_sorted)
-        sort_inds_ct3[num_conn_ct_ids:] = False
+        sort_inds_ct3[:num_conn_ct_ids] = False
         percell_result_df.loc[sort_inds_ct3, 'syn number'] = ct3_syn_numbers_sorted
         percell_result_df.loc[sort_inds_ct3, 'sum syn size'] = ct3_sum_sizes_sorted
         percell_result_df.loc[sort_inds_ct3, 'mean syn size'] = ct3_sum_sizes_sorted / ct3_syn_numbers_sorted

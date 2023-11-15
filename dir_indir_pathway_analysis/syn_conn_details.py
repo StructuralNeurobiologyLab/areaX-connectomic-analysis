@@ -28,10 +28,10 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    conn_ct = 10
+    conn_ct = 8
     #celltypes that are compared
-    ct2 = 2
-    ct3 = 8
+    ct2 = 6
+    ct3 = 7
     color_key = 'STNGP'
     fontsize_jointplot = 12
     kde = True
@@ -900,7 +900,7 @@ if __name__ == '__main__':
         ct3_syn_numbers_sorted = ct3_syn_numbers[sort_inds_ct3]
         ct3_sum_sizes_sorted = ct3_sum_sizes[sort_inds_ct3]
         sort_inds_ct3 = np.in1d(percell_result_df['cellid'], unique_ssv_ids_sorted)
-        sort_inds_ct3[num_conn_ct_ids:] = False
+        sort_inds_ct3[:num_conn_ct_ids] = False
         percell_result_df.loc[sort_inds_ct3, 'syn number'] = ct3_syn_numbers_sorted
         percell_result_df.loc[sort_inds_ct3, 'sum syn size'] = ct3_sum_sizes_sorted
         percell_result_df.loc[sort_inds_ct3, 'mean syn size'] = ct3_sum_sizes_sorted / ct3_syn_numbers_sorted

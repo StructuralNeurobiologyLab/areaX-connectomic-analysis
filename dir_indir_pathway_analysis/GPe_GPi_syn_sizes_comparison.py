@@ -37,7 +37,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 12
     comp_ax = 50
     comp_full = 200
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231115_j0251v5_GPe_GPi_synsize_overview_synprob_%.2f_ax%i_full%i" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231117_j0251v5_GPe_GPi_synsize_overview_synprob_%.2f_ax%i_full%i" % (
         syn_prob_thresh, comp_ax, comp_full)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     log.info("Analysis of GPe and GPi syn sizes starts")
     log.info(f'syn_prob = {syn_prob_thresh}, min_syn_size = {min_syn_size} µm², \n'
              f'min comp length ax = {comp_ax} µm, min comp len full cells = {comp_full}')
-    log.info('Step 1/X: filter synapses for syn_prob and min_syn_size and also axo-dendritic and axo-somatic only')
+    log.info('Step 1/4: filter synapses for syn_prob and min_syn_size and also axo-dendritic and axo-somatic only')
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
     m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob = filter_synapse_caches_general(sd_synssv,
                                                                                                  syn_prob_thresh=syn_prob_thresh,
@@ -64,6 +64,13 @@ if __name__ == '__main__':
     m_axs = m_axs[den_so_inds]
     m_ssv_partners = m_ssv_partners[den_so_inds]
     m_sizes = m_sizes[den_so_inds]
+    #make sure synapses are between neurons only
+    neuron_cts = list(ct_dict.keys())
+    ct_inds = np.all(np.in1d(m_cts, neuron_cts).reshape(len(m_cts), 2), axis=1)
+    m_cts = m_cts[ct_inds]
+    m_axs = m_axs[ct_inds]
+    m_ssv_partners = m_ssv_partners[ct_inds]
+    m_sizes = m_sizes[ct_inds]
     #get all synapses which have either GPe or GPi as pre or post
     ct_inds = np.any(np.in1d(m_cts, [gpe_ct, gpi_ct]).reshape(len(m_cts), 2), axis = 1)
     m_cts = m_cts[ct_inds]
@@ -71,20 +78,22 @@ if __name__ == '__main__':
     m_ssv_partners = m_ssv_partners[ct_inds]
     m_sizes = m_sizes[ct_inds]
 
-    log.info('Step 2/X: Get more info (pre, postcelltypes, full cell) about synapses and save in DataFrame')
+    log.info('Step 2/4: Get more info (pre, postcelltypes, full cell) about synapses and save in DataFrame')
     syn_columns = ['synapse size', 'celltype pre', 'celltype post', 'cellid pre', 'cellid post', 'full cell pre', 'full cell post']
     all_syns_df = pd.DataFrame(columns=syn_columns, index = range(len(m_sizes)))
     all_syns_df['synapse size'] = m_sizes
     ax_inds = np.where(m_axs == 1)
-    denso_inds = np.where(m_axs != 0)
+    denso_inds = np.where(m_axs != 1)
     ax_cts = m_cts[ax_inds]
     ax_ssv_partners = m_ssv_partners[ax_inds]
     denso_cts = m_cts[denso_inds]
     denso_ssv_partners = m_ssv_partners[denso_inds]
-    all_syns_df['celltype pre'] = ax_cts
-    all_syns_df['celltype post'] = denso_cts
+    all_syns_df['celltype pre'] = [ct_dict[ax_cts[i]] for i in range(len(ax_cts))]
+    all_syns_df['celltype post'] = [ct_dict[denso_cts[i]] for i in range(len(denso_cts))]
     all_syns_df['cellid pre'] = ax_ssv_partners
-    all_syns_df['celltype post'] = denso_ssv_partners
+    all_syns_df['cellid post'] = denso_ssv_partners
+    gpe_str = ct_dict[gpe_ct]
+    gpi_str = ct_dict[gpi_ct]
 
     log.info('Check cellids for full cells')
     celltypes = np.array([ct_dict[ct] for ct in ct_dict])
@@ -125,28 +134,106 @@ if __name__ == '__main__':
     all_syns_df.to_csv(f'{f_name}/all_syns_df_gpe_gpi.csv')
 
     log.info(f'{len(all_syns_df)} synapses are either with GPe or GPi')
-    log.info('Step 3/X: Get information about all synapses, make statistics and plots')
-    summary_cats = ['all syns', 'all syns pre', 'all syns post', 'full GPs pre', 'full GPs post', 'all cells full pre', 'all cells full post']
+    log.info('Step 3/4: Get information about all synapses, make statistics and plots')
+    summary_cats = ['all syns', 'all syns pre', 'all syns post','full cells', 'full cells pre', 'full cells post']
     summary_df = pd.DataFrame(columns=['total number', 'number GPe', 'number GPi'], index = summary_cats)
     summary_df.loc['all syns', 'total number'] = len(all_syns_df)
-    gpe_syn_df = all_syns_df[np.any([all_syns_df['cellid pre'] == gpe_ct,all_syns_df['cellid post'] == gpe_ct ], axis = 0)]
+    summary_df.loc['all syns', 'median'] = np.median(all_syns_df['synapse size'])
+    gpe_syn_df = all_syns_df[np.any([all_syns_df['celltype pre'] == gpe_str,all_syns_df['celltype post'] == gpe_str ], axis = 0)]
     gpi_syn_df = all_syns_df[
-        np.any([all_syns_df['cellid pre'] == gpi_ct, all_syns_df['cellid post'] == gpi_ct], axis=0)]
+        np.any([all_syns_df['celltype pre'] == gpi_str, all_syns_df['celltype post'] == gpi_str], axis=0)]
     summary_df.loc['all syns', 'number GPe'] = len(gpe_syn_df)
     summary_df.loc['all syns', 'number GPi'] = len(gpi_syn_df)
-    gp_pre_syn_df = all_syns_df[np.in1d(all_syns_df['cellid pre'], [gpe_ct, gpi_ct])]
-    gp_post_syn_df = all_syns_df[np.in1d(all_syns_df['cellid post'], [gpe_ct, gpi_ct])]
-    gpe_pre_syn_df = all_syns_df[all_syns_df['cellid pre'] == gpe_ct]
-    gpi_pre_syn_df = all_syns_df[all_syns_df['cellid pre'] == gpi_ct]
-    gpe_post_syn_df = all_syns_df[all_syns_df['cellid post'] == gpe_ct]
-    gpi_post_syn_df = all_syns_df[all_syns_df['cellid post'] == gpi_ct]
-    summary_df.loc['all syns pre', 'total number'] = len(gp_pre_syn_df)
-    summary_df.loc['all syns pre', 'number GPe'] = len(gp_post_syn_df)
+    summary_df.loc['all syns', 'median GPe'] = np.median(gpe_syn_df['synapse size'])
+    summary_df.loc['all syns', 'median GPi'] = np.median(gpi_syn_df['synapse size'])
+    gp_pre_syn_df = all_syns_df[np.in1d(all_syns_df['celltype pre'], [gpe_str, gpi_str])]
+    gp_post_syn_df = all_syns_df[np.in1d(all_syns_df['celltype post'], [gpe_str, gpi_str])]
+    gpe_pre_syn_df = all_syns_df[all_syns_df['celltype pre'] == gpe_str]
+    gpi_pre_syn_df = all_syns_df[all_syns_df['celltype pre'] == gpi_str]
+    gpe_post_syn_df = all_syns_df[all_syns_df['celltype post'] == gpe_str]
+    gpi_post_syn_df = all_syns_df[all_syns_df['celltype post'] == gpi_str]
+    summary_df.loc['all syns pre', 'total number'] = len(gpe_pre_syn_df) + len(gpi_pre_syn_df)
+    summary_df.loc['all syns pre', 'median'] = np.median(gp_pre_syn_df['synapse size'])
+    summary_df.loc['all syns pre', 'number GPe'] = len(gpe_post_syn_df)
+    summary_df.loc['all syns pre', 'median GPe'] = np.median(gpi_post_syn_df['synapse size'])
     summary_df.loc['all syns pre', 'number GPi'] = len(gpi_pre_syn_df)
-    summary_df.loc['all syns post', 'total number'] = len(gpe_pre_syn_df) + len(gpi_pre_syn_df)
+    summary_df.loc['all syns pre', 'median GPi'] = np.median(gpi_pre_syn_df['synapse size'])
+    summary_df.loc['all syns post', 'total number'] = len(gpe_post_syn_df) + len(gpi_post_syn_df)
     summary_df.loc['all syns post', 'number GPe'] = len(gpe_post_syn_df)
     summary_df.loc['all syns post', 'number GPi'] = len(gpi_post_syn_df)
+    summary_df.loc['all syns post', 'median'] = np.median(gp_post_syn_df['synapse size'])
+    summary_df.loc['all syns post', 'median GPe'] = np.median(gpe_post_syn_df['synapse size'])
+    summary_df.loc['all syns post', 'median GPi'] = np.median(gpi_post_syn_df['synapse size'])
+    #ranksum test on size of synapses
+    ranksum_results = pd.DataFrame(index = ['GPe vs GPi pre all syns', 'GPe vs GPi post all syns', 'GPe vs GPi pre full cells', 'GPe vs GPi post full cells'], columns = ['stats', 'p_value'])
+    stats, p_value = ranksums(gpe_pre_syn_df['synapse size'], gpi_pre_syn_df['synapse size'])
+    ranksum_results.loc['GPe vs GPi pre all syns', 'stats'] = stats
+    ranksum_results.loc['GPe vs GPi pre all syns', 'stats'] = p_value
+    stats, p_value = ranksums(gpe_post_syn_df['synapse size'], gpi_post_syn_df['synapse size'])
+    ranksum_results.loc['GPe vs GPi post all syns', 'stats'] = stats
+    ranksum_results.loc['GPe vs GPi post all syns', 'stats'] = p_value
+    #plot histograms for all synapses where GP cells are pre
+    plot_histogram_selection(dataframe=gp_pre_syn_df, x_data='synapse size', color_palette=ct_palette,
+                             label = 'all_syns_pre', count = 'synapses',
+                             foldername = f_name, hue_data='celltype pre',
+                             title='all synapse sizes for presynaptic GPe and GPi')
+    #plot histograms for all synapses where GP cells are post
+    plot_histogram_selection(dataframe=gp_post_syn_df, x_data='synapse size', color_palette=ct_palette,
+                             label='all_syns_post', count='synapses',
+                             foldername=f_name, hue_data='celltype post',
+                             title='all synapse sizes for postsynaptic GPe and GPi')
 
+    log.info('Step 4/4: Get information about synapses only with filtered cells')
+    #get synapses only between full cells
+    full_pre_df = all_syns_df[all_syns_df['full cell pre'] == 1]
+    full_cells_df = full_pre_df[full_pre_df['full cell post'] == 1]
+    full_cells_df.to_csv(f'{f_name}/full_cells_syns_{gpe_str}_{gpi_str}_{comp_full}_{comp_ax}.csv')
+    log.info(f'{len(full_cells_df)} synapses are made with filtered cells')
+    gpe_syn_df = full_cells_df[
+        np.any([full_cells_df['celltype pre'] == gpe_str, full_cells_df['celltype post'] == gpe_str], axis=0)]
+    gpi_syn_df = full_cells_df[
+        np.any([full_cells_df['celltype pre'] == gpi_str, full_cells_df['celltype post'] == gpi_str], axis=0)]
+    summary_df.loc['full cells', 'number GPe'] = len(gpe_syn_df)
+    summary_df.loc['full cells', 'number GPi'] = len(gpi_syn_df)
+    summary_df.loc['full cells', 'median GPe'] = np.median(gpe_syn_df['synapse size'])
+    summary_df.loc['full cells', 'median GPi'] = np.median(gpi_syn_df['synapse size'])
+    gp_pre_syn_df = full_cells_df[np.in1d(full_cells_df['celltype pre'], [gpe_str, gpi_str])]
+    gp_post_syn_df = full_cells_df[np.in1d(full_cells_df['celltype post'], [gpe_str, gpi_str])]
+    gpe_pre_syn_df = full_cells_df[full_cells_df['celltype pre'] == gpe_str]
+    gpi_pre_syn_df = full_cells_df[full_cells_df['celltype pre'] == gpi_str]
+    gpe_post_syn_df = full_cells_df[full_cells_df['celltype post'] == gpe_str]
+    gpi_post_syn_df = full_cells_df[full_cells_df['celltype post'] == gpi_str]
+    summary_df.loc['full cells pre', 'total number'] = len(gpe_pre_syn_df) + len(gpi_pre_syn_df)
+    summary_df.loc['full cells pre', 'number GPe'] = len(gpe_post_syn_df)
+    summary_df.loc['full cells pre', 'number GPi'] = len(gpi_pre_syn_df)
+    summary_df.loc['full cells post', 'total number'] = len(gpe_post_syn_df) + len(gpi_post_syn_df)
+    summary_df.loc['full cells post', 'number GPe'] = len(gpe_post_syn_df)
+    summary_df.loc['full cells post', 'number GPi'] = len(gpi_post_syn_df)
+    summary_df.loc['full cells pre', 'median'] = np.median(gp_pre_syn_df['synapse size'])
+    summary_df.loc['full cells pre', 'median GPe'] = np.median(gpe_post_syn_df['synapse size'])
+    summary_df.loc['full cells pre', 'median GPi'] = np.median(gpi_pre_syn_df['synapse size'])
+    summary_df.loc['full cells post', 'median'] = np.median(gp_post_syn_df['synapse size'])
+    summary_df.loc['full cells post', 'median GPe'] = np.median(gpe_post_syn_df['synapse size'])
+    summary_df.loc['full cells post', 'median GPi'] = np.median(gpi_post_syn_df['synapse size'])
+    summary_df.to_csv(f'{f_name}/summary_stats.csv')
+    # ranksum test on size of synapses
+    stats, p_value = ranksums(gpe_pre_syn_df['synapse size'], gpi_pre_syn_df['synapse size'])
+    ranksum_results.loc['GPe vs GPi pre full cells', 'stats'] = stats
+    ranksum_results.loc['GPe vs GPi pre full cells', 'stats'] = p_value
+    stats, p_value = ranksums(gpe_post_syn_df['synapse size'], gpi_post_syn_df['synapse size'])
+    ranksum_results.loc['GPe vs GPi post full cells', 'stats'] = stats
+    ranksum_results.loc['GPe vs GPi post full cells', 'stats'] = p_value
+    # plot histograms for all synapses where GP cells are pre
+    plot_histogram_selection(dataframe=gp_pre_syn_df, x_data='synapse size', color_palette=ct_palette,
+                             label='full_cells_syns_pre', count='synapses',
+                             foldername=f_name, hue_data='celltype pre',
+                             title='full cells synapse sizes for presynaptic GPe and GPi')
+    # plot histograms for all synapses where GP cells are post
+    plot_histogram_selection(dataframe=gp_post_syn_df, x_data='synapse size', color_palette=ct_palette,
+                             label='full_cells_syns_post', count='synapses',
+                             foldername=f_name, hue_data='celltype post',
+                             title='full cells synapse sizes for postsynaptic GPe and GPi')
 
+    log.info('Analysis done')
 
 

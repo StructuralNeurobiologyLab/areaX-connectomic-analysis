@@ -223,6 +223,7 @@ if __name__ == '__main__':
     stats, p_value = ranksums(gpe_post_syn_df['synapse size'], gpi_post_syn_df['synapse size'])
     ranksum_results.loc['GPe vs GPi post full cells', 'stats'] = stats
     ranksum_results.loc['GPe vs GPi post full cells', 'stats'] = p_value
+    ranksum_results.to_csv(f'{f_name}/ranksum_results.csv')
     # plot histograms for all synapses where GP cells are pre
     plot_histogram_selection(dataframe=gp_pre_syn_df, x_data='synapse size', color_palette=ct_palette,
                              label='full_cells_syns_pre', count='synapses',

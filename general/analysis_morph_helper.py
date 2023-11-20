@@ -17,7 +17,6 @@ def get_cell_length(cellid):
     :param cellid: id of the cell
     :return: total length in µm
     '''
-
     cell = SuperSegmentationObject(cellid)
     cell_graph = cell.weighted_graph()
     total_length = cell_graph.size(weight="weight") / 1000  # in µm
@@ -206,7 +205,45 @@ def get_myelin_fraction(cellid, cell = None, min_comp_len = 100, load_skeleton =
     relative_myelin_length = absolute_myelin_length / axon_length
     return [absolute_myelin_length, relative_myelin_length]
 
-def get_organell_volume_density(input):
+def get_percell_organell_volume_density(input):
+    '''
+    calculates volume density per cell given numpy arrays per cell.
+    :param input: cellid, numpy array with all organell ids, numpy array with all volumes of organell
+    '''
+    cellid, cached_so_ids, cached_so_volume = input
+    cell = SuperSegmentationObject(cellid)
+    segmentation_object_ids = cell.mi_ids
+    sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
+    organell_volumes = np.sum(cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling))  # convert to cubic µm
+    cell_length = get_cell_length(cellid)
+    volume_density = organell_volumes/ cell_length
+    return volume_density
+
+def get_organell_ids_comps(input):
+    '''
+    Get all organell ids for one cell seperated by compartment
+    :param input: cellid, org_so_ids, org_rep_coords
+    :return: axon_ids, den_ids, soma_ids
+    '''
+    cellid, org_so_ids, org_rep_coord = input
+    cell = SuperSegmentationObject(cellid)
+    segmentation_object_ids = cell.mi_ids
+    cell.load_skeleton()
+    kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"] * cell.scaling)
+    sso_organell_inds = np.in1d(org_so_ids, segmentation_object_ids)
+    sso_organell_ids = org_so_ids[sso_organell_inds]
+    so_rep_coord = org_rep_coord[sso_organell_inds] * cell.scaling  # in nm
+    close_node_ids = kdtree.query(so_rep_coord, k=1)[1].astype(int)
+    axo = np.array(cell.skeleton["axoness_avg10000"][close_node_ids])
+    axo[axo == 3] = 1
+    axo[axo == 4] = 1
+    org_soma_ids = sso_organell_ids[axo == 2]
+    org_den_ids = sso_organell_ids[axo == 0]
+    org_ax_ids = sso_organell_ids[axo == 1]
+    comp_dict = {'axon': org_ax_ids, 'dendrite': org_den_ids, 'soma': org_soma_ids}
+    return comp_dict
+
+def get_organell_volume_density_comps(input):
     '''
     :param cell: super segmentation object
     :param segmentation_object_ids: organell ids per cell
@@ -242,12 +279,15 @@ def get_organell_volume_density(input):
         return 0, 0, 0, 0
     axo_so_amount = len(axo_so_ids)
     if full_cell_dict is not None:
-        axon_length = full_cell_dict[cell.id]["axon length"]
+        axon_length = full_cell_dict[cellid]["axon length"]
+        complete_length = full_cell_dict[cellid]['complete pathlength']
     else:
         g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
         axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
+        complete_length = get_cell_length(cellid)
     if axon_length < min_comp_len:
         return 0,0, 0, 0
+    total_volume_density = np.sum(organell_volumes)/ complete_length
     axo_so_density = axo_so_amount / axon_length
     axo_so_volume = np.sum(organell_volumes[axon_inds])
     axo_so_volume_density = axo_so_volume / axon_length
@@ -264,7 +304,7 @@ def get_organell_volume_density(input):
         den_so_density = den_so_amount/dendrite_length
         den_so_volume = np.sum(organell_volumes[den_inds])
         den_so_volume_density = den_so_volume/ dendrite_length
-        return [axo_so_density, den_so_density, axo_so_volume_density, den_so_volume_density]
+        return [axo_so_density, den_so_density, axo_so_volume_density, den_so_volume_density, total_volume_density]
 
 def get_compartment_mesh_area(cell):
     """
@@ -499,14 +539,15 @@ def get_per_cell_mito_myelin_info(input):
     # cached_so_volume, full_cell_dict,k, min_comp_len, axon_only
     organell_input = [cellid, cached_mito_ids, cached_mito_rep_coords,
                       cached_mito_volumes, full_cell_dict, 3, min_comp_len, False]
-    mito_results = get_organell_volume_density(organell_input)
-    den_mito_density_cell = mito_results[1]
+    mito_results = get_organell_volume_density_comps(organell_input)
     axo_mito_volume_density_cell = mito_results[2]
+    den_mito_volume_density_cell = mito_results[3]
+    total_mito_volume_density_cell = mito_results[4]
     axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
     axon_radii_cell = get_compartment_radii(cell, comp_inds=axon_inds)
     ax_median_radius_cell = np.median(axon_radii_cell)
     cell_volume = np.abs(cell.size) * np.prod(cell.scaling) * 10**(-9) #in µm³
-    return [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell, cell_volume]
+    return [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell, cell_volume, total_mito_volume_density_cell]
 
 def get_cell_comp_vert_coords(cellid, comp):
     '''
@@ -620,6 +661,7 @@ def get_dendrite_info_cell(input):
                     branching_points.append(b)
     number_branching_points = len(branching_points)
     return dendrite_length, primary_dendrite_number, number_branching_points
+
 
 
 

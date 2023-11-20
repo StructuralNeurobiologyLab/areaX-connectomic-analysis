@@ -34,7 +34,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 10
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230919_j0251v5_ngf_fs_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231120_j0251v5_ngf_fs_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -90,6 +90,7 @@ if __name__ == '__main__':
     axon_median_radius_ngf = ngf_output[:, 0]
     axon_mito_volume_density_ngf = ngf_output[:, 1]
     axon_myelin_ngf = ngf_output[:, 2]
+    total_mito_volume_density_ngf = ngf_output[:, 4]
 
     ngf_nonzero = axon_median_radius_ngf > 0
     # get soma diameter from all GPe
@@ -103,7 +104,9 @@ if __name__ == '__main__':
     spine_density = start_multiprocess_imap(get_spine_density, ngf_input)
     spine_density = np.array(spine_density)
     ngf_params = {"axon median radius": axon_median_radius_ngf[ngf_nonzero], "axon mitochondria volume density": axon_mito_volume_density_ngf[ngf_nonzero],
-                  'soma diameter': ngf_diameters[ngf_nonzero],'spine density': spine_density[ngf_nonzero], "cellids": ngf_ids[ngf_nonzero]}
+                  'soma diameter': ngf_diameters[ngf_nonzero],'spine density': spine_density[ngf_nonzero],
+                  'total mitochondria volume density': total_mito_volume_density_ngf[ngf_nonzero],
+                  "cellids": ngf_ids[ngf_nonzero]}
     ngf_param_df = pd.DataFrame(ngf_params)
     ngf_param_df.to_csv("%s/ngf_params.csv" % f_name)
 
@@ -178,11 +181,13 @@ if __name__ == '__main__':
              f'for soma density = {soma_den_thresh} µm, axon median radius = {axon_med_radius_thresh} µm, \n'
              f'mito volume density = {mito_density_thresh} µm³/µm, spine density = {spine_density_thresh} 1/µm')
     threshold = [axon_med_radius_thresh, mito_density_thresh, soma_den_thresh, spine_density_thresh]
-    ct_palette = {'type 1': '#232121', 'type 2': '#15AEAB', 'no type':'#707070'}
+    ct_palette = {'type 1': '#232121', 'type 2': '#38C2BA', 'no type':'#707070'}
     #seperate based on these threshold and if cells don't fit into either category, plot in grey
     type_1_inds_collected = np.zeros((len(ngf_param_df), 4))
     type_2_inds_collected = np.zeros((len(ngf_param_df), 4))
     for i, key in enumerate(key_list):
+        if 'total mito' in key:
+            continue
         if 'spine' in key:
             type_1_inds = ngf_params[key] >= threshold[i]
             type_2_inds = ngf_params[key] < threshold[i]
@@ -272,6 +277,7 @@ if __name__ == '__main__':
     axon_median_radius_fs = fs_output[:, 0]
     axon_mito_volume_density_fs = fs_output[:, 1]
     axon_myelin_fs = fs_output[:, 2]
+    total_mito_volume_density_fs = fs_output[:, 4]
     fs_nonzero = axon_median_radius_fs > 0
     # get soma diameter from all FS
     log.info('Get information about soma diameter')
@@ -287,6 +293,7 @@ if __name__ == '__main__':
     fs_params = {"axon median radius": axon_median_radius_fs[fs_nonzero],
                   "axon mitochondria volume density": axon_mito_volume_density_fs[fs_nonzero],
                   'soma diameter': fs_diameters[fs_nonzero], 'spine density': spine_density[fs_nonzero],
+                 'total mitochondria volume density': total_mito_volume_density_fs[fs_nonzero],
                   "cellids": fs_ids[fs_nonzero]}
     fs_param_df = pd.DataFrame(fs_params)
     fs_param_df.to_csv("%s/fs_params.csv" % f_name)
@@ -295,7 +302,7 @@ if __name__ == '__main__':
     comb_df.loc[comb_df['celltype'] == 'type 1', 'celltype'] = 'NGF type 1'
     comb_df.loc[comb_df['celltype'] == 'type 2', 'celltype'] = 'NGF type 2'
     comb_df.loc[comb_df['celltype'] == 'no type', 'celltype'] = 'NGF no type'
-    ct_palette = {'NGF type 1': '#232121', 'NGF type 2': '#15AEAB', 'NGF no type': '#707070', 'FS': '#912043'}
+    ct_palette = {'NGF type 1': '#232121', 'NGF type 2': '#38C2BA', 'NGF no type': '#707070', 'FS': '#912043'}
     comb_df.to_csv(f'{f_name}/FS_ngf_params.csv')
     example_cellids = [126798179, 1155532413, 15724767, 24397945, 1080627023]
     example_inds = np.in1d(comb_df['cellids'], example_cellids)

@@ -6,6 +6,7 @@ if __name__ == '__main__':
     from syconn.handler.basics import load_pkl2obj
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_histogram_selection
     import os as os
     import pandas as pd
     import numpy as np
@@ -25,11 +26,13 @@ if __name__ == '__main__':
     ct2 = 10
     color_key = 'STNGP'
     fontsize_jointplot = 12
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231121_j0251v5_%s_%s_morph_PCA" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231127_j0251v5_%s_%s_morph_PCA" % (
             ct_dict[ct1], ct_dict[ct2])
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Connectivity comparison', log_dir=f_name + '/logs/')
+    n_comps = 1
+    log.info(f'Number of components is {n_comps}')
     ct_colors = CelltypeColors()
     #ct_palette = ct_colors.ct_palette(key=color_key)
     ct_palette = {'NGF type 1': '#232121', 'NGF type 2': '#38C2BA', 'NGF no type': '#707070', 'FS': '#912043'}
@@ -50,21 +53,30 @@ if __name__ == '__main__':
     #standardize features for PCA
     scaler = StandardScaler()
     features_standardized = scaler.fit_transform(features)
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=n_comps)
     principal_components = pca.fit_transform(features_standardized)
     #new dataframe with principal components and labels
-    pca_df = pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
-    pca_df['celltype'] = labels
-    pca_df.to_csv(f'{f_name}/pca_two_principal_components.csv')
+    if n_comps == 1:
+        pca_df = pd.DataFrame(data=principal_components, columns=['PC1'])
+        pca_df['celltype'] = labels
+        pca_df.to_csv(f'{f_name}/pca_principal_component.csv')
+        log.info('Step 3/3: Plot results')
+        plot_histogram_selection(dataframe=pca_df, x_data='PC1',
+                                 color_palette=ct_palette, label='pca_one_comp', count='cells', foldername=f_name,
+                                 hue_data='celltype', title=f'Separation by first principal component')
+    elif n_comps == 2:
+        pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
+        pca_df['celltype'] = labels
+        pca_df.to_csv(f'{f_name}/pca_two_principal_components.csv')
 
-    log.info('Step 3/3: Plot results')
-    g = sns.JointGrid(data=pca_df, x='PC1', y='PC2', hue="celltype", palette=ct_palette)
-    g.plot_joint(sns.scatterplot)
-    g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
-                     kde=False, bins=10, palette=ct_palette)
-    plt.savefig(f"{f_name}/pca_joinplot_celltypes.svg" )
-    plt.savefig(f"{f_name}/pca_joinplot_celltypes.png" )
-    plt.close()
+        log.info('Step 3/3: Plot results')
+        g = sns.JointGrid(data=pca_df, x='PC1', y='PC2', hue="celltype", palette=ct_palette)
+        g.plot_joint(sns.scatterplot)
+        g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
+                         kde=False, bins=10, palette=ct_palette)
+        plt.savefig(f"{f_name}/pca_joinplot_celltypes.svg" )
+        plt.savefig(f"{f_name}/pca_joinplot_celltypes.png" )
+        plt.close()
 
     #plot them in grid plot with histplot in middle and scatterplots (see JK)
     #do UMAP on them

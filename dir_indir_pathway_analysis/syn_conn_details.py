@@ -28,18 +28,18 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    conn_ct = 10
+    conn_ct = 0
     #celltypes that are compared
-    ct2 = 2
-    ct3 = 8
+    ct2 = 6
+    ct3 = 7
     color_key = 'STNGP'
     fontsize_jointplot = 12
     kde = True
     if conn_ct == None:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231115_j0251v5_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231130_j0251v5_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
             ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231115_j0251v5_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231130_j0251v5_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
             ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -308,7 +308,7 @@ if __name__ == '__main__':
         ct3_counts = np.bincount(ct3_inds)
         num_ct2_bins = len(ct2_bins)
         len_bins = num_ct2_bins + len(ct3_bins)
-        hist_df = pd.DataFrame(columns=['count of cell-pairs', 'percent of cell-pairs', 'bins', 'to celltype'],
+        hist_df = pd.DataFrame(columns=['count of cell-pairs', 'percent of cell-pairs', 'bins', 'celltype'],
                                index=range(len_bins))
         hist_df.loc[0: num_ct2_bins - 1, 'count of cell-pairs'] = ct2_counts
         hist_df.loc[0: num_ct2_bins - 1, 'percent of cell-pairs'] = 100 * ct2_counts / np.sum(ct2_counts)
@@ -327,6 +327,38 @@ if __name__ == '__main__':
         plt.xlabel('number of synapses')
         plt.savefig(f'{f_name}/multi_bar_syn_num_inter_perc.svg')
         plt.savefig(f'{f_name}/multi_bar_syn_num_inter_perc.png')
+        plt.close()
+        #plot again as histogramm summarized with 1, 2-5, 5-10, >10
+        sum_bins = [1, 2, 6, 11, np.max(hist_df['bins']) + 1]
+        sum_bin_labels = ['1', '2-5', '5-10', '<10']
+        sum_bin_cats = np.array(pd.cut(hist_df['bins'], sum_bins, right=False, labels=sum_bin_labels))
+        hist_df['sum bins'] = sum_bin_cats
+        len_bin_labels = len(sum_bin_labels)
+        sum_hist_df = pd.DataFrame(columns=['count of cell-pairs', 'percent of cell-pairs', 'sum bins', 'celltype'],
+                               index=range(len_bin_labels * 2))
+        ct2_hist_df = hist_df[hist_df['celltype'] == ct_dict[ct2]]
+        ct3_hist_df = hist_df[hist_df['celltype'] == ct_dict[ct3]]
+        for i, label in enumerate(sum_bin_labels):
+            ct2_label_hist = ct2_hist_df[ct2_hist_df['sum bins'] == label]
+            sum_hist_df.loc[i, 'count of cell-pairs'] = np.sum(ct2_label_hist['count of cell-pairs'])
+            sum_hist_df.loc[i, 'percent of cell-pairs'] = np.sum(ct2_label_hist['percent of cell-pairs'])
+            sum_hist_df.loc[i, 'sum bins'] = label
+            sum_hist_df.loc[i, 'celltype'] = ct_dict[ct2]
+            ct3_label_hist = ct3_hist_df[ct3_hist_df['sum bins'] == label]
+            sum_hist_df.loc[i + len_bin_labels, 'count of cell-pairs'] = np.sum(ct3_label_hist['count of cell-pairs'])
+            sum_hist_df.loc[i + len_bin_labels, 'percent of cell-pairs'] = np.sum(ct3_label_hist['percent of cell-pairs'])
+            sum_hist_df.loc[i + len_bin_labels, 'sum bins'] = label
+            sum_hist_df.loc[i + len_bin_labels, 'celltype'] = ct_dict[ct3]
+        sum_hist_df.to_csv(f'{f_name}/hist_df_inter_summary.csv')
+        sns.barplot(data=sum_hist_df, x='sum bins', y='count of cell-pairs', hue='celltype', palette=ct_palette)
+        plt.xlabel('number of synapses')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_inter.svg')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_inter.png')
+        plt.close()
+        sns.barplot(data=sum_hist_df, x='sum bins', y='percent of cell-pairs', hue='celltype', palette=ct_palette)
+        plt.xlabel('number of synapses')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_inter_perc.svg')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_inter_perc.png')
         plt.close()
         log.info('Step 4/4: Get information to same celltype and plot per cell information')
         #get number synapses and sum size per cells to same celltype
@@ -617,6 +649,43 @@ if __name__ == '__main__':
                     plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra_perc.svg')
                     plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra_perc.png')
                     plt.close()
+                    # plot again as histogramm summarized with 1, 2-5, 5-10, >10
+                    sum_bins = [1, 2, 6, 11, np.max(hist_df['bins']) + 1]
+                    sum_bin_labels = ['1', '2-5', '5-10', '<10']
+                    sum_bin_cats = np.array(pd.cut(hist_df['bins'], sum_bins, right=False, labels=sum_bin_labels))
+                    hist_df['sum bins'] = sum_bin_cats
+                    len_bin_labels = len(sum_bin_labels)
+                    sum_hist_df = pd.DataFrame(
+                        columns=['count of cell-pairs', 'percent of cell-pairs', 'sum bins', 'celltype'],
+                        index=range(len_bin_labels * 2))
+                    ct2_hist_df = hist_df[hist_df['celltype'] == ct_dict[ct2]]
+                    ct3_hist_df = hist_df[hist_df['celltype'] == ct_dict[ct3]]
+                    for i, label in enumerate(sum_bin_labels):
+                        ct2_label_hist = ct2_hist_df[ct2_hist_df['sum bins'] == label]
+                        sum_hist_df.loc[i, 'count of cell-pairs'] = np.sum(ct2_label_hist['count of cell-pairs'])
+                        sum_hist_df.loc[i, 'percent of cell-pairs'] = np.sum(ct2_label_hist['percent of cell-pairs'])
+                        sum_hist_df.loc[i, 'sum bins'] = label
+                        sum_hist_df.loc[i, 'celltype'] = ct_dict[ct2]
+                        ct3_label_hist = ct3_hist_df[ct3_hist_df['sum bins'] == label]
+                        sum_hist_df.loc[i + len_bin_labels, 'count of cell-pairs'] = np.sum(
+                            ct3_label_hist['count of cell-pairs'])
+                        sum_hist_df.loc[i + len_bin_labels, 'percent of cell-pairs'] = np.sum(
+                            ct3_label_hist['percent of cell-pairs'])
+                        sum_hist_df.loc[i + len_bin_labels, 'sum bins'] = label
+                        sum_hist_df.loc[i + len_bin_labels, 'celltype'] = ct_dict[ct3]
+                    sum_hist_df.to_csv(f'{f_name}/hist_df_intra_summary.csv')
+                    sns.barplot(data=sum_hist_df, x='sum bins', y='count of cell-pairs', hue='celltype',
+                                palette=ct_palette)
+                    plt.xlabel('number of synapses')
+                    plt.savefig(f'{f_name}/multi_bar_sum_syn_num_intra.svg')
+                    plt.savefig(f'{f_name}/multi_bar_sum_syn_num_intra.png')
+                    plt.close()
+                    sns.barplot(data=sum_hist_df, x='sum bins', y='percent of cell-pairs', hue='celltype',
+                                palette=ct_palette)
+                    plt.xlabel('number of synapses')
+                    plt.savefig(f'{f_name}/multi_bar_sum_syn_num_intra_perc.svg')
+                    plt.savefig(f'{f_name}/multi_bar_sum_syn_num_intra_perc.png')
+                    plt.close()
     else:
         log.info(f'Step 3/4: Get information outgoing from {ct_dict[conn_ct]}')
         log.info('Get per cell information to other celltype')
@@ -842,6 +911,43 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_outgoing_perc.svg')
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_outgoing_perc.png')
             plt.close()
+        # plot again as histogramm summarized with 1, 2-5, 5-10, >10
+        sum_bins = [1, 2, 6, 11, np.max(hist_df['bins']) + 1]
+        sum_bin_labels = ['1', '2-5', '5-10', '<10']
+        sum_bin_cats = np.array(pd.cut(hist_df['bins'], sum_bins, right=False, labels=sum_bin_labels))
+        hist_df['sum bins'] = sum_bin_cats
+        len_bin_labels = len(sum_bin_labels)
+        sum_hist_df = pd.DataFrame(
+            columns=['count of cell-pairs', 'percent of cell-pairs', 'sum bins', 'to celltype'],
+            index=range(len_bin_labels * 2))
+        ct2_hist_df = hist_df[hist_df['to celltype'] == ct_dict[ct2]]
+        ct3_hist_df = hist_df[hist_df['to celltype'] == ct_dict[ct3]]
+        for i, label in enumerate(sum_bin_labels):
+            ct2_label_hist = ct2_hist_df[ct2_hist_df['sum bins'] == label]
+            sum_hist_df.loc[i, 'count of cell-pairs'] = np.sum(ct2_label_hist['count of cell-pairs'])
+            sum_hist_df.loc[i, 'percent of cell-pairs'] = np.sum(ct2_label_hist['percent of cell-pairs'])
+            sum_hist_df.loc[i, 'sum bins'] = label
+            sum_hist_df.loc[i, 'to celltype'] = ct_dict[ct2]
+            ct3_label_hist = ct3_hist_df[ct3_hist_df['sum bins'] == label]
+            sum_hist_df.loc[i + len_bin_labels, 'count of cell-pairs'] = np.sum(
+                ct3_label_hist['count of cell-pairs'])
+            sum_hist_df.loc[i + len_bin_labels, 'percent of cell-pairs'] = np.sum(
+                ct3_label_hist['percent of cell-pairs'])
+            sum_hist_df.loc[i + len_bin_labels, 'sum bins'] = label
+            sum_hist_df.loc[i + len_bin_labels, 'to celltype'] = ct_dict[ct3]
+        sum_hist_df.to_csv(f'{f_name}/hist_df_outgoing_summary.csv')
+        sns.barplot(data=sum_hist_df, x='sum bins', y='count of cell-pairs', hue='to celltype',
+                    palette=ct_palette)
+        plt.xlabel('number of synapses')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_outgoing.svg')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_outgoing.png')
+        plt.close()
+        sns.barplot(data=sum_hist_df, x='sum bins', y='percent of cell-pairs', hue='to celltype',
+                    palette=ct_palette)
+        plt.xlabel('number of synapses')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_outgoing_perc.svg')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_outgoing_perc.png')
+        plt.close()
         log.info(f'Step 4/4: Get information incoming to {ct_dict[conn_ct]}')
         suit_ct_inds = np.all(np.in1d(in_m_ssv_partners, all_suitable_ids).reshape(len(in_m_ssv_partners), 2), axis=1)
         in_m_cts = in_m_cts[suit_ct_inds]
@@ -866,7 +972,7 @@ if __name__ == '__main__':
         conn_inds = np.where(ct2_cts == conn_ct)
         post_ct2_ids = ct2_ssv_partners[conn_inds]
         # get cellids of ct2
-        pre_ct2_ids = m_ssv_partners[ct2_inds]
+        pre_ct2_ids = in_m_ssv_partners[ct2_inds]
         ct2_syn_numbers, ct2_sum_sizes, unique_ssv_ids = get_ct_syn_number_sumsize(syn_sizes=ct2_sizes,
                                                                                    syn_ssv_partners=ct2_ssv_partners,
                                                                                    syn_cts=ct2_cts, ct=conn_ct)
@@ -883,15 +989,15 @@ if __name__ == '__main__':
         log.info(
             f'{len(unique_ssv_ids_sorted)} out of {num_conn_ct_ids} {ct_dict[conn_ct]} get synapses from {ct_dict[ct2]}')
         log.info(f'Get per cell information from {ct_dict[ct3]}')
-        ct3_inds = np.where(m_cts == ct3)
-        ct3_ssv_partners = m_ssv_partners[ct3_inds[0]]
-        ct3_sizes = m_sizes[ct3_inds[0]]
-        ct3_cts = m_cts[ct3_inds[0]]
+        ct3_inds = np.where(in_m_cts == ct3)
+        ct3_ssv_partners = in_m_ssv_partners[ct3_inds[0]]
+        ct3_sizes = in_m_sizes[ct3_inds[0]]
+        ct3_cts = in_m_cts[ct3_inds[0]]
         # get cellids of all conncts
         conn_inds = np.where(ct3_cts == conn_ct)
         post_ct3_ids = ct3_ssv_partners[conn_inds]
         # get cellids of ct2
-        pre_ct3_ids = m_ssv_partners[ct3_inds]
+        pre_ct3_ids = in_m_ssv_partners[ct3_inds]
         ct3_syn_numbers, ct3_sum_sizes, unique_ssv_ids = get_ct_syn_number_sumsize(syn_sizes=ct3_sizes,
                                                                                    syn_ssv_partners=ct3_ssv_partners,
                                                                                    syn_cts=ct3_cts, ct=conn_ct)
@@ -1068,5 +1174,39 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_incoming_perc.svg')
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_incoming_perc.png')
             plt.close()
+        # plot again as histogramm summarized with 1, 2-5, 5-10, >10
+        sum_bins = [1, 2, 6, 11, np.max(hist_df['bins']) + 1]
+        sum_bin_labels = ['1', '2-5', '5-10', '<10']
+        sum_bin_cats = np.array(pd.cut(hist_df['bins'], sum_bins, right=False, labels=sum_bin_labels))
+        hist_df['sum bins'] = sum_bin_cats
+        len_bin_labels = len(sum_bin_labels)
+        sum_hist_df = pd.DataFrame(columns=['count of cell-pairs', 'percent of cell-pairs', 'sum bins', 'from celltype'],
+                                   index=range(len_bin_labels * 2))
+        ct2_hist_df = hist_df[hist_df['from celltype'] == ct_dict[ct2]]
+        ct3_hist_df = hist_df[hist_df['from celltype'] == ct_dict[ct3]]
+        for i, label in enumerate(sum_bin_labels):
+            ct2_label_hist = ct2_hist_df[ct2_hist_df['sum bins'] == label]
+            sum_hist_df.loc[i, 'count of cell-pairs'] = np.sum(ct2_label_hist['count of cell-pairs'])
+            sum_hist_df.loc[i, 'percent of cell-pairs'] = np.sum(ct2_label_hist['percent of cell-pairs'])
+            sum_hist_df.loc[i, 'sum bins'] = label
+            sum_hist_df.loc[i, 'from celltype'] = ct_dict[ct2]
+            ct3_label_hist = ct3_hist_df[ct3_hist_df['sum bins'] == label]
+            sum_hist_df.loc[i + len_bin_labels, 'count of cell-pairs'] = np.sum(
+                ct3_label_hist['count of cell-pairs'])
+            sum_hist_df.loc[i + len_bin_labels, 'percent of cell-pairs'] = np.sum(
+                ct3_label_hist['percent of cell-pairs'])
+            sum_hist_df.loc[i + len_bin_labels, 'sum bins'] = label
+            sum_hist_df.loc[i + len_bin_labels, 'from celltype'] = ct_dict[ct3]
+        sum_hist_df.to_csv(f'{f_name}/hist_df_incoming_summary.csv')
+        sns.barplot(data=sum_hist_df, x='sum bins', y='count of cell-pairs', hue='from celltype', palette=ct_palette)
+        plt.xlabel('number of synapses')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_incoming.svg')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_incoming.png')
+        plt.close()
+        sns.barplot(data=sum_hist_df, x='sum bins', y='percent of cell-pairs', hue='from celltype', palette=ct_palette)
+        plt.xlabel('number of synapses')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_incoming_perc.svg')
+        plt.savefig(f'{f_name}/multi_bar_sum_syn_num_incoming_perc.png')
+        plt.close()
 
     log.info('Analysis finished')

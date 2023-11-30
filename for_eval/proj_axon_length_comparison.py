@@ -23,13 +23,14 @@ if __name__ == '__main__':
     ct_dict = bio_params.ct_dict()
     use_gt = True
     filter_syns = False
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231114_j0251v5_ax_fraglengths_gt"
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231129_j0251v5_ax_fraglengths_gt"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
     if use_gt:
-        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv"
-        v6_gt = pd.read_csv(gt_path,names=["cellids", "celltype"])
+        #gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv"
+        gt_path = 'cajal/nvmescratch/users/arother/202301_syconnv5_wd_tests/20231013_new_celltype_gt/231115_ar_j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv'
+        gt = pd.read_csv(gt_path,names=["cellids", "celltype"])
         log.info(f'Ground truth cells from {gt_path} used for analysis')
     else:
         ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
@@ -48,7 +49,7 @@ if __name__ == '__main__':
     all_ax_cts = []
     for ct in ax_cts:
         if use_gt:
-            ct_ids = v6_gt['cellids'][v6_gt['celltype'] == ct_dict[ct]]
+            ct_ids = gt['cellids'][gt['celltype'] == ct_dict[ct]]
         else:
             ct_inds = np.where(celltypes == ct)[0]
             ct_ids = cellids[ct_inds]

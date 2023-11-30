@@ -13,8 +13,8 @@ if __name__ == '__main__':
     ct_dict = bio_params.ct_dict()
     ax_cts = bio_params.axon_cts()
     num_samples = 10
-    np.random.seed(42)
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/231115_j0251v5_check_ax_forgt_{num_samples}"
+    np.random.seed(41)
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/231129_j0251v5_check_ax_forgt_{num_samples}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Get rnd ids for different ax lengths', log_dir=f_name + '/logs/')

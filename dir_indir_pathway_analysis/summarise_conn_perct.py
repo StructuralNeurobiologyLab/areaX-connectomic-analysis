@@ -21,7 +21,7 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     #celltypes that are compared
-    ct = 2
+    ct = 8
     color_key = 'STNGP'
     fontsize_jointplot = 12
     f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231130_j0251v5_%s_connectivity_summary" % (
@@ -33,9 +33,9 @@ if __name__ == '__main__':
     ct_palette = ct_colors.ct_palette(key=color_key)
     ct_palette['other'] = '#707070'
     ct_str = ct_dict[ct]
-    incoming_celltypes = [3, 4]
+    incoming_celltypes = [3, 4, 6, 7]
     incoming_ct_str = [ct_dict[i] for i in incoming_celltypes]
-    outgoing_celltypes = [6, 7]
+    outgoing_celltypes = [2, 6, 7, 8]
     outgoing_ct_str = [ct_dict[i] for i in outgoing_celltypes]
     log.info(f'Summary will focus on celltype {ct_str}, incoming synapses from {incoming_ct_str}'
              f'and outgoing synapses to {outgoing_ct_str}')

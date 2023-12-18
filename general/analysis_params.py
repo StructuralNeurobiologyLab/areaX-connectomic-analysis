@@ -12,16 +12,21 @@ class Analysis_Params(object):
         self._version = version
         ct_dict = {'v3': {}, 'v4': {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}, 'v5': {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF", 11:"ASTRO", 12:"OLIGO", 13:'MICRO', 14:'FRAG'}}
+               10: "NGF", 11:"ASTRO", 12:"OLIGO", 13:'MICRO', 14:'FRAG'},
+                   'v6': {0:'DA', 1:'LMAN', 2: 'HVC', 3:'MSN', 4:'STN', 5:'TAN', 6:'GPe', 7:'GPi', 8: 'LTS',
+                          9:'INT1', 10:'INT2', 11:'INT3', 12:'ASTRO', 13:'OLIGO', 14:'MICRO', 15:'MIGR', 16:'FRAG'}}
         self._ct_dict = ct_dict[version]
         if version == 'v5':
             self._glia_cts = [11, 12, 13, 14]
+            self._axon_cts = [1, 3, 4]
+        elif version == 'v6':
+            self._glia_cts = [12, 13, 14, 15, 16]
+            self._axon_cts = [0, 1, 2]
         else:
             self._glia_cts = []
         self._num_cts = len(self._ct_dict.keys())
         self._axoness_dict = {0: 'dendrite', 1:'axon', 2:'soma'}
         self._spiness_dict = {0: 'spine neck', 1: 'spine head', 2:'dendritic shaft', 3:'other'}
-        self._axon_cts = [1, 3, 4]
         self._syn_prob_tresh = 0.6
         self._min_syn_size = 0.1
         self._min_comp_length = 200

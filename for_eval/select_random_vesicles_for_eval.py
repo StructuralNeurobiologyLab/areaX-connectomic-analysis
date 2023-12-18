@@ -18,7 +18,7 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     from sklearn.utils import shuffle
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     start = time.time()
     ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",

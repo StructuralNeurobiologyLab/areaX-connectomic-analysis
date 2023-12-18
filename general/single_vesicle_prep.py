@@ -7,15 +7,17 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from analysis_params import Analysis_Params
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    version = 'v6'
+    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
     f_name = analysis_params.file_locations
     log = initialize_logging('sort single vesicles into celltypes',
                              log_dir=f_name + '/logs/')
     with_glia = True
     log.info(f'Sort single vesicles into celltypes v1 of single vesicles, with_glia = {with_glia}')
 
-    ves_wd = f'{global_params.wd}/single_vesicles'
+    #ves_wd = f'{global_params.wd}/single_vesicles/multi_class_pred/'
+    ves_wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_organell_seg/231216_single_vesicles_slurm/'
     log.info(f'wd = {ves_wd}')
     log.info('Load single vesicle data')
     single_ves_ids = np.load(f'{ves_wd}/ids.npy')
@@ -42,7 +44,7 @@ if __name__ == '__main__':
         np.save(f'{f_name}/{ct_dict[ct]}_mapping_ssv_ids.npy', ct_ves_map2ssvids)
         np.save(f'{f_name}/{ct_dict[ct]}_dist2matrix.npy', ct_ves_dist2matrix)
 
-    log.info('Caches for single vesicles per celltype done')
+    log.info('Numpy arrays for single vesicles per celltype done')
 
 
 

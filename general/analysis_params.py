@@ -30,13 +30,10 @@ class Analysis_Params(object):
         self._syn_prob_tresh = 0.6
         self._min_syn_size = 0.1
         self._min_comp_length = 200
-        file_locations = {'v3': '/cajal/nvmescratch/users/arother/j0251v3_prep/',
-                               'v4': "/cajal/nvmescratch/users/arother/j0251v4_prep/",
-                               'v5': "/cajal/nvmescratch/users/arother/j0251v5_prep/"}
-        self.file_locations = file_locations[version]
+        self.file_locations = f"/cajal/nvmescratch/users/arother/j0251{self._version}_prep/"
         self._merger_file_location = f'{self.file_locations}/merger_arr.pkl'
         self._pot_astros_file_location = f'{self.file_locations}/pot_astro_ids.pkl'
-        celltype_keys = {'v3':'celltype_cnn_e3', 'v4':'celltype_cnn_e3', 'v5':'celltype_pts_e3'}
+        celltype_keys = {'v3':'celltype_cnn_e3', 'v4':'celltype_cnn_e3', 'v5':'celltype_pts_e3', 'v6':'celltype_pts_e3'}
         self._celltype_key = celltype_keys[version]
 
     def working_dir(self):
@@ -87,11 +84,17 @@ class Analysis_Params(object):
         return potential_astrocytes
 
     def load_cell_dict(self, celltype):
-        if celltype in self._axon_cts:
-            cell_dict = load_pkl2obj(f'{self.file_locations}/ax_{self._ct_dict[celltype]:.3s}_dict.pkl')
+        if self._version == 'v6':
+            if celltype in self._axon_cts:
+                cell_dict = load_pkl2obj(f'{self.file_locations}/ax_{self._ct_dict[celltype]}_dict.pkl')
+            else:
+                cell_dict = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]}_dict.pkl')
         else:
-            cell_dict = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]:.3s}_dict.pkl')
-        return cell_dict
+            if celltype in self._axon_cts:
+                cell_dict = load_pkl2obj(f'{self.file_locations}/ax_{self._ct_dict[celltype]:.3s}_dict.pkl')
+            else:
+                cell_dict = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]:.3s}_dict.pkl')
+            return cell_dict
 
     def load_full_cell_array(self, celltype):
         if celltype in self._axon_cts:

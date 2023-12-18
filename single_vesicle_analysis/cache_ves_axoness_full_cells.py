@@ -16,7 +16,8 @@ if __name__ == '__main__':
     with_glia = False
     log.info(f'Cache axoness of celltypes that are not projecting axons (DA, LMAN, HVC), with_glia = {with_glia}')
     log.info('Cache only for full cells')
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
+    version = 'v6'
+    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v6')
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     #only use celltypes that are not projecting axons
     ct_types = analysis_params.load_celltypes_full_cells(with_glia=with_glia)

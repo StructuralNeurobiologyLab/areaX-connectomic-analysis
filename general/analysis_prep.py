@@ -16,14 +16,12 @@ if __name__ == '__main__':
     #V4
     #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     #v5
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
 
-
-    start = time.time()
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
-    f_name = "/cajal/nvmescratch/users/arother/j0251v5_prep"
+    version = 'v6'
+    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    f_name = analysis_params.file_locations
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     syn_proba = 0.6
@@ -31,13 +29,15 @@ if __name__ == '__main__':
     with_glia = False
     log = initialize_logging('analysis prep', log_dir=f_name + '/logs/')
     log.info(f'Data based on the working directory {global_params.wd} will be cached')
-    log.info('Compared to v4 (agglo2) this involves new synapse, mitochondria and vesicle cloud predictions; new celltype trainings but old skeletons and compartments')
+    log.info('Compared to v5 (agglo2) this involves; new celltype trainings (gt now involves INT1-3 instead of FS, NGF; also migrating neurons but old skeletons and compartments')
     log.info('syn_prob = %.2f, min syn size = %.2f, with_glia = %s' % (syn_proba, min_syn_size, with_glia))
     log.info("Step 0: Loading synapse data on all cells")
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
+
     # celltypes: j0256: STN = 0, DA = 1, MSN = 2, LMAN = 3, HVC = 4, TAN = 5, GPe = 6, GPi = 7,
     #                      FS=8, LTS=9, NGF=10, ASTRO = 11, OLIGO = 12, MICRO = 13, FRAG = 14
+    #celltypes: 'v6': {0:'DA', 1:'LMAN', 2: 'HVC', 3:'MSN', 4:'STN', 5:'TAN', 6:'GPe', 7:'GPi', 8: 'LTS',
+    #                      9:'INT1', 10:'INT2', 11:'INT3', 12:'ASTRO', 13:'OLIGO', 14:'MICRO', 15:'MIGR', 16:'FRAG'}
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     ax_list = analysis_params.axon_cts()
     ct_list = list(ct_dict.keys())
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     for ix, ct in enumerate(ct_list):
         if ct in ax_list:
             continue
-        log.info('Step %.1i/%.1i find full cells of celltype %.3s' % (ix+1,len(ct_list), ct_dict[ct]))
+        log.info(f'Step %.1i/%.1i find full cells of celltype {ct_dict[ct]}' % (ix+1,len(ct_list)))
         log.info("Get amount and sum of synapses")
         axon_syns, den_syns, soma_syns = synapse_amount_percell(celltype = ct, syn_cts = m_cts, syn_sizes = m_sizes, syn_ssv_partners = m_ssv_partners,
                                                                 syn_axs = m_axs, axo_denso = True, all_comps = True)
@@ -100,8 +100,8 @@ if __name__ == '__main__':
             except KeyError:
                 cell_dict[cellid]["soma synapse amount"] = 0
                 cell_dict[cellid]["soma summed synapse size"] = 0
-        dict_path = ("%s/full_%.3s_dict.pkl" % (f_name, ct_dict[ct]))
-        arr_path = ("%s/full_%.3s_arr.pkl" % (f_name, ct_dict[ct]))
+        dict_path = (f"{f_name}/full_{ct_dict[ct]}_dict.pkl")
+        arr_path = (f"{f_name}/full_{ct_dict[ct]}_arr.pkl")
         cell_dict = dict(cell_dict)
         write_obj2pkl(dict_path, cell_dict)
         write_obj2pkl(arr_path, cell_array)
@@ -139,7 +139,7 @@ if __name__ == '__main__':
             except KeyError:
                 axon_dict[axonid]["axon synapse amount"] = 0
                 axon_dict[axonid]["axon summed synapse size"] = 0
-        syn_path = ("%s/ax_%.3s_dict.pkl" % (f_name, ct_dict[axct]))
+        syn_path = (f"{f_name}/ax_{ct_dict[axct]}_dict.pkl")
         axon_dict = dict(axon_dict)
         write_obj2pkl(syn_path, axon_dict)
         time_stamps = [time.time()]

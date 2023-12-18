@@ -11,6 +11,7 @@ if __name__ == '__main__':
     from syconn.reps.segmentation import SegmentationDataset
     from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import \
         get_vesicle_distance_information_per_cell
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np
@@ -21,8 +22,9 @@ if __name__ == '__main__':
     global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    version = 'v5'
+    bio_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    ct_dict = bio_params.ct_dict()
     min_comp_len = 200
     dist_thresholds = [5, 10, 15]  # nm
     min_syn_size = 0.1
@@ -31,8 +33,9 @@ if __name__ == '__main__':
     syn_dist_threshold_far = 5000 #nm
     size_dist_cat = 5
     size_syn_cat = 3
+    gt_version = 'v6'
     color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230220_j0251v4_ct_random_ves_eval_mcl_%i_dt_%i_st_%i_%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/231218_j0251{version}_ct_random_ves_eval_mcl_%i_dt_%i_st_%i_%i_{gt_version}gt" % (
         min_comp_len, dist_thresholds[-1], syn_dist_threshold_close, syn_dist_threshold_far)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -46,22 +49,18 @@ if __name__ == '__main__':
     log.info(f'Select random vesicles from gt cells, from each celltype get {size_dist_cat} per distance to membrane category \n'
              f'and {size_syn_cat} that are within distance to membrane but in two different distance categories per synapse. \n'
              'Save in table, select randomly and shuffle.')
-
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
+    log.info(f'GT version is {gt_version}')
 
     log.info('Step 1/5: Load cellids and celltypes from groundtruth')
     cts = list(ct_dict.keys())
     num_cts = len(cts)
-    cts_str = [ct_dict[i] for i in range(num_cts)]
-    v6_gt = pd.read_csv(
-        "wholebrain/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv",
+    cts_str = bio_params.ct_str(with_glia=False)
+    celltype_gt = pd.read_csv(
+        f"cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_{gt_version}_j0251_72_seg_20210127_agglo2_IDs.csv",
         names=["cellids", "celltype"])
-    v6_neuron_gt = v6_gt[np.in1d(v6_gt['celltype'], cts_str)]
-    cellids = np.array(v6_neuron_gt['cellids'])
-    ct_gt = np.array(v6_neuron_gt['celltype'])
-    time_stamps = [time.time()]
-    step_idents = ['t-1']
+    celltype_gt_gt = celltype_gt[np.in1d(celltype_gt['celltype'], cts_str)]
+    cellids = np.array(celltype_gt['cellids'])
+    ct_gt = np.array(celltype_gt['celltype'])
 
     log.info('Step 2/5: Filter synapse caches')
     #filtering taken from filter_synapse_caches in analysis_conn_helper but not filtering per celltype
@@ -111,7 +110,7 @@ if __name__ == '__main__':
     syn_ssv_partners = m_ssv_partners[filtered_inds]
 
     log.info('Step 3/5: Load single vesicle information and filter for gt cellids')
-    ves_wd = 'cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811/single_vesicles'
+    ves_wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_organell_seg/231216_single_vesicles_slurm/'
     single_ves_ids = np.load(f'{ves_wd}/ids.npy')
     single_ves_coords = np.load(f'{ves_wd}/rep_coords.npy')
     ves_map2ssvids = np.load(f'{ves_wd}/mapping_ssv_ids.npy')

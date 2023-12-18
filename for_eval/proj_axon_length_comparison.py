@@ -18,12 +18,12 @@ if __name__ == '__main__':
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
-
-    bio_params = Analysis_Params(working_dir=global_params.wd, version='v5')
+    version = 'v5'
+    bio_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = bio_params.ct_dict()
     use_gt = True
     filter_syns = False
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231202_j0251v5_ax_fraglengths_gt"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/231202_j0251{version}_ax_fraglengths_gt"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')

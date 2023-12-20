@@ -16,14 +16,16 @@ if __name__ == '__main__':
     from syconn.handler.basics import load_pkl2obj
 
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
-    analysis_params = Analysis_Params(global_params.wd)
-    ct_dict = analysis_params.ct_dict()
+    #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    version = 'v6'
+    analysis_params = Analysis_Params(global_params.wd, version = version)
+    ct_dict = analysis_params.ct_dict(with_glia=True)
     min_comp_len = 200
     #samples per ct
     rnd_samples = 3
     color_key = 'axoness_avg10000'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230314_j0251v5_oldcts_ct_random_comp_val_mcl_%i_samples_%i_k%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/eval/231218_j0251{version}_oldcts_ct_random_comp_val_mcl_%i_samples_%i_k%s" % (
         min_comp_len, rnd_samples, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -37,7 +39,7 @@ if __name__ == '__main__':
 
 
     log.info(f'Iterate over celltypes to write out {rnd_samples} cells with compartments')
-    cache_name = "/cajal/nvmescratch/users/arother/j0251v4_prep"
+    cache_name = "/cajal/nvmescratch/users/arother/j0251v6_prep"
     num_cts = analysis_params.num_cts()
     ax_cts = analysis_params.axon_cts()
     cts_str = analysis_params.ct_str()

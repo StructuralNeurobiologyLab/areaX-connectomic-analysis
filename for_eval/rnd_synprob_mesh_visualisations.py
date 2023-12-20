@@ -3,34 +3,34 @@
 #use also same cells
 
 if __name__ == '__main__':
-    import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     import os as os
     import pandas as pd
     import numpy as np
     from tqdm import tqdm
-    from analysis_params import Analysis_Params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     from syconn.mp.mp_utils import start_multiprocess_imap
     from syconn.reps.segmentation import SegmentationDataset
     from sklearn.utils import shuffle
-    from analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_synprob_data
-    import time
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_synprob_data
     from syconn.handler.basics import load_pkl2obj
-    from analysis_conn_helper import filter_synapse_caches_for_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
     import seaborn as sns
     import matplotlib.pyplot as plt
     import matplotlib.colors as co
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
-    analysis_params = Analysis_Params(global_params.wd, 'v4')
-    ct_dict = analysis_params.ct_dict()
+    #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    version = 'v6'
+    analysis_params = Analysis_Params(global_params.wd, 'v6')
+    ct_dict = analysis_params.ct_dict(with_glia= False)
     min_comp_len = 200
     #samples per ct
     rnd_samples = 3
     color_key = 'axoness_avg10000'
     min_syn_size = 0.1
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230503_j0251v5_synprob_old_cts_mesh_visualization_mcl_%i_samples_%i_k%s_ms_%.1f" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/231218_j0251{version}_synprob_old_cts_mesh_visualization_mcl_%i_samples_%i_k%s_ms_%.1f" % (
         min_comp_len, rnd_samples, color_key, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -39,9 +39,6 @@ if __name__ == '__main__':
     log.info(
         f"min_comp_len = %i, number of samples per ct = %i, key to color to = %s, minimum synapse size = %.1f" % (
             min_comp_len, rnd_samples, color_key, min_syn_size))
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
-
 
     log.info(f'Iterate over celltypes to write out {rnd_samples} cells with compartments')
     cache_name = "/cajal/nvmescratch/users/arother/j0251v4_prep"

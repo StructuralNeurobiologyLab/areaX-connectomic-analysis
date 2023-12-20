@@ -287,13 +287,15 @@ def get_organell_volume_density_comps(input):
         complete_length = get_cell_length(cellid)
     if axon_length < min_comp_len:
         return 0,0, 0, 0
-    total_volume_density = np.sum(organell_volumes)/ complete_length
+
     axo_so_density = axo_so_amount / axon_length
     axo_so_volume = np.sum(organell_volumes[axon_inds])
     axo_so_volume_density = axo_so_volume / axon_length
     if axon_only:
-        return [axo_so_density, axo_so_volume_density, 0, 0]
+        total_volume_density = axo_so_volume_density
+        return [axo_so_density, axo_so_volume_density, 0, 0, total_volume_density]
     else:
+        total_volume_density = np.sum(organell_volumes) / complete_length
         den_so_amount = len(den_so_ids)
         if full_cell_dict is not None:
             dendrite_length = full_cell_dict[cell.id]["dendrite length"]

@@ -16,14 +16,15 @@ if __name__ == '__main__':
     from scipy.stats import kruskal, ranksums
     from itertools import combinations
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
-    version = 'v5'
+    version = 'v6'
     bio_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = bio_params.ct_dict()
-    use_gt = True
+    use_gt = False
     filter_syns = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/231202_j0251{version}_ax_fraglengths_gt"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/231218_j0251{version}_ax_fraglengths_nosyn"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
@@ -95,7 +96,7 @@ if __name__ == '__main__':
         filtered_inds = np.in1d(all_ax_ids, unique_pre_cellids)
         axon_df = axon_df[filtered_inds]
         all_ax_ids = all_ax_ids[filtered_inds]
-        axon_df = axon_df.reset_index()
+        axon_df = axon_df.reset_index(drop = True)
         ct_group_sizes = axon_df.groupby('celltype').size()
         log.info(f'After synapse filtering: total of {len(axon_df)} axons with the following sizes {ct_group_sizes}')
 
@@ -108,7 +109,7 @@ if __name__ == '__main__':
     zero_lengths_df.to_csv(f'{f_name}/zero_lengths.csv')
     nonzero_axon_df = axon_df.replace(0, np.nan)
     nonzero_axon_df = nonzero_axon_df.dropna()
-    nonzero_axon_df = nonzero_axon_df.reset_index()
+    nonzero_axon_df = nonzero_axon_df.reset_index(drop = True)
     assert(len(axon_df) == len(zero_lengths_df) + len(nonzero_axon_df))
     da_0 = len(zero_lengths_df[zero_lengths_df['celltype'] == 'DA'])
     hvc_0 = len(zero_lengths_df[zero_lengths_df['celltype'] == 'HVC'])

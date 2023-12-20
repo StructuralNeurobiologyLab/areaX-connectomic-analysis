@@ -7,10 +7,9 @@ class CelltypeColors():
     '''
     Here are colour palettes made to visualize 11 different celltypes
     '''
-    def __init__(self):
-        self.ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
-        self.num_cts = len(self.ct_dict.keys())
+    def __init__(self, ct_dict):
+        self.ct_dict = ct_dict
+        self.num_cts = len(ct_dict.keys())
         #palette with dark blue, grays, black, red, last, three repeating itself
         c1 = ["#010440", "#010326", "#D98977", "#BF0404", "#D9D9D9", "#8C8C8C", "#404040", "#0D0D0D", "#010440", "#010326", "#D98977"]
         #palette with gray values, also look a bit muddy

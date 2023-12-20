@@ -9,16 +9,17 @@ if __name__ == '__main__':
     import numpy as np
     from syconn.mp.mp_utils import start_multiprocess_imap
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    f_name = "/cajal/nvmescratch/users/arother/j0251v5_prep"
-    log = initialize_logging('axoness full celltypes',
-                             log_dir=f_name + '/logs/')
-    with_glia = False
-    log.info(f'Cache axoness of celltypes that are not projecting axons (DA, LMAN, HVC), with_glia = {with_glia}')
-    log.info('Cache only for full cells')
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     version = 'v6'
+    with_glia = False
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v6')
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
+    f_name = analysis_params.file_locations
+    log = initialize_logging('axoness full celltypes',
+                             log_dir=f_name + '/logs/')
+    log.info(f'Cache axoness of celltypes that are not projecting axons (DA, LMAN, HVC), with_glia = {with_glia}')
+    log.info('Cache only for full cells')
     #only use celltypes that are not projecting axons
     ct_types = analysis_params.load_celltypes_full_cells(with_glia=with_glia)
     cache_name = analysis_params.file_locations

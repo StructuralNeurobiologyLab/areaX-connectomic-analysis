@@ -30,26 +30,28 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = 'cajal/nvmescratch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2'
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
+    version = 'v6'
+    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v6')
     ct_dict = analysis_params.ct_dict(with_glia=False)
     celltype_key = analysis_params.celltype_key()
-    min_comp_len_ax = 50
+    min_comp_len_ax = 200
     min_comp_len_cells = 200
     syn_prob = 0.6
     min_syn_size = 0.1
     exclude_known_mergers = True
-    cls = CelltypeColors()
+    cls = CelltypeColors(ct_dict=ct_dict)
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'STNGP'
+    color_key = 'STNGPNGF'
     plot_connmatrix_only = False
     fontsize = 20
     annot = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230811_j0251v5_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/231220_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -60,7 +62,7 @@ if __name__ == '__main__':
         min_comp_len_cells, min_comp_len_ax, syn_prob, min_syn_size, exclude_known_mergers, color_key))
 
     #this script should iterate over all celltypes
-    axon_cts = [1, 3, 4]
+    axon_cts = analysis_params.axon_cts()
     log.info("Step 1/3: Load cell dicts and get suitable cellids")
     if exclude_known_mergers:
         known_mergers = analysis_params.load_known_mergers()
@@ -83,7 +85,7 @@ if __name__ == '__main__':
                               max_path_len=None)
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(cellids)
         else:
-            if ct == 2:
+            if ct == 3:
                 misclassified_asto_ids = analysis_params.load_potential_astros()
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
@@ -154,8 +156,7 @@ if __name__ == '__main__':
         if ct not in axon_cts:
             #incoming synapses of suitable cells of ct only
             # calculate total number of incoming synapses and sum size (see also similar in analysis_prep_func)
-            in_ids, in_sizes, in_ssv_partners, in_axs, in_cts, unique_in_ssvs, in_syn_sizes, in_syn_numbers = get_number_sum_size_synapses(
-                syn_ids=m_ids,
+            in_sizes, in_ssv_partners, in_axs, in_cts, unique_in_ssvs, in_syn_sizes, in_syn_numbers = get_number_sum_size_synapses(
                 syn_sizes=m_sizes,
                 syn_ssv_partners=m_ssv_partners,
                 syn_axs=m_axs, syn_cts=m_cts,
@@ -168,8 +169,7 @@ if __name__ == '__main__':
             synapse_pd_perct.loc[ct_str, 'median incoming total synapse number'] = np.median(in_syn_numbers)
             synapse_pd_perct.loc[ct_str, 'median incoming total synapse sum size'] = np.median(in_syn_sizes)
             #get only synapses that are with other suitable ids from every cts
-            in_ids, in_sizes, in_ssv_partners, in_axs, in_cts, unique_in_ssvs, in_syn_sizes, in_syn_numbers = get_number_sum_size_synapses(
-                syn_ids=in_ids,
+            in_sizes, in_ssv_partners, in_axs, in_cts, unique_in_ssvs, in_syn_sizes, in_syn_numbers = get_number_sum_size_synapses(
                 syn_sizes=in_sizes,
                 syn_ssv_partners=in_ssv_partners,
                 syn_axs=in_axs, syn_cts=in_cts,
@@ -199,8 +199,7 @@ if __name__ == '__main__':
                 synapse_dict_perct[ct]['incoming percentage full cells synapse sum size'])
         #outgoing synapses
         # calculate total number of outgoing synapses and sum size (see also similar in analysis_prep_func)
-        out_ids, out_sizes, out_ssv_partners, out_axs, out_cts, unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
-            syn_ids=m_ids,
+        out_sizes, out_ssv_partners, out_axs, out_cts, unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
             syn_sizes=m_sizes,
             syn_ssv_partners=m_ssv_partners,
             syn_axs=m_axs, syn_cts=m_cts,
@@ -213,8 +212,7 @@ if __name__ == '__main__':
         synapse_pd_perct.loc[ct_str, 'median outgoing total synapse number'] = np.median(out_syn_numbers)
         synapse_pd_perct.loc[ct_str, 'median outgoing total synapse sum size'] = np.median(out_syn_sizes)
         # get only synapses that are with other suitable ids from every cts
-        out_ids, out_sizes, out_ssv_partners, out_axs, out_cts, unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
-            syn_ids=out_ids,
+        out_sizes, out_ssv_partners, out_axs, out_cts, unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
             syn_sizes=out_sizes,
             syn_ssv_partners=out_ssv_partners,
             syn_axs=out_axs, syn_cts=out_cts,
@@ -249,14 +247,14 @@ if __name__ == '__main__':
                 #incoming synapses
                 if other_ct == ct:
                     unique_in_ssvs, in_syn_sizes, in_syn_numbers = get_number_sum_size_synapses(
-                        syn_ids=in_ids, syn_sizes=in_sizes, syn_ssv_partners=in_ssv_partners,
+                        syn_sizes=in_sizes, syn_ssv_partners=in_ssv_partners,
                         syn_axs=in_axs, syn_cts=in_cts, ct=ct, cellids=suitable_ids_dict[ct],
                         filter_ax=[0,2], filter_ids=suitable_ids_dict[ct], return_syn_arrays=False,
                         filter_pre_ids=None, filter_post_ids=None)
                 else:
                     #raise ValueError
                     unique_in_ssvs, in_syn_sizes, in_syn_numbers = get_number_sum_size_synapses(
-                        syn_ids=in_ids, syn_sizes=in_sizes, syn_ssv_partners=in_ssv_partners,
+                        syn_sizes=in_sizes, syn_ssv_partners=in_ssv_partners,
                         syn_axs=in_axs, syn_cts=in_cts, ct=ct, cellids=suitable_ids_dict[ct],
                         filter_ax=None, filter_ids=None, return_syn_arrays=False,
                         filter_pre_ids=suitable_ids_dict[other_ct], filter_post_ids=suitable_ids_dict[ct])
@@ -288,13 +286,13 @@ if __name__ == '__main__':
                 continue
             if other_ct == ct:
                 unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
-                    syn_ids=out_ids, syn_sizes=out_sizes, syn_ssv_partners=out_ssv_partners,
+                    syn_sizes=out_sizes, syn_ssv_partners=out_ssv_partners,
                     syn_axs=out_axs, syn_cts=out_cts, ct=ct, cellids=suitable_ids_dict[ct],
                     filter_ax=[1], filter_ids=suitable_ids_dict[ct], return_syn_arrays=False,
                     filter_pre_ids=None, filter_post_ids=None)
             else:
                 unique_out_ssvs, out_syn_sizes, out_syn_numbers = get_number_sum_size_synapses(
-                    syn_ids=out_ids, syn_sizes=out_sizes, syn_ssv_partners=out_ssv_partners,
+                    syn_sizes=out_sizes, syn_ssv_partners=out_ssv_partners,
                     syn_axs=out_axs, syn_cts=out_cts, ct=ct, cellids=suitable_ids_dict[ct],
                     filter_ax=None, filter_ids=None, return_syn_arrays=False,
                     filter_pre_ids=suitable_ids_dict[ct], filter_post_ids=suitable_ids_dict[other_ct])
@@ -336,11 +334,11 @@ if __name__ == '__main__':
                         plt_celltypes = celltypes
                     else:
                         plt_celltypes = non_ax_celltypes
-                    lengths = [len(synapse_dict_ct[key_name + c]) for c in plt_celltypes]
+                    lengths = [len(synapse_dict_ct[key_name + ' ' + p_ct]) for p_ct in plt_celltypes]
                     max_length = np.max(lengths)
                     result_df = pd.DataFrame(columns=plt_celltypes, index=range(max_length))
-                    for i, c in enumerate(plt_celltypes):
-                        result_df.loc[0:lengths[i] - 1, c] = synapse_dict_ct[key_name + c]
+                    for i, p_ct in enumerate(plt_celltypes):
+                        result_df.loc[0:lengths[i] - 1, p_ct] = synapse_dict_ct[key_name +' '+ p_ct]
                     #fill up with zeros so that each cell that makes at least one synapse with another suitable cell is included in analysis
                     result_df = result_df.fillna(0)
                     if 'percentage' in key:
@@ -351,7 +349,7 @@ if __name__ == '__main__':
                         else:
                             ylabel = 'sum of synapse size [µm²]'
                     sns.stripplot(data=result_df, palette='dark:black', alpha=0.2,
-                                  dodge=True, size=2)
+                                      dodge=True, size=2)
                     sns.violinplot(data=result_df, inner="box",
                                         palette=ct_palette)
                     plt.title(key_name_gen + ' of ' + ct_str)

@@ -101,9 +101,9 @@ class Analysis_Params(object):
             raise ValueError('This function is only available for full cells. You are trying to load it with a celltype where only axons are available')
         else:
             if self._version == 'v6':
-                cell_array = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]:.3s}_arr.pkl')
+                cell_array = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]:}_arr.pkl')
             else:
-                cell_array = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]}_arr.pkl')
+                cell_array = load_pkl2obj(f'{self.file_locations}/full_{self._ct_dict[celltype]:.3s}_arr.pkl')
         return cell_array
 
     def celltype_key(self):

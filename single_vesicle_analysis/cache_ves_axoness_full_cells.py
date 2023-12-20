@@ -25,7 +25,7 @@ if __name__ == '__main__':
     cache_name = analysis_params.file_locations
 
     log.info('Iterate over celltypes to map vesicles to axons')
-    for ct in ct_types:
+    for ct in ct_types[::-1]:
         log.info(f'Now processing celltype {ct_dict[ct]}')
         #get cellids for celltype
         ct_ids = analysis_params.load_full_cell_array(ct)

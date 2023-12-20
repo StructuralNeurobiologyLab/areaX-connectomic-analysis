@@ -1,12 +1,12 @@
 #mito volume density axon per celltype
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_organell_volume_density
+    from analysis_morph_helper import check_comp_lengths_ct
+    from analysis_colors import CelltypeColors
+    from analysis_morph_helper import get_organell_volume_density_comps
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from analysis_params import Analysis_Params
     import os as os
     from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd
@@ -29,7 +29,8 @@ if __name__ == '__main__':
     mito_k = 3
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/231218_j0251{version}_ct_mito_vol_density_mcl_%i_ax%i_k%i_%s" % (
+    full_cell_only = True
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/231220_j0251{version}_ct_mito_vol_density_mcl_%i_ax%i_k%i_%s_fconly" % (
         min_comp_len_cell, min_comp_len_ax, mito_k, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -45,7 +46,7 @@ if __name__ == '__main__':
     num_cts = analysis_params.num_cts(with_glia=with_glia)
     ct_str_list = analysis_params.ct_str(with_glia=with_glia)
     cls = CelltypeColors(ct_dict= ct_dict)
-    ct_palette = cls.ct_palette()
+    ct_palette = cls.ct_palette(key = color_key)
     if with_glia:
         glia_cts = analysis_params._glia_cts
     sd_mi = SegmentationDataset('mi', working_dir=global_params.wd)
@@ -54,7 +55,7 @@ if __name__ == '__main__':
     mito_volumes = sd_mi.load_numpy_data("size")
     firing_rate_dict = {'DA': 15, 'MSN': 1.58, 'LMAN': 34.9, 'HVC': 1, 'TAN': 65.1, 'GPe': 135, 'GPi': 258, 'FS': 19.1, 'LTS': 35.8}
 
-    log.info('Step 1/X: Iterate over each celltype')
+    log.info('Step 1/4: Iterate over each celltypeto check min length')
     suitable_ids_dict = {}
     all_suitable_ids = []
     all_cell_dict = {}
@@ -81,7 +82,7 @@ if __name__ == '__main__':
 
     all_suitable_ids = np.concatenate(all_suitable_ids)
 
-    log.info('Step 2/X: Get mito volume density per cell')
+    log.info('Step 2/4: Get mito volume density per cell')
     #ellid, cached_so_ids, cached_so_rep_coord, cached_so_volume, full_cell_dict, k, min_comp_len = input
     # generate pd Dataframe as overview per celltype
     ov_columns = ['celltype', 'mean firing rate singing', 'mean total mito volume density',
@@ -102,7 +103,7 @@ if __name__ == '__main__':
             input = [[cellid, mi_ids, mito_coords, mito_volumes, all_cell_dict[ct], mito_k, min_comp_len_ax, True] for cellid in suitable_ids_dict[ct]]
         else:
             input = [[cellid, mi_ids, mito_coords, mito_volumes, all_cell_dict[ct], mito_k, min_comp_len_cell, False] for cellid in suitable_ids_dict[ct]]
-        output = start_multiprocess_imap(get_organell_volume_density, input)
+        output = start_multiprocess_imap(get_organell_volume_density_comps, input)
         output = np.array(output, dtype='object')
         axon_so_density = np.concatenate(output[:, 0])
         axon_volume_density = np.concatenate(output[:, 1])
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     overview_df.to_csv(f'{f_name}/overview_df_mito_den.csv')
     percell_mito_df.to_csv(f'{f_name}/percell_df_mito_den.csv')
 
-    log.info('Step 3/3: Calculate statistics and plot results')
+    log.info('Step 3/4: Calculate statistics and plot results')
     group_comps = list(combinations(range(num_cts), 2))
     ranksum_columns = [f'{ct_str_list[gc[0]]} vs {ct_str_list[gc[1]]}' for gc in group_comps]
     ranksum_group_df = pd.DataFrame(columns=ranksum_columns)

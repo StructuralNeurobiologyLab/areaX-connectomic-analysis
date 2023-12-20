@@ -252,15 +252,33 @@ def get_organell_volume_density_comps(input):
     :param cached_so_volume: cached organell volume for all cells
     :param full_cell_dict: lookup dictionary for per cell parameters, cell.id is key, if None given will be calculated
     :param k: number of nodes surrounding the organells compartment will be determined from
+    :param axon_only: set True if assumption that whole cell is axon (e.g. for DA, lMAN, HVC)
     :return: densities and volume densities for aoxn and dendrite
     '''
     cellid, cached_so_ids, cached_so_rep_coord, cached_so_volume, full_cell_dict,k, min_comp_len, axon_only = input
     cell = SuperSegmentationObject(cellid)
+    if full_cell_dict is not None:
+        axon_length = full_cell_dict[cellid]["axon length"]
+        if not axon_only:
+            complete_length = full_cell_dict[cellid]['complete pathlength']
+    else:
+        g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
+        axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
+        if not axon_only:
+            complete_length = get_cell_length(cellid)
+    if axon_length < min_comp_len:
+        return 0,0, 0, 0
     segmentation_object_ids = cell.mi_ids
-    cell.load_skeleton()
-    kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"]*cell.scaling)
     sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
     organell_volumes = cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling)  # convert to cubic µm
+    #if projecting axon no need for kdtree and mapping; all mito is used
+    if axon_only:
+        axo_so_density = len(cell.mis) / axon_length
+        axo_so_volume_density = np.sum(organell_volumes)/ axon_length
+        total_volume_density = axo_so_volume_density
+        return [axo_so_density, axo_so_volume_density, 0, 0, total_volume_density]
+    cell.load_skeleton()
+    kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"]*cell.scaling)
     so_rep_coord = cached_so_rep_coord[sso_organell_inds] * cell.scaling # in nm
     close_node_ids = kdtree.query(so_rep_coord, k=k)[1].astype(int)
     axo = np.array(cell.skeleton["axoness_avg10000"][close_node_ids])
@@ -269,44 +287,30 @@ def get_organell_volume_density_comps(input):
     axon_unique = np.unique(np.where(axo == 1)[0], return_counts=True)
     axon_inds = axon_unique[0][axon_unique[1] > k / 2]
     axo_so_ids = segmentation_object_ids[axon_inds]
-    if axon_only == False:
-        den_unique = np.unique(np.where(axo == 0)[0], return_counts=True)
-        den_inds = den_unique[0][den_unique[1] > k / 2]
-        den_so_ids = segmentation_object_ids[den_inds]
-        non_soma_inds = np.hstack([axon_inds, den_inds])
-        segmentation_object_ids = segmentation_object_ids[non_soma_inds]
+
+    den_unique = np.unique(np.where(axo == 0)[0], return_counts=True)
+    den_inds = den_unique[0][den_unique[1] > k / 2]
+    den_so_ids = segmentation_object_ids[den_inds]
+    non_soma_inds = np.hstack([axon_inds, den_inds])
+    segmentation_object_ids = segmentation_object_ids[non_soma_inds]
     if len(segmentation_object_ids) == 0:
         return 0, 0, 0, 0
     axo_so_amount = len(axo_so_ids)
-    if full_cell_dict is not None:
-        axon_length = full_cell_dict[cellid]["axon length"]
-        complete_length = full_cell_dict[cellid]['complete pathlength']
-    else:
-        g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
-        axon_length = get_compartment_length(cell, compartment=1, cell_graph=g)
-        complete_length = get_cell_length(cellid)
-    if axon_length < min_comp_len:
-        return 0,0, 0, 0
-
     axo_so_density = axo_so_amount / axon_length
     axo_so_volume = np.sum(organell_volumes[axon_inds])
     axo_so_volume_density = axo_so_volume / axon_length
-    if axon_only:
-        total_volume_density = axo_so_volume_density
-        return [axo_so_density, axo_so_volume_density, 0, 0, total_volume_density]
+    total_volume_density = np.sum(organell_volumes) / complete_length
+    den_so_amount = len(den_so_ids)
+    if full_cell_dict is not None:
+        dendrite_length = full_cell_dict[cell.id]["dendrite length"]
     else:
-        total_volume_density = np.sum(organell_volumes) / complete_length
-        den_so_amount = len(den_so_ids)
-        if full_cell_dict is not None:
-            dendrite_length = full_cell_dict[cell.id]["dendrite length"]
-        else:
-            dendrite_length = get_compartment_length(cell, compartment=0, cell_graph=g)
-        if dendrite_length < min_comp_len:
-            return 0,0, 0, 0
-        den_so_density = den_so_amount/dendrite_length
-        den_so_volume = np.sum(organell_volumes[den_inds])
-        den_so_volume_density = den_so_volume/ dendrite_length
-        return [axo_so_density, den_so_density, axo_so_volume_density, den_so_volume_density, total_volume_density]
+        dendrite_length = get_compartment_length(cell, compartment=0, cell_graph=g)
+    if dendrite_length < min_comp_len:
+        return 0,0, 0, 0
+    den_so_density = den_so_amount/dendrite_length
+    den_so_volume = np.sum(organell_volumes[den_inds])
+    den_so_volume_density = den_so_volume/ dendrite_length
+    return [axo_so_density, den_so_density, axo_so_volume_density, den_so_volume_density, total_volume_density]
 
 def get_compartment_mesh_area(cell):
     """

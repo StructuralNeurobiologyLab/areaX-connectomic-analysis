@@ -668,6 +668,47 @@ def get_dendrite_info_cell(input):
     number_branching_points = len(branching_points)
     return dendrite_length, primary_dendrite_number, number_branching_points
 
+def map_axoness_cellid2org(params):
+    '''
+    Map axoness (axon, dendrite, soma) of a cellid to the organell associated with it;
+    also map cellid and celltype.
+    :param input: cellid, org_ids, org_coords
+    :return: org_ids and axoness per cell
+    '''
+
+    cellid, org_ids, org_coords = params
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    cell_mi_ids = cell.mi_ids
+    cell_org_ind = np.in1d(org_ids, cell_mi_ids)
+    cell_org_coords = org_coords[cell_org_ind]
+    cell_org_ids = org_ids[cell_org_ind]
+    kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"] * cell.scaling)
+    close_node_ids = kdtree.query(cell_org_coords * cell.scaling, k=1)[1].astype(int)
+    axo = np.array(cell.skeleton["axoness_avg10000"][close_node_ids])
+    axo[axo == 3] = 1
+    axo[axo == 4] = 1
+    org_ssv_ids = np.zeros(len(axo), dtype=np.int64) + cellid
+    return [cell_org_ids, axo, org_ssv_ids]
+
+def map_cellid2org(params):
+    '''
+    Map cellid and celltype to the organell associated with it;
+    For full cells use 'map_axoness_cellid2org' to also map comparetment directly;
+    Use for projecting axon celltypes instead of 'map_axoness_cellid2org'
+    :param input: cellid, org_ids (need both to have in same order as other values e.g. size which is not used here)
+    :return: org_ids and axoness per cell
+    '''
+
+    cellid, org_ids = params
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    cell_mi_ids = cell.mi_ids
+    cell_org_ind = np.in1d(org_ids, cell_mi_ids)
+    cell_org_ids = org_ids[cell_org_ind]
+    org_ssv_ids = np.zeros(len(cell_org_ids), dtype=np.int64) + cellid
+    return [cell_org_ids, org_ssv_ids]
+
 
 
 

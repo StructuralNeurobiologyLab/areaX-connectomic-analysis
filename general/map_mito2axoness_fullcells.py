@@ -1,7 +1,7 @@
 if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from morph_helper import map_axoness_cellid2org, map_cellid2org
+    from analysis_morph_helper import map_axoness_cellid2org, map_cellid2org
     from analysis_params import Analysis_Params
     import numpy as np
     from syconn.mp.mp_utils import start_multiprocess_imap
@@ -30,12 +30,13 @@ if __name__ == '__main__':
     mi_ids = sd_mi.ids
     mi_coords = sd_mi.load_numpy_data('rep_coord')
     mi_sizes = sd_mi.load_numpy_data('size')
-    for ct in range(num_cts):
+    ct_types = np.arange(0, num_cts)[::-1]
+    for ct in ct_types:
         log.info(f'Now processing celltype {ct_dict[ct]}')
-        #get cellids for celltype
-        ct_ids = analysis_params.load_full_cell_array(ct)
-        log.info('Get axoness for each vesicle in cells')
         if ct in axon_cts:
+            log.info('Get cellid for each mito in cells')
+            cell_dict = analysis_params.load_cell_dict(ct)
+            ct_ids = np.array(list(cell_dict.keys()))
             mito_input = [[cellid, mi_ids] for cellid in ct_ids]
             output = start_multiprocess_imap(map_cellid2org, mito_input)
             output = np.array(output, dtype='object')
@@ -56,12 +57,15 @@ if __name__ == '__main__':
             np.save(f'{f_name}/{ct_dict[ct]}_mito_sizes.npy', ct_mi_sizes)
             np.save(f'{f_name}/{ct_dict[ct]}_mito_mapping_ssv_ids.npy', ct_mito_cellids)
         else:
+            log.info('Get cellid, axoness for each mito in cells')
+            # get cellids for celltype
+            ct_ids = analysis_params.load_full_cell_array(ct)
             mito_input = [[cellid, mi_ids, mi_coords] for cellid in ct_ids]
             output = start_multiprocess_imap(map_axoness_cellid2org, mito_input)
             output = np.array(output, dtype='object')
             mito_ids_reordered = np.concatenate(output[:, 0])
             mito_axoness_reordered = np.concatenate(output[:, 1])
-            mito_cellid_reordered = np.concatenate(output[:, 2])
+            mito_cellids_reordered = np.concatenate(output[:, 2])
             #reorder according to original mtio
             ct_inds = np.in1d(mi_ids, mito_ids_reordered)
             ct_mi_ids = mi_ids[ct_inds]

@@ -2,7 +2,7 @@
 if __name__ == '__main__':
     from analysis_morph_helper import check_comp_lengths_ct
     from analysis_colors import CelltypeColors
-    from analysis_morph_helper import get_organell_volume_density_comps
+    from analysis_morph_helper import get_mito_density_presaved, get_mito_comp_density_presaved
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -24,6 +24,7 @@ if __name__ == '__main__':
      #          10: "NGF"}
     version = 'v6'
     with_glia = False
+    full_cells_only = True
     min_comp_len_cell = 200
     min_comp_len_ax = 50
     mito_k = 3
@@ -38,28 +39,31 @@ if __name__ == '__main__':
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, mito k = %i, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, mito_k, color_key))
+    if full_cells_only:
+        log.info('Plot for full cells only')
     analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     known_mergers = analysis_params.load_known_mergers()
     misclassified_asto_ids = analysis_params.load_potential_astros()
     axon_cts = analysis_params.axon_cts()
     num_cts = analysis_params.num_cts(with_glia=with_glia)
+    np_presaved_loc = analysis_params.file_locations
+    if full_cells_only:
+        ct_types = analysis_params.load_celltypes_full_cells()
+    else:
+        ct_types = np.arange(0, num_cts)
     ct_str_list = analysis_params.ct_str(with_glia=with_glia)
     cls = CelltypeColors(ct_dict= ct_dict)
     ct_palette = cls.ct_palette(key = color_key)
     if with_glia:
         glia_cts = analysis_params._glia_cts
-    sd_mi = SegmentationDataset('mi', working_dir=global_params.wd)
-    mi_ids = sd_mi.ids
-    mito_coords = sd_mi.load_numpy_data("rep_coord")
-    mito_volumes = sd_mi.load_numpy_data("size")
     firing_rate_dict = {'DA': 15, 'MSN': 1.58, 'LMAN': 34.9, 'HVC': 1, 'TAN': 65.1, 'GPe': 135, 'GPi': 258, 'FS': 19.1, 'LTS': 35.8}
 
-    log.info('Step 1/4: Iterate over each celltypeto check min length')
+    log.info('Step 1/4: Iterate over each celltypes check min length')
     suitable_ids_dict = {}
     all_suitable_ids = []
     all_cell_dict = {}
-    for ct in range(num_cts):
+    for ct in ct_types:
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
         cell_dict = analysis_params.load_cell_dict(ct)
@@ -93,25 +97,44 @@ if __name__ == '__main__':
     pc_columns = ['cellid', 'mean firing rate singing', 'total mito volume density', 'axon mito volume density']
     percell_mito_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
     percell_mito_df['cellid'] = all_suitable_ids
-    for ct in range(num_cts):
+    for ct in ct_types:
         ct_str = ct_dict[ct]
         try:
             firing_value = firing_rate_dict[ct_str]
         except KeyError:
             firing_value = np.nan
+        log.info('Load presaved arrays for mitos')
         if ct in axon_cts:
-            input = [[cellid, mi_ids, mito_coords, mito_volumes, all_cell_dict[ct], mito_k, min_comp_len_ax, True] for cellid in suitable_ids_dict[ct]]
+            ct_mito_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_ids.npy')
+            ct_mito_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_mapping_ssv_ids.npy')
+            ct_mito_sizes = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_sizes.npy')
+            #filter for suitable cellids
+            ct_ind = np.in1d(ct_mito_map2ssvids, suitable_ids_dict[ct])
+            ct_mito_ids = ct_mito_ids[ct_ind]
+            ct_mito_map2ssvids = ct_mito_map2ssvids[ct_ind]
+            ct_mito_sizes = ct_mito_sizes[ct_ind]
+            input = [[cellid,ct_mito_sizes, all_cell_dict[ct], True] for cellid in suitable_ids_dict[ct]]
+            output = start_multiprocess_imap(get_mito_density_presaved, input)
+            output = np.array(output, dtype='object')
+            axon_volume_density = output
+            full_volume_density = axon_volume_density
         else:
-            input = [[cellid, mi_ids, mito_coords, mito_volumes, all_cell_dict[ct], mito_k, min_comp_len_cell, False] for cellid in suitable_ids_dict[ct]]
-        output = start_multiprocess_imap(get_organell_volume_density_comps, input)
-        output = np.array(output, dtype='object')
-        axon_so_density = np.concatenate(output[:, 0])
-        axon_volume_density = np.concatenate(output[:, 1])
-        #for axons this is same as axon volume density
-        full_volume_density = np.concatenate(output[:, 4])
-        if ct not in axon_cts:
-            dendrite_so_density = np.concatenate(output[:, 2])
-            dendrite_volume_density = np.concatenate(output[:, 3])
+            ct_mito_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_ids_fullcells.npy')
+            ct_mito_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_mapping_ssv_ids_fullcells.npy')
+            ct_mito_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_axoness_coarse_fullcells.npy')
+            ct_mito_sizes = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_sizes_fullcells.npy')
+            #filter for suitable cellids
+            ct_ind = np.in1d(ct_mito_map2ssvids, suitable_ids_dict[ct])
+            ct_mito_ids = ct_mito_ids[ct_ind]
+            ct_mito_map2ssvids = ct_mito_map2ssvids[ct_ind]
+            ct_mito_sizes = ct_mito_sizes[ct_ind]
+            ct_mito_axoness = ct_mito_axoness[ct_ind]
+            input = [[cellid, ct_mito_sizes, ct_mito_axoness, all_cell_dict[ct]] for cellid in suitable_ids_dict[ct]]
+            output = start_multiprocess_imap(get_mito_comp_density_presaved, input)
+            output = np.array(output, dtype='object')
+            axon_volume_density = np.concatenate(output[:, 0])
+            dendrite_volume_density = np.concatenate(output[:, 1])
+            full_volume_density = np.concatenate(output[:, 2])
         mean_axo_den = np.mean(axon_volume_density)
         std_axo_den = np.std(axon_volume_density)
         mean_total_den = np.mean(full_volume_density)

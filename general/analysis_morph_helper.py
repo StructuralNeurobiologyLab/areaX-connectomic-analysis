@@ -702,12 +702,47 @@ def map_cellid2org(params):
 
     cellid, org_ids = params
     cell = SuperSegmentationObject(cellid)
-    cell.load_skeleton()
     cell_mi_ids = cell.mi_ids
     cell_org_ind = np.in1d(org_ids, cell_mi_ids)
     cell_org_ids = org_ids[cell_org_ind]
     org_ssv_ids = np.zeros(len(cell_org_ids), dtype=np.int64) + cellid
     return [cell_org_ids, org_ssv_ids]
+
+def get_mito_density_presaved(params):
+    '''
+    Get mito density from presaved mito arrays with cellid. If proj_axon = True,
+    uses 'axon_length' and not total length for volume density
+    :param params: cellid, mi_ids, mi_ssv_ids, mi_sizes, full_cell_dict, proj_axon
+    :return: mito_volume_density
+    '''
+
+    cellid, mi_ssv_ids, mi_sizes, full_cell_dict, proj_axon = params
+    cell_mi_inds = np.in1d(mi_ssv_ids, cellid)
+    cell_mi_sizes = mi_sizes[cell_mi_inds]
+    if proj_axon:
+        length = full_cell_dict[cellid]['axon length']
+    else:
+        length = full_cell_dict[cellid]["complete pathlength"]
+    mito_volume_density = np.sum(cell_mi_sizes)/ length
+    return mito_volume_density
+
+def get_mito_comp_density_presaved(params):
+    '''
+        Get mito density from presaved mito arrays with cellid for each compartment and the complete cell.
+        :param params: cellid, mi_ids, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict
+        :return: mito_volume_density for axon, dendrite and full cell
+        '''
+    cellid, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict = params
+    cell_mi_inds = np.in1d(mi_ssv_ids, cellid)
+    cell_mi_sizes = mi_sizes[cell_mi_inds]
+    cell_mi_axoness = mi_axoness[cell_mi_inds]
+    full_length = full_cell_dict[cellid]["complete pathlength"]
+    full_mito_volume_density = np.sum(cell_mi_sizes) / full_length
+    axon_mito_sizes = cell_mi_sizes[cell_mi_axoness == 1]
+    den_mito_sizes = cell_mi_sizes[cell_mi_axoness == 0]
+    axon_mito_volume_density = np.sum(axon_mito_sizes) / full_cell_dict['axon length']
+    den_mito_volume_density = np.sum(den_mito_sizes) / full_cell_dict['dendrite length']
+    return [axon_mito_volume_density, den_mito_volume_density, full_mito_volume_density]
 
 
 

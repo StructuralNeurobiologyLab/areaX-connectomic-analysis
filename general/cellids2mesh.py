@@ -9,6 +9,8 @@ if __name__ == '__main__':
     import numpy as np
     from tqdm import tqdm
     from syconn.proc.meshes import write_mesh2kzip, write_meshes2kzip
+    from scipy.spatial import cKDTree
+    from collections import Counter
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #f_name = 'cajal/scratch/users/arother/230804_neuron_example_meshes'
@@ -16,9 +18,10 @@ if __name__ == '__main__':
 
     bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = bio_params.ct_dict()
-    whole_cell = True
+    whole_cell = False
     get_mitos = False
     get_mitos_comp_sep = False
+    get_only_myelin = True
 
     #cellids = [ 126798179, 1155532413, 15724767, 24397945, 32356701, 26790127, 379072583]
     #cellids = [15521116, 10157981]
@@ -82,3 +85,42 @@ if __name__ == '__main__':
                 ply_f_names = [f'{cellid}_mito_{i}.ply' for i in range(len(mito_inds))]
                 write_meshes2kzip(kzip_out, mito_inds, mito_verts, mito_norms, mito_cols,
                                 ply_f_names)
+
+    if get_only_myelin:
+        #get mesh of axon where myelin is
+        for cellid in tqdm(cellids):
+            cell = SuperSegmentationObject(cellid)
+            celltype = ct_dict[cell.celltype()]
+            #get skeleton myelin coords
+            #map to vertex
+            cell.load_skeleton()
+            # load skeleton axoness, spiness attributes
+            nodes = cell.skeleton['nodes'] * cell.scaling
+            myelin_labels = cell.skeleton['myelin']
+            # load mesh and put skeleton annotations on mesh
+            indices, vertices, normals = cell.mesh
+            vertices = vertices.reshape((-1, 3))
+            kdt = cKDTree(nodes)
+            dists, node_inds = kdt.query(vertices)
+            vert_myelin_labels = myelin_labels[node_inds]
+            #code based on meshes.compartmentalize_mesh
+            ind_myelin = vert_myelin_labels[indices]
+            indices= indices.reshape(-1, 3)
+            ind_myelin = ind_myelin.reshape(-1, 3)
+            ind_comp_maj = np.zeros((len(indices)), dtype=np.uint8)
+            #get only indices where at least 2 have myelin
+            for ii in range(len(indices)):
+                triangle = ind_myelin[ii]
+                cnt = Counter(triangle)
+                my, n = cnt.most_common(1)[0]
+                ind_comp_maj[ii] = my
+            indices_myelin = indices[ind_comp_maj == 1].flatten()
+            unique_my_inds = np.unique(indices_myelin)
+            myelin_verts = vertices[unique_my_inds]
+            remap_dict = {}
+            for i in range(len(unique_my_inds)):
+                remap_dict[unique_my_inds[i]] = i
+            myelin_ind = np.array([remap_dict[i] for i in indices_myelin], dtype=np.uint64)
+            kzip_out = f'{f_name}/{cellid}_{celltype}_myelin_mesh'
+            write_mesh2kzip(kzip_out, myelin_ind.astype(np.float32), myelin_verts.astype(np.float32), None, None,
+                            f'{cellid}_myelin.ply')

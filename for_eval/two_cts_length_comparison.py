@@ -25,8 +25,8 @@ if __name__ == '__main__':
     ct_dict = bio_params.ct_dict()
     use_gt = False
     filter_syns = False
-    ct1 = 4
-    ct2 = 0
+    ct1 = 2
+    ct2 = 4
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240115_j0251{version}_ax_lengths_comparison_{ct1_str}_{ct2_str}_nosyn"

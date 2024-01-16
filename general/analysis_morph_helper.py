@@ -611,6 +611,7 @@ def get_cell_comp_vert_coords(cellid, comp):
     vert_comp_coords = vert_coords[cell_ld_axoness == comp]
     return vert_comp_coords
 
+
 def get_cell_soma_radius(cellid, use_skel = False, use_median_centre = True):
     '''
     Gives an estimate about the soma radius. Calculates radius as median distance from soma

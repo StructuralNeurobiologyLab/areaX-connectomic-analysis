@@ -22,17 +22,53 @@ def get_cell_length(cellid):
     total_length = cell_graph.size(weight="weight") / 1000  # in µm
     return total_length
 
-def get_compartment_length(sso, compartment, cell_graph):
+def get_compartment_length(cellid, compartment, cell_graph=None, full_dict = None):
     """
             calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
             :param compartment: 0 = dendrite, 1 = axon, 2 = soma
             :param cell_graph: sso.weighted graph
             :return: comp_len in µm
             """
+    if full_dict is not None:
+        if cellid in full_dict.keys():
+            comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
+            comp_key = f'{comp_dict[compartment]} length'
+            comp_length = full_dict[cellid][comp_key]
+            return comp_length
+    sso = SuperSegmentationObject(cellid)
     axoness = sso.skeleton["axoness_avg10000"]
     axoness[axoness == 3] = 1
     axoness[axoness == 4] = 1
     non_comp_inds = np.nonzero(axoness != compartment)[0]
+    if cell_graph is None:
+        cell_graph = sso.weighted_graph()
+    comp_graph = cell_graph.copy()
+    comp_graph.remove_nodes_from(non_comp_inds)
+    comp_length = comp_graph.size(weight="weight") / 1000  # in µm
+    return comp_length
+
+def get_compartment_length_mp(comp_input):
+    """
+            calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
+            :param compartment: 0 = dendrite, 1 = axon, 2 = soma
+            :param cell_graph: sso.weighted graph
+            :return: comp_len in µm
+            """
+    cellid, compartment, cell_graph, full_dict = comp_input
+    if full_dict is not None:
+        if cellid in full_dict.keys():
+            comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
+            comp_key = f'{comp_dict[compartment]} length'
+            comp_length = full_dict[cellid][comp_key]
+            return comp_length
+    sso = SuperSegmentationObject(cellid)
+    sso.load_skeleton()
+    axoness = sso.skeleton["axoness_avg10000"]
+    axoness[axoness == 3] = 1
+    axoness[axoness == 4] = 1
+    non_comp_inds = np.nonzero(axoness != compartment)[0]
+    if cell_graph is None:
+        cell_graph = sso.weighted_graph()
     comp_graph = cell_graph.copy()
     comp_graph.remove_nodes_from(non_comp_inds)
     comp_length = comp_graph.size(weight="weight") / 1000  # in µm
@@ -740,8 +776,8 @@ def get_mito_comp_density_presaved(params):
     full_mito_volume_density = np.sum(cell_mi_sizes) / full_length
     axon_mito_sizes = cell_mi_sizes[cell_mi_axoness == 1]
     den_mito_sizes = cell_mi_sizes[cell_mi_axoness == 0]
-    axon_mito_volume_density = np.sum(axon_mito_sizes) / full_cell_dict['axon length']
-    den_mito_volume_density = np.sum(den_mito_sizes) / full_cell_dict['dendrite length']
+    axon_mito_volume_density = np.sum(axon_mito_sizes) / full_cell_dict[cellid]['axon length']
+    den_mito_volume_density = np.sum(den_mito_sizes) / full_cell_dict[cellid]['dendrite length']
     return [axon_mito_volume_density, den_mito_volume_density, full_mito_volume_density]
 
 

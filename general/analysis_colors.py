@@ -29,7 +29,10 @@ class CelltypeColors():
               '#4B1D3F', '#232121', '#15AEAB']
         c9 = ['#707070', '#707070', '#707070', '#707070', '#707070', '#707070', '#707070', '#707070', '#912043',
               '#707070', '#232121', '#38C2BA']
-        self.colors = {'BlRdGy': c1, 'MudGrays': c2, 'BlGrTe': c3, 'TePkBr': c4, 'BlYw': c5, 'STNGP': c6, 'STNGPNGF': c7, 'TePkBrNGF': c8, 'FSNGF': c9}
+        c10 = ['#0E7C7B', '#139D9B', '#15AEAB', '#17BEBB', '#D4F4DD', '#D5C0B8', '#D58B92', '#D62246', '#912043',
+              '#4B1D3F', '#232121', '#707070', '#707070', '#707070', '#707070']
+        self.colors = {'BlRdGy': c1, 'MudGrays': c2, 'BlGrTe': c3, 'TePkBr': c4, 'BlYw': c5, 'STNGP': c6, 'STNGPNGF': c7, 'TePkBrNGF': c8, 'FSNGF': c9,
+                       'TePkBrGlia':c10}
         self.palettes = list(self.colors.keys())
 
     def ct_palette(self, key, num = False):

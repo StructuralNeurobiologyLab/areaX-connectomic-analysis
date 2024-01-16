@@ -263,4 +263,34 @@ def map_axoness2ves(params):
     axo[axo == 4] = 1
     return [cell_ves_ids, axo]
 
+def get_ves_density_presaved(params):
+    '''
+    Get vesicle density from presaved vesicle arrays with cellid. If proj_axon = True,
+    uses 'axon_length' and not total length for volume density
+    :param params: cellid, ves_ssv_ids, full_cell_dict, proj_axon
+    :return: mito_volume_density
+    '''
+
+    cellid, ves_ssv_ids, full_cell_dict, proj_axon = params
+    num_vesicles = len(ves_ssv_ids[np.in1d(ves_ssv_ids, cellid)])
+    if proj_axon:
+        length = full_cell_dict[cellid]['axon length']
+    else:
+        length = full_cell_dict[cellid]["complete pathlength"]
+    vesicle_density = num_vesicles/ length
+    return vesicle_density
+
+def get_ves_comp_density_presaved(params):
+    '''
+        Get vesicle density from presaved vesicle arrays with cellid for the axon.
+        :param params: cellid, ves_ssv_ids, ves_axoness, full_cell_dict
+        :return: mito_volume_density for axon, dendrite and full cell
+        '''
+    cellid, ves_ssv_ids, ves_axoness, full_cell_dict = params
+    cell_ves_inds = np.in1d(ves_ssv_ids, cellid)
+    cell_ves_axoness = ves_axoness[cell_ves_inds]
+    num_axon_vesicles = len(cell_ves_axoness[cell_ves_axoness == 1])
+    axon_ves_density = num_axon_vesicles / full_cell_dict[cellid]['axon length']
+    return axon_ves_density
+
 

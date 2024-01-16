@@ -2,15 +2,14 @@
 #similar code to ct mito volume density
 
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_colors import CelltypeColors
-    from analysis_morph_helper import get_organell_volume_density_comps
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_ves_density_presaved, get_ves_comp_density_presaved
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from analysis_params import Analysis_Params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
-    from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd
     import numpy as np
     from syconn.mp.mp_utils import start_multiprocess_imap
@@ -30,14 +29,17 @@ if __name__ == '__main__':
     min_comp_len_ax = 50
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicles/231220_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_k%i_%s" % (
+    full_cells_only = True
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/231221_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fc_only_no_msn" % (
         min_comp_len_cell, min_comp_len_ax, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('get single vesicle density per celltype', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i for full cells, min_comp_len = %i for axons, mito k = %i, colors = %s" % (
+        "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, color_key))
+    if full_cells_only:
+        log.info('Full cells only')
     analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     known_mergers = analysis_params.load_known_mergers()
@@ -50,13 +52,18 @@ if __name__ == '__main__':
     np_presaved_loc = analysis_params.file_locations
     if with_glia:
         glia_cts = analysis_params._glia_cts
+    if full_cells_only:
+        ct_types = analysis_params.load_celltypes_full_cells()
+        ct_types = ct_types[1:]
+    else:
+        ct_types = np.arange(0, num_cts)
     firing_rate_dict = {'DA': 15, 'MSN': 1.58, 'LMAN': 34.9, 'HVC': 1, 'TAN': 65.1, 'GPe': 135, 'GPi': 258, 'FS': 19.1, 'LTS': 35.8}
 
     log.info('Step 1/4: Iterate over each celltype to check min length')
     suitable_ids_dict = {}
     all_suitable_ids = []
     all_cell_dict = {}
-    for ct in range(num_cts):
+    for ct in ct_types:
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
         cell_dict = analysis_params.load_cell_dict(ct)
@@ -84,18 +91,18 @@ if __name__ == '__main__':
     # generate pd Dataframe as overview per celltype
     ov_columns = ['celltype', 'mean firing rate singing', 'mean vesicle density',
                   'std vesicle density']
-    overview_df = pd.DataFrame(columns=ov_columns, index=range(num_cts))
+    overview_df = pd.DataFrame(columns=ov_columns, index=range(len(ct_types)))
     # generate df for each cell
     pc_columns = ['cellid', 'mean firing rate singing','vesicle density']
     percell_mito_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
     percell_mito_df['cellid'] = all_suitable_ids
-    for ct in range(num_cts):
+    for i,ct in enumerate(ct_types):
         ct_str = ct_dict[ct]
+        log.info(f'process {ct_str}')
         try:
             firing_value = firing_rate_dict[ct_str]
         except KeyError:
             firing_value = np.nan
-        log.info('Load presaved numpy arrays for vesicles')
         if ct in axon_cts:
             ct_ves_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_ids.npy')
             ct_ves_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mapping_ssv_ids.npy')
@@ -104,61 +111,51 @@ if __name__ == '__main__':
             ct_ves_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mapping_ssv_ids_fullcells.npy')
             ct_ves_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_axoness_coarse_fullcells.npy')
         # filter for selected cellids
-        ct_ind = np.in1d(ct_ves_map2ssvids, cellids)
+        ct_ind = np.in1d(ct_ves_map2ssvids, suitable_ids_dict[ct])
         ct_ves_ids = ct_ves_ids[ct_ind]
         ct_ves_map2ssvids = ct_ves_map2ssvids[ct_ind]
-        if ct not in axon_cts:
-            ct_ves_axoness = ct_ves_axoness[ct_ind]
-            # make sure for full cells vesicles are only in axon
-            ax_ind = np.in1d(ct_ves_axoness, 1)
-            ct_ves_ids = ct_ves_ids[ax_ind]
-            ct_ves_map2ssvids = ct_ves_map2ssvids[ax_ind]
         #get percell vesicle density
         if ct in axon_cts:
-            input = [[cellid, mi_ids, mito_coords, mito_volumes, all_cell_dict[ct], mito_k, min_comp_len_ax, True] for cellid in suitable_ids_dict[ct]]
+            input = [[cellid, ct_ves_map2ssvids, all_cell_dict[ct], True] for cellid in suitable_ids_dict[ct]]
+            output = start_multiprocess_imap(get_ves_density_presaved, input)
         else:
-            input = [[cellid, mi_ids, mito_coords, mito_volumes, all_cell_dict[ct], mito_k, min_comp_len_cell, False] for cellid in suitable_ids_dict[ct]]
-        output = start_multiprocess_imap(get_organell_volume_density_comps, input)
-        output = np.array(output, dtype='object')
-        axon_so_density = np.concatenate(output[:, 0])
-        axon_volume_density = np.concatenate(output[:, 1])
-        #for axons this is same as axon volume density
-        full_volume_density = np.concatenate(output[:, 4])
-        if ct not in axon_cts:
-            dendrite_so_density = np.concatenate(output[:, 2])
-            dendrite_volume_density = np.concatenate(output[:, 3])
-        mean_axo_den = np.mean(axon_volume_density)
-        std_axo_den = np.std(axon_volume_density)
-        mean_total_den = np.mean(full_volume_density)
-        std_total_den = np.std(full_volume_density)
-        overview_df['celltype'] = ct
-        overview_df['mean firing rate singing'] = firing_value
-        overview_df['mean total mito volume density'] = mean_total_den
-        overview_df['std total mito volume density'] = std_total_den
-        overview_df['mean axon mito volume density'] = mean_axo_den
-        overview_df['std axon mito volume density'] = std_axo_den
+            ct_ves_axoness = ct_ves_axoness[ct_ind]
+            input = [[cellid, ct_ves_map2ssvids, ct_ves_axoness, all_cell_dict[ct]] for cellid in suitable_ids_dict[ct]]
+            output = start_multiprocess_imap(get_ves_comp_density_presaved, input)
+        axon_ves_density = np.array(output)
+        mean_axo_den = np.mean(axon_ves_density)
+        std_axo_den = np.std(axon_ves_density)
+        overview_df.loc[i,'celltype'] = ct_str
+        overview_df.loc[i, 'mean firing rate singing'] = firing_value
+        overview_df.loc[i,'mean vesicle density'] = mean_axo_den
+        overview_df.loc[i,'std vesicle density'] = std_axo_den
         #for percell df
         ct_inds = np.in1d(percell_mito_df['cellid'], suitable_ids_dict[ct])
-        percell_mito_df[ct_inds, 'celltype'] = ct_str
-        percell_mito_df[ct_inds, 'mean firing rate singing'] = firing_value
-        percell_mito_df[ct_inds, 'total mito volume density'] = full_volume_density
-        percell_mito_df[ct_inds, 'axon mito volume density'] = axon_volume_density
+        percell_mito_df.loc[ct_inds, 'celltype'] = ct_str
+        percell_mito_df.loc[ct_inds, 'mean firing rate singing'] = firing_value
+        percell_mito_df.loc[ct_inds, 'vesicle density'] = axon_ves_density
 
-    overview_df.to_csv(f'{f_name}/overview_df_mito_den.csv')
-    percell_mito_df.to_csv(f'{f_name}/percell_df_mito_den.csv')
+    overview_df.to_csv(f'{f_name}/overview_df_ves_den.csv')
+    percell_mito_df.to_csv(f'{f_name}/percell_df_ves_den.csv')
 
     log.info('Step 3/4: Calculate statistics and plot results')
-    group_comps = list(combinations(range(num_cts), 2))
+    group_comps = list(combinations(range(len(ct_types)), 2))
     ranksum_columns = [f'{ct_str_list[gc[0]]} vs {ct_str_list[gc[1]]}' for gc in group_comps]
     ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
+    known_values_only_percell = percell_mito_df.dropna()
 
     for key in percell_mito_df.keys():
-        if 'mito' in key:
+        if 'vesicle' in key:
             key_groups = [group[key].values for name, group in
                                 percell_mito_df.groupby('celltype')]
+            medians = [np.median(kg) for kg in key_groups]
+            median_order = np.unique(percell_mito_df['celltype'])[np.argsort(medians)]
             kruskal_res = kruskal(*key_groups, nan_policy='omit')
             log.info(f'Kruskal Wallis test result for {key}: {kruskal_res}')
-            spearman_res = spearmanr(percell_mito_df[key], percell_mito_df['mean firing rate singing'], nan_policy='omit')
+            # calculate spearmannr only for known celltypes
+            spearman_res = spearmanr(known_values_only_percell[key], known_values_only_percell['mean firing rate singing'], nan_policy='omit')
+            spearman_cts = np.unique(known_values_only_percell['celltype'])
+            log.info(f'Spearman correlation test result for {key}: {spearman_res}, for these celltypes {spearman_cts}')
             log.info(f'Spearman correlation test result for {key}: {spearman_res}')
             #ranksum results
             for group in group_comps:
@@ -166,43 +163,43 @@ if __name__ == '__main__':
                 ranksum_group_df.loc[f'{key} stats', f'{ct_str_list[group[0]]} vs {ct_str_list[group[1]]}'] = ranksum_res[0]
                 ranksum_group_df.loc[f'{key} p-value',f'{ct_str_list[group[0]]} vs {ct_str_list[group[1]]}'] = ranksum_res[1]
             #plot with increasing median as boxplot and violinplot
-            median_order = key_groups.median().index
             sns.boxplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, order=median_order)
             plt.title(key)
             plt.savefig(f'{f_name}/{key}_box.png')
             plt.savefig(f'{f_name}/{key}_box.svg')
-            plt.ylabel(f'{key} [µm³/µm]')
+            plt.ylabel(f'{key} [1/µm]')
             plt.close()
-            sns.stripplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, color='black', alpha=0.2,
-                          dodge=True, size=2, order=median_order)
-            sns.violinplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
-            plt.title(key)
-            plt.ylabel(f'{key} [µm³/µm]')
-            plt.savefig(f'{f_name}/{key}_violin.png')
-            plt.savefig(f'{f_name}/{key}_violin.svg')
-            plt.close()
+            #sns.stripplot(data=percell_mito_df, x='celltype', y=key, color='black', alpha=0.2,
+            #              dodge=True, size=2, order=median_order)
+            #sns.violinplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
+            #plt.title(key)
+            #plt.ylabel(f'{key} [1/µm]')
+            #plt.savefig(f'{f_name}/{key}_violin.png')
+            #plt.savefig(f'{f_name}/{key}_violin.svg')
+            #plt.close()
 
     ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
 
     log.info('Analysis finished')
 
-    log.info('Step 4/4: Plot mean firing rates vs mito density')
+    log.info('Step 4/4: Plot mean firing rates vs vesicle density')
     #plot once with and once without unknown literature values
     known_values_only_ov = overview_df.dropna()
-    known_values_only_percell = percell_mito_df.dropna()
     fs_dict = {'celltype': 'FS', 'mean firing rate singing': firing_rate_dict['FS']}
     overview_df = overview_df.append(fs_dict, ignore_index=True)
     for key in overview_df.keys():
-        if 'mean' in key:
-            sns.pointplot(data= known_values_only_ov, x = key, y = 'mean firing rate singing', color = 'black')
-            plt.xlabel(f'{key} [µm³/µm]')
+        if 'mean' in key and 'ves' in key:
+            sns.scatterplot(data= known_values_only_ov, x = key, y = 'mean firing rate singing', color = 'black')
+            plt.xlabel(f'{key} [1/µm]')
             plt.ylabel('mean firing rate singing [Hz]')
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.svg')
             plt.close()
+            percell_key = key.split(' ')[1:]
+            percell_key = ' '.join(percell_key)
             #lin reg code adopted from ChatGPT
             reg_model = LinearRegression()
-            reg_model.fit(known_values_only_percell[key], known_values_only_percell['mean firing rate singing'])
+            reg_model.fit(np.array(known_values_only_percell[percell_key]).reshape(-1, 1), known_values_only_percell['mean firing rate singing'])
             #get coeff and intercept
             coefficient = reg_model.coef_
             intercept = reg_model.intercept_
@@ -214,10 +211,10 @@ if __name__ == '__main__':
                     continue
                 key_ct_ind = np.where(overview_df['celltype'] == ct_str)[0]
                 key_ct_value = overview_df[key][key_ct_ind]
-                firing_pred = reg_model.predict(key_ct_value)
-                overview_df.loc[key_ct_ind, key] = firing_pred
+                firing_pred = coefficient*key_ct_value + intercept
+                overview_df.loc[key_ct_ind, 'mean firing rate singing'] = firing_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', color='black')
-            plt.xlabel(f'{key} [µm³/µm]')
+            plt.xlabel(f'{key} [1/µm]')
             plt.ylabel('mean firing rate singing [Hz]')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred.svg')
@@ -227,11 +224,13 @@ if __name__ == '__main__':
             fs_ind = np.where(overview_df['celltype'] == 'FS')[0]
             overview_df.loc[fs_ind, key] = fs_mito_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', color='black')
-            plt.xlabel(f'{key} [µm³/µm]')
+            plt.xlabel(f'{key} [1/µm]')
             plt.ylabel('mean firing rate singing [Hz]')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS.svg')
             plt.close()
 
-        log.info('Analysis done')
+    overview_df.to_csv(f'{f_name}/overview_df_with_preds.csv')
+
+    log.info('Analysis done')
 

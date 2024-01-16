@@ -10,7 +10,7 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
 
-    f_name = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/231106_syn_prob/'
+    f_name = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/240115_syn_prob/'
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('syn prob comparison', log_dir=f_name + '/logs/')
@@ -108,8 +108,6 @@ if __name__ == '__main__':
     new_denso_inds = np.any(np.in1d(new_syn_axoness, den_so).reshape(len(new_syn_axoness), 2), axis=1)
     new_syn_probs = new_syn_probs[new_denso_inds]
     new_syn_cts = new_syn_cts[new_denso_inds]
-    #since synapses in v5 are the same, the length should be the same
-    assert(len(old_syn_probs) == len(new_syn_probs))
 
     log.info('Get params and plot histogram of filtered synapses')
     sp_params.loc['agglo2 axo-denso', 'total number'] = len(agglo2_syn_probs)

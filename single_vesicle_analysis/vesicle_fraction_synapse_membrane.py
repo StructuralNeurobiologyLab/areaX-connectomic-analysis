@@ -21,11 +21,12 @@ if __name__ == '__main__':
     import scipy.stats
     from itertools import combinations
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     start = time.time()
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
      #          10: "NGF"}
-    analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
+    version = 'v6'
+    analysis_params = Analysis_Params(working_dir = global_params.wd, version = version)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len_cell = 500
     min_comp_len_ax = 500
@@ -34,10 +35,10 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     syn_dist_threshold = 500 #nm
     nonsyn_dist_threshold = 5000 #nm
-    cls = CelltypeColors()
+    cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/230704_j0251v5_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+    color_key = 'TePkBrNGF'
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/231221_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -96,7 +97,7 @@ if __name__ == '__main__':
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
         log.info('Prefilter synapses for celltype')
         #filter synapses to only have specific celltype
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
                                                                                                             pre_cts=[
                                                                                                                 ct],
                                                                                                             post_cts=None,

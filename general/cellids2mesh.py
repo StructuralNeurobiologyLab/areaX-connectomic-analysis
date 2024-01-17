@@ -13,8 +13,8 @@ if __name__ == '__main__':
     from collections import Counter
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    #f_name = 'cajal/scratch/users/arother/230804_neuron_example_meshes'
-    f_name = 'cajal/scratch/users/arother/240115_LMAN_example_meshes'
+    f_name = 'cajal/scratch/users/arother/230804_neuron_example_meshes'
+    #f_name = 'cajal/scratch/users/arother/240115_LMAN_example_meshes'
 
     bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = bio_params.ct_dict()
@@ -26,7 +26,8 @@ if __name__ == '__main__':
     #cellids = [ 126798179, 1155532413, 15724767, 24397945, 32356701, 26790127, 379072583]
     #cellids = [15521116, 10157981]
     #cellids = [1080627023]
-    cellids = [3171878, 18222490, 50542644, 96194764, 436157555]
+    #cellids = [3171878, 18222490, 50542644, 96194764, 436157555]
+    cellids = [32356701, 26790127]
 
     if whole_cell:
         for cellid in tqdm(cellids):

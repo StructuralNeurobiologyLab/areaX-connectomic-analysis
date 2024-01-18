@@ -102,6 +102,7 @@ if __name__ == '__main__':
     #prefilter so that all synapses are between suitable ids
     suit_ids_ind = np.all(np.in1d(m_ssv_partners, all_suitable_ids).reshape(len(m_ssv_partners), 2), axis=1)
     m_ssv_partners = m_ssv_partners[suit_ids_ind]
+    m_ids = m_ids[suit_ids_ind]
     m_sizes = m_sizes[suit_ids_ind]
     m_axs = m_axs[suit_ids_ind]
     m_rep_coord = m_rep_coord[suit_ids_ind]
@@ -118,7 +119,6 @@ if __name__ == '__main__':
                  'mean syn number per other cell', 'mean syn area per other cell',
                  'std syn number per other cell', 'std syn area per other cell']
     summary_df = pd.DataFrame(columns=sum_columns, index = sum_index)
-
 
     log.info(f'Step 3/5: Identify {ct2_str} cells that get {ct1_str} input')
     #prefilter synapses between ct1 and ct2, only use suitable cellids
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     perc_ct2_rec_ssvs = 100 * len(ct2_rec_ssvs) / len(suitable_ids_dict[ct2])
     med_syn_number = np.median(ct2_syn_numbers)
     med_syn_size = np.median(ct2_syn_ssv_sizes)
-    log.info(f'{num_ct2_rec_ssvs} {ct2_str} receive {ct1_str} projections. These are {perc_ct2_rec_ssvs:.2f}'
+    log.info(f'{num_ct2_rec_ssvs} {ct2_str} receive {ct1_str} projections. These are {perc_ct2_rec_ssvs:.2f} '
              f'percent of {ct2_str} cells')
     log.info(
         f'The median number of synapses are {med_syn_number}, sum size {med_syn_size:.2f} per cell')
@@ -321,7 +321,7 @@ if __name__ == '__main__':
     perc_ct3_rec_ssvs = 100 * len(ct3_rec_ssvs) / len(suitable_ids_dict[ct3])
     med_syn_number = np.median(ct3_syn_numbers)
     med_syn_size = np.median(ct3_syn_ssv_sizes)
-    log.info(f'{num_ct3_rec_ssvs} {ct3_str} receive synapses from {ct2_str}. These are {perc_ct3_rec_ssvs:.2f}'
+    log.info(f'{num_ct3_rec_ssvs} {ct3_str} receive synapses from {ct2_str}. These are {perc_ct3_rec_ssvs:.2f} '
              f'percent of {ct3_str} cells')
     log.info(
         f'The median number of synapses are {med_syn_number}, sum size {med_syn_size:.2f} per cell')

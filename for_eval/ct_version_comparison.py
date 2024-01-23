@@ -15,7 +15,7 @@ if __name__ == '__main__':
     v5_wd = '/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811'
 
     color_key = 'TePkBrGlia'
-    ct_str = 'LMAN'
+    ct_str = 'DA'
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240123_j0251v6_vs_v5_{ct_str}_cellids_{color_key}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -24,8 +24,8 @@ if __name__ == '__main__':
                           9:'INT1', 10:'INT2', 11:'INT3', 12:'ASTRO', 13:'OLIGO', 14:'MICRO', 15:'MIGR', 16:'FRAG'}
     v5_ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF", 11:"ASTRO", 12:"OLIGO", 13:'MICRO', 14:'FRAG'}
-    ct_num_v6 = 1
-    ct_num_v5 = 3
+    ct_num_v6 = 0
+    ct_num_v5 = 1
     ct_colors = CelltypeColors(ct_dict = v5_ct_dict)
     ct_palette = ct_colors.ct_palette(key = color_key)
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     #do kurskal wallis test for all celltypes
     stats_df = pd.DataFrame(columns = ['stats', 'p-value'])
     certainty_ct_groups = [group['certainty v5'].values for name, group in
-                        v6_hvc_ids_df.groupby(f'celltype v5')]
+                        v6_hvc_ids_df.groupby('celltype v5')]
     kruskal_v5_res = kruskal(*certainty_ct_groups, nan_policy='omit')
     stats_df.loc['kruskal v5 cts', 'stats'] = kruskal_v5_res[0]
     stats_df.loc['kruskal v5 cts', 'p-value'] = kruskal_v5_res[1]
@@ -86,24 +86,40 @@ if __name__ == '__main__':
     stats_df.loc[f'ranksum {ct_str} v5 vs v6', 'stats'] = ranksum_ct_res[0]
     stats_df.loc[f'ranksum {ct_str} v5 vs v6', 'p-value'] = ranksum_ct_res[1]
     #get ranksum results of pairwise comparison if kruskal < 0.05 for all cts in v5
-    v5_unique_cts = np.unique(ct_certainty_v5_all)
+    v5_unique_cts = np.unique(ct_celltypes_v5_all_str)
+    num_unique_v5_cts = len(v5_unique_cts)
     if kruskal_v5_res[1] < 0.05:
-        group_comps = list(combinations(v5_unique_cts, 2))
+        group_comps = list(combinations(range(num_unique_v5_cts), 2))
         for gc in group_comps:
-            ranksum_res = ranksums(certainty_ct_groups[v5_ct_dict[gc[0]]], certainty_ct_groups[v5_ct_dict[gc[1]]])
-            stats_df.loc[f'ranksum {v5_ct_dict[gc[0]]} vs {v5_ct_dict[gc[1]]}', 'stats'] = ranksum_res[0]
-            stats_df.loc[f'ranksum {v5_ct_dict[gc[0]]} vs {v5_ct_dict[gc[1]]}', 'p-value'] = ranksum_res[1]
+            ranksum_res = ranksums(certainty_ct_groups[gc[0]], certainty_ct_groups[gc[1]])
+            stats_df.loc[f'ranksum {v5_unique_cts[gc[0]]} vs {v5_unique_cts[gc[1]]}', 'stats'] = ranksum_res[0]
+            stats_df.loc[f'ranksum {v5_unique_cts[gc[0]]} vs {v5_unique_cts[gc[1]]}', 'p-value'] = ranksum_res[1]
     stats_df.to_csv(f'{f_name}/stats_{ct_str}.csv')
     #plot according to celltypes
-    sns.countplot(data = v6_hvc_ids_df, x='celltype v5', palette=ct_palette)
-    plt.ylabel('number of cells')
+    v5_ct_groups = v6_hvc_ids_df.groupby('celltype v5')
+    per_ct_numbers_v5 = pd.DataFrame(columns = ['celltype v5', 'number of cells', 'percent of cells'])
+    per_ct_numbers_v5['celltype v5'] = v5_ct_groups.groups.keys()
+    ct_numbers = np.array(v5_ct_groups.size())
+    per_ct_numbers_v5['number of cells'] = ct_numbers
+    per_ct_numbers_v5['percent of cells'] = 100 * ct_numbers / np.sum(ct_numbers)
+    per_ct_numbers_v5.to_csv(f'{f_name}/ct_v5_{ct_str}_numbers.csv')
+    plot_order_cts = list(ct_palette.keys())
+    sns.barplot(data = per_ct_numbers_v5, x='celltype v5', y = 'number of cells', palette=ct_palette, order=plot_order_cts)
     plt.savefig(f'{f_name}/number_{ct_str}_v6_v5_cts.png')
     plt.close()
-    sns.countplot(data=v6_hvc_ids_df, x='celltype v5', palette=ct_palette, stat='percent')
-    plt.ylabel('% of cells')
+    sns.barplot(data = per_ct_numbers_v5, x='celltype v5', y = 'percent of cells', palette=ct_palette, order=plot_order_cts)
     plt.savefig(f'{f_name}/perc_{ct_str}_v6_v5_cts.png')
     plt.close()
-    #plot according to certainty in v5
-    sns.boxplot(data = v6_hvc_ids_df, x = 'celltype v5', y = 'certainty v5')
-    plt.savefig(f'{f_name}/certainty_{ct_str}_v6_v5_cts.png')
+    #if seaborn 0.13.0 in environment
+    #sns.countplot(data=v6_hvc_ids_df, x='celltype v5', palette=ct_palette, stat='percent')
+    #plt.ylabel('% of cells')
+    #plt.savefig(f'{f_name}/perc_{ct_str}_v6_v5_cts.png')
+    #plt.close()
+    #plot number per celltype
+    # plot according to certainty in v5
+    sns.boxplot(data=v6_hvc_ids_df, x='celltype v5', y='certainty v5', order=plot_order_cts, palette=ct_palette)
+    plt.savefig(f'{f_name}/certainty_{ct_str}_v5_cts.png')
+    plt.close()
+    sns.boxplot(data=v6_hvc_ids_df, x='celltype v5', y='certainty v6', order=plot_order_cts, palette=ct_palette)
+    plt.savefig(f'{f_name}/certainty_{ct_str}_v6_cts.png')
     plt.close()

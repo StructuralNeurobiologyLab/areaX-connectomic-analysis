@@ -16,13 +16,14 @@ if __name__ == '__main__':
     import numpy as np
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
     sd_csssv = SegmentationDataset("cs_ssv", working_dir=global_params.wd)
     start = time.time()
-    version = 'v5'
+    version = 'v6'
     analysis_params = Analysis_Params(working_dir = global_params.wd, version = version)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     cl_cell = 200
@@ -31,12 +32,16 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     gpe_ct = 6
     gpi_ct = 7
-    msn_ct = 2
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230814_j0251v5_MSN_connGP_comparison_mcl_%i_ax%i_synprob_%.2f_ranksums_med" % (cl_cell, cl_ax, syn_prob)
+    msn_ct = 4
+    ct1_str = ct_dict[msn_ct]
+    ct2_str = ct_dict[gpe_ct]
+    ct3_str = ct_dict[gpi_ct]
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/" \
+             f"240118_j0251{version}_{ct1_str}_{ct2_str}_{ct3_str}_comparison_mcl_{cl_cell}_ax{cl_ax}_synprob_{syn_prob}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('MSN percentile comparison connectivity, mergers excluded', log_dir=f_name + '/logs/')
-    log.info("MSN percentile comparison starts")
+    log = initialize_logging(f'{ct1_str} comparison connectivity, mergers excluded', log_dir=f_name + '/logs/')
+    log.info(f"{ct1_str} percentile comparison starts")
     time_stamps = [time.time()]
     step_idents = ['t-0']
     f_name_saving = "cajal/nvmescratch/users/arother/j0251v5_prep"
@@ -73,8 +78,16 @@ if __name__ == '__main__':
     cell_dicts = [MSN_dict, GPe_dict, GPi_dict]
 
     log.info("Step 1/12: sort MSN based on connectivity to GPe and GPi")
-    msn2gpe_ids, msn2gpi_ids, msn2gpei_ids, msn_nogp_ids = sort_by_connectivity(sd_synssv, sd_csssv = None, ct1 = 2, ct2 = 6, ct3 = 7, cellids1 = MSN_ids, cellids2 = GPe_ids, cellids3 = GPi_ids,
-                         f_name = f_name, celldicts= cell_dicts, f_name_saving = f_name_saving, min_comp_len = cl_cell, syn_prob_thresh = syn_prob, min_syn_size = min_syn_size)
+    msn2gpe_ids, msn2gpi_ids, msn2gpei_ids, msn_nogp_ids = sort_by_connectivity(sd_synssv, sd_csssv=None, ct1=msn_ct, ct2=gpe_ct,
+                                                                                ct3=gpi_ct, cellids1=MSN_ids,
+                                                                                cellids2=GPe_ids, cellids3=GPi_ids,
+                                                                                f_name=f_name, celldicts=cell_dicts,
+                                                                                f_name_saving=f_name_saving,
+                                                                                min_comp_len=cl_cell,
+                                                                                syn_prob_thresh=syn_prob,
+                                                                                min_syn_size=min_syn_size,
+                                                                                ct_dict = ct_dict)
+
 
     time_stamps = [time.time()]
     step_idents = ['sort MSN via connectivity to GPe/i finished']

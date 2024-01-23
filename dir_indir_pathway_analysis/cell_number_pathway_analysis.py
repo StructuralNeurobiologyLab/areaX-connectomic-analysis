@@ -38,9 +38,9 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'MSN','TeYw','MudGrays'}
     color_key = 'STNGPNGF'
-    ct1 = 4
-    ct2 = 6
-    ct3 = 7
+    ct1 = 2
+    ct2 = 11
+    ct3 = 3
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     ct3_str = ct_dict[ct3]
@@ -83,9 +83,14 @@ if __name__ == '__main__':
                 misclassified_asto_ids = bio_params.load_potential_astros()
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
-        cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
-                                                axon_only=False,
-                                                max_path_len=None)
+        if ct in axon_cts:
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
+                                                    axon_only=True,
+                                                    max_path_len=None)
+        else:
+            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                                                    axon_only=False,
+                                                    max_path_len=None)
         suitable_ids_dict[ct] = cellids_checked
         all_suitable_ids.append(cellids_checked)
 
@@ -263,6 +268,8 @@ if __name__ == '__main__':
     m_spiness = m_spiness[suit_ct_inds]
     m_cts = m_cts[suit_ct_inds]
     log.info(f'Total synaptic strength from {ct2_str} to {ct3_str} are {np.sum(m_sizes):.2f} µm² from {len(m_sizes)} synapses')
+    summary_df.loc['total synaptic area', f'{ct2_str} to {ct3_str}'] = np.sum(m_sizes)
+    summary_df.loc['total synaptic area', f'{ct3_str} from {ct2_str}'] = np.sum(m_sizes)
     # get ct2 cells that project to ct3
     ct2ct3_syn_numbers, ct2ct3_syn_ssv_sizes, ct2_proj_ssvs = get_ct_syn_number_sumsize(syn_sizes=m_sizes,
                                                                                   syn_ssv_partners=m_ssv_partners,

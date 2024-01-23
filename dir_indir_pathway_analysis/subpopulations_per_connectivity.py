@@ -13,12 +13,12 @@ from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
 from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes, get_cell_nodes_ax
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids, get_contact_site_axoness_percell
+from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids, get_contact_size_axoness_per_cell
 from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
 from multiprocessing import pool
 from functools import partial
 
-def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, celldicts, sd_csssv = None, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
+def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3, f_name, celldicts, ct_dict, sd_csssv = None, f_name_saving = None, min_comp_len = 200, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     """
     sort one celltype into 4 groups based on connectivty to two other celltypes. Groups will be only one of them, neither or both.
     Also synapse amount, sum of synaptic area and cellids of the cells they synapsed onto will be looked at.
@@ -37,8 +37,7 @@ def sort_by_connectivity(sd_synssv, ct1, ct2, ct3, cellids1, cellids2, cellids3,
     :param min_syn_size: minimum synaose size
     :return:
     """
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+
     full_celldict1 , full_celldict2, full_celldict3 = celldicts
     if f_name_saving is None:
         f_name_saving = f_name

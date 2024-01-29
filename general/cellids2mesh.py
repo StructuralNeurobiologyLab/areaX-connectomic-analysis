@@ -12,11 +12,12 @@ if __name__ == '__main__':
     from scipy.spatial import cKDTree
     from collections import Counter
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     f_name = 'cajal/scratch/users/arother/230804_neuron_example_meshes'
     #f_name = 'cajal/scratch/users/arother/240115_LMAN_example_meshes'
 
-    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
+    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v6')
     ct_dict = bio_params.ct_dict()
     whole_cell = True
     get_mitos = False

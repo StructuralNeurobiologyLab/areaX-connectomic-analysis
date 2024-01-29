@@ -12,8 +12,8 @@ from syconn.proc.meshes import write_meshes2kzip
 
 global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
-cellid1 = 844683784
-cellid2 = 7626258
+cellid1 = 542544908
+cellid2 = 32356701
 version = 'v6'
 bio_params = Analysis_Params(working_dir=global_params.wd, version=version)
 ct_dict = bio_params.ct_dict()
@@ -28,7 +28,7 @@ min_syn_size = 0.1
 dataset_scaling = [10, 10, 25]
 blender_scaling = 10**(-5)
 
-f_name = f'cajal/scratch/users/arother/240125_example_conns_syns/{ct1}_{cellid1}_{ct2}_{cellid2}_example_syns'
+f_name = f'cajal/scratch/users/arother/240129_example_conns_syns/{ct1}_{cellid1}_{ct2}_{cellid2}_example_syns'
 log = initialize_logging(f'example cells {ct1} {cellid1}, {ct2} {cellid2} syns', log_dir=f_name + '/logs/')
 log.info(f'min syn size = {min_syn_size} µm², syn prob thresh = {syn_prob_tresh},'
          f'dataset scaling = {dataset_scaling}, scaling for blender = {blender_scaling}')
@@ -90,7 +90,7 @@ testax = np.in1d(id1_id2_axs, 1).reshape(len(id1_id2_axs), 2)
 pre_ct_inds = np.any(testct == testax, axis = 1)
 conn_df[f'from {ct1}'] = 'No'
 conn_df.loc[pre_ct_inds, f'from {ct1}'] = 'Yes'
-conn_df.to_csv(f'{f_name}/conn_coords')
+conn_df.to_csv(f'{f_name}/conn_coords.csv')
 
 log.info('Get meshes for synapses')
 syn_color_rgba = np.array([189, 195, 199, 1])

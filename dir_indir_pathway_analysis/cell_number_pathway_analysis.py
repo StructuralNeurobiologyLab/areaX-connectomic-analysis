@@ -38,8 +38,8 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'MSN','TeYw','MudGrays'}
     color_key = 'STNGPNGF'
-    ct1 = 2
-    ct2 = 11
+    ct1 = 7
+    ct2 = 6
     ct3 = 3
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
@@ -49,11 +49,11 @@ if __name__ == '__main__':
     if np.any(np.in1d(comp_cts, axon_cts)):
         axon_ct_present = True
         f_name = f'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/' \
-                 f'240118_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{min_comp_len_ax}_{color_key}'
+                 f'240125_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{min_comp_len_ax}_{color_key}'
     else:
         axon_ct_present = False
         f_name = f'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/' \
-                 f'240118_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{color_key}'
+                 f'240125_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{color_key}'
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'Pathway cell number analysis {ct1_str}, {ct2_str}, {ct3_str}', log_dir=f_name + '/logs/')

@@ -18,6 +18,7 @@ if __name__ == '__main__':
     from scipy.spatial import KDTree
     import seaborn as sns
     import matplotlib.pyplot as plt
+    from collections import defaultdict
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
@@ -119,7 +120,7 @@ if __name__ == '__main__':
 
     log.info(f'Step 3/X: Get synapses from {proj_ct_str} to {ct1_str} and {ct2_str}')
     #proj_ct to ct1
-    proj2ct1_cts, proj2ct1_ids, proj2ct1_axs, proj2ct1_ssv_partners, proj2ct1_sizes, proj2ct1_spiness, proj2ct1_rep_coord = filter_synapse_caches_for_ct(pre_cts=[proj_ct],
+    proj2ct1_cts, proj2ct1_syn_ids, proj2ct1_axs, proj2ct1_ssv_partners, proj2ct1_sizes, proj2ct1_spiness, proj2ct1_rep_coord = filter_synapse_caches_for_ct(pre_cts=[proj_ct],
                                                                                                         post_cts=[ct1],
                                                                                                         syn_prob_thresh=None,
                                                                                                         min_syn_size=None,
@@ -137,9 +138,9 @@ if __name__ == '__main__':
     ct1_ids_proj = np.unique(denso_ssv_partners)
     # check that all of them are really ct1 suitable ids
     assert (np.all(np.in1d(ct1_ids_proj, suitable_ids_dict[ct1])))
-    log.info(f'{len(proj2ct1_ids)} {proj_ct_str} ids project to {len(ct1_ids_proj)} {ct1_str} ids with a total synaptic sum of {np.sum(proj2ct1_sizes):.2f} µm²')
+    log.info(f'{len(proj_ids_2ct1)} {proj_ct_str} ids project to {len(ct1_ids_proj)} {ct1_str} ids with a total synaptic sum of {np.sum(proj2ct1_sizes):.2f} µm²')
     #proj_ct to ct2
-    proj2ct2_cts, proj2ct2_ids, proj2ct2_axs, proj2ct2_ssv_partners, proj2ct2_sizes, proj2ct2_spiness, proj2ct2_rep_coord = filter_synapse_caches_for_ct(
+    proj2ct2_cts, proj2ct2_syn_ids, proj2ct2_axs, proj2ct2_ssv_partners, proj2ct2_sizes, proj2ct2_spiness, proj2ct2_rep_coord = filter_synapse_caches_for_ct(
         pre_cts=[proj_ct],
         post_cts=[ct2],
         syn_prob_thresh=None,
@@ -159,36 +160,108 @@ if __name__ == '__main__':
     # check that all of them are really ct1 suitable ids
     assert (np.all(np.in1d(ct2_ids_proj, suitable_ids_dict[ct2])))
     log.info(
-        f'{len(proj2ct2_ids)} {proj_ct_str} ids project to {len(ct2_ids_proj)} {ct2_str} ids with a total synaptic sum of {np.sum(proj2ct2_sizes):.2f} µm²')
+        f'{len(proj_ids_2ct2)} {proj_ct_str} ids project to {len(ct2_ids_proj)} {ct2_str} ids with a total synaptic sum of {np.sum(proj2ct2_sizes):.2f} µm²')
     #get cellids that project to both celltypes and only corresponding synapses
     both_proj_ids = proj_ids_2ct1[np.in1d(proj_ids_2ct1, proj_ids_2ct2)]
     num_poth_proj_ids = len(both_proj_ids)
-    log.info(f'{num_poth_proj_ids} project to {ct1_str} and {ct2_str} which is {100 * num_poth_proj_ids / len(suitable_ids_dict[proj_ct]):.2f} percent of all suitable {proj_ct_str}'
-             f'ids ({100 * num_poth_proj_ids/ len(proj_ids_2ct1):.2f} percent to {proj_ids_2ct1}, {100 * num_poth_proj_ids/ len(proj_ids_2ct2):.2f} percent to {ct2_str})')
+    log.info(f'{num_poth_proj_ids} project to {ct1_str} and {ct2_str} which is {100 * num_poth_proj_ids / len(suitable_ids_dict[proj_ct]):.2f} percent of all suitable {proj_ct_str} \n'
+             f' ids ({100 * num_poth_proj_ids/ len(proj_ids_2ct1):.2f} percent of the ones projecting to {ct1_str}, \n'
+             f' {100 * num_poth_proj_ids/ len(proj_ids_2ct2):.2f} percent to {ct2_str})')
     if num_poth_proj_ids < len(proj_ids_2ct1):
-        both_inds = np.any(np.in1d(proj2ct1_ssv_partners, both_proj_ids).reshape(len(proj2ct1_ssv_partners, 2)), axis = 1)
+        both_inds = np.any(np.in1d(proj2ct1_ssv_partners, both_proj_ids).reshape(len(proj2ct1_ssv_partners), 2), axis = 1)
         proj2ct1_ssv_partners = proj2ct1_ssv_partners[both_inds]
         proj2ct1_sizes = proj2ct1_sizes[both_inds]
         proj2ct1_axs = proj2ct1_axs[both_inds]
         proj2ct1_rep_coord = proj2ct1_rep_coord[both_inds]
+        proj2ct1_syn_ids = proj2ct1_syn_ids[both_inds]
+    denso_inds = np.where(proj2ct1_axs != 1)
+    denso_ssv_partners = proj2ct1_ssv_partners[denso_inds]
+    ct1_ids_proj_both = np.unique(denso_ssv_partners)
+    log.info(f'{len(ct1_ids_proj_both)} {ct1_str} cells get synapses from {proj_ct_str} ids that project also to {ct2_str} \n'
+             f' This is {100 * len(ct1_ids_proj_both) / len(suitable_ids_dict[ct1]):.2f} percent of all {ct1_str} cells and '
+             f' {100 * len(ct1_ids_proj_both) / len(ct1_ids_proj):.2f} percent of {ct1_str} cells that get {proj_ct_str} input')
     if num_poth_proj_ids < len(proj_ids_2ct2):
-        both_inds = np.any(np.in1d(proj2ct2_ssv_partners, both_proj_ids).reshape(len(proj2ct2_ssv_partners, 2)), axis=1)
+        both_inds = np.any(np.in1d(proj2ct2_ssv_partners, both_proj_ids).reshape(len(proj2ct2_ssv_partners), 2), axis=1)
         proj2ct2_ssv_partners = proj2ct2_ssv_partners[both_inds]
         proj2ct2_sizes = proj2ct2_sizes[both_inds]
         proj2ct2_axs = proj2ct2_axs[both_inds]
         proj2ct2_rep_coord = proj2ct2_rep_coord[both_inds]
+        proj2ct2_syn_ids = proj2ct2_syn_ids[both_inds]
+    denso_inds = np.where(proj2ct2_axs != 1)
+    denso_ssv_partners = proj2ct2_ssv_partners[denso_inds]
+    ct2_ids_proj_both = np.unique(denso_ssv_partners)
+    log.info(f'{len(ct2_ids_proj_both)} {ct2_str} cells get synapses from {proj_ct_str} ids that project also to {ct1_str} \n'
+        f' This is {100 * len(ct2_ids_proj_both) / len(suitable_ids_dict[ct2]):.2f} percent of all {ct1_str} cells and '
+        f' {100 * len(ct2_ids_proj_both) / len(ct2_ids_proj):.2f} percent of {ct2_str} cells that get {proj_ct_str} input')
     log.info(f'The synaptic sum of {proj_ct_str} to {ct1_str} of ids 2 both celltypes is {np.sum(proj2ct1_sizes):.2f}')
     log.info(f'The synaptic sum of {proj_ct_str} to {ct2_str} of ids 2 both celltypes is {np.sum(proj2ct2_sizes):.2f}')
 
     log.info(f'Step 3/X: Get synapses of {ct1_str} and {ct2_str} that are with a distance of {syn_dist_thresh} µm on the same axon of {proj_ct_str}')
-    #get synapses within the distance threshold via KDTree
+    #get synapses within the distance threshold via KDTree (not pathlenght on axon so far)
     syn_tree_ct1 = scipy.spatial.KDTree(proj2ct1_rep_coord * scaling)
     syn_tree_ct2 = scipy.spatial.KDTree(proj2ct2_rep_coord * scaling)
     inds_tree_ct2 = syn_tree_ct1.query_ball_tree(syn_tree_ct2, r = syn_dist_thresh * 1000)
-    syn_partner_cellids_ct2 = proj2ct2_ssv_partners[inds_tree_ct2]
-    syn_partner_sizes_ct2 = proj2ct2_sizes[inds_tree_ct2]
-    syn_partner_axs_ct2 = proj2ct2_axs[inds_tree_ct2]
-    raise ValueError
+    #remove ones that don't have any partner synapse
+    non_zero_mask = [len(partners) > 0 for partners in inds_tree_ct2]
+    partner_syns_ct1_sizes = proj2ct1_sizes[non_zero_mask]
+    log.info(f'{len(partner_syns_ct1_sizes)} synapses have at least one synapse within {syn_dist_thresh} µm distance to a synapse from {proj_ct_str} to {ct2_str}.'
+             f' This is {100 * len(partner_syns_ct1_sizes)/ len(proj2ct1_sizes):.2f} percent of synapses from {proj_ct_str} to {ct1_str}')
+    num_partner_syns_ct2 = len(np.unique(np.concatenate(inds_tree_ct2)))
+    log.info(
+        f'{num_partner_syns_ct2} synapses have at least one synapse within {syn_dist_thresh} µm distance to a synapse from {proj_ct_str} to {ct1_str}.'
+        f' This is {100 * num_partner_syns_ct2 / len(proj2ct2_sizes):.2f} percent of synapses from {proj_ct_str} to {ct2_str}')
+    num_pairs = len(np.concatenate(inds_tree_ct2))
+    log.info(f'In total there are {num_pairs} pairs of synapses between {proj_ct_str}-{ct1_str} and {proj_ct_str}-{ct2_str} synapses')
+    #make dataframe with coordinates of partners, sizes etc
+    #dictionary with pairs where proj_ct id is key and ct1, ct2ids are entries
+    #make another dictionary with ct1_id as key and ct2_id as entry
+    columns = [f'{proj_ct_str} id', f'{ct1_str} id', f'{ct2_str} id', f'{ct1_str} syn size', f'{ct2_str} syn size',
+               f'{ct1_str} coord x', f'{ct1_str} coord y', f'{ct1_str} coord z', f'{ct2_str} coord x', f'{ct2_str} coord y', f'{ct2_str} coord z',
+               f'{ct1_str} syn id', f'{ct2_str} syn id']
+    syn_partners_df = pd.Dataframe(columns = columns, index = range(len(proj2ct1_ssv_partners)))
+    proj_id_dict = defaultdict(lambda: [])
+    ct1_id_dict = defaultdict(lambda: [])
+    ct2_id_dict = defaultdict(lambda: [])
+    ax_ind_ct1 = np.where(proj2ct1_axs == 1)
+    ax_ind_ct2 = np.where(proj2ct2_axs == 1)
+    ct1_ind = np.where(proj2ct1_axs != 1)
+    ct2_ind = np.where(proj2ct2_axs != 1)
+    for i, ct1_syn_id in enumerate(proj2ct1_syn_ids):
+        #check first if all pais have same proj_ax
+        if len(inds_tree_ct2[i]) == 0:
+            continue
+        proj_id_ct1 = proj2ct1_ssv_partners[ax_ind_ct1[i]]
+        ct1_id = proj2ct1_ssv_partners[ct1_ind[i]]
+        ct1_coords = proj2ct1_rep_coord[i]
+        for ct2_syn_ind in inds_tree_ct2[i]:
+            proj_id_ct2 = proj2ct2_ssv_partners[ax_ind_ct2[ct2_syn_ind]]
+            ct2_id = proj2ct2_ssv_partners[ct2_ind[ct2_syn_ind]]
+            if proj_id_ct2 != proj_id_ct1:
+                continue
+            proj_id_dict[proj_id_ct1].append([ct1_id, ct2_id])
+            ct1_id_dict[ct1_id].append(ct2_id)
+            ct2_id_dict[ct2_id].append(ct1_id)
+            syn_partners_df.loc[i, f'{proj_ct_str} id'] = proj_id_ct1
+            syn_partners_df.loc[i, f'{ct1_str} id'] = ct1_id
+            syn_partners_df.loc[i, f'{ct2_str} id'] = ct2_id
+            syn_partners_df.loc[i, f'{ct1_str} syn size'] = proj2ct1_sizes[i]
+            syn_partners_df.loc[i, f'{ct1_str} syn id'] = ct1_syn_id
+            syn_partners_df.loc[i, f'{ct1_str} coord x'] = proj2ct1_rep_coord[i, 0]
+            syn_partners_df.loc[i, f'{ct1_str} coord y'] = proj2ct1_rep_coord[i, 1]
+            syn_partners_df.loc[i, f'{ct1_str} coord z'] = proj2ct1_rep_coord[i, 2]
+            ct2_coords = proj2ct2_rep_coord[ct2_syn_ind]
+            syn_partners_df.loc[i, f'{ct2_str} syn size'] = proj2ct2_sizes[ct2_syn_ind]
+            syn_partners_df.loc[i, f'{ct2_str} syn id'] = proj2ct2_syn_ids[ct2_syn_ind]
+            syn_partners_df.loc[i, f'{ct2_str} coord x'] = proj2ct2_rep_coord[ct2_syn_ind, 0]
+            syn_partners_df.loc[i, f'{ct2_str} coord y'] = proj2ct2_rep_coord[ct2_syn_ind, 1]
+            syn_partners_df.loc[i, f'{ct2_str} coord z'] = proj2ct2_rep_coord[ct2_syn_ind, 2]
+
+    #check that synapses that are close together are from the same proj axon
+    #save number of synapses that are close to each other and number of cells that
+    #are part of this
+    #make dictionary with proj_axon_id as key and ct1 and ct2 id that are close togehter
+    #another dictionary with ct1_id and ct2_id that is from same axon
+
 
 
 

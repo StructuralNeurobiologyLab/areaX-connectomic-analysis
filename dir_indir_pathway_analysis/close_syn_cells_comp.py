@@ -3,13 +3,11 @@ import scipy.spatial
 
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_ct_syn_number_sumsize, filter_synapse_caches_general
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import SubCT_Colors
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, filter_synapse_caches_general
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
-    from syconn.reps.super_segmentation import SuperSegmentationDataset
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
@@ -18,7 +16,7 @@ if __name__ == '__main__':
     from scipy.spatial import KDTree
     import seaborn as sns
     import matplotlib.pyplot as plt
-    from collections import defaultdict
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
@@ -41,22 +39,24 @@ if __name__ == '__main__':
     ct1 = 4
     ct2 = 3
     rec_ct = 7
-    syn_dist_thresh = 2  # synapse distance threshold in µm
+    syn_dist_thresh = 1  # synapse distance threshold in µm
     comp_cts = [proj_ct, ct1, ct2, rec_ct]
     proj_ct_str = ct_dict[proj_ct]
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     rec_ct_str = ct_dict[rec_ct]
     scaling = np.array([10, 10, 25]) #nm voxelsize
-
+    color_key = 'STNGPINTv6'
+    cls = CelltypeColors(ct_dict=ct_dict)
+    ct_palette = cls.ct_palette(key=color_key)
     if np.any(np.in1d(comp_cts, axon_cts)):
         axon_ct_present = True
         f_name = f'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/' \
-                 f'240201_j0251{version}_close_syn_cellid_comp_{proj_ct_str}_{ct1_str}_{ct2_str}_{rec_ct_str}_{min_comp_len}_{min_comp_len_ax}'
+                 f'240206_j0251{version}_close_syn_cellid_comp_{proj_ct_str}_{ct1_str}_{ct2_str}_{rec_ct_str}_{min_comp_len}_{min_comp_len_ax}_{syn_dist_thresh}'
     else:
         axon_ct_present = False
         f_name = f'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/' \
-                 f'240201_j0251{version}_close_syn_cellid_comp_{proj_ct_str}_{ct1_str}_{ct2_str}_{rec_ct_str}_{min_comp_len}'
+                 f'240206_j0251{version}_close_syn_cellid_comp_{proj_ct_str}_{ct1_str}_{ct2_str}_{rec_ct_str}_{min_comp_len}_{syn_dist_thresh}'
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'Close synapse cells comparison {proj_ct_str}, {ct1_str}, {ct2_str}, {rec_ct_str}', log_dir=f_name + '/logs/')
@@ -193,9 +193,8 @@ if __name__ == '__main__':
     log.info(f'{len(ct2_ids_proj_both)} {ct2_str} cells get synapses from {proj_ct_str} ids that project also to {ct1_str} \n'
         f' This is {100 * len(ct2_ids_proj_both) / len(suitable_ids_dict[ct2]):.2f} percent of all {ct1_str} cells and '
         f' {100 * len(ct2_ids_proj_both) / len(ct2_ids_proj):.2f} percent of {ct2_str} cells that get {proj_ct_str} input')
-    log.info(f'The synaptic sum of {proj_ct_str} to {ct1_str} of ids 2 both celltypes is {np.sum(proj2ct1_sizes):.2f}')
-    log.info(f'The synaptic sum of {proj_ct_str} to {ct2_str} of ids 2 both celltypes is {np.sum(proj2ct2_sizes):.2f}')
-
+    log.info(f'The synaptic sum of {proj_ct_str} to {ct1_str} of ids to both celltypes is {np.sum(proj2ct1_sizes):.2f} µm².')
+    log.info(f'The synaptic sum of {proj_ct_str} to {ct2_str} of ids to both celltypes is {np.sum(proj2ct2_sizes):.2f} µm².')
     log.info(f'Step 3/X: Get synapses of {ct1_str} and {ct2_str} that are with a distance of {syn_dist_thresh} µm on the same axon of {proj_ct_str}')
     #get synapses within the distance threshold via KDTree (not pathlenght on axon so far)
     syn_tree_ct1 = scipy.spatial.KDTree(proj2ct1_rep_coord * scaling)
@@ -218,29 +217,41 @@ if __name__ == '__main__':
     columns = [f'{proj_ct_str} id', f'{ct1_str} id', f'{ct2_str} id', f'{ct1_str} syn size', f'{ct2_str} syn size',
                f'{ct1_str} coord x', f'{ct1_str} coord y', f'{ct1_str} coord z', f'{ct2_str} coord x', f'{ct2_str} coord y', f'{ct2_str} coord z',
                f'{ct1_str} syn id', f'{ct2_str} syn id']
-    syn_partners_df = pd.Dataframe(columns = columns, index = range(len(proj2ct1_ssv_partners)))
-    proj_id_dict = defaultdict(lambda: [])
-    ct1_id_dict = defaultdict(lambda: [])
-    ct2_id_dict = defaultdict(lambda: [])
-    ax_ind_ct1 = np.where(proj2ct1_axs == 1)
-    ax_ind_ct2 = np.where(proj2ct2_axs == 1)
-    ct1_ind = np.where(proj2ct1_axs != 1)
-    ct2_ind = np.where(proj2ct2_axs != 1)
+    syn_partners_df = pd.DataFrame(columns = columns, index = range(len(proj2ct1_ssv_partners)))
+    proj_id_dict = {}
+    ct1_id_dict = {}
+    ct2_id_dict = {}
+    ct1_proj_id_dict = {}
+    ct2_proj_id_dict = {}
+    ax_ind_ct1 = np.where(proj2ct1_axs == 1)[1]
+    ax_ind_ct2 = np.where(proj2ct2_axs == 1)[1]
+    ct1_ind = np.where(proj2ct1_axs != 1)[1]
+    ct2_ind = np.where(proj2ct2_axs != 1)[1]
     for i, ct1_syn_id in enumerate(proj2ct1_syn_ids):
         #check first if all pais have same proj_ax
         if len(inds_tree_ct2[i]) == 0:
             continue
-        proj_id_ct1 = proj2ct1_ssv_partners[ax_ind_ct1[i]]
-        ct1_id = proj2ct1_ssv_partners[ct1_ind[i]]
+        proj_id_ct1 = proj2ct1_ssv_partners[i, ax_ind_ct1[i]]
+        ct1_id = proj2ct1_ssv_partners[i, ct1_ind[i]]
         ct1_coords = proj2ct1_rep_coord[i]
         for ct2_syn_ind in inds_tree_ct2[i]:
-            proj_id_ct2 = proj2ct2_ssv_partners[ax_ind_ct2[ct2_syn_ind]]
-            ct2_id = proj2ct2_ssv_partners[ct2_ind[ct2_syn_ind]]
+            proj_id_ct2 = proj2ct2_ssv_partners[ct2_syn_ind, ax_ind_ct2[ct2_syn_ind]]
+            ct2_id = proj2ct2_ssv_partners[ct2_syn_ind, ct2_ind[ct2_syn_ind]]
             if proj_id_ct2 != proj_id_ct1:
                 continue
+            if proj_id_ct1 not in list(proj_id_dict.keys()):
+                proj_id_dict[proj_id_ct1] = []
             proj_id_dict[proj_id_ct1].append([ct1_id, ct2_id])
+            if ct1_id not in list(ct1_id_dict.keys()):
+                ct1_id_dict[ct1_id] = []
+                ct1_proj_id_dict[ct1_id] = []
             ct1_id_dict[ct1_id].append(ct2_id)
+            ct1_proj_id_dict[ct1_id].append(proj_id_ct1)
+            if ct2_id not in list(ct2_id_dict.keys()):
+                ct2_id_dict[ct2_id] = []
+                ct2_proj_id_dict[ct2_id] = []
             ct2_id_dict[ct2_id].append(ct1_id)
+            ct2_proj_id_dict[ct2_id].append(proj_id_ct1)
             syn_partners_df.loc[i, f'{proj_ct_str} id'] = proj_id_ct1
             syn_partners_df.loc[i, f'{ct1_str} id'] = ct1_id
             syn_partners_df.loc[i, f'{ct2_str} id'] = ct2_id
@@ -256,22 +267,229 @@ if __name__ == '__main__':
             syn_partners_df.loc[i, f'{ct2_str} coord y'] = proj2ct2_rep_coord[ct2_syn_ind, 1]
             syn_partners_df.loc[i, f'{ct2_str} coord z'] = proj2ct2_rep_coord[ct2_syn_ind, 2]
 
-    #check that synapses that are close together are from the same proj axon
-    #save number of synapses that are close to each other and number of cells that
-    #are part of this
-    #make dictionary with proj_axon_id as key and ct1 and ct2 id that are close togehter
-    #another dictionary with ct1_id and ct2_id that is from same axon
+    write_obj2pkl(f'{f_name}/{proj_ct_str}_dict2{ct1_str}_{ct2_str}.pkl', proj_id_dict)
+    write_obj2pkl(f'{f_name}/{ct1_str}_dict2{ct2_str}_partners.pkl', ct1_id_dict)
+    write_obj2pkl(f'{f_name}/{ct2_str}_dict2{ct1_str}_partners.pkl', ct2_id_dict)
+    write_obj2pkl(f'{f_name}/{ct1_str}_dict_{proj_ct_str}_partners.pkl', ct1_proj_id_dict)
+    write_obj2pkl(f'{f_name}/{ct2_str}_dict_{proj_ct_str}_partners.pkl', ct2_proj_id_dict)
+    syn_partners_df = syn_partners_df.dropna()
+    syn_partners_df = syn_partners_df.reset_index(drop = True)
+    syn_partners_df.to_csv(f'{f_name}/{proj_ct_str}_{ct1_str}_{ct2_str}_partner_syns.csv')
+    log.info(f'{len(syn_partners_df)} synapse partners exist from the same {proj_ct_str} axon. \n'
+             f'This involves {len(proj_id_dict.keys())} {proj_ct_str} ids ({100 * len(proj_id_dict.keys())/ len(suitable_ids_dict[proj_ct]):.2f} percent), \n'
+             f' {len(ct1_id_dict.keys())} {ct1_str} ids ({100 * len(ct1_id_dict.keys())/ len(suitable_ids_dict[ct1]):.2f} percent), \n'
+             f' {len(ct2_id_dict.keys())} {ct2_str} ids ({100 * len(ct2_id_dict.keys())/ len(suitable_ids_dict[ct2]):.2f} percent).')
+    num_unique_ct1_syns = len(np.unique(syn_partners_df[f'{ct1_str} syn id']))
+    num_unique_ct2_syns = len(np.unique(syn_partners_df[f'{ct2_str} syn id']))
+    log.info(
+        f'{num_unique_ct1_syns} synapses have at least one synapse within {syn_dist_thresh} µm distance to a synapse from {proj_ct_str} to {ct2_str} from the same axon.'
+        f' This is {100 * num_unique_ct1_syns / len(proj2ct1_sizes):.2f} percent of synapses from {proj_ct_str} to {ct1_str} and'
+        f' {100 * num_unique_ct1_syns / len(partner_syns_ct1_sizes):.2f} percent of synapses that have a partner within the distance.')
+    log.info(
+        f'{num_unique_ct2_syns} synapses have at least one synapse within {syn_dist_thresh} µm distance to a synapse from {proj_ct_str} to {ct1_str} from the same axon.'
+        f' This is {100 * num_unique_ct2_syns / len(proj2ct2_sizes):.2f} percent of synapses from {proj_ct_str} to {ct2_str} and'
+        f' {100 * num_unique_ct2_syns / num_partner_syns_ct2:.2f} percent of synapses that have a partner within the distance.')
+    #get information about how many ct2 cells one ct1 cells is connected to indirectly
+    unique_ct1_cells = list(ct1_id_dict.keys())
+    unique_ct2_cells = list(ct2_id_dict.keys())
+    ct1_conn_partners_df = pd.DataFrame(columns = ['cellid', f'number syns from {proj_ct_str} with partner syn to {ct2_str}',
+                                                   f'number {ct2_str} partners', f'number {proj_ct_str} axons'], index = range(len(unique_ct1_cells)))
+    for i, ct1_id in enumerate(tqdm(unique_ct1_cells)):
+        ct1_conn_partners_df.loc[i, 'cellid'] = ct1_id
+        ct1_conn_partners_df.loc[i, f'number syns from {proj_ct_str} with partner syn to {ct2_str}'] = len(ct1_id_dict[ct1_id])
+        ct1_conn_partners_df.loc[i, f'number {ct2_str} partners'] = len(np.unique(ct1_id_dict[ct1_id]))
+        ct1_conn_partners_df.loc[i, f'number {proj_ct_str} axons'] = len(np.unique(ct1_proj_id_dict[ct1_id]))
+    ct1_conn_partners_df.to_csv(f'{f_name}/{ct1_str}_number_cell_parners.csv')
+    median_syn_percell = np.median(ct1_conn_partners_df[f'number syns from {proj_ct_str} with partner syn to {ct2_str}'])
+    median_proj_ct_percell = np.median(ct1_conn_partners_df[f'number {proj_ct_str} axons'])
+    median_otherct_percell = np.median(ct1_conn_partners_df[f'number {ct2_str} partners'])
+    log.info(f'{ct1_str} cells have a median of {median_syn_percell} synapses where a {ct2_str} syn is close by on the same axon, \n'
+             f' which connects them to a median of {median_otherct_percell} {ct2_str} cells with {median_proj_ct_percell} different {proj_ct_str} axons.')
+    ct2_conn_partners_df = pd.DataFrame(
+        columns=['cellid', f'number syns from {proj_ct_str} with partner syn to {ct1_str}',
+                 f'number {ct1_str} partners', f'number {proj_ct_str} axons'], index = range(len(unique_ct2_cells)))
+    for i, ct2_id in enumerate(tqdm(unique_ct2_cells)):
+        ct2_conn_partners_df.loc[i, 'cellid'] = ct2_id
+        ct2_conn_partners_df.loc[i, f'number syns from {proj_ct_str} with partner syn to {ct1_str}'] = len(ct2_id_dict[ct2_id])
+        ct2_conn_partners_df.loc[i, f'number {ct1_str} partners'] = len(np.unique(ct2_id_dict[ct2_id]))
+        ct2_conn_partners_df.loc[i, f'number {proj_ct_str} axons'] = len(np.unique(ct2_proj_id_dict[ct2_id]))
+    ct2_conn_partners_df.to_csv(f'{f_name}/{ct2_str}_number_cell_parners.csv')
+    median_syn_percell = np.median(
+        ct2_conn_partners_df[f'number syns from {proj_ct_str} with partner syn to {ct1_str}'])
+    median_proj_ct_percell = np.median(ct2_conn_partners_df[f'number {proj_ct_str} axons'])
+    median_otherct_percell = np.median(ct2_conn_partners_df[f'number {ct1_str} partners'])
+    log.info(
+        f'{ct2_str} cells have a median of {median_syn_percell} synapses where a {ct1_str} syn is close by on the same axon, \n'
+        f' which connects them to a median of {median_otherct_percell} {ct1_str} cells with {median_proj_ct_percell} different {proj_ct_str} axons.')
+    #plot these parameters
+    for param1, param2 in zip(ct1_conn_partners_df, ct2_conn_partners_df):
+        if 'cellid' in param1:
+            continue
+        if 'syns' in param1:
+            ylabel = 'number of synapses'
+            ylabel_perc = 'percent of synapses'
+        else:
+            ylabel = 'number of cells'
+            ylabel_perc = 'percent of cells'
+        sns.histplot(x=param1, data=ct1_conn_partners_df, color=ct_palette[ct1_str], common_norm=False,
+                     fill=False, element="step", linewidth=3)
+        plt.ylabel(ylabel)
+        plt.title(param1)
+        plt.savefig(f'{f_name}/{ct1_str}_{param1}_hist.png')
+        plt.close()
+        sns.histplot(x=param2, data=ct2_conn_partners_df, color=ct_palette[ct2_str], common_norm=False,
+                     fill=False, element="step", linewidth=3)
+        plt.ylabel(ylabel)
+        plt.title(param2)
+        plt.savefig(f'{f_name}/{ct2_str}_{param2}_hist.png')
+        plt.close()
+        sns.histplot(x=param1, data=ct1_conn_partners_df, color=ct_palette[ct1_str], common_norm=False,
+                     fill=False, element="step", linewidth=3, stat='percent')
+        plt.ylabel(ylabel_perc)
+        plt.title(param1)
+        plt.savefig(f'{f_name}/{ct1_str}_{param1}_hist_perc.png')
+        plt.close()
+        sns.histplot(x=param2, data=ct2_conn_partners_df, color=ct_palette[ct2_str], common_norm=False,
+                     fill=False, element="step", linewidth=3, stat='percent')
+        plt.ylabel(ylabel_perc)
+        plt.title(param2)
+        plt.savefig(f'{f_name}/{ct2_str}_{param2}_hist_perc.png')
+        plt.close()
 
 
+    log.info(f'Step 4/X: Get synapses from {ct1_str} and {ct2_str} to {rec_ct_str}')
+    #prefilter synapses
+    ct12rec_cts, ct12rec_syn_ids, ct12rec_axs, ct12rec_ssv_partners, ct12rec_sizes, ct12rec_spiness, ct12rec_rep_coord = filter_synapse_caches_for_ct(
+        pre_cts=[ct1],
+        post_cts=[rec_ct],
+        syn_prob_thresh=None,
+        min_syn_size=None,
+        axo_den_so=True,
+        synapses_caches=synapse_cache)
+    ct22rec_cts, ct22rec_syn_ids, ct22rec_axs, ct22rec_ssv_partners, ct22rec_sizes, ct22rec_spiness, ct22rec_rep_coord = filter_synapse_caches_for_ct(
+        pre_cts=[ct2],
+        post_cts=[rec_ct],
+        syn_prob_thresh=None,
+        min_syn_size=None,
+        axo_den_so=True,
+        synapses_caches=synapse_cache)
+    #make sure only cellids that were identified in Step 3 are used
+    id_inds = np.any(np.in1d(ct12rec_ssv_partners, unique_ct1_cells).reshape(len(ct12rec_ssv_partners), 2), axis = 1)
+    ct12rec_syn_ids = ct12rec_syn_ids[id_inds]
+    ct12rec_ssv_partners = ct12rec_ssv_partners[id_inds]
+    ct12rec_sizes = ct12rec_sizes[id_inds]
+    ct12rec_axs = ct12rec_axs[id_inds]
+    id_inds = np.any(np.in1d(ct22rec_ssv_partners, unique_ct2_cells).reshape(len(ct22rec_ssv_partners), 2), axis=1)
+    ct22rec_syn_ids = ct22rec_syn_ids[id_inds]
+    ct22rec_ssv_partners = ct22rec_ssv_partners[id_inds]
+    ct22rec_sizes = ct22rec_sizes[id_inds]
+    ct22rec_axs = ct22rec_axs[id_inds]
+    # get all cellids of proj_ct make synapses
+    axo_inds = np.where(ct12rec_axs == 1)
+    axo_ct1_partners = ct12rec_ssv_partners[axo_inds]
+    ct1_ids_2rec = np.unique(axo_ct1_partners)
+    # get all cellids of ct1 that project to rec ct
+    denso_inds = np.where(ct12rec_axs != 1)
+    denso_ct1_partners = ct12rec_ssv_partners[denso_inds]
+    rec_ids_ct1 = np.unique(denso_ct1_partners)
+    log.info(
+        f'{len(ct1_ids_2rec)} {ct1_str} ids project to {len(rec_ids_ct1)} {rec_ct_str} ids with a total synaptic sum of {np.sum(ct12rec_sizes):.2f} µm²')
+    log.info(f'These are {100 * len(ct1_ids_2rec)/ len(unique_ct1_cells):.2f} percent of {ct1_str} cells which have connected synapses and \n'
+             f' {100 * len(rec_ids_ct1)/ len(suitable_ids_dict[rec_ct]):.2f} percent of {rec_ct_str} cells in total')
+    # get all cellids of proj_ct make synapses
+    axo_inds = np.where(ct22rec_axs == 1)
+    axo_ct2_partners = ct22rec_ssv_partners[axo_inds]
+    ct2_ids_2rec = np.unique(axo_ct2_partners)
+    # get all cellids of ct2 that project to receiving ct ids
+    denso_inds = np.where(ct22rec_axs != 1)
+    denso_ct2_partners = ct22rec_ssv_partners[denso_inds]
+    rec_ids_ct2 = np.unique(denso_ct2_partners)
+    log.info(
+        f'{len(ct2_ids_2rec)} {ct2_str} ids project to {len(rec_ids_ct2)} {rec_ct_str} ids with a total synaptic sum of {np.sum(ct22rec_sizes):.2f} µm²')
+    log.info(
+        f'These are {100 * len(ct2_ids_2rec) / len(unique_ct2_cells):.2f} percent of {ct2_str} cells which have connected synapses and \n'
+        f' {100 * len(rec_ids_ct2) / len(suitable_ids_dict[rec_ct]):.2f} percent of {rec_ct_str} cells in total')
+    #get information of each ct1, ct2 cell to which it is connected to
+    sort_axo_inds = np.argsort(axo_ct1_partners)
+    sorted_axo_ct1_partners = axo_ct1_partners[sort_axo_inds]
+    sorted_denso_ct1_partners = denso_ct1_partners[sort_axo_inds]
+    unique_ct1_ids, inds = np.unique(sorted_axo_ct1_partners, return_inverse=True)
+    splits = np.cumsum(np.bincount(inds))[:-1]
+    split_ct1_syn_rec_ids = np.split(sorted_denso_ct1_partners, splits)
+    ct1_rec_id_dict = {unique_ct1_ids[i]: split_ct1_syn_rec_ids[i] for i in range(len(unique_ct1_ids))}
+    sort_axo_inds = np.argsort(axo_ct2_partners)
+    sorted_axo_ct2_partners = axo_ct2_partners[sort_axo_inds]
+    sorted_denso_ct2_partners = denso_ct2_partners[sort_axo_inds]
+    unique_ct2_ids, inds = np.unique(sorted_axo_ct2_partners, return_inverse=True)
+    splits = np.cumsum(np.bincount(inds))[:-1]
+    split_ct2_syn_rec_ids = np.split(sorted_denso_ct2_partners, splits)
+    ct2_rec_id_dict = {unique_ct2_ids[i]: split_ct2_syn_rec_ids[i] for i in range(len(unique_ct2_ids))}
+    write_obj2pkl(f'{f_name}/{ct1_str}_{rec_ct_str}_ids.pkl', ct1_rec_id_dict)
+    write_obj2pkl(f'{f_name}/{ct2_str}_{rec_ct_str}_ids.pkl', ct2_rec_id_dict)
+    #also save information on how many cells ct1, ct2 cells are connected to
+    for i, ct1_id in enumerate(tqdm(unique_ct1_ids)):
+        id_ind = np.where(ct1_conn_partners_df['cellid'] == ct1_id)[0]
+        ct1_conn_partners_df.loc[id_ind, f'number {rec_ct_str} cells'] = len(np.unique(ct1_rec_id_dict[ct1_id]))
+        ct1_conn_partners_df.loc[id_ind, f'number {rec_ct_str} syns'] = len(ct1_rec_id_dict[ct1_id])
+    ct1_conn_partners_df.to_csv(f'{f_name}/{ct1_str}_number_cell_parners.csv')
+    median_syn_percell = np.median(
+        ct1_conn_partners_df[f'number {rec_ct_str} syns'])
+    median_rec_ct_percell = np.median(ct1_conn_partners_df[f'number {rec_ct_str} cells'])
+    log.info(
+        f'{ct1_str} cells which have a partner cell with {ct2_str} have a median of {median_syn_percell} synapses where to {rec_ct_str}, \n'
+        f' which connects them to a median of {median_rec_ct_percell} {rec_ct_str} cells.')
+    for i, ct2_id in enumerate(tqdm(unique_ct2_ids)):
+        id_ind = np.where(ct2_conn_partners_df['cellid'] == ct2_id)[0]
+        ct2_conn_partners_df.loc[id_ind, f'number {rec_ct_str} cells'] = len(np.unique(ct2_rec_id_dict[ct2_id]))
+        ct2_conn_partners_df.loc[id_ind, f'number {rec_ct_str} syns'] = len(ct2_rec_id_dict[ct2_id])
+    ct2_conn_partners_df.to_csv(f'{f_name}/{ct2_str}_number_cell_parners.csv')
+    median_syn_percell = np.median(
+        ct2_conn_partners_df[f'number {rec_ct_str} syns'])
+    median_rec_ct_percell = np.median(ct2_conn_partners_df[f'number {rec_ct_str} cells'])
+    log.info(
+        f'{ct2_str} cells which have a partner cell with {ct1_str} have a median of {median_syn_percell} synapses where to {rec_ct_str}, \n'
+        f' which connects them to a median of {median_rec_ct_percell} {rec_ct_str} cells.')
+    #plot information for number of syns to rec ct as above
+    for param1 in ct1_conn_partners_df:
+        if not {rec_ct_str} in param1:
+            continue
+        if 'syns' in param1:
+            ylabel = 'number of synapses'
+            ylabel_perc = 'percent of synapses'
+        else:
+            ylabel = 'number of cells'
+            ylabel_perc = 'percent of cells'
+        sns.histplot(x=param1, data=ct1_conn_partners_df, color=ct_palette[ct1_str], common_norm=False,
+                     fill=False, element="step", linewidth=3)
+        plt.ylabel(ylabel)
+        plt.title(param1)
+        plt.savefig(f'{f_name}/{ct1_str}_{param1}_hist.png')
+        plt.close()
+        sns.histplot(x=param2, data=ct2_conn_partners_df, color=ct_palette[ct2_str], common_norm=False,
+                     fill=False, element="step", linewidth=3)
+        plt.ylabel(ylabel)
+        plt.title(param2)
+        plt.savefig(f'{f_name}/{ct2_str}_{param2}_hist.png')
+        plt.close()
+        sns.histplot(x=param1, data=ct1_conn_partners_df, color=ct_palette[ct1_str], common_norm=False,
+                     fill=False, element="step", linewidth=3, stat='percent')
+        plt.ylabel(ylabel_perc)
+        plt.title(param1)
+        plt.savefig(f'{f_name}/{ct1_str}_{param1}_hist_perc.png')
+        plt.close()
+        sns.histplot(x=param2, data=ct2_conn_partners_df, color=ct_palette[ct2_str], common_norm=False,
+                     fill=False, element="step", linewidth=3, stat='percent')
+        plt.ylabel(ylabel_perc)
+        plt.title(param2)
+        plt.savefig(f'{f_name}/{ct2_str}_{param2}_hist_perc.png')
+        plt.close()
 
-
-    #Step 3: Check which synapses from ct1 are close to ct2,
-    #save information on cellids that are close to each other
-
-    #Step 4: Get synapses from ct1, ct2 to rec_ct and check which cellids each of them synapses to
-    #save information on how many of the cellids that have receiving synapses close to each other
-    #project to this celltype
-
-    #Step 5: check if cellids with same input project to same rec_ct cells
+    log.info(f'Step 5/X: Check if cells linked by close syns are projecting to the same {rec_ct_str} cells')
+    #check for each pair of ct1 and ct2str if rec ct projections overlap
+    #add binary, yes and no
+    #also calculate percentage of overlap for ct1 and ct2 rec ct projection ids
+    #get pairs of ct1 and ct2 str cells
+    columns = [f'{ct1_str} id', f'{ct2_str} id', '']
+    ct1_ct2_pair_df = pd.DataFrame(columns = columns)
 
     #Step 6: calculate statisitics and plot results

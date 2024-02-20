@@ -15,7 +15,7 @@ from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import
 
 
 
-def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, celltype2 = None, cellids2 = None, full_cells = True, percentile_ct1 = None,
+def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, version, celltype2 = None, cellids2 = None, full_cells = True, percentile_ct1 = None,
                          min_comp_len = 100, min_syn_size = 0.1, syn_prob_thresh = 0.8, label_ct1 = None, label_ct2 = None, limit_multisynapse = None):
     '''
     looks at basic connectivty parameters between two celltypes such as amount of synapses, average of synapses between cell types but also
@@ -39,7 +39,7 @@ def synapses_between2cts(sd_synssv, celltype1, filename, cellids1, wd, version, 
     :return: f_name: foldername in which results are stored
     '''
 
-    analysis_params = Analysis_Params(working_dir = wd, version = version)
+    analysis_params = Analysis_Params(version = version)
     #{0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
               # 10: "NGF"}
     ct_dict = analysis_params.ct_dict(with_glia=False)

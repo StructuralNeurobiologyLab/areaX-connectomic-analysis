@@ -17,34 +17,32 @@ if __name__ == '__main__':
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
+    version = 'v6'
+    analysis_params = Analysis_Params(version = version)
+    global_params.wd = analysis_params.working_dir()
+    ct_dict = analysis_params.ct_dict(with_glia=False)
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
     sd_csssv = SegmentationDataset("cs_ssv", working_dir=global_params.wd)
-    start = time.time()
-    version = 'v6'
-    analysis_params = Analysis_Params(working_dir = global_params.wd, version = version)
-    ct_dict = analysis_params.ct_dict(with_glia=False)
     cl_cell = 200
     cl_ax = 50
     syn_prob = 0.6
     min_syn_size = 0.1
     gpe_ct = 6
     gpi_ct = 7
-    msn_ct = 4
+    msn_ct = 3
     ct1_str = ct_dict[msn_ct]
     ct2_str = ct_dict[gpe_ct]
     ct3_str = ct_dict[gpi_ct]
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/" \
-             f"240118_j0251{version}_{ct1_str}_{ct2_str}_{ct3_str}_comparison_mcl_{cl_cell}_ax{cl_ax}_synprob_{syn_prob}"
+             f"240220_j0251{version}_{ct1_str}_{ct2_str}_{ct3_str}_comparison_mcl_{cl_cell}_ax{cl_ax}_synprob_{syn_prob}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'{ct1_str} comparison connectivity, mergers excluded', log_dir=f_name + '/logs/')
     log.info(f"{ct1_str} percentile comparison starts")
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
-    f_name_saving = "cajal/nvmescratch/users/arother/j0251v5_prep"
+    f_name_saving = analysis_params.file_locations
 
     known_mergers = analysis_params.load_known_mergers()
 
@@ -128,38 +126,38 @@ if __name__ == '__main__':
                                                               cellids1=msn2gpe_ids, cellids2=msn2gpei_ids,
                                                               min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                               label_ct1="MSN only GPe", label_ct2="MSN both GPs",
-                                                              wd = global_params.wd, version = version)
+                                                              version = version)
     MSN_onlyGPe_MSN_onlyGPi_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                                  filename=f_name, full_cells=True,
                                                                  cellids1=msn2gpe_ids, cellids2=msn2gpi_ids,
                                                                  min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                  label_ct1="MSN only GPe", label_ct2="MSN only GPi",
-                                                                 wd = global_params.wd, version = version)
+                                                                 version = version)
     MSN_onlyGPe_MSN_none_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                               filename=f_name, full_cells=True,
                                                               cellids1=msn2gpe_ids, cellids2=msn_nogp_ids,
                                                               min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                               label_ct1="MSN only GPe", label_ct2="MSN no GPs",
-                                                              wd = global_params.wd, version = version)
+                                                              version = version)
 
     MSN_onlyGPi_MSN_both_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                               filename=f_name, full_cells=True,
                                                               cellids1=msn2gpi_ids, cellids2=msn2gpei_ids,
                                                               min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                               label_ct1="MSN only GPi", label_ct2="MSN both GPs",
-                                                              wd = global_params.wd, version = version)
+                                                              version = version)
     MSN_onlyGPi_MSN_none_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                               filename=f_name, full_cells=True,
                                                               cellids1=msn2gpi_ids, cellids2=msn_nogp_ids,
                                                               min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                               label_ct1="MSN only GPi", label_ct2="MSN no GPs",
-                                                              wd = global_params.wd, version = version)
+                                                              version = version)
     MSN_none_MSN_both_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=2,
                                                            filename=f_name, full_cells=True,
                                                            cellids1=msn_nogp_ids, cellids2=msn2gpei_ids,
                                                            min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                            label_ct1="MSN no GPs", label_ct2="MSN both GPs",
-                                                           wd = global_params.wd, version = version)
+                                                           version = version)
 
     msn_onlyGPe_msn_summed_synapse = compare_connectivity_multiple(comp_cts = msn_cts[1:], filename = f_name,
                                                                    foldernames = [MSN_onlyGPe_MSN_onlyGPi_resultsfolder, MSN_onlyGPe_MSN_both_resultsfolder, MSN_onlyGPe_MSN_none_resultsfolder],
@@ -187,13 +185,13 @@ if __name__ == '__main__':
                                                                  filename=f_name, full_cells=True,
                                                                  cellids1=msn2gpe_ids, cellids2=GPe_ids,
                                                                  min_comp_len=cl_cell, syn_prob_thresh=syn_prob, label_ct1 = "MSN only GPe", limit_multisynapse = 10,
-                                                                  wd = global_params.wd, version = version)
+                                                                version = version)
     MSN_bothGPs_GPe_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=6,
                                                                  filename=f_name,
                                                                  full_cells=True, cellids1=msn2gpei_ids,
                                                                  cellids2=GPe_ids, min_comp_len=cl_cell,
                                                                  syn_prob_thresh=syn_prob, label_ct1 = "MSN both GPs", limit_multisynapse = 10,
-                                                                      wd = global_params.wd, version = version)
+                                                                      version = version)
     msn_gpe_summed_synapses = compare_connectivity(comp_ct1=2, comp_ct2 = 2, connected_ct=6, filename=f_name,
                                                    foldername_ct1=MSN_onlyGPe_connectivity_resultsfolder,
                                                    foldername_ct2=MSN_bothGPs_GPe_connectivity_resultsfolder,
@@ -208,13 +206,13 @@ if __name__ == '__main__':
                                                                   cellids1=msn2gpi_ids, cellids2=GPi_ids,
                                                                   min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                   label_ct1="MSN only GPi", limit_multisynapse = 10,
-                                                                  wd = global_params.wd, version = version)
+                                                                  version = version)
     MSN_bothGPs_GPi_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=2, celltype2=7,
                                                                   filename=f_name,
                                                                   full_cells=True, cellids1=msn2gpei_ids,
                                                                   cellids2=GPi_ids, min_comp_len=cl_cell,
                                                                   syn_prob_thresh=syn_prob, label_ct1="MSN both GPs", limit_multisynapse = 10,
-                                                                      wd = global_params.wd, version = version)
+                                                                    version = version)
     msn_gpi_summed_synapses = compare_connectivity(comp_ct1=2, comp_ct2=2, connected_ct=7, filename=f_name,
                                                    foldername_ct1=MSN_onlyGPi_connectivity_resultsfolder,
                                                    foldername_ct2=MSN_bothGPs_GPi_connectivity_resultsfolder,
@@ -237,19 +235,19 @@ if __name__ == '__main__':
                                                                 full_cells=True,
                                                                 min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN only GPe",
-                                                                     wd = global_params.wd, version = version)
+                                                                     version = version)
     MSN_FS_onlyGPi_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=8, filename=f_name,
                                                                 cellids1=FS_ids, celltype2=2, cellids2=msn2gpi_ids,
                                                                 full_cells=True,
                                                                 min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN only GPi",
-                                                                     wd = global_params.wd, version = version)
+                                                                     version = version)
     MSN_FS_bothGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=8, filename=f_name,
                                                                 cellids1=FS_ids, celltype2=2, cellids2=msn2gpei_ids,
                                                                 full_cells=True,
                                                                 min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN both GPs",
-                                                                     wd = global_params.wd, version = version)
+                                                                     version = version)
     MSN_FS_noGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=8, filename=f_name,
                                                               cellids1=FS_ids, celltype2=2, cellids2=msn_nogp_ids,
                                                               full_cells=True,
@@ -270,26 +268,26 @@ if __name__ == '__main__':
                                                                      full_cells=True,
                                                                      min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                      label_ct1=None, label_ct2="MSN only GPe",
-                                                                      wd = global_params.wd, version = version)
+                                                                      version = version)
     MSN_TAN_onlyGPi_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=5, filename=f_name,
                                                                      cellids1=TAN_ids, celltype2=2, cellids2=msn2gpi_ids,
                                                                      full_cells=True,
                                                                      min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                      label_ct1=None, label_ct2="MSN only GPi",
-                                                                      wd = global_params.wd, version = version)
+                                                                      version = version)
     MSN_TAN_bothGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=5, filename=f_name,
                                                                      cellids1=TAN_ids, celltype2=2,
                                                                      cellids2=msn2gpei_ids,
                                                                      full_cells=True,
                                                                      min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                      label_ct1=None, label_ct2="MSN both GPs",
-                                                                      wd = global_params.wd, version = version)
+                                                                      version = version)
     MSN_TAN_noGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=5, filename=f_name,
                                                                    cellids1=TAN_ids, celltype2=2, cellids2=msn_nogp_ids,
                                                                    full_cells=True,
                                                                    min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                    label_ct1=None, label_ct2="MSN no GPs",
-                                                                    wd = global_params.wd, version = version)
+                                                                    version = version)
     # connectivity comparison for multiple groups
     result_folders = [MSN_TAN_onlyGPe_connectivity_resultsfolder, MSN_TAN_onlyGPi_connectivity_resultsfolder,
                       MSN_TAN_bothGPs_connectivity_resultsfolder, MSN_TAN_noGPs_connectivity_resultsfolder]
@@ -308,26 +306,26 @@ if __name__ == '__main__':
                                                                      full_cells=True,
                                                                      min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                      label_ct1=None, label_ct2="MSN only GPe",
-                                                                      wd = global_params.wd, version = version)
+                                                                      version = version)
     MSN_STN_onlyGPi_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=0, filename=f_name,
                                                                      cellids1=STN_ids, celltype2=2, cellids2=msn2gpi_ids,
                                                                      full_cells=True,
                                                                      min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                      label_ct1=None, label_ct2="MSN only GPi",
-                                                                      wd = global_params.wd, version = version)
+                                                                      version = version)
     MSN_STN_bothGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=0, filename=f_name,
                                                                      cellids1=STN_ids, celltype2=2,
                                                                      cellids2=msn2gpei_ids,
                                                                      full_cells=True,
                                                                      min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                      label_ct1=None, label_ct2="MSN both GPs",
-                                                                      wd = global_params.wd, version = version)
+                                                                      version = version)
     MSN_STN_noGPs_connectivity_resultsfolder = synapses_between2cts(sd_synssv, celltype1=0, filename=f_name,
                                                                    cellids1=STN_ids, celltype2=2, cellids2=msn_nogp_ids,
                                                                    full_cells=True,
                                                                    min_comp_len=cl_cell, syn_prob_thresh=syn_prob,
                                                                    label_ct1=None, label_ct2="MSN no GPs",
-                                                                    wd = global_params.wd, version = version)
+                                                                    version = version)
     # connectivity comparison for multiple groups
     result_folders = [MSN_STN_onlyGPe_connectivity_resultsfolder, MSN_STN_onlyGPi_connectivity_resultsfolder,
                       MSN_STN_bothGPs_connectivity_resultsfolder, MSN_STN_noGPs_connectivity_resultsfolder]
@@ -344,26 +342,26 @@ if __name__ == '__main__':
                                                             cellids1=HVC_ids, celltype2=2, cellids2=msn2gpe_ids,
                                                             full_cells_ct2=True,syn_prob_thresh=syn_prob,
                                                             label_ct1=None, label_ct2="MSN only GPe",
-                                                                wd = global_params.wd, version = version,
+                                                                version = version,
                                                                 min_comp_len_cells = cl_cell, min_comp_len_ax = cl_ax)
     MSN_HVC_onlyGPi_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=4, filename=f_name,
                                                                 cellids1=HVC_ids, celltype2=2, cellids2=msn2gpi_ids,
                                                                 full_cells_ct2=True,
                                                                 min_comp_len_cells = cl_cell, min_comp_len_ax = cl_ax, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN only GPi",
-                                                                wd = global_params.wd, version = version)
+                                                                version = version)
     MSN_HVC_bothGPs_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=4, filename=f_name,
                                                                 cellids1=HVC_ids, celltype2=2, cellids2=msn2gpei_ids,
                                                                 full_cells_ct2=True,
                                                                 min_comp_len_cells = cl_cell, min_comp_len_ax = cl_ax, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN both GPs",
-                                                                wd = global_params.wd, version = version)
+                                                                version = version)
     MSN_HVC_noGPs_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=4, filename=f_name,
                                                                 cellids1=HVC_ids, celltype2=2, cellids2=msn_nogp_ids,
                                                                 full_cells_ct2=True,
                                                                 min_comp_len_cells = cl_cell, min_comp_len_ax = cl_ax, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN no GPs",
-                                                              wd = global_params.wd, version = version)
+                                                                version = version)
 
     # connectivity comparison for multiple groups, comparison to axons
     result_folders = [MSN_HVC_onlyGPe_connectivity_resultsfolder, MSN_HVC_onlyGPi_connectivity_resultsfolder,
@@ -382,25 +380,25 @@ if __name__ == '__main__':
                                                                 full_cells_ct2=True,
                                                                 min_comp_len_cells = cl_cell, min_comp_len_ax = cl_ax, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN only GPe",
-                                                                 wd = global_params.wd, version = version)
+                                                                 version = version)
     MSN_LMAN_onlyGPi_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=3, filename=f_name,
                                                                 cellids1=LMAN_ids, celltype2=2, cellids2=msn2gpi_ids,
                                                                 full_cells_ct2=True,
                                                                 min_comp_len_cells = cl_cell, min_comp_len_ax = cl_ax, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN only GPi",
-                                                                 wd = global_params.wd, version = version)
+                                                                 version = version)
     MSN_LMAN_bothGPs_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=3, filename=f_name,
                                                                 cellids1=LMAN_ids, celltype2=2, cellids2=msn2gpei_ids,
                                                                 full_cells_ct2=True,
                                                                 min_comp_len_cells = cl_cell, min_comp_len_ax = cl_ax, syn_prob_thresh=syn_prob,
                                                                 label_ct1=None, label_ct2="MSN both GPs",
-                                                                 wd = global_params.wd, version = version)
+                                                                 version = version)
     MSN_LMAN_noGPs_connectivity_resultsfolder = synapses_ax2ct(sd_synssv, celltype1=3, filename=f_name,
                                                               cellids1=LMAN_ids, celltype2=2, cellids2=msn_nogp_ids,
                                                               full_cells_ct2=True,
                                                               min_comp_len_cells = cl_cell, min_comp_len_ax = cl_ax, syn_prob_thresh=syn_prob,
                                                               label_ct1=None, label_ct2="MSN no GPs",
-                                                               wd = global_params.wd, version = version)
+                                                               version = version)
     # connectivity comparison for multiple groups, comparison to axons
     result_folders = [MSN_LMAN_onlyGPe_connectivity_resultsfolder, MSN_LMAN_onlyGPi_connectivity_resultsfolder,
                       MSN_LMAN_bothGPs_connectivity_resultsfolder, MSN_LMAN_noGPs_connectivity_resultsfolder]

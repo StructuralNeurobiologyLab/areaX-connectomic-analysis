@@ -22,19 +22,21 @@ if __name__ == '__main__':
     from scipy.stats import ranksums, kruskal
     from itertools import combinations
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
+    version = 'v5'
+    bio_params = Analysis_Params(version = version)
+    global_params.wd = bio_params.working_dir()
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
-    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = bio_params.ct_dict()
     min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    fontsize_jointplot = 10
+    fontsize_jointplot = 20
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231120_j0251v5_ngf_fs_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_INT_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -328,7 +330,7 @@ if __name__ == '__main__':
         elif 'spine density' in x:
             scatter_x = '%s [1/µm]' % x
         else:
-            scatter_x = key
+            scatter_x = x
         if "radius" in y or 'diameter' in y:
             scatter_y = "%s [µm]" % y
         elif "volume density" in y:

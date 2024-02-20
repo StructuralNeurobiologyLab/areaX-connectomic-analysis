@@ -19,32 +19,33 @@ if __name__ == '__main__':
     from scipy.stats import ranksums
     from tqdm import tqdm
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
-    version = 'v5'
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    version = 'v6'
+    analysis_params = Analysis_Params(version=version)
+    global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len = 200
     syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    conn_ct = 0
+    conn_ct = 3
     #celltypes that are compared
     ct2 = 6
     ct3 = 7
-    color_key = 'STNGP'
-    fontsize_jointplot = 12
+    color_key = 'STNGPINTv6'
+    fontsize = 20
     kde = True
     if conn_ct == None:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231130_j0251v5_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
             ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231130_j0251v5_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
             ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Multisynaptic connectivity details', log_dir=f_name + '/logs/')
-    ct_colors = CelltypeColors()
+    ct_colors = CelltypeColors(ct_dict = ct_dict)
     ct_palette = ct_colors.ct_palette(key = color_key)
     log.info("Analysis of multisynapses starts")
     
@@ -77,11 +78,11 @@ if __name__ == '__main__':
     
     log.info('Step 2/4: Get synapses between celltypes')
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
-    m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob = filter_synapse_caches_general(sd_synssv, syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size)
-    synapse_caches = [m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob]
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = filter_synapse_caches_general(sd_synssv, syn_prob_thresh = syn_prob_thresh, min_syn_size = min_syn_size)
+    synapse_caches = [m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob]
     if conn_ct is None:
         #synapses between celltypes
-        m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord = filter_synapse_caches_for_ct(
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
             pre_cts=[ct2, ct3],
             post_cts= None,
             syn_prob_thresh=None,
@@ -89,14 +90,14 @@ if __name__ == '__main__':
             axo_den_so=True,
             synapses_caches=synapse_caches)
         #synapses within each celltype, this filter only makes sure ct2 is there, not that it is only ct2 to ct2
-        ct2_m_cts, ct2_m_axs, ct2_m_ssv_partners, ct2_m_sizes, ct2_m_rep_coord = filter_synapse_caches_for_ct(
+        ct2_m_cts, ct2_m_ids, ct2_m_axs, ct2_m_ssv_partners, ct2_m_sizes, ct2_m_spiness, ct2_m_rep_coord = filter_synapse_caches_for_ct(
             pre_cts=[ct2],
             post_cts=None,
             syn_prob_thresh=None,
             min_syn_size=None,
             axo_den_so=True,
             synapses_caches=synapse_caches)
-        ct3_m_cts, ct3_m_axs, ct3_m_ssv_partners, ct3_m_sizes, ct3_m_rep_coord = filter_synapse_caches_for_ct(
+        ct3_m_cts, ct3_m_ids, ct3_m_axs, ct3_m_ssv_partners, ct3_m_sizes, ct3_m_spiness, ct3_m_rep_coord = filter_synapse_caches_for_ct(
             pre_cts=[ct3],
             post_cts=None,
             syn_prob_thresh=None,
@@ -106,7 +107,7 @@ if __name__ == '__main__':
 
     else:
         #compare outgoing synapses
-        m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord = filter_synapse_caches_for_ct(
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
             pre_cts=[conn_ct],
             post_cts=[ct2, ct3],
             syn_prob_thresh=None,
@@ -114,7 +115,7 @@ if __name__ == '__main__':
             axo_den_so=True,
             synapses_caches=synapse_caches)
         #compare incoming synapses
-        in_m_cts, in_m_axs, in_m_ssv_partners, in_m_sizes, in_m_rep_coord = filter_synapse_caches_for_ct(
+        in_m_cts, in_m_ids, in_m_axs, in_m_ssv_partners, in_m_sizes, in_m_spiness, in_m_rep_coord = filter_synapse_caches_for_ct(
             pre_cts=[ct2, ct3],
             post_cts=[conn_ct],
             syn_prob_thresh=None,
@@ -205,13 +206,17 @@ if __name__ == '__main__':
             plot_histogram_selection(dataframe=percell_result_df, x_data=key, color_palette=ct_palette,
                                      label=f'percell_{key}_inter', count='cells', foldername=f_name,
                                      hue_data='celltype',
-                                     title=f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+                                     title=f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}',
+                                     fontsize = fontsize)
             if len(percell_result_df) <= 500:
                 sns.stripplot(x='celltype', y=key, data=percell_result_df, color = 'black',
                               alpha=0.4,
                               dodge=True, size=3)
                 sns.boxplot(x = 'celltype', y = key, data = percell_result_df, palette=ct_palette)
-                plt.ylabel(xlabel)
+                plt.ylabel(xlabel, fontsize = fontsize)
+                plt.ylabel(ylabel=key, fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
                 plt.title(f'{key} between post-syn cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
                 plt.savefig(f'{f_name}/percell_{key}_inter_box.png')
                 plt.savefig(f'{f_name}/percell_{key}_inter_box.svg')
@@ -238,7 +243,8 @@ if __name__ == '__main__':
         plot_histogram_selection(dataframe=syn_sizes_df, x_data='syn sizes', color_palette=ct_palette,
                                  label='all_synsizes_inter', count='synapses', foldername=f_name,
                                  hue_data='celltype',
-                                 title=f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
+                                 title=f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}',
+                                 fontsize = fontsize)
         log.info('Get information about multi-syn connections between celltypes')
         # get number of partner cells and size information for all of them
         # use syn_sizes df for information
@@ -296,7 +302,8 @@ if __name__ == '__main__':
         plot_histogram_selection(dataframe=multi_conn_df, x_data='sum syn area', color_palette=ct_palette,
                                  label='multi_sum_sizes_inter', count='cell-pairs', foldername=f_name,
                                  hue_data='celltype',
-                                 title=f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}')
+                                 title=f'Sum of synapse sizes of multi-syn connections between {ct_dict[ct2]}, {ct_dict[ct3]}',
+                                 fontsize = fontsize)
         # plot again as barplot
         # plot number of synapses again as barplot
         # make bins for each number, seperated by ct2 and ct3
@@ -319,12 +326,18 @@ if __name__ == '__main__':
         hist_df.loc[num_ct2_bins: len_bins - 1, 'bins'] = ct3_bins
         hist_df.loc[num_ct2_bins: len_bins - 1, 'celltype'] = ct_dict[ct3]
         sns.barplot(data=hist_df, x='bins', y='count of cell-pairs', hue='celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel='count of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_syn_num_inter.svg')
         plt.savefig(f'{f_name}/multi_bar_syn_num_inter.png')
         plt.close()
         sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel('percent of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_syn_num_inter_perc.svg')
         plt.savefig(f'{f_name}/multi_bar_syn_num_inter_perc.png')
         plt.close()
@@ -351,12 +364,18 @@ if __name__ == '__main__':
             sum_hist_df.loc[i + len_bin_labels, 'celltype'] = ct_dict[ct3]
         sum_hist_df.to_csv(f'{f_name}/hist_df_inter_summary.csv')
         sns.barplot(data=sum_hist_df, x='sum bins', y='count of cell-pairs', hue='celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel='count of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_inter.svg')
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_inter.png')
         plt.close()
         sns.barplot(data=sum_hist_df, x='sum bins', y='percent of cell-pairs', hue='celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel='percent of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_inter_perc.svg')
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_inter_perc.png')
         plt.close()
@@ -490,13 +509,17 @@ if __name__ == '__main__':
                 plot_histogram_selection(dataframe=percell_intra_result_df, x_data=key, color_palette=ct_palette,
                                          label=f'percell_{key}_intra', count='cells', foldername=f_name,
                                          hue_data='celltype',
-                                         title=f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
+                                         title=f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}',
+                                         fontsize = fontsize)
                 if len(percell_intra_result_df) <= 500:
                     sns.stripplot(x='celltype', y=key, data=percell_intra_result_df, color = 'black',
                                   alpha=0.4,
                                   dodge=True, size=3)
                     sns.boxplot(x='celltype', y = key, data=percell_intra_result_df, palette=ct_palette)
-                    plt.ylabel(xlabel)
+                    plt.ylabel(xlabel, fontsize = fontsize)
+                    plt.ylabel(ylabel=key, fontsize=fontsize)
+                    plt.xticks(fontsize=fontsize)
+                    plt.yticks(fontsize=fontsize)
                     plt.title(f'{key} within cells of {ct_dict[ct2]} and {ct_dict[ct3]}')
                     plt.savefig(f'{f_name}/percell_{key}_intra_box.png')
                     plt.savefig(f'{f_name}/percell_{key}_intra_box.svg')
@@ -518,7 +541,8 @@ if __name__ == '__main__':
             plot_histogram_selection(dataframe=syn_sizes_intra_df, x_data='syn sizes', color_palette=ct_palette,
                                      label='all_synsizes_intra', count='synapses', foldername=f_name,
                                      hue_data='celltype',
-                                     title=f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}')
+                                     title=f'Synapse sizes within {ct_dict[ct2]} and {ct_dict[ct3]}',
+                                     fontsize = fontsize)
             log.info('Get number of multisynapses within celltypes')
             # use syn_sizes df for information
             all_unique_pre_ids = np.unique(syn_sizes_intra_df['cellid pre'])
@@ -597,7 +621,8 @@ if __name__ == '__main__':
             plot_histogram_selection(dataframe=multi_conn_df_intra, x_data='sum syn area', color_palette=ct_palette,
                                      label='multi_sum_sizes_intra', count='cell-pairs', foldername=f_name,
                                      hue_data='celltype',
-                                     title='Sum of synapse sizes in multisyn connections within celltypes')
+                                     title='Sum of synapse sizes in multisyn connections within celltypes',
+                                     fontsize = fontsize)
             # plot again as barplot
             # plot number of synapses again as barplot
             # make bins for each number, seperated by ct2 and ct3
@@ -621,12 +646,18 @@ if __name__ == '__main__':
                 hist_df.loc[num_ct2_bins: len_bins - 1, 'bins'] = ct3_bins
                 hist_df.loc[num_ct2_bins: len_bins - 1, 'celltype'] = ct_dict[ct3]
                 sns.barplot(data=hist_df, x='bins', y='count of cell-pairs', hue='celltype', palette=ct_palette)
-                plt.xlabel('number of synapses')
+                plt.xlabel('number of synapses', fontsize = fontsize)
+                plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
                 plt.savefig(f'{f_name}/multi_bar_syn_num_intra.svg')
                 plt.savefig(f'{f_name}/multi_bar_syn_num_intra.png')
                 plt.close()
                 sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='celltype', palette=ct_palette)
-                plt.xlabel('number of synapses')
+                plt.xlabel('number of synapses', fontsize = fontsize)
+                plt.ylabel(ylabel = 'percent of cell-pairs', fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
                 plt.savefig(f'{f_name}/multi_bar_syn_num_intra_perc.svg')
                 plt.savefig(f'{f_name}/multi_bar_syn_num_intra_perc.png')
                 plt.close()
@@ -640,12 +671,18 @@ if __name__ == '__main__':
                         f'{len(multi_conn_df11)} cell-pairs out of {len(multi_conn_df_intra)} make multisynaptic connections with {num + 1} synapses or more, \n'
                         f'{len(hist_df11_ct2)} within {ct_dict[ct2]}, {len(hist_df11_ct3)} within {ct_dict[ct3]}')
                     sns.barplot(data=hist_df10, x='bins', y='count of cell-pairs', hue='celltype', palette=ct_palette)
-                    plt.xlabel('number of synapses')
+                    plt.xlabel('number of synapses', fontsize = fontsize)
+                    plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+                    plt.xticks(fontsize=fontsize)
+                    plt.yticks(fontsize=fontsize)
                     plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra.svg')
                     plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra.png')
                     plt.close()
                     sns.barplot(data=hist_df10, x='bins', y='percent of cell-pairs', hue='celltype', palette=ct_palette)
-                    plt.xlabel('number of synapses')
+                    plt.xlabel('number of synapses', fontsize = fontsize)
+                    plt.ylabel(ylabel = 'percent of cell-pairs', fontsize=fontsize)
+                    plt.xticks(fontsize=fontsize)
+                    plt.yticks(fontsize=fontsize)
                     plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra_perc.svg')
                     plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_intra_perc.png')
                     plt.close()
@@ -676,13 +713,19 @@ if __name__ == '__main__':
                     sum_hist_df.to_csv(f'{f_name}/hist_df_intra_summary.csv')
                     sns.barplot(data=sum_hist_df, x='sum bins', y='count of cell-pairs', hue='celltype',
                                 palette=ct_palette)
-                    plt.xlabel('number of synapses')
+                    plt.xlabel('number of synapses', fontsize = fontsize)
+                    plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+                    plt.xticks(fontsize=fontsize)
+                    plt.yticks(fontsize=fontsize)
                     plt.savefig(f'{f_name}/multi_bar_sum_syn_num_intra.svg')
                     plt.savefig(f'{f_name}/multi_bar_sum_syn_num_intra.png')
                     plt.close()
                     sns.barplot(data=sum_hist_df, x='sum bins', y='percent of cell-pairs', hue='celltype',
                                 palette=ct_palette)
-                    plt.xlabel('number of synapses')
+                    plt.xlabel('number of synapses', fontsize = fontsize)
+                    plt.ylabel(ylabel = 'percent of cell-pairs', fontsize=fontsize)
+                    plt.xticks(fontsize=fontsize)
+                    plt.yticks(fontsize=fontsize)
                     plt.savefig(f'{f_name}/multi_bar_sum_syn_num_intra_perc.svg')
                     plt.savefig(f'{f_name}/multi_bar_sum_syn_num_intra_perc.png')
                     plt.close()
@@ -772,13 +815,17 @@ if __name__ == '__main__':
             plot_histogram_selection(dataframe=percell_result_df, x_data=key, color_palette=ct_palette,
                                      label=f'percell_{key}_outgoing', count='cells', foldername=f_name,
                                      hue_data='to celltype',
-                                     title=f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
+                                     title=f'{key} synapses outgoing from {ct_dict[conn_ct]} cells',
+                                     fontsize = fontsize)
             if len(percell_result_df) <= 500:
                 sns.stripplot(x='to celltype', y=key, data=percell_result_df, color='black',
                               alpha=0.4,
                               dodge=True, size=3)
                 sns.boxplot(x='to celltype', y=key, data=percell_result_df, palette=ct_palette)
-                plt.ylabel(xlabel)
+                plt.ylabel(xlabel, fontsize = fontsize)
+                plt.ylabel(ylabel = key, fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
                 plt.title(f'{key} synapses outgoing from {ct_dict[conn_ct]} cells')
                 plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_box.png')
                 plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_outgoing_box.svg')
@@ -804,7 +851,8 @@ if __name__ == '__main__':
         plot_histogram_selection(dataframe=syn_sizes_df, x_data='syn sizes', color_palette=ct_palette,
                                  label='all_synsizes_outgoing', count='synapses', foldername=f_name,
                                  hue_data='to celltype',
-                                 title=f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells')
+                                 title=f'Synapse sizes outgoing from {ct_dict[conn_ct]} cells',
+                                 fontsize = fontsize)
         log.info('Get information about multi-syn connections')
         # get number of ct2 partner cells and size information for all of them
         #use syn_sizes df for information
@@ -861,7 +909,8 @@ if __name__ == '__main__':
         plot_histogram_selection(dataframe=multi_conn_df, x_data='sum syn area', color_palette=ct_palette,
                                  label='multi_sum_sizes_outgoing', count='cell-pairs', foldername=f_name,
                                  hue_data='to celltype',
-                                 title=f'Sum of synapse sizes outgoing from {ct_dict[conn_ct]} multisyn connections')
+                                 title=f'Sum of synapse sizes outgoing from {ct_dict[conn_ct]} multisyn connections',
+                                 fontsize = fontsize)
         #plot again as barplot
         # plot number of synapses again as barplot
         # make bins for each number, seperated by ct2 and ct3
@@ -884,12 +933,18 @@ if __name__ == '__main__':
         hist_df.loc[num_ct2_bins: len_bins - 1, 'bins'] = ct3_bins
         hist_df.loc[num_ct2_bins: len_bins - 1, 'to celltype'] = ct_dict[ct3]
         sns.barplot(data=hist_df, x='bins', y='count of cell-pairs', hue='to celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_syn_num_outgoing.svg')
         plt.savefig(f'{f_name}/multi_bar_syn_num_outgoing.png')
         plt.close()
         sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='to celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel = 'percent of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_syn_num_outgoing_perc.svg')
         plt.savefig(f'{f_name}/multi_bar_syn_num_outgoing_perc.png')
         plt.close()
@@ -902,12 +957,18 @@ if __name__ == '__main__':
             log.info(f'{len(multi_conn_df11)} cell-pairs out of {len(multi_conn_df)} make multisynaptic connections with {num + 1} synapses or more, \n'
                      f'{len(hist_df11_ct2)} to {ct_dict[ct2]}, {len(hist_df11_ct3)} to {ct_dict[ct3]}')
             sns.barplot(data=hist_df10, x='bins', y='count of cell-pairs', hue='to celltype', palette=ct_palette)
-            plt.xlabel('number of synapses')
+            plt.xlabel('number of synapses', fontsize = fontsize)
+            plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_outgoing.svg')
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_outgoing.png')
             plt.close()
             sns.barplot(data=hist_df10, x='bins', y='percent of cell-pairs', hue='to celltype', palette=ct_palette)
-            plt.xlabel('number of synapses')
+            plt.xlabel('number of synapses', fontsize = fontsize)
+            plt.ylabel(ylabel = 'percent of cell-pairs', fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_outgoing_perc.svg')
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_outgoing_perc.png')
             plt.close()
@@ -938,13 +999,19 @@ if __name__ == '__main__':
         sum_hist_df.to_csv(f'{f_name}/hist_df_outgoing_summary.csv')
         sns.barplot(data=sum_hist_df, x='sum bins', y='count of cell-pairs', hue='to celltype',
                     palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_outgoing.svg')
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_outgoing.png')
         plt.close()
         sns.barplot(data=sum_hist_df, x='sum bins', y='percent of cell-pairs', hue='to celltype',
                     palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel = 'percent of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_outgoing_perc.svg')
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_outgoing_perc.png')
         plt.close()
@@ -1033,13 +1100,17 @@ if __name__ == '__main__':
             plot_histogram_selection(dataframe=percell_result_df, x_data=key, color_palette=ct_palette,
                                      label=f'percell_{key}_{ct_dict[conn_ct]}_incoming', count='cells', foldername=f_name,
                                      hue_data='from celltype',
-                                     title=f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
+                                     title=f'{key} synapses incoming to {ct_dict[conn_ct]} cells',
+                                     fontsize = fontsize)
             if len(percell_result_df) <= 500:
                 sns.stripplot(x='from celltype', y=key, data=percell_result_df, color='black',
                               alpha=0.4,
                               dodge=True, size=3)
                 sns.boxplot(x='from celltype', y=key, data=percell_result_df, palette=ct_palette)
-                plt.ylabel(xlabel)
+                plt.ylabel(ylabel = key, fontsize= fontsize)
+                plt.xlabel(xlabel = 'from celltype', fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
                 plt.title(f'{key} synapses incoming to {ct_dict[conn_ct]} cells')
                 plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_box.png')
                 plt.savefig(f'{f_name}/percell_{key}_{ct_dict[conn_ct]}_incoming_box.svg')
@@ -1065,7 +1136,8 @@ if __name__ == '__main__':
         plot_histogram_selection(dataframe=syn_sizes_df, x_data='syn sizes', color_palette=ct_palette,
                                  label='all_synsizes_incoming', count='synapses', foldername=f_name,
                                  hue_data='from celltype',
-                                 title=f'Synapse sizes incoming to {ct_dict[conn_ct]} cells')
+                                 title=f'Synapse sizes incoming to {ct_dict[conn_ct]} cells',
+                                 fontsize = fontsize)
         log.info('Get information about multi-syn connections')
         # get number of ct2 partner cells and size information for all of them
         # use syn_sizes df for information
@@ -1123,7 +1195,8 @@ if __name__ == '__main__':
         plot_histogram_selection(dataframe=multi_conn_df, x_data='sum syn area', color_palette=ct_palette,
                                  label='multi_sum_sizes_incoming', count='cell-pairs', foldername=f_name,
                                  hue_data='from celltype',
-                                 title=f'Sum of synapse sizes incoming to {ct_dict[conn_ct]} multisyn connections')
+                                 title=f'Sum of synapse sizes incoming to {ct_dict[conn_ct]} multisyn connections',
+                                 fontsize = fontsize)
         # plot again as barplot
         # plot number of synapses again as barplot
         # make bins for each number, seperated by ct2 and ct3
@@ -1146,12 +1219,18 @@ if __name__ == '__main__':
         hist_df.loc[num_ct2_bins: len_bins - 1, 'bins'] = ct3_bins
         hist_df.loc[num_ct2_bins: len_bins - 1, 'from celltype'] = ct_dict[ct3]
         sns.barplot(data=hist_df, x='bins', y='count of cell-pairs', hue='from celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_syn_num_incoming.svg')
         plt.savefig(f'{f_name}/multi_bar_syn_num_incoming.png')
         plt.close()
         sns.barplot(data=hist_df, x='bins', y='percent of cell-pairs', hue='from celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel = 'percent of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_syn_num_incoming_perc.svg')
         plt.savefig(f'{f_name}/multi_bar_syn_num_incoming_perc.png')
         plt.close()
@@ -1165,12 +1244,18 @@ if __name__ == '__main__':
                 f'{len(multi_conn_df11)} cell-pairs out of {len(multi_conn_df)} make incoming multisynaptic connections with {num + 1} synapses or more, \n'
                 f'{len(hist_df11_ct2)} to {ct_dict[ct2]}, {len(hist_df11_ct3)} to {ct_dict[ct3]}')
             sns.barplot(data=hist_df10, x='bins', y='count of cell-pairs', hue='from celltype', palette=ct_palette)
-            plt.xlabel('number of synapses')
+            plt.xlabel('number of synapses', fontsize = fontsize)
+            plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_incoming.svg')
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_incoming.png')
             plt.close()
             sns.barplot(data=hist_df10, x='bins', y='percent of cell-pairs', hue='from celltype', palette=ct_palette)
-            plt.xlabel('number of synapses')
+            plt.xlabel('number of synapses', fontsize = fontsize)
+            plt.ylabel(ylabel = 'percent of cell-pairs', fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_incoming_perc.svg')
             plt.savefig(f'{f_name}/cutoff{num}_multi_bar_syn_num_incoming_perc.png')
             plt.close()
@@ -1199,12 +1284,18 @@ if __name__ == '__main__':
             sum_hist_df.loc[i + len_bin_labels, 'from celltype'] = ct_dict[ct3]
         sum_hist_df.to_csv(f'{f_name}/hist_df_incoming_summary.csv')
         sns.barplot(data=sum_hist_df, x='sum bins', y='count of cell-pairs', hue='from celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel = 'count of cell-pairs', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_incoming.svg')
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_incoming.png')
         plt.close()
         sns.barplot(data=sum_hist_df, x='sum bins', y='percent of cell-pairs', hue='from celltype', palette=ct_palette)
-        plt.xlabel('number of synapses')
+        plt.xlabel('number of synapses', fontsize = fontsize)
+        plt.ylabel(ylabel = 'percent of cell-pairs', fontsize = fontsize)
+        plt.xticks(fontsize = fontsize)
+        plt.yticks(fontsize = fontsize)
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_incoming_perc.svg')
         plt.savefig(f'{f_name}/multi_bar_sum_syn_num_incoming_perc.png')
         plt.close()

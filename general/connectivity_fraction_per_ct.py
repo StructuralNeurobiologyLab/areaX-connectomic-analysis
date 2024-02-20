@@ -30,17 +30,18 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = 'cajal/nvmescratch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2'
-    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
-    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     start = time.time()
     version = 'v6'
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v6')
+    analysis_params = Analysis_Params(version='v6')
+    global_params.wd = analysis_params.working_dir()
+    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
+    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     celltype_key = analysis_params.celltype_key()
-    min_comp_len_ax = 200
+    min_comp_len_ax = 10
     min_comp_len_cells = 200
     syn_prob = 0.6
     min_syn_size = 0.1
@@ -49,9 +50,9 @@ if __name__ == '__main__':
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGPNGF'
     plot_connmatrix_only = False
-    fontsize = 20
+    fontsize = 14
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/231220_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/2402_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

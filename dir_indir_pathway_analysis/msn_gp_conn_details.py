@@ -21,11 +21,13 @@ if __name__ == '__main__':
     from collections import ChainMap
     from tqdm import tqdm
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
+
+    version = 'v6'
+    analysis_params = Analysis_Params(version=version)
+    global_params.wd = analysis_params.working_dir()
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
-    version = 'v5'
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len = 200
     syn_prob = 0.6
@@ -35,9 +37,9 @@ if __name__ == '__main__':
     #celltypes that are compared
     gpe_ct = 6
     gpi_ct = 7
-    fontsize_jointplot = 12
+    fontsize_jointplot = 20
     kde = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231107_j0251v5_MSN_GP_syn_multisyn_mcl_%i_synprob_%.2f_kde%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_MSN_GP_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}" % (
         min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

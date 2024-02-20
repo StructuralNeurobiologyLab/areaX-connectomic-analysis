@@ -12,20 +12,18 @@ if __name__ == '__main__':
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     import os as os
     import pandas as pd
-    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
-    from scipy.stats import ranksums
-    import scipy
+    from scipy.stats import ranksums, kruskal
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    version = 'v6'
+    bio_params = Analysis_Params(version = version)
+    ct_dict = bio_params.ct_dict(with_glia=False)
+    global_params.wd = bio_params.working_dir()
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-    start = time.time()
-    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
-    ct_dict = bio_params.ct_dict(with_glia=False)
     #min_comp_len = bio_params.min_comp_length()
     min_comp_len_cell = 200
     min_comp_len_ax = 50
@@ -33,19 +31,19 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'STNGP'
-    post_ct = 7
+    color_key = 'STNGPINTv6'
+    post_ct = 11
     post_ct_str = ct_dict[post_ct]
-    #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd, TeBk'}
-    comp_color_key = 'TeBk'
+    #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd, TeBk', 'TeGy'}
+    comp_color_key = 'TeGy'
     save_svg = True
-    fontsize = 10
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230814_j0251v5_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
+    fontsize = 20
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
     post_ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key, comp_color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
-    cts_for_loading = [0, 2, 3, 4,6, 7, 8]
+    cts_for_loading = [1, 2, 3, 6, 7, 9, 10, 11]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -58,7 +56,7 @@ if __name__ == '__main__':
     log.info("Step 1/3: Load celltypes and check suitability")
 
     axon_cts = bio_params.axon_cts()
-    cls = CelltypeColors()
+    cls = CelltypeColors(ct_dict = ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)
     comp_cls = CompColors()
     comp_palette = comp_cls.comp_palette(comp_color_key, num = False, denso=True)
@@ -106,9 +104,12 @@ if __name__ == '__main__':
                         f'Percentage of synapses from ct to {post_ct_str}',
                         f'Percentage of synapse sizes from ct to {post_ct_str}']
     param_titles = [pt.split('from')[0] for pt in complete_param_titles]
-    columns = np.hstack([np.array(param_titles[:int(len(param_titles)/2)]), np.array(['celltype', 'compartment'])])
+    columns = np.hstack([np.array(['celltype', 'compartment']), np.array(param_titles[:int(len(param_titles)/2)])])
     all_comps_results_dict_percell = pd.DataFrame(columns=columns, index=range(num_comps * num_cts * len(suitable_ids_dict[post_ct])))
     all_comps_results_dict = pd.DataFrame(columns = columns, index=range(num_comps * num_cts))
+    summary_columns = np.concatenate([[f'{pt} median', f'{pt} mean', f'{pt} std'] for pt in param_titles[:int(len(param_titles)/2)]])
+    summary_columns = np.hstack([np.array(['celltype', 'compartment']), np.array(summary_columns)])
+    summary_all_comps_df = pd.DataFrame(columns = summary_columns, index=range(num_comps * num_cts))
     num_postcellids = len(suitable_ids_dict[post_ct])
     for ic, ct in enumerate(tqdm(cts_for_loading)):
         ct_str = ct_dict[ct]
@@ -137,6 +138,8 @@ if __name__ == '__main__':
             ind_all_syns = ic*num_comps + i_comp
             all_comps_results_dict.loc[ind_all_syns, 'compartment'] = compartment
             all_comps_results_dict.loc[ind_all_syns, 'celltype'] = ct_str
+            summary_all_comps_df.loc[ind_all_syns, 'compartment'] = compartment
+            summary_all_comps_df.loc[ind_all_syns, 'celltype'] = ct_str
             # fill in data per postsynaptic cell per compartment per celltype
             start_ind = ic * num_comps * num_postcellids + i_comp * num_postcellids
             len_comp_percell = len(percell_params[0][compartment])
@@ -144,8 +147,12 @@ if __name__ == '__main__':
             all_comps_results_dict_percell.loc[start_ind: end_ind, 'compartment'] = compartment
             all_comps_results_dict_percell.loc[start_ind: end_ind, 'celltype'] = ct_str
             for iy in range(len(syn_params)):
+                percell_params_comp = percell_params[iy][compartment].astype(float)
                 all_comps_results_dict.loc[ind_all_syns, param_titles[iy]] = syn_params[iy][compartment]
-                all_comps_results_dict_percell.loc[start_ind: end_ind, param_titles[iy]] = percell_params[iy][compartment].astype(float)
+                all_comps_results_dict_percell.loc[start_ind: end_ind, param_titles[iy]] = percell_params_comp
+                summary_all_comps_df.loc[ind_all_syns, f'{param_titles[iy]} median'] = np.median(percell_params_comp)
+                summary_all_comps_df.loc[ind_all_syns, f'{param_titles[iy]} mean'] = np.mean(percell_params_comp)
+                summary_all_comps_df.loc[ind_all_syns, f'{param_titles[iy]} std'] = np.std(percell_params_comp)
 
         all_comps_results_dict_percell = all_comps_results_dict_percell.convert_dtypes()
         f_name_ct = f'{f_name}/{ct_str}'
@@ -199,10 +206,12 @@ if __name__ == '__main__':
     all_comps_results_dict_percell = all_comps_results_dict_percell.dropna()
     all_comps_results_dict_percell.to_csv(f'{f_name}/all_comps_results_per_{post_ct_str}_cell.csv')
     all_comps_results_dict.to_csv(f'{f_name}/all_comps_results_cts.csv')
+    summary_all_comps_df.to_csv(f'{f_name}/summary_all_comps_results.csv')
     time_stamps = [time.time()]
     step_idents = ['get compartment specific synapse information']
 
     log.info("Step 3/3 Plot results for comparison between celltypes and calculate statistics")
+    kruskal_res_df = pd.DataFrame(columns = ['stats', 'p-value'])
     for ik, key in enumerate(tqdm(complete_param_titles)):
         #use ranksum test (non-parametric) to calculate results
         param_title = param_titles[ik]
@@ -213,6 +222,11 @@ if __name__ == '__main__':
                 comp_res_pc = pd.DataFrame(data = all_comps_results_dict_percell[all_comps_results_dict_percell['compartment'] == comp],
                                            columns = all_comps_results_dict_percell.columns).astype(all_comps_results_dict_percell.dtypes)
                 comp_res_pc[param_title] = comp_res_pc[param_title].astype(float)
+                comp_param_groups = [group[param_title].values for name, group in
+                    comp_res_pc.groupby('celltype')]
+                kruskal_res = kruskal(*comp_param_groups, nan_policy='omit')
+                kruskal_res_df.loc[f'{comp} {param_title}', 'stats'] = kruskal_res[0]
+                kruskal_res_df.loc[f'{comp} {param_title}', 'p-value'] = kruskal_res[1]
                 for c1 in cts_for_loading:
                     c1_str = ct_dict[c1]
                     c1_res = comp_res_pc[comp_res_pc['celltype'] == c1_str][param_title]
@@ -299,6 +313,7 @@ if __name__ == '__main__':
                 plt.savefig('%s/%s_syn_cts_box.svg' % (f_name, param_title))
             plt.close()
 
+    kruskal_res_df.to_csv(f'{f_name}/kruskal_results.csv')
 
     ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 

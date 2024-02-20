@@ -4,35 +4,36 @@ if __name__ == '__main__':
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
     from syconn.reps.segmentation import SegmentationDataset
     import os as os
     import pandas as pd
     import numpy as np
     from scipy.stats import ranksums
-    from general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, get_cell_soma_radius
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, get_cell_soma_radius
     from syconn.handler.basics import write_obj2pkl
-    from general.result_helper import  ComparingResultsForPLotting
-    from general.analysis_params import Analysis_Params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import  ComparingResultsForPLotting
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import itertools
     import seaborn as sns
     import matplotlib.pyplot as plt
     from syconn.mp.mp_utils import start_multiprocess_imap
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
+    version = 'v6'
+    bio_params = Analysis_Params(version = version)
+    global_params.wd = bio_params.working_dir()
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
-    start = time.time()
-    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
     ct_dict = bio_params.ct_dict()
     min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    fontsize_jointplot = 10
+    fontsize_jointplot = 14
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230914_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_GPe_i_myelin_mito_radius_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

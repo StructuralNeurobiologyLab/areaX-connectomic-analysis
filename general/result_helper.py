@@ -897,7 +897,7 @@ def plot_nx_graph(results_dictionary, filename, title):
     plt.savefig(filename)
     plt.close()
 
-def plot_histogram_selection(dataframe, x_data, color_palette, label, count, foldername, hue_data = None, title = None):
+def plot_histogram_selection(dataframe, x_data, color_palette, label, count, foldername, hue_data = None, title = None, fontsize = None):
     '''
     Function to plot multiple histograms of the same data, preferebly with two or more groups
     to compare.
@@ -924,32 +924,40 @@ def plot_histogram_selection(dataframe, x_data, color_palette, label, count, fol
 
     sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True)
-    plt.ylabel(f'number of {count}')
-    plt.xlabel(xlabel)
+    plt.ylabel(f'number of {count}', fontsize = fontsize)
+    plt.xlabel(xlabel, fontsize = fontsize)
+    plt.xticks(fontsize = fontsize)
+    plt.yticks(fontsize = fontsize)
     plt.title(plottitle)
     plt.savefig(f'{foldername}/{label}_hist.png')
     plt.savefig(f'{foldername}/{label}_hist.svg')
     plt.close()
     sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
-    plt.ylabel(f'% of {count}')
-    plt.xlabel(xlabel)
+    plt.ylabel(f'% of {count}', fontsize = fontsize)
+    plt.xlabel(xlabel, fontsize = fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
     plt.title(plottitle)
     plt.savefig(f'{foldername}/{label}_hist_perc.png')
     plt.savefig(f'{foldername}/{label}_hist_perc.svg')
     plt.close()
     sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale=True)
-    plt.ylabel(f'number of {count}')
-    plt.xlabel(xlabel)
+    plt.ylabel(f'number of {count}', fontsize = fontsize)
+    plt.xlabel(xlabel, fontsize = fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
     plt.title(plottitle)
     plt.savefig(f'{foldername}/{label}_hist_log.png')
     plt.savefig(f'{foldername}/{label}_hist_log.svg')
     plt.close()
     sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent', log_scale=True)
-    plt.ylabel(f'% of {count}')
-    plt.xlabel(xlabel)
+    plt.ylabel(f'% of {count}', fontsize = fontsize)
+    plt.xlabel(xlabel, fontsize = fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
     plt.title(plottitle)
     plt.savefig(f'{foldername}/{label}_hist_log_perc.png')
     plt.savefig(f'{foldername}/{label}_hist_log_perc.svg')

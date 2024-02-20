@@ -15,32 +15,33 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from scipy.stats import ranksums
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
-    version = 'v5'
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    version = 'v6'
+    analysis_params = Analysis_Params(version=version)
+    global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict(with_glia=False)
     #celltypes that are compared
-    ct = 8
-    color_key = 'STNGP'
-    fontsize_jointplot = 12
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/231130_j0251v5_%s_connectivity_summary" % (
+    ct = 3
+    color_key = 'STNGPINTv6'
+    fontsize = 20
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_%s_connectivity_summary_f{fontsize}" % (
             ct_dict[ct])
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Connectivity summary', log_dir=f_name + '/logs/')
-    ct_colors = CelltypeColors()
+    ct_colors = CelltypeColors(ct_dict = ct_dict)
     ct_palette = ct_colors.ct_palette(key=color_key)
     ct_palette['other'] = '#707070'
     ct_str = ct_dict[ct]
-    incoming_celltypes = [3, 4, 6, 7]
+    incoming_celltypes = [1, 2]
     incoming_ct_str = [ct_dict[i] for i in incoming_celltypes]
-    outgoing_celltypes = [2, 6, 7, 8]
+    outgoing_celltypes = [6, 7]
     outgoing_ct_str = [ct_dict[i] for i in outgoing_celltypes]
     log.info(f'Summary will focus on celltype {ct_str}, incoming synapses from {incoming_ct_str}'
              f'and outgoing synapses to {outgoing_ct_str}')
 
-    conn_filename = 'cajal/scratch/users/arother/bio_analysis_results/general/230920_j0251v5_cts_percentages_ngf_subgroups_mcl_200_ax50_synprob_0.60_TePkBrNGF_annot_bw_fs_12'
+    conn_filename = 'cajal/scratch/users/arother/bio_analysis_results/general/240220_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_STNGPNGF_annot_bw_fs_20'
     log.info(f'Step 1/3: Load connectivity data from {conn_filename}')
     conn_dict = load_pkl2obj(f'{conn_filename}/synapse_dict_per_ct.pkl')
 
@@ -48,8 +49,8 @@ if __name__ == '__main__':
     #use similar code as in connectivity_fraction_per_ct
     key_list = ['outgoing synapse sum size percentage', 'outgoing synapse sum size',
                 'incoming synapse sum size percentage', 'incoming synapse sum size' ]
-    ct_dict[10] = 'TP1'
-    ct_dict[11] = 'TP2'
+    #ct_dict[10] = 'TP1'
+    #ct_dict[11] = 'TP2'
     celltypes = np.array([ct_dict[ct] for ct in ct_dict])
     axon_cts = analysis_params.axon_cts()
     num_cts = len(celltypes)
@@ -138,6 +139,8 @@ if __name__ == '__main__':
             ylabel = 'sum of synaptic area [µm²]'
         plt.ylabel(ylabel)
         plt.xlabel('presynaptic celltypes')
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/comp_syn_box_{key}.png')
         plt.savefig(f'{f_name}/comp_syn_box_{key}.svg')
         plt.close()
@@ -150,6 +153,8 @@ if __name__ == '__main__':
         else:
             ylabel = 'sum of synaptic area [µm²]'
         plt.ylabel(ylabel)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
         plt.xlabel('postsynaptic celltypes')
         plt.savefig(f'{f_name}/comp_syn_box_{key}.png')
         plt.savefig(f'{f_name}/comp_syn_box_{key}.svg')

@@ -6,7 +6,7 @@ from syconn.reps.super_segmentation import SuperSegmentationObject
 import pandas as pd
 from multiprocessing import pool
 
-def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_size = 0.1, ct_pre = None, cellids_pre = None, dendrite_only = False):
+def get_syn_distances(ct_post, cellids_post, syn_prob = 0.8, min_syn_size = 0.1, ct_pre = None, cellids_pre = None, dendrite_only = False, sd_synssv = None, prefiltered_syn_params = None):
     '''
     Calculates distance of synapses to soma for two celltypes. Uses distance2soma
     :param ct_post: Celltype that receives synapses. distance2soma computed for this one.
@@ -19,28 +19,48 @@ def get_syn_distances(ct_post, cellids_post, sd_synssv, syn_prob = 0.8, min_syn_
     :param dendrite_only: if True only calculate for axo-dendritic synapses, not axo-somatic ones
     :return: array with cellids, median distances to soma per cell
     '''
-
+    if sd_synssv is None and prefiltered_syn_params is None:
+        raise ValueError('Need to give either SegmentationDataset for synapses or saved filtered arrays but none were given')
     #filter synapses between celltypes
     if ct_pre is None:
         ct_pre = ct_post
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
-                                                                                                        pre_cts=[ct_pre],
-                                                                                                        post_cts=None,
-                                                                                                        syn_prob_thresh=syn_prob,
-                                                                                                        min_syn_size=min_syn_size,
-                                                                                                        axo_den_so=True)
+        if sd_synssv is not None:
+            m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
+                                                                                                            pre_cts=[ct_pre],
+                                                                                                            post_cts=None,
+                                                                                                            syn_prob_thresh=syn_prob,
+                                                                                                            min_syn_size=min_syn_size,
+                                                                                                            axo_den_so=True)
+        else:
+            m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
+                sd_synssv=None,
+                pre_cts=[ct_pre],
+                post_cts=None,
+                syn_prob_thresh=None,
+                min_syn_size=None,
+                axo_den_so=True,
+                synapses_caches = prefiltered_syn_params)
         suit_ct_inds = np.all(np.in1d(m_ssv_partners, cellids_post).reshape(len(m_ssv_partners), 2), axis=1)
         m_ssv_partners = m_ssv_partners[suit_ct_inds]
         m_sizes = m_sizes[suit_ct_inds]
         m_axs = m_axs[suit_ct_inds]
         m_rep_coord = m_rep_coord[suit_ct_inds]
     else:
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
-                                                                                                            pre_cts=[ct_pre],
-                                                                                                            post_cts=[ct_post],
-                                                                                                            syn_prob_thresh=syn_prob,
-                                                                                                            min_syn_size=min_syn_size,
-                                                                                                            axo_den_so=True)
+        if sd_synssv is not None:
+            m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
+                                                                                                                pre_cts=[ct_pre],
+                                                                                                                post_cts=[ct_post],
+                                                                                                                syn_prob_thresh=syn_prob,
+                                                                                                                min_syn_size=min_syn_size,
+                                                                                                                axo_den_so=True)
+        else:
+            m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
+                synapses_caches = prefiltered_syn_params,
+                pre_cts=[ct_pre],
+                post_cts=[ct_post],
+                syn_prob_thresh=None,
+                min_syn_size=None,
+                axo_den_so=True)
         suit_ct_inds = np.any(np.in1d(m_ssv_partners, cellids_post).reshape(len(m_ssv_partners), 2), axis=1)
         m_ssv_partners = m_ssv_partners[suit_ct_inds]
         m_sizes = m_sizes[suit_ct_inds]

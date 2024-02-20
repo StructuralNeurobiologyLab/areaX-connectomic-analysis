@@ -7,14 +7,17 @@ class Analysis_Params(object):
     Config object for setting general analysis parameters
     TO DO: base on file
     '''
-    def __init__(self, working_dir, version):
-        self._working_dir = working_dir
+    def __init__(self, version):
         self._version = version
         ct_dict = {'v3': {}, 'v4': {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF"}, 'v5': {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
                10: "NGF", 11:"ASTRO", 12:"OLIGO", 13:'MICRO', 14:'FRAG'},
                    'v6': {0:'DA', 1:'LMAN', 2: 'HVC', 3:'MSN', 4:'STN', 5:'TAN', 6:'GPe', 7:'GPi', 8: 'LTS',
                           9:'INT1', 10:'INT2', 11:'INT3', 12:'ASTRO', 13:'OLIGO', 14:'MICRO', 15:'MIGR', 16:'FRAG'}}
+        working_dir_dict = {'v4':'/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811',
+                       'v5':'/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811',
+                       'v6':'/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'}
+        self._working_dir = working_dir_dict[version]
         self._ct_dict = ct_dict[version]
         if version == 'v5':
             self._glia_cts = [11, 12, 13, 14]

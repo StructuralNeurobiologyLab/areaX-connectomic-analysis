@@ -19,14 +19,12 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
     from scipy.stats import ranksums
 
-    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
-    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
-
     version = 'v6'
     bio_params = Analysis_Params(working_dir=global_params.wd, version=version)
     ct_dict = bio_params.ct_dict()
+    global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
+    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     min_comp_len = 200
     min_comp_len_ax = 50
     syn_prob = 0.6
@@ -36,11 +34,11 @@ if __name__ == '__main__':
     #                      9:'INT1', 10:'INT2', 11:'INT3', 12:'ASTRO', 13:'OLIGO', 14:'MICRO', 15:'MIGR', 16:'FRAG'}
     #proj ct is celltype that makes synapses to ct1 and ct2, potentially in close proximity to each other
     #rec_ct is celltype that ct1 and ct2 project to and whose individual cells will be compared
-    proj_ct = 2
-    ct1 = 4
+    proj_ct = 1
+    ct1 = 9
     ct2 = 3
     rec_ct = 6
-    syn_dist_thresh = 1  # synapse distance threshold in µm
+    syn_dist_thresh = 10  # synapse distance threshold in µm
     comp_cts = [proj_ct, ct1, ct2, rec_ct]
     proj_ct_str = ct_dict[proj_ct]
     ct1_str = ct_dict[ct1]

@@ -35,8 +35,8 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGPINTv6'
-    only_dendrite = False
-    dist2ct = 6
+    only_dendrite = True
+    dist2ct = 3
     dist2ct_str = ct_dict[dist2ct]
     save_svg = True
     fontsize = 20
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of distance to soma for GPi and different synaptic inputs', log_dir=f_name + '/logs/')
-    cts_for_loading = [ 1, 2, 3, 4, 6, 7, 9]
+    cts_for_loading = [ 0, 1, 2, 3, 10, 11]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(

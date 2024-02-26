@@ -24,23 +24,25 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
-    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
-    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
+    #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+
 
     version = 'v6'
-    bio_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    bio_params = Analysis_Params(version=version)
     ct_dict = bio_params.ct_dict()
+    global_params.wd = bio_params.working_dir()
+    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
+    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     min_comp_len = 200
     min_comp_len_ax = 50
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
     exclude_known_mergers = True
     #color keys: 'MSN','TeYw','MudGrays'}
-    color_key = 'STNGPNGF'
-    ct1 = 7
-    ct2 = 6
-    ct3 = 3
+    color_key = 'STNGPINTv6'
+    ct1 = 2
+    ct2 = 3
+    ct3 = 7
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     ct3_str = ct_dict[ct3]
@@ -49,11 +51,11 @@ if __name__ == '__main__':
     if np.any(np.in1d(comp_cts, axon_cts)):
         axon_ct_present = True
         f_name = f'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/' \
-                 f'240125_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{min_comp_len_ax}_{color_key}'
+                 f'240226_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{min_comp_len_ax}_{color_key}'
     else:
         axon_ct_present = False
         f_name = f'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/' \
-                 f'240125_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{color_key}'
+                 f'240226_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{color_key}'
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'Pathway cell number analysis {ct1_str}, {ct2_str}, {ct3_str}', log_dir=f_name + '/logs/')

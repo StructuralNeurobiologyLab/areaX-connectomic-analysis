@@ -9,21 +9,27 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from syconn.reps.segmentation import SegmentationDataset
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import matplotlib.pyplot as plt
     from scipy.stats import ranksums, kruskal
     from itertools import combinations
     import seaborn as sns
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+
+    version = 'v6'
+    analysis_params = Analysis_Params(version=version)
+    ct_dict = analysis_params.ct_dict(with_glia=False)
+    global_params.wd = analysis_params.working_dir()
 
     min_comp_len = 200
     syn_prob = 0.6
     min_syn_size = 0.1
-    msn_ct = 2
+    msn_ct = 3
     gpe_ct = 6
     gpi_ct = 7
     n_it = 3
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230914_j0251v5_MSN_GP_ratio_shuffle_it%i" % (n_it)
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240223_j0251v5_MSN_GP_ratio_shuffle_it%i" % (n_it)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -32,16 +38,16 @@ if __name__ == '__main__':
 
     # load information about MSN groups and GP ratio
     kde = True
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230911_j0251v5_MSN_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_replot" % (
-        min_comp_len, syn_prob, kde)
+    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f14" % (
+        ct_dict[msn_ct], min_comp_len, syn_prob, kde)
     log.info(f'Use morph parameters from {f_name_saving1}')
-    msn_result_df = pd.read_csv(f'{f_name_saving1}/msn_spine_density_GPratio.csv', index_col=0)
+    msn_result_df = pd.read_csv(f'{f_name_saving1}/MSN_spine_density_GPratio.csv', index_col=0)
     np.random.seed(42)
 
     #load information about GP cells
-    fontsize_jointplot = 10
+    fontsize_jointplot = 20
     use_median = True
-    f_name_saving2 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/230911_j0251v5_GPe_i_myelin_mito_radius_mcl%i_newcolors_fs%i_med%i" % \
+    f_name_saving2 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251v6_GPe_i_myelin_mito_radius_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     log.info(f'Use morph parameters from {f_name_saving2}')
     gp_morph_df = pd.read_csv(f'{f_name_saving2}/GPe_GPi_params.csv', index_col=0)

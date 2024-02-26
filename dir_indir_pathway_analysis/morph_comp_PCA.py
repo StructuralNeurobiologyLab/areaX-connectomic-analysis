@@ -36,7 +36,7 @@ if __name__ == '__main__':
     use_median = True  # if true use median of vertex coordinates to find centre
     cts = [9, 10, 11]
     cts_str = [ct_dict[ct] for ct in cts]
-    color_key = 'STNGPINTv6'
+    color_key = 'RdTeINTv6'
     n_comps_PCA = 1
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_{cts_str}_morph_comp_radius_spiness_examplecells_mcl%i_fs%i_med%i_{color_key}_nc{n_comps_PCA}" % \
              (min_comp_len, fontsize_jointplot, use_median)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
                                             max_path_len=None)
         suitable_ids_dict[ct] = cell_ids
         all_suitable_ids.append(cell_ids)
-        all_celltypes.append(np.empty(len(cell_ids)) + ct_str)
+        all_celltypes.append([ct_dict[ct] for i in cell_ids])
 
     log.info(f'{len(cell_ids)} {ct_str} are suitable for analysis')
 
@@ -122,7 +122,7 @@ if __name__ == '__main__':
         nonzero_id_inds = np.in1d(param_df['cellids'], ids_nonzero)
         param_df.loc[nonzero_id_inds, 'axon median radius'] = axon_median_radius_ct[ct_nonzero]
         param_df.loc[nonzero_id_inds, 'axon mitochondria volume density'] = axon_mito_volume_density_ct[ct_nonzero]
-        param_df.loc[nonzero_id_inds, 'soma diameter'] = axon_median_radius_ct[ct_nonzero]
+        param_df.loc[nonzero_id_inds, 'soma diameter'] = ct_diameters[ct_nonzero]
         param_df.loc[nonzero_id_inds, 'spine density'] = spine_density[ct_nonzero]
         param_df.loc[nonzero_id_inds, 'total mitochondria volume density'] = total_mito_volume_density_ct[ct_nonzero]
         

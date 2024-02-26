@@ -14,14 +14,15 @@ if __name__ == '__main__':
     from collections import ChainMap
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+    analysis_params = Analysis_Params(version='v6')
     ct_dict = analysis_params.ct_dict(with_glia=False)
+    global_params.wd = analysis_params.working_dir()
     celltype_key = analysis_params.celltype_key()
     min_comp_len_ax = 50
     min_comp_len_cells = 200
     exclude_known_mergers = True
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230905_cache_cs_ssv_mcl_%i_ax%i" % (
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/240226_cache_cs_ssv_mcl_%i_ax%i" % (
     min_comp_len_cells, min_comp_len_ax)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -32,7 +33,7 @@ if __name__ == '__main__':
         min_comp_len_cells, min_comp_len_ax, exclude_known_mergers))
 
     #this script should iterate over all celltypes
-    axon_cts = [1, 3, 4]
+    axon_cts = analysis_params.axon_cts()
     log.info("Step 1/3: Load cell dicts and get suitable cellids")
     if exclude_known_mergers:
         known_mergers = analysis_params.load_known_mergers()
@@ -77,7 +78,7 @@ if __name__ == '__main__':
     log.info(f'{len(all_suitable_ids)} cells/ axons found that fulfill criteria')
     
     log.info('Step 2/2: Filter and cache cs_ssvs')
-    '''
+
     sd_cs_ssv = SegmentationDataset('cs_ssv')
     cs_ssv_ids = sd_cs_ssv.ids
     cs_ssv_mesh_areas = sd_cs_ssv.load_numpy_data('mesh_area')
@@ -85,13 +86,13 @@ if __name__ == '__main__':
     cs_ssv_coords = sd_cs_ssv.load_numpy_data('rep_coord')
     cs_ssv_partners = sd_cs_ssv.load_numpy_data('neuron_partners')
     log.info(f' In total there are {len(cs_ssv_ids)} cs_ssvs')
-    '''
-    old_cs_ssv_loading = f'{global_params.wd}/old_cs_ssv/'
-    cs_ssv_ids = np.load(f'{old_cs_ssv_loading}/ids.npy')
-    cs_ssv_mesh_areas = np.load(f'{old_cs_ssv_loading}/mesh_areas.npy')
-    cs_ssv_mesh_bb = np.load(f'{old_cs_ssv_loading}/mesh_bbs.npy')
-    cs_ssv_coords = np.load(f'{old_cs_ssv_loading}/rep_coords.npy')
-    cs_ssv_partners = np.load(f'{old_cs_ssv_loading}/neuron_partnerss.npy')
+
+    #old_cs_ssv_loading = f'{global_params.wd}/old_cs_ssv/'
+    #cs_ssv_ids = np.load(f'{old_cs_ssv_loading}/ids.npy')
+    #cs_ssv_mesh_areas = np.load(f'{old_cs_ssv_loading}/mesh_areas.npy')
+    #cs_ssv_mesh_bb = np.load(f'{old_cs_ssv_loading}/mesh_bbs.npy')
+    #cs_ssv_coords = np.load(f'{old_cs_ssv_loading}/rep_coords.npy')
+    #cs_ssv_partners = np.load(f'{old_cs_ssv_loading}/neuron_partnerss.npy')
     #filter for only ones in suitable ids
     suit_ct_inds = np.all(np.in1d(cs_ssv_partners, all_suitable_ids).reshape(len(cs_ssv_partners), 2), axis=1)
     cs_ssv_ids = cs_ssv_ids[suit_ct_inds]

@@ -14,11 +14,13 @@ class Analysis_Params(object):
                10: "NGF", 11:"ASTRO", 12:"OLIGO", 13:'MICRO', 14:'FRAG'},
                    'v6': {0:'DA', 1:'LMAN', 2: 'HVC', 3:'MSN', 4:'STN', 5:'TAN', 6:'GPe', 7:'GPi', 8: 'LTS',
                           9:'INT1', 10:'INT2', 11:'INT3', 12:'ASTRO', 13:'OLIGO', 14:'MICRO', 15:'MIGR', 16:'FRAG'}}
-        working_dir_dict = {'v4':'/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811',
+        working_dir_dict = {'v4':'/cajal/nvmescratch/projects/from_ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2',
                        'v5':'/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811',
                        'v6':'/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'}
         self._working_dir = working_dir_dict[version]
         self._ct_dict = ct_dict[version]
+        if version == 'v4':
+            self._axon_cts = [1, 3, 4]
         if version == 'v5':
             self._glia_cts = [11, 12, 13, 14]
             self._axon_cts = [1, 3, 4]
@@ -37,7 +39,10 @@ class Analysis_Params(object):
         self._merger_file_location = f'{self.file_locations}/merger_arr.pkl'
         self._pot_astros_file_location = f'{self.file_locations}/pot_astro_ids.pkl'
         celltype_keys = {'v3':'celltype_cnn_e3', 'v4':'celltype_cnn_e3', 'v5':'celltype_pts_e3', 'v6':'celltype_pts_e3'}
+        celltype_keys_certainty = {'v3': 'celltype_cnn_e3_certainty', 'v4': 'celltype_cnn_e3_certainty', 'v5': 'celltype_pts_e3_certainty',
+                         'v6': 'celltype_pts_e3_certainty'}
         self._celltype_key = celltype_keys[version]
+        self._celltype_certainty_key = celltype_keys_certainty[version]
 
     def working_dir(self):
         return self._working_dir
@@ -85,6 +90,12 @@ class Analysis_Params(object):
     def load_potential_astros(self):
         potential_astrocytes = load_pkl2obj(self._pot_astros_file_location)
         return potential_astrocytes
+
+    def celltype_key(self):
+        return self._celltype_key
+
+    def celltype_certainty_key(self):
+        return self._celltype_certainty_key
 
     def load_cell_dict(self, celltype):
         if self._version == 'v6':

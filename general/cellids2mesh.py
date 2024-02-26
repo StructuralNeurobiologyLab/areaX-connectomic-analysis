@@ -13,23 +13,27 @@ if __name__ == '__main__':
     from collections import Counter
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     f_name = 'cajal/scratch/users/arother/230804_neuron_example_meshes'
     #f_name = 'cajal/scratch/users/arother/240115_LMAN_example_meshes'
 
-    bio_params = Analysis_Params(working_dir = global_params.wd, version = 'v6')
-    ct_dict = bio_params.ct_dict()
+    bio_params = Analysis_Params(version = 'v6')
+    ct_dict = bio_params.ct_dict(with_glia = True)
+    global_params.wd = bio_params.working_dir()
     whole_cell = True
-    get_mitos = False
+    get_mitos = True
     get_mitos_comp_sep = False
-    get_only_myelin = False
+    get_only_myelin = True
 
     #cellids = [ 126798179, 1155532413, 15724767, 24397945, 32356701, 26790127, 379072583]
     #cellids = [15521116, 10157981]
     #cellids = [1080627023]
     #cellids = [3171878, 18222490, 50542644, 96194764, 436157555]
     #cellids = [32356701, 26790127]
-    cellids = [844683784, 373956306, 820388630, 975932938, 1355540633]
+    #cellids = [844683784, 373956306, 820388630, 975932938, 1355540633]
+    #gt HVC, LMAN, DA, example LTS, MSNs aroudn TAN, oligo + GPI (x2), other example glia cells
+    #cellids = [195998712, 139212645,  88265889, 832232717, 841444450, 436157555, 1126849047, 379072583, 1469886143,1503488997, 2834161,561503453, 155343800, 1644151292]
+    cellids = [63431281, 700174676]
 
     if whole_cell:
         for cellid in tqdm(cellids):

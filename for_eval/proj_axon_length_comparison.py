@@ -15,30 +15,36 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     from scipy.stats import kruskal, ranksums
     from itertools import combinations
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
-    version = 'v6'
-    bio_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    version = 'v4'
+    bio_params = Analysis_Params(version=version)
+    global_params.wd = bio_params.working_dir()
     ct_dict = bio_params.ct_dict()
     use_gt = False
     filter_syns = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240115_j0251{version}_ax_fraglengths"
+    color_key = 'AxRdYwBev5'
+    cls = CelltypeColors(ct_dict=ct_dict)
+    ct_palette = cls.ct_palette(color_key, num=False)
+    fontsize = 20
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240226_j0251{version}_ax_fraglengths_syns_f{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
     if use_gt:
         #for gt: agglo2 uses v4 (11 neuron classes, no glia, no fragments), gt v5 (manually checked gt for mergers, add fragment class + some astros)
         #v5 wd uses v6: fragment class, astros, oligo + microglia, v6 wd: v7: INT1⁻3 instead of FS, NGF, + migrating neurons; add short axon fragments
-        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv"
+        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv"
         #gt_path = 'cajal/nvmescratch/users/arother/202301_syconnv5_wd_tests/20231013_new_celltype_gt/231115_ar_j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv'
         gt = pd.read_csv(gt_path,names=["cellids", "celltype"])
         log.info(f'Ground truth cells from {gt_path} used for analysis')
     else:
         ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
         cellids = ssd.ssv_ids
-        celltypes = ssd.load_numpy_data('celltype_pts_e3')
+        celltypes = ssd.load_numpy_data(bio_params.celltype_key())
         log.info(f'Axons used from {global_params.wd}')
     if filter_syns:
         log.info('Only axons used that have one axo-somatic or axo-dendritic outgoing synapse')
@@ -149,32 +155,41 @@ if __name__ == '__main__':
 
     log.info('Step 4/4: Plot results')
     sns.histplot(data = axon_df, x = 'skeleton length', hue = 'celltype', fill=False,
-                 kde=False, element='step')
-    plt.ylabel('number of axons')
-    plt.xlabel('skeleton length [µm]')
+                 kde=False, element='step', palette=ct_palette, linewidth=3)
+    plt.ylabel('number of axons', fontsize = fontsize)
+    plt.xlabel('skeleton length [µm]', fontsize = fontsize)
+    plt.yticks(fontsize = fontsize)
+    plt.xticks(fontsize = fontsize)
     plt.title('Lengths of axon fragments')
     plt.savefig(f'{f_name}/proj_axons_lengths.png')
     plt.savefig(f'{f_name}/proj_axons_lengths.svg')
     plt.close()
     sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
-                 kde=False, element='step', stat='percent')
-    plt.xlabel('skeleton length [µm]')
-    plt.title('Lengths of axon fragments')
+                 kde=False, element='step', stat='percent', palette=ct_palette, linewidth=3)
+    plt.xlabel('skeleton length [µm]', fontsize = fontsize)
+    plt.title('Lengths of axon fragments', fontsize = fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/proj_axons_lengths_perc.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_perc.svg')
     plt.close()
     sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
-                 kde=False, element='step', log_scale=True)
-    plt.ylabel('number of axons')
-    plt.xlabel('skeleton length [µm]')
+                 kde=False, element='step', log_scale=True, palette=ct_palette, linewidth=3)
+    plt.ylabel('number of axons', fontsize = fontsize)
+    plt.xlabel('skeleton length [µm]', fontsize = fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
     plt.title('Lengths of axon fragments')
     plt.savefig(f'{f_name}/proj_axons_lengths_log.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_log.svg')
     plt.close()
     sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
-                 kde=False, element='step', log_scale=True, stat='percent')
-    plt.xlabel('skeleton length [µm]')
-    plt.title('Lengths of axon fragments')
+                 kde=False, element='step', log_scale=True, stat='percent', palette=ct_palette, linewidth=3)
+    plt.xlabel('skeleton length [µm]', fontsize = fontsize)
+    plt.ylabel('percent of axons', fontsize = fontsize)
+    plt.title('Lengths of axon fragments', fontsize = fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.svg')
     plt.close()
@@ -200,34 +215,51 @@ if __name__ == '__main__':
         axon_df['length bins'] = length_cats
         axon_df.to_csv(f'{f_name}/proj_axon_lengths.csv')
         #make boxplot with hue
-        sns.boxplot(data = axon_df, x = 'length bins', y= 'synapse density', hue = 'celltype')
-        plt.ylabel('synapse density [1/µm]')
+        sns.boxplot(data = axon_df, x = 'length bins', y= 'synapse density', hue = 'celltype', palette=ct_palette)
+        plt.ylabel('synapse density [1/µm]', fontsize = fontsize)
+        plt.xlabel('length bins [µm]', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/syn_density_length_bins.png')
         plt.savefig(f'{f_name}/syn_density_length_bins.svg')
         plt.close()
         #make boxplot again with only skeleton lengths larger than one
         axon_df_one = axon_df[axon_df['skeleton length'] > 1]
-        sns.boxplot(data=axon_df_one, x='length bins', y='synapse density', hue='celltype')
-        plt.ylabel('synapse density [1/µm]')
+        sns.boxplot(data=axon_df_one, x='length bins', y='synapse density', hue='celltype', palette=ct_palette)
+        plt.ylabel('synapse density [1/µm]', fontsize=fontsize)
+        plt.xlabel('length bins [µm]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.title('Synapse density for fragment with length of > 1 µm')
         plt.savefig(f'{f_name}/filtered_syn_density_length_bins.png')
         plt.savefig(f'{f_name}/filtered_syn_density_length_bins.svg')
         plt.close()
         axon_df_cut = axon_df[axon_df['synapse density'] <= 1]
-        sns.boxplot(data=axon_df_cut, x='length bins', y='synapse density', hue='celltype')
-        plt.ylabel('synapse density [1/µm]')
+        sns.boxplot(data=axon_df_cut, x='length bins', y='synapse density', hue='celltype', palette=ct_palette)
+        plt.ylabel('synapse density [1/µm]', fontsize=fontsize)
+        plt.xlabel('length bins [µm]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.title('Synapse density up to 1 with fragments > 1 µm')
         plt.savefig(f'{f_name}/cut_syn_density_length_bins.png')
         plt.savefig(f'{f_name}/cut_syn_density_length_bins.svg')
         plt.close()
         #make histogram with lengths bins to see number
         sns.histplot(data=axon_df, x='length bins', hue='celltype',fill=False,
-                 kde=False, element='step')
+                 kde=False, element='step', palette=ct_palette, linewidth=3)
+        plt.ylabel('number of axons', fontsize=fontsize)
+        plt.xlabel('length bins [µm]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/length_bins_hist.png')
         plt.savefig(f'{f_name}/length_bins_hist.svg')
         plt.close()
         sns.histplot(data=axon_df, x='length bins', hue='celltype',fill=False,
-                 kde=False, element='step')
+                 kde=False, element='step', palette=ct_palette, stat='percent', linewidth=3)
+        plt.ylabel('percent of axons', fontsize=fontsize)
+        plt.xlabel('length bins [µm]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/length_bins_hist_perc.png')
         plt.savefig(f'{f_name}/length_bins_hist_perc.svg')
         plt.close()

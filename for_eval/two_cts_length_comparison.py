@@ -27,8 +27,8 @@ if __name__ == '__main__':
     global_params.wd = bio_params.working_dir()
     ct_dict = bio_params.ct_dict()
     use_gt = False
-    filter_syns = False
-    ct1 = 2
+    filter_syns = True
+    ct1 = 1
     ct2 = 4
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
@@ -36,12 +36,12 @@ if __name__ == '__main__':
     color_key = 'AxRdYwBev5'
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240226_j0251{version}_ax_lengths_comparison_{ct1_str}_{ct2_str}_nosyn_f{fontsize}"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240226_j0251{version}_ax_lengths_comparison_{ct1_str}_{ct2_str}_syn_f{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Comparison axon lengths', log_dir=f_name + '/logs/')
     if use_gt:
-        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv"
+        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv"
         #gt_path = 'cajal/nvmescratch/users/arother/202301_syconnv5_wd_tests/20231013_new_celltype_gt/231115_ar_j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv'
         gt = pd.read_csv(gt_path,names=["cellids", "celltype"])
         log.info(f'Ground truth cells from {gt_path} used for analysis')
@@ -274,7 +274,7 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/length_bins_hist_{ct1_str}_{ct2_str}.svg')
         plt.close()
         sns.histplot(data=axon_df, x='length bins', hue='celltype',fill=False,
-                 kde=False, element='step', linewidth = 3, fontsize = fontsize, stat = 'percent')
+                 kde=False, element='step', linewidth = 3, palette=ct_palette, stat = 'percent')
         plt.ylabel('percent of axons', fontsize = fontsize)
         plt.xlabel('length bins [µm]', fontsize=fontsize)
         plt.yticks(fontsize=fontsize)

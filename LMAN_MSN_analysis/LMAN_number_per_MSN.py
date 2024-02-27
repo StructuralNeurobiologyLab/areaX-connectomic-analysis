@@ -13,45 +13,52 @@ if __name__ == '__main__':
     import numpy as np
     from tqdm import tqdm
     import scipy
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
 
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
-    start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    version = 'v6'
+    bio_params = Analysis_Params(version=version)
+    global_params.wd = bio_params.working_dir()
+    ct_dict = bio_params.ct_dict()
     min_comp_len = 200
-    max_MSN_path_len = 7500
-    syn_prob = 0.8
+    min_comp_len_ax = 50
+    syn_prob = 0.6
     min_syn_size = 0.1
     msn_ct = 2
     lman_ct = 3
     gpi_ct = 7
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220809_j0251v4_LMAN_MSN_GP_est_mcl_%i_synprob_%.2f" % (
-    min_comp_len, syn_prob)
+    color_key = 'STNGPINTv6'
+    cls = CelltypeColors(ct_dict=ct_dict)
+    ct_palette = cls.ct_palette(color_key, num=False)
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
+                       f"240227_j0251{version}_lman_number_msn_mcl{min_comp_len}_max_{min_comp_len_ax}_syn{syn_prob}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('LMAN MSN connectivity estimate', log_dir=f_name + '/logs/')
-    log.info("min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %.1f, min_syn_size = %.1f" % (min_comp_len, max_MSN_path_len, syn_prob, min_syn_size))
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
+    log.info(f"min_comp_len ={min_comp_len} µm, min comp len ax = {min_comp_len_ax} µm, "
+             f"syn_prob = {syn_prob}, min_syn_size = {min_syn_size} µm")
 
     # 1st part of the analysis: get estimate on how many "complete" LMAN branches
     # project to one MSN and how many MSN one LMAN projects to
 
     log.info("Step 1/8: load suitable LMAN and MSN, filter for min_comp_len and max_path_len")
     # load full MSN and filter for min_comp_len, also filter out if total_comp_len > 7500 mm (likely glia merger)
-    LMAN_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/ax_LMA_dict.pkl")
-    LMAN_ids = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/LMAN_handpicked_arr.pkl")
-    MSN_ids  = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_arr.pkl")
-    MSN_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_MSN_dict.pkl")
-    MSN_ids = check_comp_lengths_ct(cellids = MSN_ids, fullcelldict = MSN_dict, min_comp_len = min_comp_len, axon_only = False, max_path_len = max_MSN_path_len)
-
-    time_stamps = [time.time()]
-    step_idents = ["load and filter cells"]
+    LMAN_dict = bio_params.load_cell_dict(lman_ct)
+    LMAN_ids = load_pkl2obj(f"{bio_params.file_locations}/LMAN_handpicked_arr.pkl")
+    MSN_dict = bio_params.load_cell_dict(msn_ct)
+    MSN_ids = np.array(list(MSN_dict.keys()))
+    known_mergers =bio_params.load_known_mergers()
+    merger_inds = np.in1d(MSN_ids, known_mergers) == False
+    MSN_ids = MSN_ids[merger_inds]
+    misclassified_asto_ids = bio_params.load_potential_astros()
+    astro_inds = np.in1d(MSN_ids, misclassified_asto_ids) == False
+    MSN_ids = MSN_ids[astro_inds]
+    MSN_ids = check_comp_lengths_ct(cellids=MSN_ids, fullcelldict=MSN_dict, min_comp_len=min_comp_len,
+                                    axon_only=False,
+                                    max_path_len=None)
 
     log.info("Step 2/8: filter synapses from suitable LMAN and MSN")
     #prefilter synapse caches from LMAN onto MSN synapses
@@ -69,9 +76,6 @@ if __name__ == '__main__':
     m_ids = m_ids[lmanids_inds]
     m_ssv_partners = m_ssv_partners[lmanids_inds]
     m_sizes = m_sizes[lmanids_inds]
-
-    time_stamps = [time.time()]
-    step_idents = ["filtered synapses"]
 
     log.info("Step 3/8: Create per cell dictionary for LMAN and MSN")
     #make per MSN dictionary of LMAN ids they are getting input from, number of LMAN
@@ -143,12 +147,9 @@ if __name__ == '__main__':
     log.info("Median number of LMAN per MSN = %.2f" % np.median(number_lman_permsn))
 
 
-    time_stamps = [time.time()]
-    step_idents = ["created per cell dictionaries for LMAN and MSN"]
-
     log.info("Step 4/8: Plot LMAN to MSN results")
-    msn_results = ResultsForPlotting(celltype = ct_dict[msn_ct], filename = f_name, dictionary = MSN_rec_dict)
-    lman_results = ResultsForPlotting(celltype=ct_dict[lman_ct], filename=f_name, dictionary=LMAN_proj_dict)
+    msn_results = ResultsForPlotting(celltype = ct_dict[msn_ct], filename = f_name, dictionary = MSN_rec_dict, color = ct_palette[ct_dict[msn_ct]])
+    lman_results = ResultsForPlotting(celltype=ct_dict[lman_ct], filename=f_name, dictionary=LMAN_proj_dict, color = ct_palette[ct_dict[lman_ct]])
 
     for key in MSN_rec_dict:
         if "ids" in key:
@@ -166,20 +167,17 @@ if __name__ == '__main__':
         else:
             lman_results.plot_hist(key, subcell="cell", cells=True)
 
-    time_stamps = [time.time()]
-    step_idents = ["plotted results for LMAN and MSN"]
 
     #2nd part of analysis: see how MSN from different LMANs project to GPi
 
     log.info("Step 5/8: load and filter GPi cells for min_comp_len")
-    GPi_ids = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_arr.pkl")
-    GPi_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/full_GPi_dict.pkl")
-    GPi_ids = check_comp_lengths_ct(cellids=GPi_ids, fullcelldict=GPi_dict, min_comp_len=min_comp_len, axon_only=False,
+    GPi_dict = bio_params.load_cell_dict(gpi_ct)
+    GPi_ids = np.array(list(GPi_dict.keys()))
+    merger_inds = np.in1d(GPi_ids, known_mergers) == False
+    GPi_ids = GPi_ids[merger_inds]
+    GPi_ids = check_comp_lengths_ct(cellids=GPi_ids, fullcelldict=GPi_dict, min_comp_len=min_comp_len,
+                                    axon_only=False,
                                     max_path_len=None)
-    time_stamps = [time.time()]
-    step_idents = ["filtered GPi cells"]
 
     log.info("Step 6/8: Filter MSN to GPi synapses")
     #prefilter synapses from MSN -> GP
@@ -201,9 +199,6 @@ if __name__ == '__main__':
     m_ids = m_ids[gpiids_inds]
     m_ssv_partners = m_ssv_partners[gpiids_inds]
     m_sizes = m_sizes[gpiids_inds]
-
-    time_stamps = [time.time()]
-    step_idents = ["filtered synapses"]
 
     log.info("Step 7/8: Create per cell dictionary for GPi, add GPi info to existing MSN, LMAN dicts")
     #create dictionary with GPi as keys to see how many MSNs they get input from and how many LMANs
@@ -250,7 +245,6 @@ if __name__ == '__main__':
     log.info("Average number of GPi per MSN = %.2f" % np.mean(number_gpi_permsn))
     log.info("Median number of MSNs per GPi = %.2f" % np.median(number_msn_pergpi))
     log.info("Median number of GPi per MSN = %.2f" % np.median(number_gpi_permsn))
-
 
     #compute highest percentage of MSN that go to one GP
     # compute number of GPi per LMAN
@@ -341,14 +335,10 @@ if __name__ == '__main__':
     lman_proj_pd = pd.DataFrame(LMAN_proj_dict)
     lman_proj_pd.to_csv("%s/lman_dict.csv" % f_name)
 
-
-    time_stamps = [time.time()]
-    step_idents = ["created per cell dictionary for GPi"]
-
     log.info("Step 8/8: Plot results of LMAN -> MSN -> GPi connection")
-    msn_results = ResultsForPlotting(celltype=ct_dict[msn_ct], filename=f_name, dictionary=MSN_proj_dict)
-    gpi_results = ResultsForPlotting(celltype=ct_dict[gpi_ct], filename=f_name, dictionary=GPi_rec_dict)
-    lman_results = ResultsForPlotting(celltype=ct_dict[lman_ct], filename=f_name, dictionary=LMAN_proj_dict)
+    msn_results = ResultsForPlotting(celltype=ct_dict[msn_ct], filename=f_name, dictionary=MSN_proj_dict, color = ct_palette[ct_dict[msn_ct]])
+    gpi_results = ResultsForPlotting(celltype=ct_dict[gpi_ct], filename=f_name, dictionary=GPi_rec_dict, color = ct_palette[ct_dict[gpi_ct]])
+    lman_results = ResultsForPlotting(celltype=ct_dict[lman_ct], filename=f_name, dictionary=LMAN_proj_dict, color = ct_palette[ct_dict[lman_ct]])
 
     for key in MSN_proj_dict:
         if "MSN ids" in key:
@@ -371,8 +361,5 @@ if __name__ == '__main__':
         if not "GPi" in key:
             continue
         lman_results.plot_hist(key, subcell="cells", cells=True)
-
-    time_stamps = [time.time()]
-    step_idents = ["GPi results plotted"]
 
     log.info("LMAN, MSN, GPi number estimate analysis done")

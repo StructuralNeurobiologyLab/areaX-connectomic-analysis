@@ -15,8 +15,8 @@ if __name__ == '__main__':
     #v6_wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     #v5_wd = '/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811'
 
-    version1 = 'v6'
-    version2 = 'v5'
+    version1 = 'v5'
+    version2 = 'v4'
     analysis_params1 = Analysis_Params(version = version1)
     v1_wd = analysis_params1.working_dir()
     v1_ct_dict = analysis_params1.ct_dict(with_glia = True)
@@ -28,12 +28,13 @@ if __name__ == '__main__':
     ct_key2 = analysis_params2.celltype_key()
     ct_certainty2 = analysis_params2.celltype_certainty_key()
 
-    color_key = 'TePkBrGlia'
-    ct_str = 'DA'
-    ct_num_1 = 0
-    ct_num_2 = 1
-    fontsize = 14
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240226_j0251{version1}_vs_{version2}_{ct_str}_cellids_{color_key}_f{fontsize}"
+
+    color_key = 'AxRdYwBev5'
+    ct_str = 'TAN'
+    ct_num_1 = 5
+    ct_num_2 = 5
+    fontsize = 20
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240227_j0251{version1}_vs_{version2}_{ct_str}_cellids_{color_key}_f{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
 
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     summary_pd = pd.DataFrame(columns = [version1, version2])
     #get certainties of celltypes
     v1_certainty = ssd_v1.load_numpy_data(ct_certainty1)
-    v2_certainty = ssd_v2.load_numpy_data(ct_certainty1)
+    v2_certainty = ssd_v2.load_numpy_data(ct_certainty2)
 
     #get celltype ids from both versions
     v1_ct_inds = v1_celltypes == ct_num_1
@@ -107,7 +108,7 @@ if __name__ == '__main__':
             stats_df.loc[f'ranksum {v2_unique_cts[gc[0]]} vs {v2_unique_cts[gc[1]]}', 'p-value'] = ranksum_res[1]
     stats_df.to_csv(f'{f_name}/stats_{ct_str}.csv')
     #plot according to celltypes
-    v2_ct_groups = v1_ids_df.groupby('celltype v5')
+    v2_ct_groups = v1_ids_df.groupby(f'celltype {version2}')
     per_ct_numbers_v2 = pd.DataFrame(columns = [f'celltype {version2}', 'number of cells', 'percent of cells'])
     per_ct_numbers_v2[f'celltype {version2}'] = v2_ct_groups.groups.keys()
     ct_numbers = np.array(v2_ct_groups.size())

@@ -112,13 +112,13 @@ if __name__ == '__main__':
     log.info('Created celltype array')
     log.info('Will start getting information to map axoness values to each cs')
     #get axoness information  for full cells and save it
-    #params = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
-    #comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, params)
-    #log.info('Per cell axoness information processed via multiprocessing, will now start writing it '
-    #         'in one numpy array.')
+    params = [[cellid, cs_ssv_ids, cs_ssv_coords, cs_ssv_partners] for cellid in full_cell_suitable_ids]
+    comp_output = start_multiprocess_imap(get_contact_size_axoness_per_cell, params)
+    log.info('Per cell axoness information processed via multiprocessing, will now start writing it '
+             'in one numpy array.')
     #write_obj2pkl(f'{analysis_params.file_locations}/perfullcell_axoness_cs_ssv_arrays.pkl', comp_output)
-    log.info('Load results from last run 04/09/23')
-    comp_output = load_pkl2obj(f'{analysis_params.file_locations}/perfullcell_axoness_cs_ssv_arrays.pkl')
+    #log.info('Load results from last run 04/09/23')
+    #comp_output = load_pkl2obj(f'{analysis_params.file_locations}/perfullcell_axoness_cs_ssv_arrays.pkl')
     axon_output = [co[0] for co in comp_output]
     dendrite_output = [co[1] for co in comp_output]
     soma_output = [co[2] for co in comp_output]

@@ -7,17 +7,17 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from analysis_params import Analysis_Params
 
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     version = 'v6'
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    analysis_params = Analysis_Params(version=version)
+    global_params.wd = analysis_params.working_dir()
     f_name = analysis_params.file_locations
     log = initialize_logging('sort single vesicles into celltypes',
                              log_dir=f_name + '/logs/')
     with_glia = True
     log.info(f'Sort single vesicles into celltypes v1 of single vesicles, with_glia = {with_glia}')
 
-    #ves_wd = f'{global_params.wd}/single_vesicles/multi_class_pred/'
-    ves_wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_organell_seg/231216_single_vesicles_slurm/'
+    ves_wd = f'{global_params.wd}/single_vesicles/multi_class_pred/'
+    #ves_wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_organell_seg/231216_single_vesicles_slurm/'
     log.info(f'wd = {ves_wd}')
     log.info('Load single vesicle data')
     single_ves_ids = np.load(f'{ves_wd}/ids.npy')

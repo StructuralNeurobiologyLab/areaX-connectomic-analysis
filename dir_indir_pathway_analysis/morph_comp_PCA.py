@@ -31,14 +31,14 @@ if __name__ == '__main__':
     min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    fontsize_jointplot = 14
+    fontsize_jointplot = 20
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
     cts = [9, 10, 11]
     cts_str = [ct_dict[ct] for ct in cts]
     color_key = 'RdTeINTv6'
     n_comps_PCA = 1
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_{cts_str}_morph_comp_radius_spiness_examplecells_mcl%i_fs%i_med%i_{color_key}_nc{n_comps_PCA}" % \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240405_j0251{version}_{cts_str}_morph_comp_radius_spiness_examplecells_mcl%i_fs%i_med%i_{color_key}_nc{n_comps_PCA}" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

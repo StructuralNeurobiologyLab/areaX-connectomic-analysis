@@ -19,19 +19,21 @@ if __name__ == '__main__':
     from itertools import combinations
     from sklearn.linear_model import LinearRegression
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    start = time.time()
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
      #          10: "NGF"}
     version = 'v6'
     with_glia = False
     min_comp_len_cell = 200
-    min_comp_len_ax = 50
+    min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     full_cells_only = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/231221_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fc_only_no_msn" % (
-        min_comp_len_cell, min_comp_len_ax, color_key)
+    analysis_params = Analysis_Params(version = version)
+    ct_dict = analysis_params.ct_dict(with_glia=with_glia)
+    global_params.wd = analysis_params.working_dir()
+    fontsize = 20
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240313_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fc_only_fs%i" % (
+        min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('get single vesicle density per celltype', log_dir=f_name + '/logs/')
@@ -40,8 +42,6 @@ if __name__ == '__main__':
             min_comp_len_cell, min_comp_len_ax, color_key))
     if full_cells_only:
         log.info('Full cells only')
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
-    ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     known_mergers = analysis_params.load_known_mergers()
     misclassified_asto_ids = analysis_params.load_potential_astros()
     axon_cts = analysis_params.axon_cts()
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         glia_cts = analysis_params._glia_cts
     if full_cells_only:
         ct_types = analysis_params.load_celltypes_full_cells()
-        ct_types = ct_types[1:]
+        #ct_types = ct_types[1:]
     else:
         ct_types = np.arange(0, num_cts)
     firing_rate_dict = {'DA': 15, 'MSN': 1.58, 'LMAN': 34.9, 'HVC': 1, 'TAN': 65.1, 'GPe': 135, 'GPi': 258, 'FS': 19.1, 'LTS': 35.8}
@@ -116,11 +116,11 @@ if __name__ == '__main__':
         ct_ves_map2ssvids = ct_ves_map2ssvids[ct_ind]
         #get percell vesicle density
         if ct in axon_cts:
-            input = [[cellid, ct_ves_map2ssvids, all_cell_dict[ct], True] for cellid in suitable_ids_dict[ct]]
+            input = [[cellid, ct_ves_map2ssvids, all_cell_dict[ct][cellid], True] for cellid in suitable_ids_dict[ct]]
             output = start_multiprocess_imap(get_ves_density_presaved, input)
         else:
             ct_ves_axoness = ct_ves_axoness[ct_ind]
-            input = [[cellid, ct_ves_map2ssvids, ct_ves_axoness, all_cell_dict[ct]] for cellid in suitable_ids_dict[ct]]
+            input = [[cellid, ct_ves_map2ssvids, ct_ves_axoness, all_cell_dict[ct][cellid]] for cellid in suitable_ids_dict[ct]]
             output = start_multiprocess_imap(get_ves_comp_density_presaved, input)
         axon_ves_density = np.array(output)
         mean_axo_den = np.mean(axon_ves_density)
@@ -165,9 +165,12 @@ if __name__ == '__main__':
             #plot with increasing median as boxplot and violinplot
             sns.boxplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, order=median_order)
             plt.title(key)
+            plt.ylabel(f'{key} [1/µm]', fontsize = fontsize)
+            plt.xlabel('celltype', fontsize = fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/{key}_box.png')
             plt.savefig(f'{f_name}/{key}_box.svg')
-            plt.ylabel(f'{key} [1/µm]')
             plt.close()
             #sns.stripplot(data=percell_mito_df, x='celltype', y=key, color='black', alpha=0.2,
             #              dodge=True, size=2, order=median_order)
@@ -190,8 +193,12 @@ if __name__ == '__main__':
     for key in overview_df.keys():
         if 'mean' in key and 'ves' in key:
             sns.scatterplot(data= known_values_only_ov, x = key, y = 'mean firing rate singing', color = 'black')
-            plt.xlabel(f'{key} [1/µm]')
-            plt.ylabel('mean firing rate singing [Hz]')
+            for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
+                plt.text(x = x, y = y + 10, s = t)
+            plt.xlabel(f'{key} [1/µm]', fontsize = fontsize)
+            plt.ylabel('mean firing rate singing [Hz]', fontsize = fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.svg')
             plt.close()
@@ -214,8 +221,12 @@ if __name__ == '__main__':
                 firing_pred = coefficient*key_ct_value + intercept
                 overview_df.loc[key_ct_ind, 'mean firing rate singing'] = firing_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', color='black')
-            plt.xlabel(f'{key} [1/µm]')
-            plt.ylabel('mean firing rate singing [Hz]')
+            for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
+                plt.text(x = x, y = y + 10, s = t)
+            plt.xlabel(f'{key} [1/µm]', fontsize = fontsize)
+            plt.ylabel('mean firing rate singing [Hz]', fontsize = fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/{key}_firing_rate_pred.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred.svg')
             plt.close()
@@ -224,8 +235,12 @@ if __name__ == '__main__':
             fs_ind = np.where(overview_df['celltype'] == 'FS')[0]
             overview_df.loc[fs_ind, key] = fs_mito_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', color='black')
-            plt.xlabel(f'{key} [1/µm]')
-            plt.ylabel('mean firing rate singing [Hz]')
+            for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
+                plt.text(x = x, y = y + 10, s = t)
+            plt.xlabel(f'{key} [1/µm]', fontsize = fontsize)
+            plt.ylabel('mean firing rate singing [Hz]', fontsize = fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS.svg')
             plt.close()

@@ -18,27 +18,26 @@ if __name__ == '__main__':
 
 
     #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
-    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     version = 'v6'
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
+    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     ct_dict = bio_params.ct_dict()
     min_comp_len = 200
-    min_comp_len_ax = 50
     syn_prob = 0.6
     min_syn_size = 0.1
-    msn_ct = 2
-    lman_ct = 3
+    msn_ct = 3
+    lman_ct = 1
     gpi_ct = 7
     color_key = 'STNGPINTv6'
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
-                       f"240227_j0251{version}_lman_number_msn_mcl{min_comp_len}_max_{min_comp_len_ax}_syn{syn_prob}"
+                       f"240227_j0251{version}_lman_number_msn_mcl{min_comp_len}_syn{syn_prob}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('LMAN MSN connectivity estimate', log_dir=f_name + '/logs/')
-    log.info(f"min_comp_len ={min_comp_len} µm, min comp len ax = {min_comp_len_ax} µm, "
+    log.info(f"min_comp_len ={min_comp_len} µm, use handpicked LMAN axons, "
              f"syn_prob = {syn_prob}, min_syn_size = {min_syn_size} µm")
 
     # 1st part of the analysis: get estimate on how many "complete" LMAN branches
@@ -48,6 +47,7 @@ if __name__ == '__main__':
     # load full MSN and filter for min_comp_len, also filter out if total_comp_len > 7500 mm (likely glia merger)
     LMAN_dict = bio_params.load_cell_dict(lman_ct)
     LMAN_ids = load_pkl2obj(f"{bio_params.file_locations}/LMAN_handpicked_arr.pkl")
+    log.info(f'LMAN ids loaded from {bio_params.file_locations}/LMAN_handpicked_arr.pkl')
     MSN_dict = bio_params.load_cell_dict(msn_ct)
     MSN_ids = np.array(list(MSN_dict.keys()))
     known_mergers =bio_params.load_known_mergers()
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     log.info("Step 2/8: filter synapses from suitable LMAN and MSN")
     #prefilter synapse caches from LMAN onto MSN synapses
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv, pre_cts = [lman_ct],
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv=sd_synssv, pre_cts = [lman_ct],
                                                                                                         post_cts = [msn_ct], syn_prob_thresh = syn_prob,
                                                                                                         min_syn_size = min_syn_size, axo_den_so = True)
     #filter out synapses that are not from LMAN or MSN ids
@@ -181,7 +181,7 @@ if __name__ == '__main__':
 
     log.info("Step 6/8: Filter MSN to GPi synapses")
     #prefilter synapses from MSN -> GP
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv= sd_synssv,
                                                                                                         pre_cts=[msn_ct],
                                                                                                         post_cts=[gpi_ct],
                                                                                                         syn_prob_thresh=syn_prob,
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     GPi_rec_dict = {"GPi ids": unique_gpi_ssvs, "number of synapses from MSN": gpi_syn_number, "sum size synapses from MSN": gpi_syn_sumsizes,
                       "number MSN cells": number_msn_pergpi,
                       "number of synapses per MSN": gpi_syn_number / number_msn_pergpi,
-                      "sum size synapses per MSM": gpi_syn_sumsizes / number_msn_pergpi}
+                      "sum size synapses per MSN": gpi_syn_sumsizes / number_msn_pergpi}
 
     MSN_proj_dict_percell = {id: {"GPi ids": np.unique(gpi_ssvsids[permsn_gpi_groups[i]]),
                                    "number MSN cells": len(np.unique(gpi_ssvsids[permsn_gpi_groups[i]]))} for

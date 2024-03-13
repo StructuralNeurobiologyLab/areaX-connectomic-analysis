@@ -244,14 +244,21 @@ def get_myelin_fraction(cellid, cell = None, min_comp_len = 100, load_skeleton =
 def get_percell_organell_volume_density(input):
     '''
     calculates volume density per cell given numpy arrays per cell.
-    :param input: cellid, numpy array with all organell ids, numpy array with all volumes of organell
+    :param input: cellid, numpy array with all organell ids, numpy array with all volumes of organell,
+    cell_dict is per cell dictionary with presaved values like axon_length, proj_axon (True if DA, HVC, LMAN)
     '''
-    cellid, cached_so_ids, cached_so_volume = input
+    cellid, cached_so_ids, cached_so_volume, cell_dict, proj_axon = input
     cell = SuperSegmentationObject(cellid)
     segmentation_object_ids = cell.mi_ids
     sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
     organell_volumes = np.sum(cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling))  # convert to cubic µm
-    cell_length = get_cell_length(cellid)
+    if cell_dict is None:
+        cell_length = get_cell_length(cellid)
+    else:
+        if proj_axon:
+            cell_length = cell_dict['axon length']
+        else:
+            cell_length = cell_dict["complete pathlength"]
     volume_density = organell_volumes/ cell_length
     return volume_density
 
@@ -662,7 +669,7 @@ def get_dendrite_info_cell(input):
     '''
     cellid, min_comp_len = input
     if min_comp_len is None:
-        min_comp_len = 200
+        min_comp_len = 0
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
@@ -749,36 +756,44 @@ def get_mito_density_presaved(params):
     '''
     Get mito density from presaved mito arrays with cellid. If proj_axon = True,
     uses 'axon_length' and not total length for volume density
-    :param params: cellid, mi_ids, mi_ssv_ids, mi_sizes, full_cell_dict, proj_axon
+    :param params: cellid, mi_ids, mi_ssv_ids, mi_sizes, full_cell_dict (per cell), proj_axon
     :return: mito_volume_density
     '''
 
+    scaling = [10, 10, 25]
     cellid, mi_ssv_ids, mi_sizes, full_cell_dict, proj_axon = params
     cell_mi_inds = np.in1d(mi_ssv_ids, cellid)
     cell_mi_sizes = mi_sizes[cell_mi_inds]
     if proj_axon:
-        length = full_cell_dict[cellid]['axon length']
+        length = full_cell_dict['axon length']
     else:
-        length = full_cell_dict[cellid]["complete pathlength"]
-    mito_volume_density = np.sum(cell_mi_sizes)/ length
+        length = full_cell_dict["complete pathlength"]
+    #convert to µm³
+    cell_mi_volume = np.sum(cell_mi_sizes) *10 ** (-9) * np.prod(scaling)
+    mito_volume_density = cell_mi_volume/ length
     return mito_volume_density
 
 def get_mito_comp_density_presaved(params):
     '''
         Get mito density from presaved mito arrays with cellid for each compartment and the complete cell.
-        :param params: cellid, mi_ids, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict
+        :param params: cellid, mi_ids, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict (per cell)
         :return: mito_volume_density for axon, dendrite and full cell
         '''
+    scaling = [10, 10, 25]
     cellid, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict = params
     cell_mi_inds = np.in1d(mi_ssv_ids, cellid)
     cell_mi_sizes = mi_sizes[cell_mi_inds]
     cell_mi_axoness = mi_axoness[cell_mi_inds]
-    full_length = full_cell_dict[cellid]["complete pathlength"]
-    full_mito_volume_density = np.sum(cell_mi_sizes) / full_length
+    full_length = full_cell_dict["complete pathlength"]
+    #convert t0 µm³
+    cell_mi_volume = np.sum(cell_mi_sizes) * 10 ** (-9) * np.prod(scaling)
+    full_mito_volume_density = cell_mi_volume / full_length
     axon_mito_sizes = cell_mi_sizes[cell_mi_axoness == 1]
     den_mito_sizes = cell_mi_sizes[cell_mi_axoness == 0]
-    axon_mito_volume_density = np.sum(axon_mito_sizes) / full_cell_dict[cellid]['axon length']
-    den_mito_volume_density = np.sum(den_mito_sizes) / full_cell_dict[cellid]['dendrite length']
+    axon_mi_volume = np.sum(axon_mito_sizes) * 10 ** (-9) * np.prod(scaling)
+    den_mi_volume = np.sum(den_mito_sizes) * 10 ** (-9) * np.prod(scaling)
+    axon_mito_volume_density = axon_mi_volume / full_cell_dict['axon length']
+    den_mito_volume_density = den_mi_volume/ full_cell_dict['dendrite length']
     return [axon_mito_volume_density, den_mito_volume_density, full_mito_volume_density]
 
 

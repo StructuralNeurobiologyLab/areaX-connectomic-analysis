@@ -22,14 +22,14 @@ if __name__ == '__main__':
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
-    version = 'v6'
+    version = 'v4'
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
     ct_dict = bio_params.ct_dict()
     use_gt = False
     filter_syns = True
-    ct1 = 1
-    ct2 = 4
+    ct1 = 4
+    ct2 = 0
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     fontsize = 20

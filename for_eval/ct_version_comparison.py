@@ -15,7 +15,7 @@ if __name__ == '__main__':
     #v6_wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     #v5_wd = '/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811'
 
-    version1 = 'v5'
+    version1 = 'v6'
     version2 = 'v4'
     analysis_params1 = Analysis_Params(version = version1)
     v1_wd = analysis_params1.working_dir()
@@ -30,9 +30,9 @@ if __name__ == '__main__':
 
 
     color_key = 'AxRdYwBev5'
-    ct_str = 'TAN'
-    ct_num_1 = 5
-    ct_num_2 = 5
+    ct_str = 'HVC'
+    ct_num_1 = 2
+    ct_num_2 = 4
     fontsize = 20
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240227_j0251{version1}_vs_{version2}_{ct_str}_cellids_{color_key}_f{fontsize}"
     if not os.path.exists(f_name):
@@ -122,6 +122,7 @@ if __name__ == '__main__':
     plt.yticks(fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/number_{ct_str}_{version1}_{version2}_cts.png')
+    plt.savefig(f'{f_name}/number_{ct_str}_{version1}_{version2}_cts.svg')
     plt.close()
     sns.barplot(data = per_ct_numbers_v2, x=f'celltype {version2}', y = 'percent of cells', palette=ct_palette, order=plot_order_cts)
     plt.ylabel('percent of cells', fontsize=fontsize)
@@ -129,6 +130,7 @@ if __name__ == '__main__':
     plt.yticks(fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/perc_{ct_str}_{version1}_{version2}_cts.png')
+    plt.savefig(f'{f_name}/perc_{ct_str}_{version1}_{version2}_cts.svg')
     plt.close()
     #if seaborn 0.13.0 in environment
     #sns.countplot(data=v6_hvc_ids_df, x='celltype v5', palette=ct_palette, stat='percent')
@@ -143,6 +145,7 @@ if __name__ == '__main__':
     plt.yticks(fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/certainty_{ct_str}_{version2}_cts.png')
+    plt.savefig(f'{f_name}/certainty_{ct_str}_{version2}_cts.svg')
     plt.close()
     sns.boxplot(data=v1_ids_df, x=f'celltype {version2}', y=f'certainty {version1}', order=plot_order_cts, palette=ct_palette)
     plt.ylabel(f'certainty {version1}', fontsize=fontsize)
@@ -150,4 +153,5 @@ if __name__ == '__main__':
     plt.yticks(fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/certainty_{ct_str}_{version1}_cts.png')
+    plt.savefig(f'{f_name}/certainty_{ct_str}_{version1}_cts.svg')
     plt.close()

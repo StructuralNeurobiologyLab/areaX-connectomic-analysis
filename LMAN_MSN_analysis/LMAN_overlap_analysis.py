@@ -1,7 +1,7 @@
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import remove_myelinated_part_axon, compute_overlap_skeleton
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import remove_myelinated_part_axon, compute_overlap_skeleton
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
 
     import time
     from syconn.handler.config import initialize_logging
@@ -16,32 +16,31 @@ if __name__ == '__main__':
     from scipy.stats import ranksums
     import matplotlib.pyplot as plt
     import seaborn as sns
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
 
-
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
-    start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    version = 'v6'
+    bio_params = Analysis_Params(version=version)
+    global_params.wd = bio_params.working_dir()
+    ct_dict = bio_params.ct_dict()
     overlap_threshold = 0.75
     non_overlap_threshold = 0.001
     kdtree_radius = 50 #µm
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220817_j0251v4_LMAN_overlap_analysis_ot_%.2f_not_%.3f_kdtr_%i" % (
-    overlap_threshold, non_overlap_threshold, kdtree_radius)
+    lman_ct = 1
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
+             f"240227_j0251{version}_lman_overlap_analyses_ov{overlap_threshold}_nov{non_overlap_threshold}_kdtr{kdtree_radius}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('LMAN overlap analysis', log_dir=f_name + '/logs/')
     log.info("overlap threshold = %.2f, non-overlap threshold = %.3f, kdtree radius = %i" % (overlap_threshold, non_overlap_threshold, kdtree_radius))
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
 
     #anaylsis to see if overlapping LMAN axons target same MSN cells
     #also if there are differences between overlapping and non-overlapping lman
 
     #1st part of analysis: divide LMAN axons in overlapping and non-overlapping
     log.info("Step 1/3: Divide LMAN in overlapping and non-overlapping")
-    LMAN_dict = load_pkl2obj(
-        "/wholebrain/scratch/arother/j0251v4_prep/ax_LMA_dict.pkl")
-    LMAN_ids = load_pkl2obj("/wholebrain/scratch/arother/j0251v4_prep/LMAN_handpicked_arr.pkl")
+    LMAN_dict = bio_params.load_cell_dict(lman_ct)
+    LMAN_ids = load_pkl2obj(f"{bio_params.file_locations}/LMAN_handpicked_arr.pkl")
+    log.info(f'LMAN ids loaded from {bio_params.file_locations}/LMAN_handpicked_arr.pkl')
     #iterate over lmans to remove myelinated parts of axon
     p = pool.Pool()
     node_positions = p.map(remove_myelinated_part_axon, tqdm(LMAN_ids))
@@ -83,17 +82,16 @@ if __name__ == '__main__':
 
     log.info("%i overlap pairs were found" % len(overlap_pairs))
     log.info("%i non-overlap pairs were found" % len(non_overlap_pairs))
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
 
     #2nd part of analysis: compare number of same MSNs between overlapping LMAN
     #also do this for non-overlapping LMAN
     log.info("Step 2/3: Compare MSN of overlapping and non-overlapping MSN")
-    syn_prob = 0.8
+    syn_prob = 0.6
     mcl = 200
     #load connectivity dicts
-    LMAN_proj_dict = load_pkl2obj("wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220809_j0251v4_LMAN_MSN_GP_est_mcl_%i_synprob_%.2f/lman_dict_percell.pkl" % (
-    mcl, syn_prob))
+    LMAN_proj_dict = load_pkl2obj(
+        f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
+        f"240227_j0251{version}_lman_number_msn_mcl{mcl}_syn{syn_prob}/lman_dict_percell.pkl")
     log.info("LMAN proj dict was loaded with min comp len = %i, syn_prob = %.2f" % (mcl, syn_prob))
     #comapare overlapping LMAN
     shared_msn_perc_overlap = np.zeros(len(overlap_pairs))

@@ -3,7 +3,7 @@
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct,  filter_synapse_caches_general
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -21,15 +21,15 @@ if __name__ == '__main__':
     import scipy.stats
     from itertools import combinations
 
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
-    start = time.time()
+    #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
      #          10: "NGF"}
     version = 'v6'
-    analysis_params = Analysis_Params(working_dir = global_params.wd, version = version)
+    analysis_params = Analysis_Params(version = version)
+    global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict(with_glia=False)
-    min_comp_len_cell = 500
-    min_comp_len_ax = 500
+    min_comp_len_cell = 200
+    min_comp_len_ax = 200
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/231221_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240311_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -47,8 +47,6 @@ if __name__ == '__main__':
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, min_syn_size = %.1f, syn_prob_thresh = %.1f, distance threshold to membrane = %s nm, "
         "distance threshold to synapse = %i nm, distance threshold for not at synapse = %i nm, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, min_syn_size, syn_prob_thresh, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key))
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
     known_mergers = analysis_params.load_known_mergers()
     log.info("Step 1/4: synapse segmentation dataset")
 
@@ -73,6 +71,11 @@ if __name__ == '__main__':
     median_plotting_df = pd.DataFrame(columns = ['celltype', 'vesicle density', 'location'], index=range(num_cts*2))
 
     log.info('Step 3/4 Get information for vesicles close to membrane and synapse for all celltypes')
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = filter_synapse_caches_general(
+        sd_synssv,
+        syn_prob_thresh=syn_prob_thresh,
+        min_syn_size=min_syn_size)
+    synapse_cache = [m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob]
     for ct in tqdm(range(num_cts)):
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
@@ -97,13 +100,13 @@ if __name__ == '__main__':
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
         log.info('Prefilter synapses for celltype')
         #filter synapses to only have specific celltype
-        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
-                                                                                                            pre_cts=[
-                                                                                                                ct],
-                                                                                                            post_cts=None,
-                                                                                                            syn_prob_thresh=syn_prob_thresh,
-                                                                                                            min_syn_size=min_syn_size,
-                                                                                                            axo_den_so=True)
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
+            pre_cts=[ct],
+            post_cts=None,
+            syn_prob_thresh=None,
+            min_syn_size=None,
+            axo_den_so=True,
+            synapses_caches=synapse_cache)
         #filter so that only filtered cellids are included and are all presynaptic
         ct_inds = np.in1d(m_ssv_partners, cellids).reshape(len(m_ssv_partners), 2)
         comp_inds = np.in1d(m_axs, 1).reshape(len(m_ssv_partners), 2)
@@ -171,11 +174,11 @@ if __name__ == '__main__':
         log.info(f'{ct_str} cells have a median median fraction of membrane-close vesicles '
                  f'not at synapses of {median_fraction:.2f} ')
 
-    log.info('Step 4/5 calculate statistics')
-    stats_combinations = combinations(np.arange(num_cts), 2)
-    columns = ['Fraction of non- synaptic vesicles', 'Density non-synaptic vesicles', 'Density synaptic vesicles']
-    stats_comb_list = np.array([c for c in stats_combinations])
-    stats_results = pd.DataFrame(columns = columns, index = np.hstack(['Kruskal', stats_comb_list]))
+    #log.info('Step 4/5 calculate statistics')
+    #stats_combinations = combinations(np.arange(num_cts), 2)
+    #columns = ['Fraction of non- synaptic vesicles', 'Density non-synaptic vesicles', 'Density synaptic vesicles']
+    #stats_comb_list = np.array([c for c in stats_combinations])
+    #stats_results = pd.DataFrame(columns = columns, index = np.hstack(['Kruskal', stats_comb_list]))
 
 
     log.info('Step 5/5: Plot results')

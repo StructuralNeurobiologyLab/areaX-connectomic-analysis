@@ -32,18 +32,18 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGPINTv6'
-    post_ct = 11
+    post_ct = 3
     post_ct_str = ct_dict[post_ct]
     #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd, TeBk', 'TeGy'}
     comp_color_key = 'TeGy'
     save_svg = True
-    fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
+    fontsize = 14
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240228_j0251{version}_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
     post_ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key, comp_color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
-    cts_for_loading = [1, 2, 3, 6, 7, 9, 10, 11]
+    cts_for_loading = [0, 1, 2, 3, 10, 11]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -146,6 +146,7 @@ if __name__ == '__main__':
             end_ind = start_ind + len_comp_percell - 1
             all_comps_results_dict_percell.loc[start_ind: end_ind, 'compartment'] = compartment
             all_comps_results_dict_percell.loc[start_ind: end_ind, 'celltype'] = ct_str
+            all_comps_results_dict_percell.loc[start_ind:end_ind, 'cellid'] = percell_params[-1]
             for iy in range(len(syn_params)):
                 percell_params_comp = percell_params[iy][compartment].astype(float)
                 all_comps_results_dict.loc[ind_all_syns, param_titles[iy]] = syn_params[iy][compartment]

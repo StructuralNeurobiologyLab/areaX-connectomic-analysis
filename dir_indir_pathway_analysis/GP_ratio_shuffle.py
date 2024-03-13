@@ -29,7 +29,8 @@ if __name__ == '__main__':
     gpe_ct = 6
     gpi_ct = 7
     n_it = 3
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240223_j0251v5_MSN_GP_ratio_shuffle_it%i" % (n_it)
+    fontsize = 20
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240311_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -38,10 +39,10 @@ if __name__ == '__main__':
 
     # load information about MSN groups and GP ratio
     kde = True
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f14" % (
+    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240229_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f20" % (
         ct_dict[msn_ct], min_comp_len, syn_prob, kde)
     log.info(f'Use morph parameters from {f_name_saving1}')
-    msn_result_df = pd.read_csv(f'{f_name_saving1}/MSN_spine_density_GPratio.csv', index_col=0)
+    msn_result_df = pd.read_csv(f'{f_name_saving1}/MSN_morph_GPratio.csv', index_col=0)
     np.random.seed(42)
 
     #load information about GP cells
@@ -125,16 +126,20 @@ if __name__ == '__main__':
         for i in range(n_it):
             sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{sc} {i}', palette=gp_palette, common_norm=False,
                          fill=False, element="step", linewidth=3, legend=True, stat='percent')
-            plt.ylabel('% of synapses')
-            plt.xlabel('synaptic mesh area [µm²]')
+            plt.ylabel('% of synapses', fontsize = fontsize)
+            plt.xlabel('synaptic mesh area [µm²]', fontsize = fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
             plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_{i}_hist_perc.png')
             plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_{i}_hist_perc.svg')
             plt.title(sc)
             plt.close()
             sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{sc} {i}', palette=gp_palette, common_norm=False,
                          fill=False, element="step", linewidth=3, legend=True, log_scale=True, stat='percent')
-            plt.ylabel('% of synapses')
-            plt.xlabel('synaptic mesh area [µm²]')
+            plt.ylabel('% of synapses', fontsize = fontsize)
+            plt.xlabel('synaptic mesh area [µm²]', fontsize = fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
             plt.title(sc)
             plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_{i}_hist_log_perc.png')
             plt.savefig(f'{f_name}/synsizes_to_GP_{sc}_{i}_hist_log_perc.svg')
@@ -206,8 +211,10 @@ if __name__ == '__main__':
         it_shuffle_df = shuffle_df[shuffle_df['iteration'] == i]
         sns.histplot(x='GP ratio sum syn area', data=it_shuffle_df, hue='shuffle category', palette=cat_palette, common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of cells')
-        plt.xlabel('GPi/(GPe + GPi) syn area')
+        plt.ylabel('% of cells', fontsize = fontsize)
+        plt.xlabel('GPi/(GPe + GPi) syn area', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.title(f'GP area ratio with real synapse sizes it {i}')
         plt.savefig(f'{f_name}/GP_area_ratio_cats_{i}_hist_perc.png')
         plt.savefig(f'{f_name}/GP_area_ratio_cats_{i}_hist_perc.svg')
@@ -215,8 +222,10 @@ if __name__ == '__main__':
         sns.histplot(x='GP ratio uni syn area', data=it_shuffle_df, hue='shuffle category', palette=cat_palette,
                      common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of cells')
-        plt.xlabel('GPi/(GPe + GPi) syn area with median syn size')
+        plt.ylabel('% of cells', fontsize = fontsize)
+        plt.xlabel('GPi/(GPe + GPi) syn area with median syn size', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.title(f'GP area ratio with univariat synapse size {i}')
         plt.savefig(f'{f_name}/GP_uni_ratio_cats_{i}_hist_perc.png')
         plt.savefig(f'{f_name}/GP_uni_ratio_cats_{i}_hist_perc.svg')
@@ -230,8 +239,10 @@ if __name__ == '__main__':
         sns.histplot(x='GP ratio sum syn area', data=it_shuffle_df_spec, hue='shuffle category', palette=cat_palette,
                      common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of cells')
-        plt.xlabel('GPi/(GPe + GPi) syn area')
+        plt.ylabel('% of cells', fontsize = fontsize)
+        plt.xlabel('GPi/(GPe + GPi) syn area', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.title(f'GP area ratio with real synapse sizes it {i}')
         plt.savefig(f'{f_name}/GP_area_ratio_cats_{i}_synratio_hist_perc.png')
         plt.savefig(f'{f_name}/GP_area_ratio_cats_{i}_synratio_hist_perc.svg')
@@ -245,8 +256,10 @@ if __name__ == '__main__':
         sns.histplot(x='GP ratio sum syn area', data=sc_shuffle_df, hue='iteration', palette=it_palette,
                      common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of cells')
-        plt.xlabel('GPi/(GPe + GPi) syn area')
+        plt.ylabel('% of cells', fontsize = fontsize)
+        plt.xlabel('GPi/(GPe + GPi) syn area', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.title(f'GP area ratio with real synapse sizes {sc}')
         plt.savefig(f'{f_name}/GP_area_ratio_{sc}_its_hist_perc.png')
         plt.savefig(f'{f_name}/GP_area_ratio_{sc}_its_hist_perc.svg')
@@ -254,8 +267,10 @@ if __name__ == '__main__':
         sns.histplot(x='GP ratio uni syn area', data=sc_shuffle_df, hue='iteration', palette=it_palette,
                      common_norm=False,
                      fill=False, element="step", linewidth=3, legend=True, stat='percent')
-        plt.ylabel('% of cells')
-        plt.xlabel('GPi/(GPe + GPi) syn area with median syn size')
+        plt.ylabel('% of cells', fontsize = fontsize)
+        plt.xlabel('GPi/(GPe + GPi) syn area with median syn size', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.title(f'GP area ratio with univariat synapse size {sc}')
         plt.savefig(f'{f_name}/GP_uni_ratio_{sc}_its_hist_perc.png')
         plt.savefig(f'{f_name}/GP_uni_ratio_{sc}_its_hist_perc.svg')

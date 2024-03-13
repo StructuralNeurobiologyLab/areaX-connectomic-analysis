@@ -8,17 +8,17 @@ if __name__ == '__main__':
     from syconn.reps.segmentation import SegmentationDataset
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+    #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     version = 'v6'
     with_glia = False
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v6')
+    analysis_params = Analysis_Params(version='v6')
+    global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     f_name = analysis_params.file_locations
-    log = initialize_logging('axoness full celltypes',
+    log = initialize_logging('axoness proj axs',
                              log_dir=f_name + '/logs/')
-    log.info(f'Cache axoness, cellid of celltypes that are not projecting axons (DA, LMAN, HVC), with_glia = {with_glia}')
+    log.info(f'Cache axoness, cellid of celltypes that are projecting axons (DA, LMAN, HVC), with_glia = {with_glia}')
     log.info('For projecting axons, only map cellids to organelles')
-    log.info('Cache only for full cells')
     #only use celltypes that are not projecting axons
     num_cts = analysis_params.num_cts(with_glia=with_glia)
     cache_name = analysis_params.file_locations
@@ -30,9 +30,11 @@ if __name__ == '__main__':
     mi_ids = sd_mi.ids
     mi_coords = sd_mi.load_numpy_data('rep_coord')
     mi_sizes = sd_mi.load_numpy_data('size')
-    ct_types = np.arange(0, num_cts)[::-1]
+    ct_types = np.arange(0, num_cts)
     for ct in ct_types:
         log.info(f'Now processing celltype {ct_dict[ct]}')
+        if ct > 2:
+            break
         if ct in axon_cts:
             log.info('Get cellid for each mito in cells')
             cell_dict = analysis_params.load_cell_dict(ct)

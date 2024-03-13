@@ -20,24 +20,24 @@ if __name__ == '__main__':
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
-    version = 'v4'
+    version = 'v6'
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
     ct_dict = bio_params.ct_dict()
-    use_gt = False
-    filter_syns = True
-    color_key = 'AxRdYwBev5'
+    use_gt = True
+    filter_syns = False
+    color_key = 'AxRdYwBev6'
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240226_j0251{version}_ax_fraglengths_syns_f{fontsize}"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240301_j0251{version}_ax_fraglengths_gt_f{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
     if use_gt:
         #for gt: agglo2 uses v4 (11 neuron classes, no glia, no fragments), gt v5 (manually checked gt for mergers, add fragment class + some astros)
         #v5 wd uses v6: fragment class, astros, oligo + microglia, v6 wd: v7: INT1⁻3 instead of FS, NGF, + migrating neurons; add short axon fragments
-        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv"
+        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv"
         #gt_path = 'cajal/nvmescratch/users/arother/202301_syconnv5_wd_tests/20231013_new_celltype_gt/231115_ar_j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv'
         gt = pd.read_csv(gt_path,names=["cellids", "celltype"])
         log.info(f'Ground truth cells from {gt_path} used for analysis')
@@ -271,12 +271,33 @@ if __name__ == '__main__':
         axon_df['lengths bins'] = length_cats
         axon_df.to_csv(f'{f_name}/proj_axon_lengths.csv')
         length_sizes_df = pd.DataFrame(columns=['HVC', 'LMAN', 'DA'], index = cats)
-        for ax_ct in ax_cts:
+        num_cats = len(cats) - 1
+        length_sizes_bins_plotting = pd.DataFrame(columns=['celltype', 'length bins', 'number of axons'],
+                                                  index=range(num_cats * len(ax_cts)))
+        for a, ax_ct in enumerate(ax_cts):
             ax_axon_df = axon_df[axon_df['celltype'] == ct_dict[ax_ct]]
             ax_length_sizes = ax_axon_df.groupby('lengths bins').size()
+            length_sizes_bins_plotting.loc[a * num_cats: (a + 1) * num_cats -1, 'celltype'] = ct_dict[ax_ct]
+            length_sizes_bins_plotting.loc[a * num_cats: (a + 1) * num_cats - 1, 'length bins'] = cats[:-1]
             for cat in ax_length_sizes.keys():
                 length_sizes_df.loc[cat, ct_dict[ax_ct]] = ax_length_sizes[cat]
+            for ci, cat in enumerate(cats[:-1]):
+                try:
+                    length_sizes_bins_plotting.loc[a * num_cats + ci: (a + 1) * num_cats + ci - 1, 'number of axons'] = \
+                        ax_length_sizes[cat]
+                except KeyError:
+                    length_sizes_bins_plotting.loc[a * num_cats + ci: (a + 1) * num_cats + ci - 1, 'number of axons'] = np.nan
         length_sizes_df.to_csv(f'{f_name}/length_bins_summary.csv')
+        length_sizes_bins_plotting.to_csv((f'{f_name}/length_bins_plotting_summary.csv'))
+        sns.barplot(data = length_sizes_bins_plotting, x = 'length bins', y = 'number of axons', hue = 'celltype', palette=ct_palette, errorbar=None)
+        plt.xlabel('length bins [µm]', fontsize = fontsize)
+        plt.ylabel('number of axons', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.savefig(f'{f_name}/length_bins_num_axs.png')
+        plt.savefig(f'{f_name}/length_bins_num_axs.svg')
+        plt.close()
+
 
     log.info('Analysis done')
 

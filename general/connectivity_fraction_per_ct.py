@@ -41,18 +41,18 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     celltype_key = analysis_params.celltype_key()
-    min_comp_len_ax = 10
-    min_comp_len_cells = 200
+    min_comp_len_ax = 1000
+    min_comp_len_cells = 1000
     syn_prob = 0.6
     min_syn_size = 0.1
     exclude_known_mergers = True
     cls = CelltypeColors(ct_dict=ct_dict)
-    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'STNGPNGF'
+    #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP', 'STNGPINTv6', 'RdTeINTv6'}
+    color_key = 'STNGPINTv6'
     plot_connmatrix_only = False
-    fontsize = 14
+    fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/2402_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240301_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -328,18 +328,18 @@ if __name__ == '__main__':
             for key in synapse_dict_ct:
                 if 'ids' in key or 'full cell' in key or 'total' in key:
                     continue
-                if ct_dict[0] in key:
+                if ct_dict[3] in key:
                     key_name = key[:-3]
                     key_name_gen = key_name[:-6]
                     if 'incoming' in key:
                         plt_celltypes = celltypes
                     else:
                         plt_celltypes = non_ax_celltypes
-                    lengths = [len(synapse_dict_ct[key_name + ' ' + p_ct]) for p_ct in plt_celltypes]
+                    lengths = [len(synapse_dict_ct[key_name + p_ct]) for p_ct in plt_celltypes]
                     max_length = np.max(lengths)
                     result_df = pd.DataFrame(columns=plt_celltypes, index=range(max_length))
                     for i, p_ct in enumerate(plt_celltypes):
-                        result_df.loc[0:lengths[i] - 1, p_ct] = synapse_dict_ct[key_name +' '+ p_ct]
+                        result_df.loc[0:lengths[i] - 1, p_ct] = synapse_dict_ct[key_name + p_ct]
                     #fill up with zeros so that each cell that makes at least one synapse with another suitable cell is included in analysis
                     result_df = result_df.fillna(0)
                     if 'percentage' in key:

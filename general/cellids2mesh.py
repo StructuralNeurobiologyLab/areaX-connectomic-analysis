@@ -20,8 +20,8 @@ if __name__ == '__main__':
     bio_params = Analysis_Params(version = 'v6')
     ct_dict = bio_params.ct_dict(with_glia = True)
     global_params.wd = bio_params.working_dir()
-    whole_cell = True
-    get_mitos = True
+    whole_cell = False
+    get_mitos = False
     get_mitos_comp_sep = False
     get_only_myelin = True
 
@@ -33,7 +33,8 @@ if __name__ == '__main__':
     #cellids = [844683784, 373956306, 820388630, 975932938, 1355540633]
     #gt HVC, LMAN, DA, example LTS, MSNs aroudn TAN, oligo + GPI (x2), other example glia cells
     #cellids = [195998712, 139212645,  88265889, 832232717, 841444450, 436157555, 1126849047, 379072583, 1469886143,1503488997, 2834161,561503453, 155343800, 1644151292]
-    cellids = [63431281, 700174676]
+    #example cellids INT1, MSN, INT3, INT2, STN, TAN, LTS, GPe, HVC, DA
+    cellids = [1080627023, 27161078, 24397945, 126798179, 7626258, 10157981, 15521116, 32356701, 1126849047,  139212645]
 
     if whole_cell:
         for cellid in tqdm(cellids):

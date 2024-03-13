@@ -3,8 +3,8 @@
 #based on domain hypothesis published by Wicken et al., 1993, 1995
 
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -17,45 +17,44 @@ if __name__ == '__main__':
     from scipy.stats import ranksums
     import matplotlib.pyplot as plt
     import seaborn as sns
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
 
-
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+    version = 'v6'
+    bio_params = Analysis_Params(version=version)
+    global_params.wd = bio_params.working_dir()
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
-    start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    ct_dict = bio_params.ct_dict()
     min_comp_len = 200
     max_MSN_path_len = 7500
-    syn_prob = 0.8
+    syn_prob = 0.6
     min_syn_size = 0.1
-    msn_ct = 2
-    lman_ct = 3
+    msn_ct = 3
+    lman_ct = 1
     gpi_ct = 7
-    f_name = "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220816_j0251v4_LMAN_MSN2MSN_inhibition_mcl_%i_synprob_%.2f" % (
-    min_comp_len, syn_prob)
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
+             f"240227_j0251{version}_lman_msn2msn_mcl{min_comp_len}_syn{syn_prob}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('LMAN MSN to MSN inhibition analysis', log_dir=f_name + '/logs/')
-    log.info("min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %.1f, min_syn_size = %.1f" % (min_comp_len, max_MSN_path_len, syn_prob, min_syn_size))
-    time_stamps = [time.time()]
-    step_idents = ['t-0']
+    log.info(f"min_comp_len ={min_comp_len} µm, use handpicked LMAN axons, "
+             f"syn_prob = {syn_prob}, min_syn_size = {min_syn_size} µm")
 
     #load LMAN and MSN dictionaries from LMAN_MSN_number est. to get MSN ids LMAN
     #prjects to and GPi ids MSN project to
 
     LMAN_proj_dict = load_pkl2obj(
-        "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220809_j0251v4_LMAN_MSN_GP_est_mcl_%i_synprob_%.2f/lman_dict_percell.pkl" % (
-            min_comp_len, syn_prob))
+        f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
+                       f"240227_j0251{version}_lman_number_msn_mcl{min_comp_len}_syn{syn_prob}/lman_dict_percell.pkl" )
     MSN_proj_dict = load_pkl2obj(
-        "wholebrain/scratch/arother/bio_analysis_results/LMAN_MSN_analysis/220809_j0251v4_LMAN_MSN_GP_est_mcl_%i_synprob_%.2f/msn_proj_dict_percell.pkl" % (
-            min_comp_len, syn_prob))
+        f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
+                       f"240227_j0251{version}_lman_number_msn_mcl{min_comp_len}_syn{syn_prob}//msn_proj_dict_percell.pkl")
     msn_ids = list(MSN_proj_dict.keys())
     lman_ids = list(LMAN_proj_dict.keys())
 
     #1st step: get synapses between MSN cells from MSN proj dict
     log.info("Step 1/3: get MSN-MSN inhibition information from synapses")
     #prefilter for only MSN to MSN axo-dendritic synapses
-    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
+    m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv = sd_synssv,
                                                                                                         pre_cts=[
                                                                                                             msn_ct],
                                                                                                         post_cts=[
@@ -112,9 +111,6 @@ if __name__ == '__main__':
     log.info("Number of MSMs inhibiting other MSNs which get input from LMAN and output to GPi: %i" % len(unique_axmsn_ssvs))
     log.info("Average number of MSNs inhibited per MSN overall = %.2f" % np.mean(number_msn_permsn))
     log.info("Median number of MSNs inhibited per MSN overall = %.2f" % np.median(number_msn_permsn))
-
-    time_stamps = [time.time()]
-    step_idents = ['get MSN to MSN synapses']
 
     #2nd step: iterate over all LMANs to see if there is inhibition among MSNs and if it is targeting the same GPs
     log.info("Step 2/3: Iterate over LMAN to see inhibition within MSNs targeted by same LMAN")

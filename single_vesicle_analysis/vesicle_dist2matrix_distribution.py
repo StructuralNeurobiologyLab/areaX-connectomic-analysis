@@ -19,25 +19,26 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    start = time.time()
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
     #           10: "NGF"}
-    analysis_params = Analysis_Params(working_dir = global_params.wd, version = 'v5')
+    version = 'v6'
+    analysis_params = Analysis_Params(version = version)
+    global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict(with_glia=False)
-    min_comp_len_cell = 500
-    min_comp_len_ax = 500
+    min_comp_len_cell = 200
+    min_comp_len_ax = 200
     dist_threshold = [15, 10, 5] #nm
     #dist_threshold = 15
-    cls = CelltypeColors()
+    cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'TePkBr'
+    color_key = 'TePkBrNGF'
     comp_color_key = 'TeYw'
     if type(dist_threshold) == list:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230704_j0251v5_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%i_%s_%s" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240311_j0251{version}_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%i_%s_%s" % (
             min_comp_len_cell, min_comp_len_ax, dist_threshold[0], dist_threshold[1], color_key, comp_color_key)
     else:
-        f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230704_j0251v5_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%s_%s" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240311_j0251{version}_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%s_%s" % (
             min_comp_len_cell, min_comp_len_ax, dist_threshold, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -45,7 +46,6 @@ if __name__ == '__main__':
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, color_key))
-    time_stamps = [time.time()]
     step_idents = ['t-0']
     known_mergers = analysis_params.load_known_mergers()
     log.info("Step 1/3: Prepare empty result DataFrames")
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     comp_cls = CompColors()
     comp_cls_list = comp_cls.colors[comp_color_key]
     cts = list(ct_dict.keys())
-    ax_ct = [1, 3, 4]
+    ax_ct = analysis_params.axon_cts()
     num_cts = len(cts)
     cts_str = [ct_dict[i] for i in range(num_cts)]
     ves_density_all = pd.DataFrame(columns=cts_str, index=range(10500))

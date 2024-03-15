@@ -16,7 +16,8 @@ if __name__ == '__main__':
     import seaborn as sns
     from scipy.stats import ranksums, kruskal, spearmanr
     from itertools import combinations
-    from sklearn.linear_model import LinearRegression
+    #from sklearn.linear_model import LinearRegression
+    import statsmodels.api as sm
 
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
      #          10: "NGF"}
@@ -31,7 +32,7 @@ if __name__ == '__main__':
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240313_j0251{version}_ct_mito_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240315_j0251{version}_ct_mito_vol_density_mcl_%i_ax%i_%s_fc_only_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -39,6 +40,7 @@ if __name__ == '__main__':
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, color_key))
+    log.info('use mean of mito volume density for regression fit')
     if full_cells_only:
         log.info('Plot for full cells only')
     known_mergers = analysis_params.load_known_mergers()
@@ -217,6 +219,8 @@ if __name__ == '__main__':
     for ct in overview_df['celltype']:
         if ct not in known_cts_only and ct != 'FS':
             ov_palette[ct] = '#15AEAB'
+    known_values_only_ov = known_values_only_ov.astype({'mean firing rate singing': float, 'mean axon mito volume density': float,
+                                                        'mean total mito volume density': float})
 
     for key in overview_df.keys():
         if 'mean' in key and 'mito' in key:
@@ -230,15 +234,20 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.svg')
             plt.close()
-            percell_key = key.split(' ')[1:]
-            percell_key = ' '.join(percell_key)
+            #percell_key = key.split(' ')[1:]
+            #percell_key = ' '.join(percell_key)
             #lin reg code adopted from ChatGPT
-            reg_model = LinearRegression()
-            reg_model.fit(np.array(known_values_only_percell[percell_key]).reshape(-1, 1), known_values_only_percell['mean firing rate singing'])
+            X_with_intercept = sm.add_constant(known_values_only_ov[key])
+            reg_model = sm.OLS(known_values_only_ov['mean firing rate singing'], X_with_intercept)
+            #reg_model.fit(np.array(known_values_only_ov[key]).reshape(-1, 1), known_values_only_ov['mean firing rate singing'])
             #get coeff and intercept
-            coefficient = reg_model.coef_
-            intercept = reg_model.intercept_
+            results = reg_model.fit()
+            #coefficient = reg_model.coef_
+            #intercept = reg_model.intercept_
+            coefficient = results.params[key]
+            intercept = results.params['const']
             log.info(f'Regression coefficient for {key} and mean firing rate: {coefficient}, intercept: {intercept}')
+            log.info(f'Summary:  {results.summary()}')
             #for plotted line
             start_xseq = np.min(known_values_only_ov[key])
             end_xseq = np.max(known_values_only_ov[key])

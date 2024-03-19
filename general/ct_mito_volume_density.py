@@ -141,15 +141,19 @@ if __name__ == '__main__':
             axon_volume_density = mi_output[:, 0]
             dendrite_volume_density = mi_output[:, 1]
             full_volume_density = mi_output[:, 2]
+        median_axo_den = np.median(axon_volume_density)
         mean_axo_den = np.mean(axon_volume_density)
         std_axo_den = np.std(axon_volume_density)
+        median_total_den = np.median(full_volume_density)
         mean_total_den = np.mean(full_volume_density)
         std_total_den = np.std(full_volume_density)
         overview_df.loc[i, 'celltype'] = ct_str
         overview_df.loc[i, 'mean firing rate singing'] = firing_value
         overview_df.loc[i, 'mean total mito volume density'] = mean_total_den
+        overview_df.loc[i, 'median total mito volume density'] = median_total_den
         overview_df.loc[i, 'std total mito volume density'] = std_total_den
         overview_df.loc[i, 'mean axon mito volume density'] = mean_axo_den
+        overview_df.loc[i, 'median axon mito volume density'] = median_axo_den
         overview_df.loc[i,'std axon mito volume density'] = std_axo_den
         #for percell df
         ct_inds = np.in1d(percell_mito_df['cellid'], suitable_ids_dict[ct])
@@ -197,14 +201,18 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_box.png')
             plt.savefig(f'{f_name}/{key}_box.svg')
             plt.close()
-            #sns.stripplot(data=percell_mito_df, x='celltype', y=key, color='black', alpha=0.2,
-            #              dodge=True, size=2, order=median_order)
-            #sns.violinplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
-            #plt.title(key)
-            #plt.ylabel(f'{key} [µm³/µm]')
-            #plt.savefig(f'{f_name}/{key}_violin.png')
-            #plt.savefig(f'{f_name}/{key}_violin.svg')
-            #plt.close()
+            if full_cells_only:
+                sns.stripplot(data=percell_mito_df, x='celltype', y=key, color='black', alpha=0.2,
+                              dodge=True, size=2, order=median_order)
+            sns.violinplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
+            plt.title(key)
+            plt.ylabel(f'{key} [µm³/µm]', fontsize=fontsize)
+            plt.xlabel('celltype', fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.savefig(f'{f_name}/{key}_violin.png')
+            plt.savefig(f'{f_name}/{key}_violin.svg')
+            plt.close()
 
     ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
 
@@ -223,7 +231,7 @@ if __name__ == '__main__':
                                                         'mean total mito volume density': float})
 
     for key in overview_df.keys():
-        if 'mean' in key and 'mito' in key:
+        if ('mean' in key or 'median' in key) and 'mito' in key:
             sns.scatterplot(data= known_values_only_ov, x = key, y = 'mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(known_values_only_ov[key], known_values_only_ov['mean firing rate singing'], known_values_only_ov['celltype']):
                 plt.text(x = x, y = y + 10, s = t)

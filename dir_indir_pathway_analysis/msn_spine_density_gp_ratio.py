@@ -28,7 +28,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=False)
     global_params.wd = analysis_params.working_dir()
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
-    min_comp_len = 1000
+    min_comp_len = 200
     syn_prob = 0.6
     min_syn_size = 0.1
     conn_ct = 3
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     gpi_ct = 7
     fontsize_jointplot = 20
     kde = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240311_j0251{version}_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_replot" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240318_j0251{version}_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_replot" % (
     ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     cell_ids = check_comp_lengths_ct(cellids=cell_ids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                     axon_only=False,
                                     max_path_len=None)
-    '''
+
     columns = ['cellid', 'celltype','spine density', 'dendritic length', 'number primary dendrites',
                'number branching points','ratio branching points vs primary dendrites','GP ratio syn number',
                'GP ratio sum syn size', 'syn number to GPe', 'syn size to GPe', 'syn number to GPi', 'syn size to GPi',
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     for key in conn_result_df.keys():
         if 'cs' in key:
             conn_result_df= conn_result_df.drop(key, axis = 1)
-
+    '''
 
     log.info(f'Step 4/7: Get GP syn ratio for {ct_dict[conn_ct]} cells')
     conn_result_df['syn number to GPe'] = 0
@@ -256,7 +256,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/synsizes_to_GP_violin.png')
     plt.savefig(f'{f_name}/synsizes_to_GP_violin.svg')
     plt.close()
-    '''
+
     log.info('Step 5/7: Get GP cs ratio from MSN')
     cs_ssv_ids = np.load(f'/{analysis_params.file_locations}/cs_ssv_ids_filtered.npy')
     cs_ssv_mesh_areas = np.load(f'/{analysis_params.file_locations}/cs_ssv_mesh_areas_filtered.npy') / 2
@@ -393,7 +393,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/cssizes_to_GP_violin.png')
     plt.savefig(f'{f_name}/cssizes_to_GP_violin.svg')
     plt.close()
-    '''
+
     log.info('Step 6/7: Plot morphological parameters vs GP ratio as joint plot')
     # plot histograms for all cells, GP ratio only for those connected to GP
     for key in conn_result_df.keys():
@@ -504,7 +504,7 @@ if __name__ == '__main__':
     spear_res = spearmanr(conn_result_df['spine density'], conn_result_df['dendritic length'], nan_policy='omit')
     spearman_result_df.loc[f'spine density vs dendritic length', 'stats'] = spear_res[0]
     spearman_result_df.loc[f'spine density vs dendritic length', 'p-value'] = spear_res[1]
-    '''
+
     #plot also GP syn ratio vs GP cs ratio
     g = sns.JointGrid(data=conn_result_df, x='GP ratio cs number', y='GP ratio syn number')
     g.plot_joint(sns.kdeplot, color="#EAAE34")
@@ -540,7 +540,7 @@ if __name__ == '__main__':
     spear_res = spearmanr(conn_result_df['GP ratio sum syn size'], conn_result_df['GP ratio sum cs size'], nan_policy='omit')
     spearman_result_df.loc['GP ratio cs vs sum sizes', 'stats'] = spear_res[0]
     spearman_result_df.loc['GP ratio cs vs sum sizes', 'p-value'] = spear_res[1]
-    '''
+
     spearman_result_df.to_csv(f'{f_name}/spearman_corr_results.csv')
 
     log.info(f'Step 7/7: Divide {ct_dict[conn_ct]} into groups depending on connectivity, plot again and compare groups')

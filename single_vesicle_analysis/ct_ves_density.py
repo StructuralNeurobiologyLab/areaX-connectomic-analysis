@@ -25,15 +25,15 @@ if __name__ == '__main__':
     version = 'v6'
     with_glia = False
     min_comp_len_cell = 200
-    min_comp_len_ax = 50
+    min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    full_cells_only = True
+    full_cells_only = False
     analysis_params = Analysis_Params(version = version)
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     global_params.wd = analysis_params.working_dir()
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240315_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fc_only_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240319_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -128,9 +128,11 @@ if __name__ == '__main__':
         axon_ves_density = np.array(output)
         mean_axo_den = np.mean(axon_ves_density)
         std_axo_den = np.std(axon_ves_density)
+        median_axo_den = np.median(axon_ves_density)
         overview_df.loc[i,'celltype'] = ct_str
         overview_df.loc[i, 'mean firing rate singing'] = firing_value
         overview_df.loc[i,'mean vesicle density'] = mean_axo_den
+        overview_df.loc[i, 'median vesicle density'] = median_axo_den
         overview_df.loc[i,'std vesicle density'] = std_axo_den
         #for percell df
         ct_inds = np.in1d(percell_ves_df['cellid'], suitable_ids_dict[ct])
@@ -138,7 +140,12 @@ if __name__ == '__main__':
         percell_ves_df.loc[ct_inds, 'mean firing rate singing'] = firing_value
         percell_ves_df.loc[ct_inds, 'vesicle density'] = axon_ves_density
 
+    overview_df = overview_df.astype(
+        {'mean firing rate singing': float, 'mean vesicle density': float,
+         'median vesicle density': float})
     overview_df.to_csv(f'{f_name}/overview_df_ves_den.csv')
+    percell_ves_df = percell_ves_df.astype(
+        {'mean firing rate singing': float, 'vesicle density': float})
     percell_ves_df.to_csv(f'{f_name}/percell_df_ves_den.csv')
 
     log.info('Step 3/4: Calculate statistics and plot results')
@@ -173,17 +180,21 @@ if __name__ == '__main__':
     plt.xlabel('celltype', fontsize = fontsize)
     plt.yticks(fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
-    plt.savefig(f'{f_name}/vesicle density_box.png')
-    plt.savefig(f'{f_name}/vesicle density_box.svg')
+    plt.savefig(f'{f_name}/vesicle_density_box.png')
+    plt.savefig(f'{f_name}/vesicle_density_box.svg')
     plt.close()
-    #sns.stripplot(data=percell_mito_df, x='celltype', y=key, color='black', alpha=0.2,
-    #              dodge=True, size=2, order=median_order)
-    #sns.violinplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
-    #plt.title(key)
-    #plt.ylabel(f'{key} [1/µm]')
-    #plt.savefig(f'{f_name}/{key}_violin.png')
-    #plt.savefig(f'{f_name}/{key}_violin.svg')
-    #plt.close()
+    if full_cells_only:
+        sns.stripplot(data=percell_ves_df, x='celltype', y='vesicle density', color='black', alpha=0.2,
+                  dodge=True, size=2, order=median_order)
+    sns.violinplot(data=percell_ves_df, x='celltype', y='vesicle density', palette=ct_palette, inner="box", order=median_order)
+    plt.title('vesicle density')
+    plt.ylabel(f'vesicle density [1/µm]', fontsize=fontsize)
+    plt.xlabel('celltype', fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/vesicle_density_violin.png')
+    plt.savefig(f'{f_name}/vesicle_density_violin.svg')
+    plt.close()
 
     ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
 
@@ -201,7 +212,7 @@ if __name__ == '__main__':
         if ct not in known_cts_only and ct != 'FS':
             ov_palette[ct] = '#15AEAB'
     for key in overview_df.keys():
-        if 'mean' in key and 'ves' in key:
+        if ('mean' in key or 'median' in key) and 'ves' in key:
             sns.scatterplot(data= known_values_only_ov, x = key, y = 'mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)

@@ -1,8 +1,11 @@
-#mito volume density axon per celltype
+#based on ct_mito_violume_density
+#write function for every organell which has a mesh and is a segmentation dataset
+#ct_mito_volume_density is obsolete then
+
 if __name__ == '__main__':
     from analysis_morph_helper import check_comp_lengths_ct
     from analysis_colors import CelltypeColors
-    from analysis_morph_helper import get_mito_density_presaved, get_percell_organell_volume_density, get_mito_comp_density_presaved
+    from analysis_morph_helper import get_percell_organell_volume_density, get_organelle_comp_density_presaved
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -32,11 +35,14 @@ if __name__ == '__main__':
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240319_j0251{version}_ct_mito_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    #organelles = 'mi', 'vc', 'er', 'golgi
+    organelle_key = 'mi'
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240319_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging('get volume density mito per celltype', log_dir=f_name + '/logs/')
+    log = initialize_logging(f'{organelle_key}_vol_density_ct_log', log_dir=f_name + '/logs/')
+    log.info(f'get volume density {organelle_key} per celltype')
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, color_key))
@@ -53,9 +59,9 @@ if __name__ == '__main__':
         #ct_types = ct_types[1:]
     else:
         ct_types = np.arange(0, num_cts)
-        sd_mitossv = SegmentationDataset("mi", working_dir=global_params.config.working_dir)
-        cached_mito_ids = sd_mitossv.ids
-        cached_mito_volumes = sd_mitossv.load_numpy_data("size")
+        sd_orgssv = SegmentationDataset(organelle_key, working_dir=global_params.config.working_dir)
+        cached_org_ids = sd_orgssv.ids
+        cached_org_volumes = sd_orgssv.load_numpy_data("size")
     ct_str_list = analysis_params.ct_str(with_glia=with_glia)
     cls = CelltypeColors(ct_dict= ct_dict)
     #ct_palette = cls.ct_palette(key = color_key)
@@ -90,17 +96,17 @@ if __name__ == '__main__':
 
     all_suitable_ids = np.concatenate(all_suitable_ids)
 
-    log.info('Step 2/4: Get mito volume density per cell')
+    log.info(f'Step 2/4: Get {organelle_key} volume density per cell')
     #ellid, cached_so_ids, cached_so_rep_coord, cached_so_volume, full_cell_dict, k, min_comp_len = input
     # generate pd Dataframe as overview per celltype
-    ov_columns = ['celltype', 'mean firing rate singing', 'mean total mito volume density',
-                  'std total mito volume density',
-                  'mean axon mito volume density', 'std axon mito volume density']
+    ov_columns = ['celltype', 'mean firing rate singing', f'mean total {organelle_key} volume density',
+                  f'std total {organelle_key} volume density',
+                  f'mean axon {organelle_key} volume density', f'std axon {organelle_key} volume density']
     overview_df = pd.DataFrame(columns=ov_columns, index=range(len(ct_types)))
     # generate df for each cell
-    pc_columns = ['cellid', 'mean firing rate singing', 'total mito volume density', 'axon mito volume density']
-    percell_mito_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
-    percell_mito_df['cellid'] = all_suitable_ids
+    pc_columns = ['cellid', 'mean firing rate singing', f'total {organelle_key} volume density', f'axon {organelle_key} volume density']
+    percell_org_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
+    percell_org_df['cellid'] = all_suitable_ids
     for i, ct in enumerate(ct_types):
         ct_str = ct_dict[ct]
         log.info(f'process {ct_str}')
@@ -109,38 +115,29 @@ if __name__ == '__main__':
         except KeyError:
             firing_value = np.nan
         if ct in axon_cts:
-            #ct_mito_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_ids.npy')
-            #ct_mito_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_mapping_ssv_ids.npy')
-            #ct_mito_sizes = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_sizes.npy')
-            #filter for suitable cellids
-            #ct_ind = np.in1d(ct_mito_map2ssvids, suitable_ids_dict[ct])
-            #ct_mito_ids = ct_mito_ids[ct_ind]
-            #ct_mito_map2ssvids = ct_mito_map2ssvids[ct_ind]
-           # ct_mito_sizes = ct_mito_sizes[ct_ind]
-            #mi_input = [[cellid,ct_mito_sizes, all_cell_dict[ct][cellid], True] for cellid in suitable_ids_dict[ct]]
-            #mi_output = start_multiprocess_imap(get_mito_density_presaved, mi_input)
-            mi_input = [[cellid, cached_mito_ids, cached_mito_volumes, all_cell_dict[ct][cellid], True] for cellid in suitable_ids_dict[ct]]
-            mi_output = start_multiprocess_imap(get_percell_organell_volume_density, mi_input)
-            mi_output = np.array(mi_output)
-            axon_volume_density = mi_output
+            org_input = [[cellid, cached_org_ids, cached_org_volumes, all_cell_dict[ct][cellid], True] for cellid in suitable_ids_dict[ct]]
+            org_output = start_multiprocess_imap(get_percell_organell_volume_density, org_input)
+            org_output = np.array(org_output)
+            axon_volume_density = org_output
             full_volume_density = axon_volume_density
         else:
-            ct_mito_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_ids_fullcells.npy')
-            ct_mito_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_mapping_ssv_ids_fullcells.npy')
-            ct_mito_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_axoness_coarse_fullcells.npy')
-            ct_mito_sizes = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mito_sizes_fullcells.npy')
+            #To DO: write function to cache all organelles for full cells with organelle_key
+            ct_org_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_ids_fullcells.npy')
+            ct_org_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_mapping_ssv_ids_fullcells.npy')
+            ct_org_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_axoness_coarse_fullcells.npy')
+            ct_org_sizes = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_sizes_fullcells.npy')
             #filter for suitable cellids
-            ct_ind = np.in1d(ct_mito_map2ssvids, suitable_ids_dict[ct])
-            ct_mito_ids = ct_mito_ids[ct_ind]
-            ct_mito_map2ssvids = ct_mito_map2ssvids[ct_ind]
-            ct_mito_sizes = ct_mito_sizes[ct_ind]
-            ct_mito_axoness = ct_mito_axoness[ct_ind]
-            mi_input = [[cellid, ct_mito_map2ssvids, ct_mito_sizes, ct_mito_axoness, all_cell_dict[ct][cellid]] for cellid in suitable_ids_dict[ct]]
-            mi_output = start_multiprocess_imap(get_mito_comp_density_presaved, mi_input)
-            mi_output = np.array(mi_output, dtype = float)
-            axon_volume_density = mi_output[:, 0]
-            dendrite_volume_density = mi_output[:, 1]
-            full_volume_density = mi_output[:, 2]
+            ct_ind = np.in1d(ct_org_map2ssvids, suitable_ids_dict[ct])
+            ct_org_ids = ct_org_ids[ct_ind]
+            ct_org_map2ssvids = ct_org_map2ssvids[ct_ind]
+            ct_org_sizes = ct_org_sizes[ct_ind]
+            ct_org_axoness = ct_org_axoness[ct_ind]
+            org_input = [[cellid, ct_org_map2ssvids, ct_org_sizes, ct_org_axoness, all_cell_dict[ct][cellid]] for cellid in suitable_ids_dict[ct]]
+            org_output = start_multiprocess_imap(get_organelle_comp_density_presaved, org_input)
+            org_output = np.array(org_output, dtype = float)
+            axon_volume_density = org_output[:, 0]
+            dendrite_volume_density = org_output[:, 1]
+            full_volume_density = org_output[:, 2]
         median_axo_den = np.median(axon_volume_density)
         mean_axo_den = np.mean(axon_volume_density)
         std_axo_den = np.std(axon_volume_density)
@@ -149,43 +146,43 @@ if __name__ == '__main__':
         std_total_den = np.std(full_volume_density)
         overview_df.loc[i, 'celltype'] = ct_str
         overview_df.loc[i, 'mean firing rate singing'] = firing_value
-        overview_df.loc[i, 'mean total mito volume density'] = mean_total_den
-        overview_df.loc[i, 'median total mito volume density'] = median_total_den
-        overview_df.loc[i, 'std total mito volume density'] = std_total_den
-        overview_df.loc[i, 'mean axon mito volume density'] = mean_axo_den
-        overview_df.loc[i, 'median axon mito volume density'] = median_axo_den
-        overview_df.loc[i,'std axon mito volume density'] = std_axo_den
+        overview_df.loc[i, f'mean total {organelle_key} volume density'] = mean_total_den
+        overview_df.loc[i, f'median total {organelle_key} volume density'] = median_total_den
+        overview_df.loc[i, f'std total {organelle_key} volume density'] = std_total_den
+        overview_df.loc[i, f'mean axon {organelle_key} volume density'] = mean_axo_den
+        overview_df.loc[i, f'median axon {organelle_key} volume density'] = median_axo_den
+        overview_df.loc[i,f'std axon {organelle_key} volume density'] = std_axo_den
         #for percell df
-        ct_inds = np.in1d(percell_mito_df['cellid'], suitable_ids_dict[ct])
-        percell_mito_df.loc[ct_inds, 'celltype'] = ct_str
-        percell_mito_df.loc[ct_inds, 'mean firing rate singing'] = firing_value
-        percell_mito_df.loc[ct_inds, 'total mito volume density'] = full_volume_density
-        percell_mito_df.loc[ct_inds, 'axon mito volume density'] = axon_volume_density
+        ct_inds = np.in1d(percell_org_df['cellid'], suitable_ids_dict[ct])
+        percell_org_df.loc[ct_inds, 'celltype'] = ct_str
+        percell_org_df.loc[ct_inds, 'mean firing rate singing'] = firing_value
+        percell_org_df.loc[ct_inds, f'total {organelle_key} volume density'] = full_volume_density
+        percell_org_df.loc[ct_inds, f'axon {organelle_key} volume density'] = axon_volume_density
 
     overview_df = overview_df.astype(
-        {'mean firing rate singing': float, 'mean axon mito volume density': float,
-         'mean total mito volume density': float, 'median axon mito volume density': float,
-         'median total mito volume density': float})
-    overview_df.to_csv(f'{f_name}/overview_df_mito_den.csv')
-    percell_mito_df = percell_mito_df.astype(
+        {'mean firing rate singing': float, f'mean axon {organelle_key} volume density': float,
+         f'mean total {organelle_key} volume density': float, f'median axon {organelle_key} volume density': float,
+         f'median total {organelle_key} volume density': float})
+    overview_df.to_csv(f'{f_name}/overview_df_{organelle_key}_den.csv')
+    percell_org_df = percell_org_df.astype(
         {'mean firing rate singing': float, 'axon mito volume density': float,
          'total mito volume density': float})
-    percell_mito_df.to_csv(f'{f_name}/percell_df_mito_den.csv')
+    percell_org_df.to_csv(f'{f_name}/percell_df_mito_den.csv')
 
     log.info('Step 3/4: Calculate statistics and plot results')
     group_comps = list(combinations(range(len(ct_types)), 2))
     ranksum_columns = [f'{ct_str_list[gc[0]]} vs {ct_str_list[gc[1]]}' for gc in group_comps]
     ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
-    known_values_only_percell = percell_mito_df.dropna()
+    known_values_only_percell = percell_org_df.dropna()
 
 
 
-    for key in percell_mito_df.keys():
+    for key in percell_org_df.keys():
         if 'mito' in key:
             key_groups = [group[key].values for name, group in
-                                percell_mito_df.groupby('celltype')]
+                                percell_org_df.groupby('celltype')]
             medians = [np.median(kg) for kg in key_groups]
-            median_order = np.unique(percell_mito_df['celltype'])[np.argsort(medians)]
+            median_order = np.unique(percell_org_df['celltype'])[np.argsort(medians)]
             ct_colors = cls.colors[color_key]
             ct_palette = {median_order[i]: ct_colors[i] for i in range(len(median_order))}
             kruskal_res = kruskal(*key_groups, nan_policy='omit')
@@ -200,7 +197,7 @@ if __name__ == '__main__':
                 ranksum_group_df.loc[f'{key} stats', f'{ct_str_list[group[0]]} vs {ct_str_list[group[1]]}'] = ranksum_res[0]
                 ranksum_group_df.loc[f'{key} p-value',f'{ct_str_list[group[0]]} vs {ct_str_list[group[1]]}'] = ranksum_res[1]
             #plot with increasing median as boxplot and violinplot
-            sns.boxplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, order=median_order)
+            sns.boxplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, order=median_order)
             plt.title(key)
             plt.ylabel(f'{key} [µm³/µm]', fontsize = fontsize)
             plt.xlabel('celltype', fontsize = fontsize)
@@ -210,9 +207,9 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_box.svg')
             plt.close()
             if full_cells_only:
-                sns.stripplot(data=percell_mito_df, x='celltype', y=key, color='black', alpha=0.2,
+                sns.stripplot(data=percell_org_df, x='celltype', y=key, color='black', alpha=0.2,
                               dodge=True, size=2, order=median_order)
-            sns.violinplot(data=percell_mito_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
+            sns.violinplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
             plt.title(key)
             plt.ylabel(f'{key} [µm³/µm]', fontsize=fontsize)
             plt.xlabel('celltype', fontsize=fontsize)
@@ -224,7 +221,7 @@ if __name__ == '__main__':
 
     ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
 
-    log.info('Step 4/4: Plot mean firing rates vs mito density')
+    log.info(f'Step 4/4: Plot mean firing rates vs {organelle_key} density')
     #plot once with and once without unknown literature values
     known_values_only_ov = overview_df.dropna()
     known_cts_only = np.unique(known_values_only_ov['celltype'])
@@ -346,18 +343,3 @@ if __name__ == '__main__':
     overview_df.to_csv(f'{f_name}/overview_df_with_preds.csv')
 
     log.info('Analysis done')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

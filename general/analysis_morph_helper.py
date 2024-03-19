@@ -796,6 +796,28 @@ def get_mito_comp_density_presaved(params):
     den_mito_volume_density = den_mi_volume/ full_cell_dict['dendrite length']
     return [axon_mito_volume_density, den_mito_volume_density, full_mito_volume_density]
 
+def get_organelle_comp_density_presaved(params):
+    '''
+        Get organelle density from presaved mito arrays with cellid for each compartment and the complete cell.
+        :param params: cellid, org_ids, org_ssv_ids, org_sizes, org_axoness, full_cell_dict (per cell)
+        :return: org_volume_density for axon, dendrite and full cell
+        '''
+    scaling = [10, 10, 25]
+    cellid, org_ssv_ids, org_sizes, org_axoness, full_cell_dict = params
+    cell_org_inds = np.in1d(org_ssv_ids, cellid)
+    cell_org_sizes = org_sizes[cell_org_inds]
+    cell_org_axoness = org_axoness[cell_org_inds]
+    full_length = full_cell_dict["complete pathlength"]
+    #convert t0 µm³
+    cell_org_volume = np.sum(cell_org_sizes) * 10 ** (-9) * np.prod(scaling)
+    full_org_volume_density = cell_org_volume / full_length
+    axon_org_sizes = cell_org_sizes[cell_org_axoness == 1]
+    den_org_sizes = cell_org_sizes[cell_org_axoness == 0]
+    axon_org_volume = np.sum(axon_org_sizes) * 10 ** (-9) * np.prod(scaling)
+    den_org_volume = np.sum(den_org_sizes) * 10 ** (-9) * np.prod(scaling)
+    axon_org_volume_density = axon_org_volume / full_cell_dict['axon length']
+    den_org_volume_density = den_org_volume/ full_cell_dict['dendrite length']
+    return [axon_org_volume_density, den_org_volume_density, full_org_volume_density]
 
 
 

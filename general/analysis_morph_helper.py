@@ -359,7 +359,7 @@ def get_compartment_mesh_area(cell):
     """
     get compartment mesh areas using compartmentalize_mesh and mesh_area_calc.
     :param cell: sso
-    :return: dictionary with mesh_areas of axon, dendrite and soma
+    :return: dictionary with mesh_areas of axon, dendrite and soma in µm²
     """
     comp_meshes = compartmentalize_mesh_fromskel(cell)
     compartments = ["axon", "dendrite", "soma"]

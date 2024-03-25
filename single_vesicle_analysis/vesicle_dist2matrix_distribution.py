@@ -35,10 +35,10 @@ if __name__ == '__main__':
     color_key = 'TePkBrNGF'
     comp_color_key = 'TeYw'
     if type(dist_threshold) == list:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240311_j0251{version}_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%i_%s_%s" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240320_j0251{version}_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%i_%s_%s" % (
             min_comp_len_cell, min_comp_len_ax, dist_threshold[0], dist_threshold[1], color_key, comp_color_key)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240311_j0251{version}_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%s_%s" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240311_j0251{version}_ct_dist2matrix_mcl_%i_ax%i_dt_%i_%s_%s" % (
             min_comp_len_cell, min_comp_len_ax, dist_threshold, color_key, comp_color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

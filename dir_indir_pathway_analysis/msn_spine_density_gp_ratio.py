@@ -28,7 +28,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=False)
     global_params.wd = analysis_params.working_dir()
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
-    min_comp_len = 200
+    min_comp_len = 50
     syn_prob = 0.6
     min_syn_size = 0.1
     conn_ct = 3
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     gpi_ct = 7
     fontsize_jointplot = 20
     kde = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240318_j0251{version}_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_replot" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240320_j0251{version}_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_replot" % (
     ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -70,6 +70,7 @@ if __name__ == '__main__':
     conn_result_df = pd.DataFrame(columns=columns, index=range(len(cell_ids)))
     cell_ids = np.sort(cell_ids)
     conn_result_df['cellid'] = cell_ids
+
     log.info(f'Step 2/7: Get spine density of all {ct_dict[conn_ct]} cells')
     cell_input = [[cell_id, min_comp_len, cell_dict] for cell_id in cell_ids]
     spine_density = start_multiprocess_imap(get_spine_density, cell_input)
@@ -99,7 +100,7 @@ if __name__ == '__main__':
     conn_result_df['ratio branching points vs primary dendrites'] = number_branching_points/ number_primary_dendrites
     conn_result_df.to_csv(f'{f_name}/{ct_dict[conn_ct]}_morph_results.csv')
     '''
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240229_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f20" % (
+    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240320_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f20" % (
         ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     log.info(f'Use morph parameters from {f_name_saving1}')
     conn_result_df= pd.read_csv(f'{f_name_saving1}/{ct_dict[conn_ct]}_morph_results.csv', index_col = 0)

@@ -36,8 +36,8 @@ if __name__ == '__main__':
     color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'mi'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240319_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    organelle_key = 'vc'
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240325_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, color_key))
-    log.info('use mean of mito volume density for regression fit')
+    log.info(f'use mean of {organelle_key} volume density for regression fit')
     if full_cells_only:
         log.info('Plot for full cells only')
     known_mergers = analysis_params.load_known_mergers()
@@ -165,9 +165,9 @@ if __name__ == '__main__':
          f'median total {organelle_key} volume density': float})
     overview_df.to_csv(f'{f_name}/overview_df_{organelle_key}_den.csv')
     percell_org_df = percell_org_df.astype(
-        {'mean firing rate singing': float, 'axon mito volume density': float,
-         'total mito volume density': float})
-    percell_org_df.to_csv(f'{f_name}/percell_df_mito_den.csv')
+        {'mean firing rate singing': float, f'axon {organelle_key} volume density': float,
+         f'total {organelle_key} volume density': float})
+    percell_org_df.to_csv(f'{f_name}/percell_df_{organelle_key}_den.csv')
 
     log.info('Step 3/4: Calculate statistics and plot results')
     group_comps = list(combinations(range(len(ct_types)), 2))
@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
 
     for key in percell_org_df.keys():
-        if 'mito' in key:
+        if organelle_key in key:
             key_groups = [group[key].values for name, group in
                                 percell_org_df.groupby('celltype')]
             medians = [np.median(kg) for kg in key_groups]
@@ -235,7 +235,7 @@ if __name__ == '__main__':
 
 
     for key in overview_df.keys():
-        if ('mean' in key or 'median' in key) and 'mito' in key:
+        if ('mean' in key or 'median' in key) and organelle_key in key:
             sns.scatterplot(data= known_values_only_ov, x = key, y = 'mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(known_values_only_ov[key], known_values_only_ov['mean firing rate singing'], known_values_only_ov['celltype']):
                 plt.text(x = x, y = y + 10, s = t)
@@ -314,10 +314,10 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_fit.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_fit.svg')
             plt.close()
-            #also predict 'FS' mito density value
-            fs_mito_pred = (firing_rate_dict['FS'] - intercept) / coefficient
+            #also predict 'FS' org density value
+            fs_org_pred = (firing_rate_dict['FS'] - intercept) / coefficient
             fs_ind = np.where(overview_df['celltype'] == 'FS')[0]
-            overview_df.loc[fs_ind, key] = fs_mito_pred
+            overview_df.loc[fs_ind, key] = fs_org_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)

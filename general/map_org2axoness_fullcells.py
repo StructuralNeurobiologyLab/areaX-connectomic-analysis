@@ -30,7 +30,7 @@ if __name__ == '__main__':
     log.info('Iterate over celltypes to map mitos to compartments, celltypes and cellids')
     ct_types = np.arange(0, num_cts)
     for ok in organell_keys:
-        log.fino(f'Load {ok} params')
+        log.info(f'Load {ok} params')
         # load organelle data
         sd_org = SegmentationDataset(ok)
         org_ids = sd_org.ids

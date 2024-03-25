@@ -544,6 +544,7 @@ def get_number_sum_size_synapses(syn_sizes, syn_ssv_partners, syn_axs, syn_cts, 
     else:
         return unique_ssv_ids, syn_ssv_sizes, syn_numbers
 
+
 def get_syn_input_distance_percell(args):
     '''
     Get median, min and max distance to soma per cell for a given set of coordinates.

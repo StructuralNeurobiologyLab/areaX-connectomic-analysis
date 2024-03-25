@@ -4,21 +4,16 @@
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_percell_organell_volume_density, get_organelle_comp_density_presaved
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
-    from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd
     import numpy as np
-    from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from scipy.stats import ranksums, kruskal, spearmanr
+    from scipy.stats import ranksums, kruskal
     from itertools import combinations
-    #from sklearn.linear_model import LinearRegression
-    import statsmodels.api as sm
     from tqdm import tqdm
 
     #ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",

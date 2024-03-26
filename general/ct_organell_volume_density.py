@@ -31,13 +31,13 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     full_cells_only = False
     min_comp_len_cell = 200
-    min_comp_len_ax = 50
+    min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'vc'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240325_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    organelle_key = 'mi'
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240326_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -174,8 +174,6 @@ if __name__ == '__main__':
     ranksum_columns = [f'{ct_str_list[gc[0]]} vs {ct_str_list[gc[1]]}' for gc in group_comps]
     ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
     known_values_only_percell = percell_org_df.dropna()
-
-
 
     for key in percell_org_df.keys():
         if organelle_key in key:
@@ -339,7 +337,6 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.svg')
             plt.close()
-
-    overview_df.to_csv(f'{f_name}/overview_df_with_preds.csv')
+            overview_df.to_csv(f'{f_name}/overview_df_with_preds_{key}.csv')
 
     log.info('Analysis done')

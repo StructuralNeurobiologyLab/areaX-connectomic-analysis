@@ -26,7 +26,7 @@ if __name__ == '__main__':
     min_comp_len_cell = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    fontsize = 20
+    fontsize = 14
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240325_j0251{version}_percell_conn_matrix_mcl_%i_%s_fs%i" % (
@@ -138,12 +138,11 @@ if __name__ == '__main__':
         order_inds = np.argsort(unique_ssv_ids)
         ordered_pre_ids = unique_ssv_ids[order_inds]
         ordered_sizes = syn_ssv_sizes[order_inds]
-        matrix_col_inds = np.in1d(ordered_suitable_ids, ordered_pre_ids)
-        matrix_percell.loc[i, matrix_col_inds] = ordered_sizes
+        matrix_percell.loc[cellid, ordered_pre_ids] = ordered_sizes
 
-    matrix_percell.fillna(0)
+    matrix_percell = matrix_percell.fillna(0)
     matrix_percell.to_csv(f'{f_name}/percell_conn_matrix.csv')
-    log.info(f'max snyaptic area between two cells = {np.max(matrix_percell):.2f} µm²')
+    log.info(f'max snyaptic area between two cells = {matrix_percell.max().max():.2f} µm²')
 
     log.info('Steo 4/4: Plot as heatmap')
     cmap_heatmap = sns.light_palette('black', as_cmap=True)

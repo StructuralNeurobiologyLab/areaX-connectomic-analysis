@@ -34,7 +34,7 @@ if __name__ == '__main__':
     fontsize = 14
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240326_j0251{version}_percell_input_matrix_mcl_%i_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240327_j0251{version}_percell_input_matrix_mcl_%i_%s_fs%i" % (
         min_comp_len_cell, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -156,9 +156,9 @@ if __name__ == '__main__':
     np.save(f'{f_name}/input_matrix_array.npy', res_matrix)
 
     log.info('Step 5/5: Plot matrix as heatmap')
-    cmap_heatmap = sns.light_palette('black', as_cmap=True)
+    cmap_heatmap = sns.diverging_palette(179,341, s= 70, l = 35, as_cmap=True)
     inc_numbers_abs = ConnMatrix(data=input_matrix_res.transpose().astype(float),
                                  title='Input matrix', filename=f_name, cmap=cmap_heatmap)
-    inc_numbers_abs.get_heatmap(save_svg=True, annot=False, fontsize=fontsize)
+    inc_numbers_abs.get_heatmap(save_svg=True, annot=False, fontsize=fontsize, center_zero=True)
 
     log.info('Analyses done')

@@ -20,19 +20,18 @@ if __name__ == '__main__':
     full_cells_only = False
     min_comp_len_cell = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'TePkBrNGF'
-    fontsize = 14
+    fontsize = 20
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240325_j0251{version}_percell_gain_matrix_mcl_%i_%s_fs%i" % (
-        min_comp_len_cell, color_key, fontsize)
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240327_j0251{version}_percell_gain_matrix_mcl_%i_fs%i" % (
+        min_comp_len_cell, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('per_cell_conn_matrix_log', log_dir=f_name + '/logs/')
     log.info('Get per cell matrix that can be used for estimation')
     #load results from synaptic connectivity matrix, in µm²
-    syn_percell_path = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240325_j0251{version}_percell_conn_matrix_mcl_%i_%s_fs%i" % (
-        min_comp_len_cell, color_key, fontsize)
+    syn_percell_path = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240325_j0251{version}_percell_conn_matrix_mcl_%i_TePkBrNGF_fs%i" % (
+        min_comp_len_cell, fontsize)
     syn_conn_matrix_percell = pd.read_csv(f'{syn_percell_path}/percell_conn_matrix.csv', index_col = 0)
     log.info(f'Step 1/5: matrix for per cell connectivity of full cells loaded from {syn_percell_path}')
     # value to estimate syn current from surface area; from Holler et al., 2021
@@ -42,8 +41,8 @@ if __name__ == '__main__':
     full_cell_matrix = syn_conn_matrix_percell * syn_curr_val
 
     #get dendritc and somatic surface area per cell, in µm²
-    den_so_surface_area_path = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240325_j0251{version}_ct_den_so_surface_area_mcl_%i_%s_fs%i" % (
-        min_comp_len_cell, color_key, fontsize)
+    den_so_surface_area_path = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240325_j0251{version}_ct_den_so_surface_area_mcl_%i_TePkBrNGF_fs20" % (
+        min_comp_len_cell)
     denso_surface_area_df = pd.read_csv(f'{den_so_surface_area_path}/den_so_surface_area.csv', index_col=0)
     log.info(f'Step 2/5: matrix for dendritic and somatic surface area of full cells loaded from {den_so_surface_area_path}')
     #order surface area according to cellids 8similar ordering as matrix)
@@ -66,30 +65,33 @@ if __name__ == '__main__':
     #also give inhibitory celltypes negative sign
     inhibitory_list = ['MSN', 'LTS', 'INT1', 'INT2', 'INT3', 'GPe', 'GPi']
     for ct in list(dt_spike_threshold_ct.keys()):
+        if ct in inhibitory_list:
+            neuro_sign = -1
+        else:
+            neuro_sign = 1
         ct_inds = np.where(denso_surface_area_df_ordered['celltype'] == ct)[0]
-        denso_surface_area_df_ordered.loc[ct_inds, 'res variable'] = denso_surface_area_df_ordered.loc[ct_inds, 'denso surface area'] * dt_spike_threshold_ct[ct]
+        denso_surface_area_df_ordered.loc[ct_inds, 'res variable'] = denso_surface_area_df_ordered.loc[ct_inds, 'denso surface area'] * dt_spike_threshold_ct[ct] * neuro_sign
 
     denso_surface_area_df_ordered.to_csv(f'{f_name}/_denso_surface_area_spike_threshold_est.csv')
 
     log.info('Step 4/5: Matrix is now divided by the res variable')
+    #for full_cell_matrix postsynaptic cells are in rows
+    #multiply surface area * dt_spike_threshold with each postsynaptic cell -> each row
     matrix_values = np.array(full_cell_matrix)
     res_vector = np.array(denso_surface_area_df_ordered['res variable'])
     res_matrix = matrix_values / res_vector.reshape(-1, 1)
     full_cell_matrix_div = pd.DataFrame(data=res_matrix, columns=cellids, index=cellids)
 
-
-
-
-
     full_cell_matrix_div.to_csv(f'{f_name}/full_cell_matrix.csv')
     np.save(f'{f_name}/full_cell_matrix_array.npy', res_matrix)
 
-    log.info(f'Max matrix value = {full_cell_matrix.max().max():.2f}')
+    log.info(f'Max matrix value = {full_cell_matrix_div.max().max()} [nA/µm²*mV]')
+    log.info(f'Min matrix value = {full_cell_matrix_div.min().min()} [nA/µm²*mV]')
 
     log.info('Step 5/5: Plot matrix as heatmap')
-    cmap_heatmap = sns.light_palette('black', as_cmap=True)
-    inc_numbers_abs = ConnMatrix(data=full_cell_matrix.transpose().astype(float),
+    cmap_heatmap = sns.diverging_palette(179,341, s= 70, l = 35, as_cmap=True)
+    inc_numbers_abs = ConnMatrix(data=full_cell_matrix_div.transpose().astype(float),
                                  title='Gain matrix full cells', filename=f_name, cmap=cmap_heatmap)
-    inc_numbers_abs.get_heatmap(save_svg=True, annot=False, fontsize=fontsize)
+    inc_numbers_abs.get_heatmap(save_svg=True, annot=False, fontsize=fontsize, center_zero=True)
 
     log.info('Analyses done')

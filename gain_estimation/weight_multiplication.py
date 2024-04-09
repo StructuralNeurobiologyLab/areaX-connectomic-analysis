@@ -25,7 +25,8 @@ if __name__ == '__main__':
     fontsize = 20
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240326_j0251{version}_weight_multiplication_%i_%s_fs%i" % (
+    input_celltype = 'LMAN'
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240326_j0251{version}_weight_multiplication_{input_celltype}_4_%i_%s_fs%i" % (
         min_comp_len_cell, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -37,12 +38,15 @@ if __name__ == '__main__':
     full_cell_matrix = pd.read_csv(f'{full_cell_path}/full_cell_matrix.csv', index_col = 0)
     log.info(f'Step 1/6: weight matrix of full cells loaded from {full_cell_path}')
     # load results from weight matrix of input, in nA/µm²mV
-    input_celltype = 'LMAN'
-    input_path = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240327_j0251{version}_percell_input_matrix_mcl_%i_%s_fs%i" % (
+    input_path = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240327_j0251{version}_percell_input_matrix_{input_celltype}_ex4_mcl_%i_%s_fs%i" % (
         min_comp_len_cell, color_key, fontsize)
     input_matrix = pd.read_csv(f'{input_path}/input_matrix.csv', index_col=0)
     log.info(f'Step 2/6: weight matrix of full cells loaded from {full_cell_path}')
-    log.info(f'This matrix includes input from {len(input_matrix.columns)} cells, {input_matrix.columns}')
+    if len(input_matrix.columns) <= 100:
+        log.info(f'This matrix includes input from {len(input_matrix.columns)} {input_celltype} cells, {input_matrix.columns}')
+    else:
+        log.info(
+            f'This matrix includes input from {len(input_matrix.columns)} {input_celltype} cells')
 
     #get dendritc and somatic surface area per cell, in µm²
     den_so_surface_area_path = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240325_j0251{version}_ct_den_so_surface_area_mcl_%i_%s_fs20" % (
@@ -56,19 +60,19 @@ if __name__ == '__main__':
     denso_surface_area_df_ordered = denso_surface_area_df_ordered.reset_index(drop = True)
     cellids = np.array(denso_surface_area_df_ordered['cellid'])
 
-    log.info('Step 4/6: Multiply matrices with each other')
+    log.info('Step 4/6: Multiply full cell matrix with input matrix summed per postsynaptic cell')
     #multiply rows of input array (postsynapse) with columns of full_cell_matrix (presynapse)
     full_cell_array = full_cell_matrix.values
     if len(input_matrix.columns) == 1:
         input_array = input_matrix.values[:, 0]
     else:
-        #untested
-        input_array = input_matrix.values
+        #sum up all inputs per postsynaptic cell
+        input_array = input_matrix.values.sum(axis = 1)
     result_matrix = full_cell_array * input_array
     result_matrix_df = pd.DataFrame(data = result_matrix, columns=cellids, index=cellids)
     result_matrix_df.to_csv(f'{f_name}/result_matrix.csv')
 
-    log.info('Step 5/6: add information about firing rate to both matrices')
+    log.info('Step 5/6: add information about firing rate')
     firing_pred_path = f"cajal/scratch/users/arother/bio_analysis_results/general/240326_j0251{version}_ct_mi_vol_density_mcl_%i_ax200_%s_fs20" % (
         min_comp_len_cell, color_key)
     firing_preds = pd.read_csv(f'{firing_pred_path}/overview_df_with_preds_median axon mi volume density.csv', index_col=0)
@@ -90,13 +94,12 @@ if __name__ == '__main__':
     firing_rates_percell = np.array(denso_surface_area_df_ordered['mean firing rate'])
     full_cell_arr_firing = full_cell_array * firing_rates_percell
     full_cell_matrix_firing = pd.DataFrame(data = full_cell_arr_firing, columns=cellids, index=cellids)
-    log.info('Multiply matrices with each other')
+    log.info('Multiply full cell matrix with input matrix summed per postsynaptic cell')
     #see as above, multiply rows in input_matrix (postsynapse) with columns of full_cell_matrix (presynapse)
     if len(input_matrix_firing.columns) == 1:
         input_arr_firing = input_matrix_firing.values[:, 0]
     else:
-        # untested
-        input_arr_firing = input_matrix_firing.values
+        input_arr_firing = input_matrix_firing.values.sum(axis = 1)
     result_matrix_firing = full_cell_arr_firing * input_arr_firing
     result_matrix_firing_df = pd.DataFrame(data = result_matrix_firing, columns= cellids, index= cellids)
 

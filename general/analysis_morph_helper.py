@@ -429,7 +429,7 @@ def get_compartment_nodes(ssoid, compartment):
             calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
             :param compartment: 0 = dendrite, 1 = axon, 2 = soma
             :param cell_graph: sso.weighted graph
-            :return: comp_len in µm
+            :return: comp_nodes with coordinates in pyhsical space (nm)
             """
     sso = SuperSegmentationObject(ssoid)
     sso.load_skeleton()
@@ -818,6 +818,33 @@ def get_organelle_comp_density_presaved(params):
     axon_org_volume_density = axon_org_volume / full_cell_dict['axon length']
     den_org_volume_density = den_org_volume/ full_cell_dict['dendrite length']
     return [axon_org_volume_density, den_org_volume_density, full_org_volume_density]
+
+def check_cutoff_dendrites(cell_input):
+    '''
+    Function that loads cell and checks if any of their dendrites is within a certain radius away from the dataset borders.
+    As the raw data is often not perfectly cubed resulting in blank space (for j0251 ca 5 µm) at the sides and segmentation also sometimes does not reach the borders,
+    a threshold of 7 µm is recommended.
+    :param cell_input: cellid and radius to determine distance to dataset border (in nm), dataset borders as 2D array, can be called
+    extracted from config with: np.array(global_params.config.entries['cube_of_interest_bb'] * scaling)
+    :return: cellid, boolean value which can be used for filtering, True = cell can be used, so does not have any cutoff dendrites
+    '''
+
+    cellid, dist_thresh, dataset_borders = cell_input
+    if dist_thresh is None:
+        dist_thresh = 7000
+    #get dendritic skeleton nodes
+    dendrite_nodes = get_compartment_nodes(cellid, compartment=0)
+    dataset_borders_thresh = np.array([dataset_borders[0] + dist_thresh, dataset_borders[1] - dist_thresh])
+    lower_bounds = np.any(dendrite_nodes < dataset_borders_thresh[0])
+    upper_bounds = np.any(dendrite_nodes > dataset_borders_thresh[1])
+    #return True if cell is not outside borders
+    if np.any([lower_bounds, upper_bounds]) == True:
+        return [cellid, False]
+    else:
+        return [cellid, True]
+
+
+
 
 
 

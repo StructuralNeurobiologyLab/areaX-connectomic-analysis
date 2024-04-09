@@ -19,6 +19,7 @@ if __name__ == '__main__':
     import numpy as np
     import seaborn as sns
     from tqdm import tqdm
+    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
 
     # ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
     #          10: "NGF"}
@@ -34,7 +35,8 @@ if __name__ == '__main__':
     fontsize = 14
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240327_j0251{version}_percell_input_matrix_mcl_%i_%s_fs%i" % (
+    input_celltype = 'HVC'
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/gain_estimation/240327_j0251{version}_percell_input_matrix_{input_celltype}_ex3_mcl_%i_%s_fs%i" % (
         min_comp_len_cell, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -44,8 +46,12 @@ if __name__ == '__main__':
         "min_comp_len = %i for full cells, colors = %s" % (
             min_comp_len_cell, color_key))
     log.info(f'min syn size = {min_syn_size} µm², syn prob threshold = {syn_prob_thresh}')
-    input_cellids = [3171878]
-    log.info(f'Calculate for LMAn example cellid: {input_cellids}')
+    #input_cellids = load_pkl2obj(f"{analysis_params.file_locations}/LMAN_handpicked_arr.pkl")
+    input_cellids = [820388630, 1126849047, 975932938, 1355540633, 373956306]
+    if len(input_cellids) <= 100:
+        log.info(f'Calculate for {len(input_cellids)} {input_celltype} cells: {input_cellids}')
+    else:
+        log.info(f'Calculate for {len(input_cellids)} {input_celltype} cells')
 
     log.info('Step 1/4: Load dendritic somatic surface area from full cells')
     fontsize_denso = 20

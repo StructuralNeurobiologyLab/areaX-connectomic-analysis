@@ -35,7 +35,7 @@ if __name__ == '__main__':
     syn_conn_matrix_percell = pd.read_csv(f'{syn_percell_path}/percell_conn_matrix.csv', index_col = 0)
     log.info(f'Step 1/5: matrix for per cell connectivity of full cells loaded from {syn_percell_path}')
     # value to estimate syn current from surface area; from Holler et al., 2021
-    syn_curr_val = 1.19
+    syn_curr_val = 1.09
     log.info(f'Factor to caclulate synaptic current from synaptic area from Holler et al., 2021 = {syn_curr_val}')
     log.info('Per cell connectivity matrix is now multiplied by this factor')
     full_cell_matrix = syn_conn_matrix_percell * syn_curr_val
@@ -56,8 +56,8 @@ if __name__ == '__main__':
     #use values from Farries and Perkel, 2000
     #msn = -34.5, FS = -44.9 -> use for all INT types, LTS: -43.3
     #Farries and Perkel., 2002:
-    #resting potential: msn = -72, LTS = -42, FS: -62, TAN = -51, GP = -47.7
-    #AP threshold = msn -37.7, LTS: -43.5, FS: -40.9, TAN = -43.7, GP = NA
+    #resting potential: msn = -72, LTS = -42, FS: -62, TAN = -51, GP = na
+    #AP threshold = msn -37.7, LTS: -43.5, FS: -40.9, TAN = -43.7, GP = -47.7
     #use this to calculate values, INT1-3 use FS, GP use 60 as resting potential, STN use also FS value
     dt_spike_threshold_ct = {'MSN': 34.3, 'STN': 21.1, 'TAN': 7.3, 'GPe': 12.3, 'GPi': 12.3, 'LTS': 1.5, 'INT1': 21.1, 'INT2': 21.1, 'INT3': 21.1}
     log.info(f'These spike thresholds are used in the matrix {dt_spike_threshold_ct}')

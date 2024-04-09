@@ -4,7 +4,8 @@
 #GPe/GPi ratios = (GPe + GPi)/GPi
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_spine_density, get_cell_soma_radius, get_dendrite_info_cell
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_spine_density, get_cell_soma_radius, \
+        get_dendrite_info_cell, check_cutoff_dendrites
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_ct_syn_number_sumsize, filter_contact_sites_axoness
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=False)
     global_params.wd = analysis_params.working_dir()
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
-    min_comp_len = 50
+    min_comp_len = 200
     syn_prob = 0.6
     min_syn_size = 0.1
     conn_ct = 3
@@ -36,7 +37,8 @@ if __name__ == '__main__':
     gpi_ct = 7
     fontsize_jointplot = 20
     kde = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240320_j0251{version}_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_replot" % (
+    check_dens= True
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240409_j0251{version}_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_replot" % (
     ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -46,6 +48,8 @@ if __name__ == '__main__':
         log.info('Centre of jointplot will be kdeplot')
     else:
         log.info('Centre of jointplot will be scatter')
+    if check_dens:
+        log.info('Check if dendrites are cutoff from MSN cells and if so, exclude these cells')
 
 
     log.info(f'Step 1/7: Load and check all {ct_dict[conn_ct]} cells')
@@ -67,8 +71,23 @@ if __name__ == '__main__':
                'GP ratio sum syn size', 'syn number to GPe', 'syn size to GPe', 'syn number to GPi', 'syn size to GPi',
                'GP ratio cs number', 'GP ratio sum cs size', 'cs number to GPe', 'cs size to GPe',
                'cs number to GPi', 'cs size to GPi']
-    conn_result_df = pd.DataFrame(columns=columns, index=range(len(cell_ids)))
+
     cell_ids = np.sort(cell_ids)
+
+    if check_dens:
+        log.info('Step 1b/7: Check if dendrites are cutoff from cells and if so, exclude them')
+        #at least 5 µm needed to reach to segmented part of dataset
+        dist_thresh = 7000
+        dataset_borders = np.array(global_params.config.entries['cube_of_interest_bb']) * [10, 10, 25]
+        cell_input = [[cellid, dist_thresh, dataset_borders] for cellid in cell_ids]
+        cell_output = start_multiprocess_imap(check_cutoff_dendrites, cell_input)
+        cell_output = np.array(cell_output)
+        cell_ids = cell_output[:, 0]
+        non_cutoff_mask = cell_output[:, 1]
+        cell_ids = cell_ids[non_cutoff_mask == 1]
+        log.info(f'{len(cell_ids)} cells do not have cutoff_dendrites')
+
+    conn_result_df = pd.DataFrame(columns=columns, index=range(len(cell_ids)))
     conn_result_df['cellid'] = cell_ids
 
     log.info(f'Step 2/7: Get spine density of all {ct_dict[conn_ct]} cells')
@@ -257,7 +276,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/synsizes_to_GP_violin.png')
     plt.savefig(f'{f_name}/synsizes_to_GP_violin.svg')
     plt.close()
-
+    '''
     log.info('Step 5/7: Get GP cs ratio from MSN')
     cs_ssv_ids = np.load(f'/{analysis_params.file_locations}/cs_ssv_ids_filtered.npy')
     cs_ssv_mesh_areas = np.load(f'/{analysis_params.file_locations}/cs_ssv_mesh_areas_filtered.npy') / 2
@@ -394,7 +413,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/cssizes_to_GP_violin.png')
     plt.savefig(f'{f_name}/cssizes_to_GP_violin.svg')
     plt.close()
-
+    '''
     log.info('Step 6/7: Plot morphological parameters vs GP ratio as joint plot')
     # plot histograms for all cells, GP ratio only for those connected to GP
     for key in conn_result_df.keys():
@@ -505,7 +524,7 @@ if __name__ == '__main__':
     spear_res = spearmanr(conn_result_df['spine density'], conn_result_df['dendritic length'], nan_policy='omit')
     spearman_result_df.loc[f'spine density vs dendritic length', 'stats'] = spear_res[0]
     spearman_result_df.loc[f'spine density vs dendritic length', 'p-value'] = spear_res[1]
-
+    '''
     #plot also GP syn ratio vs GP cs ratio
     g = sns.JointGrid(data=conn_result_df, x='GP ratio cs number', y='GP ratio syn number')
     g.plot_joint(sns.kdeplot, color="#EAAE34")
@@ -541,7 +560,7 @@ if __name__ == '__main__':
     spear_res = spearmanr(conn_result_df['GP ratio sum syn size'], conn_result_df['GP ratio sum cs size'], nan_policy='omit')
     spearman_result_df.loc['GP ratio cs vs sum sizes', 'stats'] = spear_res[0]
     spearman_result_df.loc['GP ratio cs vs sum sizes', 'p-value'] = spear_res[1]
-
+    '''
     spearman_result_df.to_csv(f'{f_name}/spearman_corr_results.csv')
 
     log.info(f'Step 7/7: Divide {ct_dict[conn_ct]} into groups depending on connectivity, plot again and compare groups')

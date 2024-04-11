@@ -125,7 +125,8 @@ def get_spine_density(input):
     subgraphs = (spine_graph.subgraph(c) for c in nx.connected_components(spine_graph))
     spine_amount = len(list(subgraphs))
     spine_density = spine_amount/no_spine_dendrite_length
-    return spine_density
+    return [spine_density, no_spine_dendrite_length]
+
 
 def get_compartment_radii(cell, comp_inds = None):
     """
@@ -138,6 +139,34 @@ def get_compartment_radii(cell, comp_inds = None):
     else:
         comp_radii = cell.skeleton["diameters"] * cell.scaling[0] / 2000  # in µm
     return comp_radii
+
+def get_median_comp_radii_cell(cell_input):
+    '''
+    Get median radius of axon and if applicable also dendrite for cell.
+    :param cell_input: cellid, only_axon if True then only axon median radius will be computed,
+        no_spine if True, then spines will be removed before calculating median radius
+    :return: axon median radius and dendrite median radius if applicable
+    '''
+
+    cellid, only_axon, no_spine = cell_input
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
+    axon_radii_cell = get_compartment_radii(cell, comp_inds=axon_inds)
+    ax_median_radius_cell = np.median(axon_radii_cell)
+    if only_axon:
+        return [ax_median_radius_cell, 0]
+    else:
+        dendrite_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 0)[0]
+        if no_spine:
+            spine_shaftinds = np.nonzero(cell.skeleton["spiness"] == 2)[0]
+            spine_otherinds = np.nonzero(cell.skeleton["spiness"] == 3)[0]
+            nonspine_inds = np.hstack([spine_shaftinds, spine_otherinds])
+            dendrite_inds = dendrite_inds[np.in1d(dendrite_inds, nonspine_inds)]
+        dendrite_radii_cell = get_compartment_radii(cell, comp_inds=dendrite_inds)
+        den_median_radius_cell = np.median(dendrite_radii_cell)
+        return [ax_median_radius_cell, den_median_radius_cell]
+
 
 def get_compartment_bbvolume(comp_nodes):
     """
@@ -213,29 +242,34 @@ def get_compartment_tortuosity_sampled(comp_graph, comp_nodes, n_samples = 1000,
 
     return avg_tortuosity
 
-def get_myelin_fraction(cellid, cell = None, min_comp_len = 100, load_skeleton = False):
+def get_myelin_fraction(cell_input):
     """
     calculate length and fraction of myelin for axon. Skeleton has to be loaded
     :param cell:super-segmentation object graph should be calculated on
     :param min_comp_len: compartment lengfh threshold
     :return: absolute length of mylein, relative length of myelin
     """
-    if cell is None:
-        cell = SuperSegmentationObject(cellid)
+    cellid, min_comp_len, load_skeleton, axon_only = cell_input
+    if min_comp_len is None:
+        min_comp_len = 100
+    if axon_only is None:
+        axon_only = False
+    cell = SuperSegmentationObject(cellid)
     if load_skeleton:
         cell.load_skeleton()
     axoness = cell.skeleton["axoness_avg10000"]
-    axoness[axoness == 3] = 1
-    axoness[axoness == 4] = 1
-    non_axon_inds = np.nonzero(axoness != 1)[0]
-    non_myelin_inds = np.nonzero(cell.skeleton["myelin"] == 0)[0]
     g = cell.weighted_graph(add_node_attr=('axoness_avg10000', "myelin"))
     axon_graph = g.copy()
-    axon_graph.remove_nodes_from(non_axon_inds)
+    if not axon_only:
+        axoness[axoness == 3] = 1
+        axoness[axoness == 4] = 1
+        non_axon_inds = np.nonzero(axoness != 1)[0]
+        axon_graph.remove_nodes_from(non_axon_inds)
     axon_length = axon_graph.size(weight="weight") / 1000  # in µm
     if axon_length < min_comp_len:
         return np.nan, np.nan
     myelin_graph = axon_graph.copy()
+    non_myelin_inds = np.nonzero(cell.skeleton["myelin"] == 0)[0]
     myelin_graph.remove_nodes_from(non_myelin_inds)
     absolute_myelin_length = myelin_graph.size(weight="weight") / 1000  # in µm
     relative_myelin_length = absolute_myelin_length / axon_length
@@ -579,7 +613,9 @@ def get_per_cell_mito_myelin_info(input):
     cellid, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, full_cell_dict = input
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
-    myelin_results = get_myelin_fraction(cellid=cellid, cell=cell, min_comp_len=min_comp_len, load_skeleton=False)
+    #cellid, min_comp_len, load_skeleton, axon_only
+    cell_input = [cellid, min_comp_len, False, False]
+    myelin_results = get_myelin_fraction(cell_input)
     abs_myelin_cell = myelin_results[0]
     rel_myelin_cell = myelin_results[1]
     if np.isnan(abs_myelin_cell):
@@ -840,6 +876,8 @@ def check_cutoff_dendrites(cell_input):
         return [cellid, False]
     else:
         return [cellid, True]
+
+
 
 
 

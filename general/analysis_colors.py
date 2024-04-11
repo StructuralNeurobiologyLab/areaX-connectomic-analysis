@@ -46,8 +46,11 @@ class CelltypeColors():
         # optimised for glia, blues, red, yellow
         c16 = ['#707070', '#707070', '#707070', '#707070', '#707070', '#707070', '#707070', '#707070', '#707070',
                '#707070', '#707070', '#707070', '#15C1E8', '#0481B2', '#5F033E', '#E5A732', '#707070']
+        c17 = ['#BD3748','#3287A8', '#E8AA47', '#17BEBB', '#D4F4DD', '#D5C0B8', '#D58B92', '#D62246', '#912043',
+              '#4B1D3F', '#232121', '#15AEAB']
         self.colors = {'BlRdGy': c1, 'MudGrays': c2, 'BlGrTe': c3, 'TePkBr': c4, 'BlYw': c5, 'STNGP': c6, 'STNGPNGF': c7, 'TePkBrNGF': c8, 'FSNGF': c9,
-                       'TePkBrGlia':c10, 'STNGPINTv6':c11, 'RdTeINTv6':c12, 'AxRdYwBev6': c13, 'AxRdYwBev5': c14, 'GliaPkTev6': c15, 'GliaBeRdYwv6': c16 }
+                       'TePkBrGlia':c10, 'STNGPINTv6':c11, 'RdTeINTv6':c12, 'AxRdYwBev6': c13, 'AxRdYwBev5': c14, 'GliaPkTev6': c15, 'GliaBeRdYwv6': c16,
+                       'AxTePkBrv6': c17}
         self.palettes = list(self.colors.keys())
 
     def ct_palette(self, key, num = False):

@@ -29,7 +29,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=False)
     global_params.wd = analysis_params.working_dir()
     ssd = SuperSegmentationDataset(working_dir=global_params.wd)
-    min_comp_len = 200
+    min_comp_len = 50
     syn_prob = 0.6
     min_syn_size = 0.1
     conn_ct = 3
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 20
     kde = True
     check_dens= True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240409_j0251{version}_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_replot" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240410_j0251{version}_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_fullden7" % (
     ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -49,7 +49,9 @@ if __name__ == '__main__':
     else:
         log.info('Centre of jointplot will be scatter')
     if check_dens:
+        dist_thresh = 7000
         log.info('Check if dendrites are cutoff from MSN cells and if so, exclude these cells')
+        log.info(f'{dist_thresh/1000} µm were selected as distance threshold to dataset borders')
 
 
     log.info(f'Step 1/7: Load and check all {ct_dict[conn_ct]} cells')
@@ -77,7 +79,6 @@ if __name__ == '__main__':
     if check_dens:
         log.info('Step 1b/7: Check if dendrites are cutoff from cells and if so, exclude them')
         #at least 5 µm needed to reach to segmented part of dataset
-        dist_thresh = 7000
         dataset_borders = np.array(global_params.config.entries['cube_of_interest_bb']) * [10, 10, 25]
         cell_input = [[cellid, dist_thresh, dataset_borders] for cellid in cell_ids]
         cell_output = start_multiprocess_imap(check_cutoff_dendrites, cell_input)
@@ -92,8 +93,9 @@ if __name__ == '__main__':
 
     log.info(f'Step 2/7: Get spine density of all {ct_dict[conn_ct]} cells')
     cell_input = [[cell_id, min_comp_len, cell_dict] for cell_id in cell_ids]
-    spine_density = start_multiprocess_imap(get_spine_density, cell_input)
-    spine_density = np.array(spine_density)
+    spine_density_res = start_multiprocess_imap(get_spine_density, cell_input)
+    spine_density_res = np.array(spine_density_res, dtype='object')
+    spine_density = spine_density_res[:, 0]
     conn_result_df['spine density'] = spine_density
     conn_result_df.to_csv(f'{f_name}/{ct_dict[conn_ct]}_spine_density_results.csv')
 

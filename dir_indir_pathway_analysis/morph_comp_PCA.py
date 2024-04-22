@@ -177,13 +177,22 @@ if __name__ == '__main__':
         plt.close()
 
     log.info('Step 3/4 Calculate statistics')
-    #kruskal wallis test to get statistics over different celltypes
-    kruskal_results_df = pd.DataFrame(columns=['stats', 'p-value'], index = param_list)
-    # get kruskal for all syn sizes between groups
-    #also get ranksum results between celltyes
     ct_str = np.unique(param_df['celltype'])
-    group_comps = list(combinations(range(len(ct_str)), 2))
-    ranksum_columns = [f'{ct_str[gc[0]]} vs {ct_str[gc[1]]}' for gc in group_comps]
+    ct_groups = param_df.groupby('celltype')
+    #get overview stats
+    summary_ct_df = pd.DataFrame(index=ct_str)
+    summary_ct_df['numbers'] = ct_groups.size()
+    for key in param_list:
+        summary_ct_df[f'{key} mean'] = ct_groups[key].mean()
+        summary_ct_df[f'{key} std'] = ct_groups[key].std()
+        summary_ct_df[f'{key} median'] = ct_groups[key].median()
+    summary_ct_df.to_csv(f'{f_name}/summary_params_ct.csv')
+    # kruskal wallis test to get statistics over different celltypes
+    kruskal_results_df = pd.DataFrame(columns=['stats', 'p-value'], index=param_list)
+    # get kruskal for all syn sizes between groups
+    # also get ranksum results between celltyes
+    group_comps = list(combinations(ct_str, 2))
+    ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
     ranksum_df = pd.DataFrame(columns=ranksum_columns)
     for key in param_list:
         key_groups = [group[key].values for name, group in
@@ -191,13 +200,16 @@ if __name__ == '__main__':
         kruskal_res = kruskal(*key_groups, nan_policy='omit')
         kruskal_results_df.loc[key, 'stats'] = kruskal_res[0]
         kruskal_results_df.loc[key, 'p-value'] = kruskal_res[1]
-        for gc in group_comps:
-            ranksum_res = ranksums(key_groups[gc[0]], key_groups[gc[1]])
-            ranksum_df.loc[f' {key} stats', f'{ct_str[gc[0]]} vs {ct_str[gc[1]]}'] = ranksum_res[0]
-            ranksum_df.loc[f' {key} p-value', f'{ct_str[gc[0]]} vs {ct_str[gc[1]]}'] = ranksum_res[1]
+        for group in group_comps:
+            ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[0])[key])
+            ranksum_df.loc[f'{key} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
+            ranksum_df.loc[f'{key} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
 
     kruskal_results_df.to_csv(f'{f_name}/kruskal_results.csv')
     ranksum_df.to_csv(f'{f_name}/ranksum_results.csv')
+
+    #get overview params
+
     
     log.info(f'Step 4/4 PCA with {n_comps_PCA} components')
     pca_params = ['axon median radius', 'axon mitochondria volume density', 'spine density', 'soma diameter']

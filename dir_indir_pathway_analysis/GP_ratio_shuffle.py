@@ -30,7 +30,7 @@ if __name__ == '__main__':
     gpi_ct = 7
     n_it = 3
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240311_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240412_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -71,27 +71,38 @@ if __name__ == '__main__':
     syn_sizes_df['med syn size'] = np.zeros(len(syn_sizes_df)) + np.median(syn_sizes_df['syn sizes'])
     #get different probabilites
     #probability depending on synapse number
+    prob_df = pd.DataFrame(columns = ['to GPe', 'to GPi'], index = ['syn number ratio', 'syn size ratio', 'cell number ratio', 'cell volume ratio'])
     syn_number_GPe = msn_result_df['syn number to GPe']
     syn_number_GPi = msn_result_df['syn number to GPi']
     sum_syn_number_GPe = syn_number_GPe.sum()
     sum_syn_number_GPi = syn_number_GPi.sum()
     syn_number_GPtotal = sum_syn_number_GPe + sum_syn_number_GPi
     p_syn_GPi_number = sum_syn_number_GPi / syn_number_GPtotal
+    prob_df.loc['syn number ratio', 'to GPi'] = p_syn_GPi_number
+    prob_df.loc['syn number ratio', 'to GPe'] = sum_syn_number_GPe/ syn_number_GPtotal
     #probability depending on total synaptic area
     sum_syn_area_GPe = msn_result_df['syn size to GPe'].sum()
     sum_syn_area_GPi = msn_result_df['syn size to GPi'].sum()
     total_syn_area_GP = sum_syn_area_GPe + sum_syn_area_GPi
     p_syn_GPi_area = sum_syn_area_GPi/ total_syn_area_GP
+    prob_df.loc['syn size ratio', 'to GPi'] = p_syn_GPi_area
+    prob_df.loc['syn size ratio', 'to GPe'] = sum_syn_area_GPe / total_syn_area_GP
     # probability depending on cell number
     number_GPe = len(gp_morph_df[gp_morph_df['celltype'] == 'GPe'])
     number_GPi = len(gp_morph_df[gp_morph_df['celltype'] == 'GPi'])
     GP_number = number_GPi + number_GPe
     p_GPi_number = number_GPi / GP_number
+    prob_df.loc['cell number ratio', 'to GPi'] = p_GPi_number
+    prob_df.loc['cell number ratio', 'to GPe'] = number_GPe / GP_number
     #probability depending on cell volume
     volume_GPe = gp_morph_df['cell volume'][gp_morph_df['celltype'] == 'GPe'].sum()
     volume_GPi = gp_morph_df['cell volume'][gp_morph_df['celltype'] == 'GPi'].sum()
     GP_total_volume = volume_GPi + volume_GPe
     p_GPi_volume = volume_GPi / GP_total_volume
+    prob_df.loc['cell volume ratio', 'to GPi'] = p_GPi_volume
+    prob_df.loc['cell volume ratio', 'to GPe'] = volume_GPe / GP_total_volume
+
+    prob_df.to_csv(f'{f_name}/prob_ratios_for_shuffling.csv')
 
     bool_choice = [True, False]
     len_sizes = len(syn_sizes_df)

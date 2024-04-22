@@ -159,10 +159,26 @@ if __name__ == '__main__':
         percell_org_df.loc[ct_inds, f'total {organelle_key} volume density'] = full_volume_density
         percell_org_df.loc[ct_inds, f'axon {organelle_key} volume density'] = axon_volume_density
 
+    #create overview df for summary params
+    # save mean, median and std for all parameters per ct
+    ct_str = np.unique(percell_org_df['celltype'])
+    ct_groups = percell_org_df.groupby('celltype')
+    overview_df = pd.DataFrame(index=ct_str)
+    overview_df['numbers'] = ct_groups.size()
+    param_list = ['mean firing rate singing', f'total {organelle_key} volume density',
+                  f'axon {organelle_key} volume density']
+    for key in param_list:
+        if 'firing rate' in key:
+            overview_df[key] = np.unique(ct_groups[key])
+        else:
+            overview_df[f'{key} mean'] = ct_groups[key].mean()
+            overview_df[f'{key} std'] = ct_groups[key].std()
+            overview_df[f'{key} median'] = ct_groups[key].median()
+
     overview_df = overview_df.astype(
-        {'mean firing rate singing': float, f'mean axon {organelle_key} volume density': float,
-         f'mean total {organelle_key} volume density': float, f'median axon {organelle_key} volume density': float,
-         f'median total {organelle_key} volume density': float})
+        {'mean firing rate singing': float, f'axon {organelle_key} volume density mean': float,
+         f'total {organelle_key} volume density mean': float, f'axon {organelle_key} volume density median': float,
+         f'total {organelle_key} volume density median': float})
     overview_df.to_csv(f'{f_name}/overview_df_{organelle_key}_den.csv')
     percell_org_df = percell_org_df.astype(
         {'mean firing rate singing': float, f'axon {organelle_key} volume density': float,
@@ -170,8 +186,8 @@ if __name__ == '__main__':
     percell_org_df.to_csv(f'{f_name}/percell_df_{organelle_key}_den.csv')
 
     log.info('Step 3/4: Calculate statistics and plot results')
-    group_comps = list(combinations(range(len(ct_types)), 2))
-    ranksum_columns = [f'{ct_str_list[gc[0]]} vs {ct_str_list[gc[1]]}' for gc in group_comps]
+    group_comps = list(combinations(ct_str, 2))
+    ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
     ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
     known_values_only_percell = percell_org_df.dropna()
 
@@ -191,9 +207,9 @@ if __name__ == '__main__':
             log.info(f'Spearman correlation test result for {key}: {spearman_res}, for these celltypes {spearman_cts}')
             #ranksum results
             for group in group_comps:
-                ranksum_res = ranksums(key_groups[group[0]], key_groups[group[1]])
-                ranksum_group_df.loc[f'{key} stats', f'{ct_str_list[group[0]]} vs {ct_str_list[group[1]]}'] = ranksum_res[0]
-                ranksum_group_df.loc[f'{key} p-value',f'{ct_str_list[group[0]]} vs {ct_str_list[group[1]]}'] = ranksum_res[1]
+                ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[0])[key])
+                ranksum_group_df.loc[f'{key} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
+                ranksum_group_df.loc[f'{key} p-value',f'{group[0]} vs {group[1]}'] = ranksum_res[1]
             #plot with increasing median as boxplot and violinplot
             sns.boxplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, order=median_order)
             plt.title(key)

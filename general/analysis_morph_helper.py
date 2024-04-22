@@ -82,7 +82,7 @@ def get_spine_density(input):
      # spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
     :param cell: super-segmentation object
     :param min_comp_len: minimum compartment length in µm
-    :param full_cell_dict: dictionary with per cell parameter values, cell.id is key
+    :param full_cell_dict: dictionary with per cell parameter values, already per cellid
     :return: amount of spines on dendrite, 0 if not having min_comp_len
     """
     cellid, min_comp_len, full_cell_dict = input
@@ -94,19 +94,19 @@ def get_spine_density(input):
     # use axon and dendrite length dictionaries to lookup axon and dendrite lenght in future versions
     if full_cell_dict is not None:
         try:
-            axon_length = full_cell_dict[cell.id]["axon length"]
+            axon_length = full_cell_dict["axon length"]
         except KeyError:
             all_cell_dict = load_pkl2obj("wholebrain/scratch/arother/j0251v4_prep/combined_fullcell_ax_dict.pkl")
-            axon_length = all_cell_dict[cell.id]["axon length"]
+            axon_length = all_cell_dict["axon length"]
     else:
         axon_length = get_compartment_length(cell, compartment = 1, cell_graph = g)
     if axon_length < min_comp_len:
         return 0
     if full_cell_dict is not None:
         try:
-            dendrite_length = full_cell_dict[cell.id]["dendrite length"]
+            dendrite_length = full_cell_dict["dendrite length"]
         except KeyError:
-            dendrite_length = all_cell_dict[cell.id]["dendrite length"]
+            dendrite_length = all_cell_dict["dendrite length"]
     else:
         dendrite_length = get_compartment_length(cell, compartment = 0, cell_graph = g)
     if dendrite_length < min_comp_len:
@@ -614,14 +614,14 @@ def get_per_cell_mito_myelin_info(input):
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
     #cellid, min_comp_len, load_skeleton, axon_only
-    cell_input = [cellid, min_comp_len, False, False]
+    cell_input = [cellid, min_comp_len, True, False]
     myelin_results = get_myelin_fraction(cell_input)
     abs_myelin_cell = myelin_results[0]
     rel_myelin_cell = myelin_results[1]
     if np.isnan(abs_myelin_cell):
         return [np.nan, np.nan, np.nan]
     #input for organell analysis: cellid, org_ssv_ids, org_sizes, org_axoness, full_cell_dict = params
-    organell_input = [cellid, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict, False]
+    organell_input = [cellid, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict]
     mito_results = get_organelle_comp_density_presaved(organell_input)
     axo_mito_volume_density_cell = mito_results[0]
     total_mito_volume_density_cell = mito_results[2]

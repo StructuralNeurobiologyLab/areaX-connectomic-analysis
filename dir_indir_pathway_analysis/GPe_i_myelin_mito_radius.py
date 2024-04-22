@@ -30,10 +30,10 @@ if __name__ == '__main__':
     min_comp_len = 200
     syn_prob = bio_params.syn_prob_thresh()
     min_syn_size = bio_params.min_syn_size()
-    fontsize_jointplot = 14
+    fontsize_jointplot = 20
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_GPe_i_myelin_mito_radius_mcl%i_fs%i_med%i" % \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240422_j0251{version}_GPe_i_myelin_mito_radius_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -70,16 +70,14 @@ if __name__ == '__main__':
     axon_median_radius_gpi = np.zeros(len(GPi_ids))
     axon_mito_volume_density_gpi = np.zeros(len(GPi_ids))
     axon_myelin_gpi = np.zeros(len(GPi_ids))
-    sd_mitossv = SegmentationDataset("mi", working_dir=global_params.config.working_dir)
-    cached_mito_ids = sd_mitossv.ids
-    cached_mito_mesh_bb = sd_mitossv.load_numpy_data("mesh_bb")
-    cached_mito_rep_coords = sd_mitossv.load_numpy_data("rep_coord")
-    cached_mito_volumes = sd_mitossv.load_numpy_data("size")
-
+    np_presaved_loc = bio_params.file_locations
 
     log.info("Step 1/3: Get information from GPe")
     log.info('Get mito mylein, radius, volume info from GPe')
-    gpe_input = [[gpe_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, GPe_full_cell_dict] for gpe_id in GPe_ids]
+    gpe_org_map2ssvids = np.load(f'{np_presaved_loc}/GPe_mi_mapping_ssv_ids_fullcells.npy')
+    gpe_org_axoness = np.load(f'{np_presaved_loc}/GPe_mi_axoness_coarse_fullcells.npy')
+    gpe_org_sizes = np.load(f'{np_presaved_loc}/GPe_mi_sizes_fullcells.npy')
+    gpe_input = [[cell_id, min_comp_len, gpe_org_map2ssvids, gpe_org_sizes, gpe_org_axoness, GPe_full_cell_dict[cell_id]] for cell_id in GPe_ids]
     gpe_output = start_multiprocess_imap(get_per_cell_mito_myelin_info, gpe_input)
     gpe_output = np.array(gpe_output)
     #[ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
@@ -106,9 +104,12 @@ if __name__ == '__main__':
 
     log.info("Step 2/3: Get information from GPi")
     log.info('Get mito mylein, radius, volume info from GPi')
+    gpi_org_map2ssvids = np.load(f'{np_presaved_loc}/GPi_mi_mapping_ssv_ids_fullcells.npy')
+    gpi_org_axoness = np.load(f'{np_presaved_loc}/GPi_mi_axoness_coarse_fullcells.npy')
+    gpi_org_sizes = np.load(f'{np_presaved_loc}/GPi_mi_sizes_fullcells.npy')
     gpi_input = [
-        [gpi_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, GPi_full_cell_dict] for
-        gpi_id in GPi_ids]
+        [cell_id, min_comp_len, gpi_org_map2ssvids, gpi_org_sizes, gpi_org_axoness, GPi_full_cell_dict[cell_id]] for
+        cell_id in GPi_ids]
     gpi_output = start_multiprocess_imap(get_per_cell_mito_myelin_info, gpi_input)
     gpi_output = np.array(gpi_output)
     # [ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]

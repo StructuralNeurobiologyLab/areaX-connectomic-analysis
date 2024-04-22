@@ -119,9 +119,9 @@ if __name__ == '__main__':
         ct_diameters = ct_soma_results[:, 1].astype(float) * 2
         #get spine density from all ngf cells
         log.info('Get cell spine density')
-        morph_input = [[cell_id, min_comp_len, suitable_cell_dict[ct]] for cell_id in suitable_ids_dict[ct]]
+        morph_input = [[cell_id, min_comp_len, suitable_cell_dict[ct][cell_id]] for cell_id in suitable_ids_dict[ct]]
         spine_density = start_multiprocess_imap(get_spine_density, morph_input)
-        spine_density = np.array(spine_density)
+        spine_density = np.array(spine_density)[:, 0]
         nonzero_id_inds = np.in1d(param_df['cellids'], ids_nonzero)
         param_df.loc[nonzero_id_inds, 'axon median radius'] = axon_median_radius_ct[ct_nonzero]
         param_df.loc[nonzero_id_inds, 'axon mitochondria volume density'] = axon_mito_volume_density_ct[ct_nonzero]

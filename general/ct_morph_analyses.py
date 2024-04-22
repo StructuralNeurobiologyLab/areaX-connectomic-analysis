@@ -143,7 +143,7 @@ if __name__ == '__main__':
                     cell_volume = np.abs(cell.size * np.prod(cell.scaling) * 10**(-9)) #in µm³
                     morph_df.loc[id_ind, 'cell volume'] = cell_volume
                 ct_inds = morph_df['celltype'] == ct_dict[ct]
-                cell_input = [[cell_id, min_comp_len_cell, cell_dict] for cell_id in ct_ids]
+                cell_input = [[cell_id, min_comp_len_cell, cell_dict[cell_id]] for cell_id in ct_ids]
                 spine_density_res = start_multiprocess_imap(get_spine_density, cell_input)
                 spine_density_res = np.array(spine_density_res, dtype='object')
                 spine_density = spine_density_res[:, 0]

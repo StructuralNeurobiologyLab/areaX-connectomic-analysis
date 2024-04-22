@@ -38,7 +38,7 @@ if __name__ == '__main__':
     cts_str = [ct_dict[ct] for ct in cts]
     color_key = 'RdTeINTv6'
     n_comps_PCA = 1
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240405_j0251{version}_{cts_str}_morph_comp_radius_spiness_examplecells_mcl%i_fs%i_med%i_{color_key}_nc{n_comps_PCA}" % \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240422_j0251{version}_{cts_str}_morph_comp_radius_spiness_examplecells_mcl%i_fs%i_med%i_{color_key}_nc{n_comps_PCA}" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -83,10 +83,8 @@ if __name__ == '__main__':
     all_celltypes = np.concatenate(all_celltypes)
 
     sd_mitossv = SegmentationDataset("mi", working_dir=global_params.config.working_dir)
-    cached_mito_ids = sd_mitossv.ids
-    cached_mito_mesh_bb = sd_mitossv.load_numpy_data("mesh_bb")
-    cached_mito_rep_coords = sd_mitossv.load_numpy_data("rep_coord")
-    cached_mito_volumes = sd_mitossv.load_numpy_data("size")
+    np_presaved_loc = bio_params.file_locations
+
 
     log.info("Step 1/4: Get morphological information from cellids")
     log.info('Get information about mitos, myelin and axon radius')
@@ -99,7 +97,12 @@ if __name__ == '__main__':
     for ct in cts:
         ct_str = ct_dict[ct]
         log.info(f'Analysis starts for {ct_str}')
-        morph_input = [[cell_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, suitable_cell_dict[ct]] for cell_id in suitable_ids_dict[ct]]
+        ct_org_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mi_ids_fullcells.npy')
+        ct_org_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mi_mapping_ssv_ids_fullcells.npy')
+        ct_org_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mi_axoness_coarse_fullcells.npy')
+        ct_org_sizes = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_mi_sizes_fullcells.npy')
+        #cellid, min_comp_len, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict = input
+        morph_input = [[cell_id, min_comp_len, ct_org_map2ssvids, ct_org_sizes, ct_org_axoness, suitable_cell_dict[ct][cell_id]] for cell_id in suitable_ids_dict[ct]]
         morph_output = start_multiprocess_imap(get_per_cell_mito_myelin_info, morph_input)
         morph_output = np.array(morph_output)
         #[ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]

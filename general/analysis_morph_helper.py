@@ -607,10 +607,10 @@ def get_per_cell_mito_myelin_info(input):
     '''
     Function to get information about myelin fraction, mitochondria density and axon radius per cell.
     Also calculates the cell volume from cell.size in µm³
-    :param input: cellid, cached mitochondria information, cell dict which cached cellids for celltype
+    :param input: cellid, cached mitochondria information, cell dict which cached cellids for cell
     :return: median radius per cell, mitochondria volume density, myelin fraction
     '''
-    cellid, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, full_cell_dict = input
+    cellid, min_comp_len, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict = input
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
     #cellid, min_comp_len, load_skeleton, axon_only
@@ -620,14 +620,11 @@ def get_per_cell_mito_myelin_info(input):
     rel_myelin_cell = myelin_results[1]
     if np.isnan(abs_myelin_cell):
         return [np.nan, np.nan, np.nan]
-    #input for organell analysis: cellid, cached_so_ids, cached_so_rep_coord,
-    # cached_so_volume, full_cell_dict,k, min_comp_len, axon_only
-    organell_input = [cellid, cached_mito_ids, cached_mito_rep_coords,
-                      cached_mito_volumes, full_cell_dict, 3, min_comp_len, False]
-    mito_results = get_organell_volume_density_comps(organell_input)
-    axo_mito_volume_density_cell = mito_results[2]
-    den_mito_volume_density_cell = mito_results[3]
-    total_mito_volume_density_cell = mito_results[4]
+    #input for organell analysis: cellid, org_ssv_ids, org_sizes, org_axoness, full_cell_dict = params
+    organell_input = [cellid, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict, False]
+    mito_results = get_organelle_comp_density_presaved(organell_input)
+    axo_mito_volume_density_cell = mito_results[0]
+    total_mito_volume_density_cell = mito_results[2]
     axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
     axon_radii_cell = get_compartment_radii(cell, comp_inds=axon_inds)
     ax_median_radius_cell = np.median(axon_radii_cell)

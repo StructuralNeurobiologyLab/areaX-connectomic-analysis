@@ -37,7 +37,7 @@ if __name__ == '__main__':
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
     organelle_key = 'mi'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240326_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240422_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

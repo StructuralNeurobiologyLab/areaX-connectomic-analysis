@@ -33,17 +33,17 @@ if __name__ == '__main__':
     axon_only = False
     min_comp_len_cell = 200
     min_comp_len_ax = 200
-    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF'
-    color_key = 'STNGPINTv6'
+    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
+    color_key = 'TeBKv6MSNyw'
     fontsize = 20
     n_comps_PCA = 2
     n_umap_runs = 5
     process_morph_parameters = False
-    use_mito_density = False
+    use_mito_density = True
     use_vc_density = False
-    use_ves_density = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240416_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_msn_only" % (
+    use_ves_density = True
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240422_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_fc_axmives" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -291,7 +291,7 @@ if __name__ == '__main__':
         kruskal_results_df.loc[key, 'stats'] = kruskal_res[0]
         kruskal_results_df.loc[key, 'p-value'] = kruskal_res[1]
         for group in group_comps:
-            ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[0])[key])
+            ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[1])[key])
             ranksum_df.loc[f'{key} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
             ranksum_df.loc[f'{key} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
 

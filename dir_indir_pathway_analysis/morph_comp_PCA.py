@@ -204,7 +204,7 @@ if __name__ == '__main__':
         kruskal_results_df.loc[key, 'stats'] = kruskal_res[0]
         kruskal_results_df.loc[key, 'p-value'] = kruskal_res[1]
         for group in group_comps:
-            ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[0])[key])
+            ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[1])[key])
             ranksum_df.loc[f'{key} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
             ranksum_df.loc[f'{key} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
 

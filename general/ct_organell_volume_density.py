@@ -98,11 +98,6 @@ if __name__ == '__main__':
 
     log.info(f'Step 2/4: Get {organelle_key} volume density per cell')
     #ellid, cached_so_ids, cached_so_rep_coord, cached_so_volume, full_cell_dict, k, min_comp_len = input
-    # generate pd Dataframe as overview per celltype
-    ov_columns = ['celltype', 'mean firing rate singing', f'mean total {organelle_key} volume density',
-                  f'std total {organelle_key} volume density',
-                  f'mean axon {organelle_key} volume density', f'std axon {organelle_key} volume density']
-    overview_df = pd.DataFrame(columns=ov_columns, index=range(len(ct_types)))
     # generate df for each cell
     pc_columns = ['cellid', 'mean firing rate singing', f'total {organelle_key} volume density', f'axon {organelle_key} volume density']
     percell_org_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
@@ -138,20 +133,6 @@ if __name__ == '__main__':
             axon_volume_density = org_output[:, 0]
             dendrite_volume_density = org_output[:, 1]
             full_volume_density = org_output[:, 2]
-        median_axo_den = np.median(axon_volume_density)
-        mean_axo_den = np.mean(axon_volume_density)
-        std_axo_den = np.std(axon_volume_density)
-        median_total_den = np.median(full_volume_density)
-        mean_total_den = np.mean(full_volume_density)
-        std_total_den = np.std(full_volume_density)
-        overview_df.loc[i, 'celltype'] = ct_str
-        overview_df.loc[i, 'mean firing rate singing'] = firing_value
-        overview_df.loc[i, f'mean total {organelle_key} volume density'] = mean_total_den
-        overview_df.loc[i, f'median total {organelle_key} volume density'] = median_total_den
-        overview_df.loc[i, f'std total {organelle_key} volume density'] = std_total_den
-        overview_df.loc[i, f'mean axon {organelle_key} volume density'] = mean_axo_den
-        overview_df.loc[i, f'median axon {organelle_key} volume density'] = median_axo_den
-        overview_df.loc[i,f'std axon {organelle_key} volume density'] = std_axo_den
         #for percell df
         ct_inds = np.in1d(percell_org_df['cellid'], suitable_ids_dict[ct])
         percell_org_df.loc[ct_inds, 'celltype'] = ct_str
@@ -207,7 +188,7 @@ if __name__ == '__main__':
             log.info(f'Spearman correlation test result for {key}: {spearman_res}, for these celltypes {spearman_cts}')
             #ranksum results
             for group in group_comps:
-                ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[0])[key])
+                ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[1])[key])
                 ranksum_group_df.loc[f'{key} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
                 ranksum_group_df.loc[f'{key} p-value',f'{group[0]} vs {group[1]}'] = ranksum_res[1]
             #plot with increasing median as boxplot and violinplot

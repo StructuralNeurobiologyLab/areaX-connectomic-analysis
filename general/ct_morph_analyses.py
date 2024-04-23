@@ -29,12 +29,12 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    full_cells_only = True
-    axon_only = False
+    full_cells_only = False
+    axon_only = True
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    color_key = 'TeBKv6MSNyw'
+    color_key = 'AxTePkBrv6'
     fontsize = 20
     n_comps_PCA = 2
     n_umap_runs = 5
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     use_vc_density = False
     use_ves_density = True
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240422_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_fc_axmives" % (
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_axonly_axmives" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

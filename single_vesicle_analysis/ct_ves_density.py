@@ -28,12 +28,12 @@ if __name__ == '__main__':
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    full_cells_only = False
+    full_cells_only = True
     analysis_params = Analysis_Params(version = version)
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     global_params.wd = analysis_params.working_dir()
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240422_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240423_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i_fc_nomsn" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         glia_cts = analysis_params._glia_cts
     if full_cells_only:
         ct_types = analysis_params.load_celltypes_full_cells()
-        #ct_types = ct_types[1:]
+        ct_types = ct_types[1:]
     else:
         ct_types = np.arange(0, num_cts)
     firing_rate_dict = {'DA': 15, 'MSN': 1.58, 'LMAN': 34.9, 'HVC': 1, 'TAN': 65.1, 'GPe': 135, 'GPi': 258, 'FS': 19.1, 'LTS': 35.8}
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     param_list = ['mean firing rate singing', f'vesicle density']
     for key in param_list:
         if 'firing rate' in key:
-            overview_df[key] = np.unique(ct_groups[key])
+            overview_df[key] = ct_groups[key].mean()
         else:
             overview_df[f'{key} mean'] = ct_groups[key].mean()
             overview_df[f'{key} std'] = ct_groups[key].std()
@@ -174,9 +174,9 @@ if __name__ == '__main__':
     log.info(f'Spearman correlation test result for vesicle density: {spearman_res}')
     #ranksum results
     for group in group_comps:
-        ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[1])[key])
-        ranksum_group_df.loc[f'{key} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
-        ranksum_group_df.loc[f'{key} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
+        ranksum_res = ranksums(ct_groups.get_group(group[0])['vesicle density'], ct_groups.get_group(group[1])['vesicle density'])
+        ranksum_group_df.loc[f'vesicle density stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
+        ranksum_group_df.loc[f'vesicle density p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
     #plot with increasing median as boxplot and violinplot
     sns.boxplot(data=percell_ves_df, x='celltype', y='vesicle density', palette=ct_palette, order=median_order)
     plt.title('vesicle density')
@@ -209,7 +209,8 @@ if __name__ == '__main__':
     known_values_only_ov = overview_df.dropna()
     known_cts_only = np.unique(known_values_only_ov['celltype'])
     fs_dict = {'celltype': 'FS', 'mean firing rate singing': firing_rate_dict['FS']}
-    overview_df = overview_df.append(fs_dict, ignore_index=True)
+    fs_df = pd.DataFrame(fs_dict, index=['FS'])
+    overview_df = pd.concat([overview_df, fs_df])
     ov_palette = {known_cts_only[i]: '#232121' for i in range(len(known_cts_only))}
     ov_palette['FS'] = '#232121'
     for ct in overview_df['celltype']:
@@ -264,10 +265,9 @@ if __name__ == '__main__':
                 ct_str = ct_dict[ct]
                 if ct_str in firing_rate_dict.keys():
                     continue
-                key_ct_ind = np.where(overview_df['celltype'] == ct_str)[0]
-                key_ct_value = overview_df[key][key_ct_ind]
-                firing_pred = coefficient*key_ct_value + intercept
-                overview_df.loc[key_ct_ind, 'mean firing rate singing'] = firing_pred
+                key_ct_value = overview_df.loc[ct_str, key]
+                firing_pred = coefficient * key_ct_value + intercept
+                overview_df.loc[ct_str, 'mean firing rate singing'] = firing_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)
@@ -297,9 +297,8 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_fit.svg')
             plt.close()
             #also predict 'FS' mito density value
-            fs_mito_pred = (firing_rate_dict['FS'] - intercept) / coefficient
-            fs_ind = np.where(overview_df['celltype'] == 'FS')[0]
-            overview_df.loc[fs_ind, key] = fs_mito_pred
+            fs_ves_pred = (firing_rate_dict['FS'] - intercept) / coefficient
+            overview_df.loc['FS', key] = fs_ves_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)

@@ -36,8 +36,8 @@ if __name__ == '__main__':
     color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'vc'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240422_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    organelle_key = 'mi'
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240423_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -145,12 +145,13 @@ if __name__ == '__main__':
     ct_str = np.unique(percell_org_df['celltype'])
     ct_groups = percell_org_df.groupby('celltype')
     overview_df = pd.DataFrame(index=ct_str)
+    overview_df['celltype'] = ct_str
     overview_df['numbers'] = ct_groups.size()
     param_list = ['mean firing rate singing', f'total {organelle_key} volume density',
                   f'axon {organelle_key} volume density']
     for key in param_list:
         if 'firing rate' in key:
-            overview_df[key] = np.unique(ct_groups[key])
+            overview_df[key] = ct_groups[key].mean()
         else:
             overview_df[f'{key} mean'] = ct_groups[key].mean()
             overview_df[f'{key} std'] = ct_groups[key].std()
@@ -221,7 +222,8 @@ if __name__ == '__main__':
     known_values_only_ov = overview_df.dropna()
     known_cts_only = np.unique(known_values_only_ov['celltype'])
     fs_dict = {'celltype': 'FS', 'mean firing rate singing': firing_rate_dict['FS']}
-    overview_df = overview_df.append(fs_dict, ignore_index=True)
+    fs_df = pd.DataFrame(fs_dict, index = ['FS'])
+    overview_df = pd.concat([overview_df, fs_df])
     ov_palette = {known_cts_only[i]: '#232121' for i in range(len(known_cts_only))}
     ov_palette['FS'] = '#232121'
     for ct in overview_df['celltype']:
@@ -278,10 +280,9 @@ if __name__ == '__main__':
                 ct_str = ct_dict[ct]
                 if ct_str in firing_rate_dict.keys():
                     continue
-                key_ct_ind = np.where(overview_df['celltype'] == ct_str)[0]
-                key_ct_value = overview_df[key][key_ct_ind]
+                key_ct_value = overview_df.loc[ct_str, key]
                 firing_pred = coefficient*key_ct_value + intercept
-                overview_df.loc[key_ct_ind, 'mean firing rate singing'] = firing_pred
+                overview_df.loc[ct_str, 'mean firing rate singing'] = firing_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)
@@ -311,8 +312,7 @@ if __name__ == '__main__':
             plt.close()
             #also predict 'FS' org density value
             fs_org_pred = (firing_rate_dict['FS'] - intercept) / coefficient
-            fs_ind = np.where(overview_df['celltype'] == 'FS')[0]
-            overview_df.loc[fs_ind, key] = fs_org_pred
+            overview_df.loc['FS', key] = fs_org_pred
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)

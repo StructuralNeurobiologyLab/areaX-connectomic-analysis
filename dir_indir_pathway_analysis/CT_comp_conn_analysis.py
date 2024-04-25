@@ -38,7 +38,7 @@ if __name__ == '__main__':
     comp_color_key = 'TeGy'
     save_svg = True
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240423_j0251{version}_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240425_j0251{version}_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
     post_ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key, comp_color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

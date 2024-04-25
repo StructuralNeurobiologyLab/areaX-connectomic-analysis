@@ -28,12 +28,12 @@ if __name__ == '__main__':
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    full_cells_only = True
+    full_cells_only = False
     analysis_params = Analysis_Params(version = version)
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     global_params.wd = analysis_params.working_dir()
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240423_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i_fc_nomsn" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240423_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         glia_cts = analysis_params._glia_cts
     if full_cells_only:
         ct_types = analysis_params.load_celltypes_full_cells()
-        ct_types = ct_types[1:]
+        #ct_types = ct_types[1:]
     else:
         ct_types = np.arange(0, num_cts)
     firing_rate_dict = {'DA': 15, 'MSN': 1.58, 'LMAN': 34.9, 'HVC': 1, 'TAN': 65.1, 'GPe': 135, 'GPi': 258, 'FS': 19.1, 'LTS': 35.8}
@@ -134,6 +134,7 @@ if __name__ == '__main__':
     ct_str = np.unique(percell_ves_df['celltype'])
     ct_groups = percell_ves_df.groupby('celltype')
     overview_df = pd.DataFrame(index=ct_str)
+    overview_df['celltype'] = ct_str
     overview_df['numbers'] = ct_groups.size()
     param_list = ['mean firing rate singing', f'vesicle density']
     for key in param_list:

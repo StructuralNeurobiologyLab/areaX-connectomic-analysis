@@ -302,9 +302,8 @@ def get_organell_ids_comps(input):
     :param input: cellid, org_so_ids, org_rep_coords
     :return: axon_ids, den_ids, soma_ids
     '''
-    cellid, org_so_ids, org_rep_coord = input
+    cellid, org_so_ids, org_rep_coord, segmentation_object_ids = input
     cell = SuperSegmentationObject(cellid)
-    segmentation_object_ids = cell.mi_ids
     cell.load_skeleton()
     kdtree = scipy.spatial.cKDTree(cell.skeleton["nodes"] * cell.scaling)
     sso_organell_inds = np.in1d(org_so_ids, segmentation_object_ids)

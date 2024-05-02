@@ -33,7 +33,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     global_params.wd = analysis_params.working_dir()
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240423_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240502_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -168,11 +168,6 @@ if __name__ == '__main__':
     ct_palette = {median_order[i]: ct_colors[i] for i in range(len(median_order))}
     kruskal_res = kruskal(*key_groups, nan_policy='omit')
     log.info(f'Kruskal Wallis test result for vesicle density: {kruskal_res}')
-    # calculate spearmannr only for known celltypes
-    spearman_res = spearmanr(known_values_only_percell['vesicle density'], known_values_only_percell['mean firing rate singing'], nan_policy='omit')
-    spearman_cts = np.unique(known_values_only_percell['celltype'])
-    log.info(f'Spearman correlation test result for vesicle density: {spearman_res}, for these celltypes {spearman_cts}')
-    log.info(f'Spearman correlation test result for vesicle density: {spearman_res}')
     #ranksum results
     for group in group_comps:
         ranksum_res = ranksums(ct_groups.get_group(group[0])['vesicle density'], ct_groups.get_group(group[1])['vesicle density'])
@@ -229,6 +224,10 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.svg')
             plt.close()
+            # calculate spearmannr only for known celltypes
+            spearman_res = spearmanr(known_values_only_ov['vesicle density'], known_values_only_ov['mean firing rate singing'], nan_policy='omit')
+            spearman_cts = np.unique(known_values_only_ov['celltype'])
+            log.info(f'Spearman correlation test result for vesicle density: {spearman_res}, for these celltypes {spearman_cts}')
             # percell_key = key.split(' ')[1:]
             # percell_key = ' '.join(percell_key)
             # lin reg code adopted from ChatGPT
@@ -328,8 +327,7 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.svg')
             plt.close()
-
-    overview_df.to_csv(f'{f_name}/overview_df_with_preds.csv')
+            overview_df.to_csv(f'{f_name}/overview_df_with_preds_{key}.csv')
 
     log.info('Analysis done')
 

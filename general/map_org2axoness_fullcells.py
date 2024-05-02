@@ -16,7 +16,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     f_name = analysis_params.file_locations
     # organelles = 'mi', 'vc', 'er', 'golgi
-    organell_keys = ['mi', 'vc']
+    organell_keys = ['vc', 'golgi']
     full_cell_only = True
     log = initialize_logging(f'{organell_keys}_full_cells',
                              log_dir=f_name + '/logs/')
@@ -36,6 +36,7 @@ if __name__ == '__main__':
         org_ids = sd_org.ids
         org_coords = sd_org.load_numpy_data('rep_coord')
         org_sizes = sd_org.load_numpy_data('size')
+        org_mesh_area = sd_org.load_numpy_data('mesh_area')
         log.info(f'Now mapping {ok} to axoness')
         for ct in ct_types:
             log.info(f'Now processing celltype {ct_dict[ct]}')
@@ -46,7 +47,7 @@ if __name__ == '__main__':
                     log.info(f'Get cellid for each {ok} in cells')
                     cell_dict = analysis_params.load_cell_dict(ct)
                     ct_ids = np.array(list(cell_dict.keys()))
-                    org_input = [[cellid, org_ids] for cellid in ct_ids]
+                    org_input = [[cellid, org_ids, ok] for cellid in ct_ids]
                     output = start_multiprocess_imap(map_cellid2org, org_input)
                     output = np.array(output, dtype='object')
                     org_ids_reordered = np.concatenate(output[:, 0])
@@ -59,17 +60,19 @@ if __name__ == '__main__':
                     ct_org_ids = org_ids[ct_inds]
                     ct_org_coords = org_coords[ct_inds]
                     ct_org_sizes = org_sizes[ct_inds]
+                    ct_org_mesh_areas = org_mesh_area[ct_inds]
                     ct_org_cellids = org_cellids_reordered[org_ids_reordered.argsort()][ct_org_ids.argsort().argsort()]
                     log.info('Save axoness cache and caches for projecting axons')
                     np.save(f'{f_name}/{ct_dict[ct]}_{ok}_ids.npy', ct_org_ids)
                     np.save(f'{f_name}/{ct_dict[ct]}_{ok}_rep_coords.npy', ct_org_coords)
                     np.save(f'{f_name}/{ct_dict[ct]}_{ok}_sizes.npy', ct_org_sizes)
                     np.save(f'{f_name}/{ct_dict[ct]}_{ok}_mapping_ssv_ids.npy', ct_org_cellids)
+                    np.save(f'{f_name}/{ct_dict[ct]}_{ok}_mesh_areas', ct_org_mesh_areas)
             else:
                 log.info(f'Get cellid, axoness for each {ok} in cells')
                 # get cellids for celltype
                 ct_ids = analysis_params.load_full_cell_array(ct)
-                org_input = [[cellid, org_ids, org_coords] for cellid in ct_ids]
+                org_input = [[cellid, org_ids, org_coords, ok] for cellid in ct_ids]
                 output = start_multiprocess_imap(map_axoness_cellid2org, org_input)
                 output = np.array(output, dtype='object')
                 org_ids_reordered = np.concatenate(output[:, 0])
@@ -80,6 +83,7 @@ if __name__ == '__main__':
                 ct_org_ids = org_ids[ct_inds]
                 ct_org_coords = org_coords[ct_inds]
                 ct_org_sizes = org_sizes[ct_inds]
+                ct_org_mesh_areas = org_mesh_area[ct_inds]
                 ct_org_cellids = org_cellids_reordered[org_ids_reordered.argsort()][ct_org_ids.argsort().argsort()]
                 ct_org_axoness = org_axoness_reordered[org_ids_reordered.argsort()][ct_org_ids.argsort().argsort()]
                 log.info('Save axoness cache and caches for full cells')
@@ -88,6 +92,7 @@ if __name__ == '__main__':
                 np.save(f'{f_name}/{ct_dict[ct]}_{ok}_rep_coords_fullcells.npy', ct_org_coords)
                 np.save(f'{f_name}/{ct_dict[ct]}_{ok}_sizes_fullcells.npy', ct_org_sizes)
                 np.save(f'{f_name}/{ct_dict[ct]}_{ok}_mapping_ssv_ids_fullcells.npy', ct_org_cellids)
+                np.save(f'{f_name}/{ct_dict[ct]}_{ok}_mesh_areas_fullcells.npy', ct_org_mesh_areas)
             log.info(f'Caching for celltype {ct_dict[ct]} finished')
 
     log.info(f'Caching for {num_cts} celltypes done.')

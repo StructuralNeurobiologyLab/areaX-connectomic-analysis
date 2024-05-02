@@ -752,10 +752,10 @@ def map_axoness_cellid2org(params):
     :return: org_ids and axoness per cell
     '''
 
-    cellid, org_ids, org_coords = params
+    cellid, org_ids, org_coords, organelle_key = params
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
-    cell_mi_ids = cell.mi_ids
+    cell_mi_ids = cell.lookup_in_attribute_dict(organelle_key)
     cell_org_ind = np.in1d(org_ids, cell_mi_ids)
     cell_org_coords = org_coords[cell_org_ind]
     cell_org_ids = org_ids[cell_org_ind]
@@ -776,9 +776,9 @@ def map_cellid2org(params):
     :return: org_ids and axoness per cell
     '''
 
-    cellid, org_ids = params
+    cellid, org_ids, organelle_key = params
     cell = SuperSegmentationObject(cellid)
-    cell_mi_ids = cell.mi_ids
+    cell_mi_ids = cell.lookup_in_attribute_dict(organelle_key)
     cell_org_ind = np.in1d(org_ids, cell_mi_ids)
     cell_org_ids = org_ids[cell_org_ind]
     org_ssv_ids = np.zeros(len(cell_org_ids), dtype=np.int64) + cellid

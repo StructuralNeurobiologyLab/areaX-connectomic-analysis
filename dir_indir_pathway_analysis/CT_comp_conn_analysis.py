@@ -32,7 +32,7 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGPINTv6'
-    post_ct = 4
+    post_ct = 5
     post_ct_str = ct_dict[post_ct]
     #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd, TeBk', 'TeGy'}
     comp_color_key = 'TeGy'
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
-    cts_for_loading = [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11]
+    cts_for_loading = np.arange(12)
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -111,6 +111,7 @@ if __name__ == '__main__':
     summary_columns = np.hstack([np.array(['celltype', 'compartment']), np.array(summary_columns)])
     summary_all_comps_df = pd.DataFrame(columns = summary_columns, index=range(num_comps * num_cts))
     num_postcellids = len(suitable_ids_dict[post_ct])
+    exclude_ct_from_stats = []
     for ic, ct in enumerate(tqdm(cts_for_loading)):
         ct_str = ct_dict[ct]
         #get median, min, max synapse distance to soma per cell
@@ -133,6 +134,11 @@ if __name__ == '__main__':
         #syn_numbers_ct, sum_sizes_ct, syn_number_perc_ct, sum_sizes_perc_ct, ids_ct = percell_params
         #parameters for all synapses independent of cell
         #all_syn_numbers, all_sum_sizes, all_syn_nums_perc, all_syn_sizes_perc = syn_params
+        if type(percell_params) == int:
+            if percell_params == 0:
+                log.info(f'for {ct_str} cells there are no synapses')
+                exclude_ct_from_stats.append(ct)
+                continue
         for i_comp, compartment in enumerate(compartments):
             #fill in numbers that summarise all synapses per compartment per celltype
             ind_all_syns = ic*num_comps + i_comp
@@ -213,6 +219,7 @@ if __name__ == '__main__':
 
     log.info("Step 3/3 Plot results for comparison between celltypes and calculate statistics")
     kruskal_res_df = pd.DataFrame(columns = ['stats', 'p-value'])
+    cts_for_stats = cts_for_loading[np.in1d(cts_for_loading, exclude_ct_from_stats) == False]
     for ik, key in enumerate(tqdm(complete_param_titles)):
         #use ranksum test (non-parametric) to calculate results
         param_title = param_titles[ik]
@@ -228,11 +235,11 @@ if __name__ == '__main__':
                 kruskal_res = kruskal(*comp_param_groups, nan_policy='omit')
                 kruskal_res_df.loc[f'{comp} {param_title}', 'stats'] = kruskal_res[0]
                 kruskal_res_df.loc[f'{comp} {param_title}', 'p-value'] = kruskal_res[1]
-                for c1 in cts_for_loading:
+                for c1 in cts_for_stats:
                     c1_str = ct_dict[c1]
                     c1_res = comp_res_pc[comp_res_pc['celltype'] == c1_str][param_title]
                     p_c1 = np.array(c1_res).astype(float)
-                    for c2 in cts_for_loading:
+                    for c2 in cts_for_stats:
                         if c1 >= c2:
                             continue
                         c2_str = ct_dict[c2]

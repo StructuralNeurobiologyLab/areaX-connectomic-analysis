@@ -1285,6 +1285,8 @@ def get_compartment_specific_connectivity(ct_post, cellids_post, sd_synssv, syn_
     total_sum_sizes = total_sum_sizes[sort_inds]
     total_cellids = total_cellids[sort_inds]
     overall_syn_number = len(m_sizes)
+    if overall_syn_number == 0:
+        return [0, 0, 0]
     overall_sum_size = np.sum(m_sizes)
     #get number and sum size of synapses for soma, dendritic shaft, dendritic spine and neck
     #use np zeros to set values for cells that don#t receive input on a specific compartment to zero

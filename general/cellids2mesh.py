@@ -22,12 +22,12 @@ if __name__ == '__main__':
     ct_dict = bio_params.ct_dict(with_glia = True)
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
-    whole_cell = False
+    whole_cell = True
     organelle_class = ['vc']
     get_orgs = False
     get_orgs_comp_sep = False
     get_only_myelin = False
-    get_single_ves_coords = True
+    get_single_ves_coords = False
 
     # cellids = [ 126798179, 1155532413, 15724767, 24397945, 32356701, 26790127, 379072583]
     # cellids = [15521116, 10157981]
@@ -39,7 +39,9 @@ if __name__ == '__main__':
     # cellids = [195998712, 139212645,  88265889, 832232717, 841444450, 436157555, 1126849047, 379072583, 1469886143,1503488997, 2834161,561503453, 155343800, 1644151292]
     # example cellids INT1, MSN, INT3, INT2, STN, TAN, LTS, GPe, HVC, DA
     # example cells TAN, GPi, GPe, INT2, INT3, MSN
-    cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
+    #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
+    #get wrongly segmented bv and associated astrocytes
+    cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])

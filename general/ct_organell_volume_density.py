@@ -29,15 +29,16 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    full_cells_only = False
+    full_cells_only = True
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'vc'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240423_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    organelle_key = 'golgi'
+    soma_only = True
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240502_j0251{version}_ct_{organelle_key}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -183,10 +184,6 @@ if __name__ == '__main__':
             ct_palette = {median_order[i]: ct_colors[i] for i in range(len(median_order))}
             kruskal_res = kruskal(*key_groups, nan_policy='omit')
             log.info(f'Kruskal Wallis test result for {key}: {kruskal_res}')
-            #calculate spearmannr only for known celltypes
-            spearman_res = spearmanr(known_values_only_percell[key], known_values_only_percell['mean firing rate singing'], nan_policy='omit')
-            spearman_cts = np.unique(known_values_only_percell['celltype'])
-            log.info(f'Spearman correlation test result for {key}: {spearman_res}, for these celltypes {spearman_cts}')
             #ranksum results
             for group in group_comps:
                 ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[1])[key])
@@ -243,6 +240,11 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.svg')
             plt.close()
+            #calculate spearman nr for mean/median of value
+            spearman_res = spearmanr(known_values_only_ov[key],
+                                     known_values_only_ov['mean firing rate singing'], nan_policy='omit')
+            spearman_cts = np.unique(known_values_only_ov['celltype'])
+            log.info(f'Spearman correlation test result for {key}: {spearman_res}, for these celltypes {spearman_cts}')
             #percell_key = key.split(' ')[1:]
             #percell_key = ' '.join(percell_key)
             #lin reg code adopted from ChatGPT

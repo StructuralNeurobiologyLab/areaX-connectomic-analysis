@@ -36,6 +36,7 @@ def get_compartment_length(cellid, compartment, cell_graph=None, full_dict = Non
             comp_length = full_dict[cellid][comp_key]
             return comp_length
     sso = SuperSegmentationObject(cellid)
+    sso.load_skeleton()
     axoness = sso.skeleton["axoness_avg10000"]
     axoness[axoness == 3] = 1
     axoness[axoness == 4] = 1
@@ -281,9 +282,9 @@ def get_percell_organell_volume_density(input):
     :param input: cellid, numpy array with all organell ids, numpy array with all volumes of organell,
     cell_dict is per cell dictionary with presaved values like axon_length, proj_axon (True if DA, HVC, LMAN)
     '''
-    cellid, cached_so_ids, cached_so_volume, cell_dict, proj_axon = input
+    cellid, cached_so_ids, cached_so_volume, cell_dict, proj_axon, organelle_key = input
     cell = SuperSegmentationObject(cellid)
-    segmentation_object_ids = cell.mi_ids
+    segmentation_object_ids = cell.lookup_in_attribute_dict(organelle_key)
     sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
     organell_volumes = np.sum(cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling))  # convert to cubic µm
     if cell_dict is None:
@@ -295,6 +296,24 @@ def get_percell_organell_volume_density(input):
             cell_length = cell_dict["complete pathlength"]
     volume_density = organell_volumes/ cell_length
     return volume_density
+
+def get_percell_organell_area_density(input):
+    '''
+    calculates surface area density per cell given numpy arrays per cell.
+    :param input: cellid, numpy array with all organell ids, numpy array with all volumes of organell,
+    cell_dict is per cell dictionary with presaved values like axon_length, proj_axon (True if DA, HVC, LMAN)
+    '''
+    cellid, cached_so_ids, cached_so_areas, cell_dict, proj_axon, organelle_key = input
+    cell = SuperSegmentationObject(cellid)
+    segmentation_object_ids = cell.lookup_in_attribute_dict(organelle_key)
+    sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
+    organell_areas = np.sum(cached_so_areas[sso_organell_inds])  #in µm²
+    if proj_axon:
+        cell_surface_area = cell_dict['axon mesh surface area']
+    else:
+        cell_surface_area = mesh_area_calc(cell.mesh)
+    mesh_area_density = organell_areas/ cell_surface_area
+    return mesh_area_density
 
 def get_organell_ids_comps(input):
     '''
@@ -835,7 +854,8 @@ def get_organelle_comp_density_presaved(params):
         :return: org_volume_density for axon, dendrite and full cell
         '''
     scaling = [10, 10, 25]
-    cellid, org_ssv_ids, org_sizes, org_axoness, full_cell_dict = params
+    comp_dict = {0:'dendrite', 1:'axon', 2:'soma'}
+    cellid, org_ssv_ids, org_sizes, org_axoness, full_cell_dict, compartment = params
     cell_org_inds = np.in1d(org_ssv_ids, cellid)
     cell_org_sizes = org_sizes[cell_org_inds]
     cell_org_axoness = org_axoness[cell_org_inds]
@@ -843,13 +863,31 @@ def get_organelle_comp_density_presaved(params):
     #convert t0 µm³
     cell_org_volume = np.sum(cell_org_sizes) * 10 ** (-9) * np.prod(scaling)
     full_org_volume_density = cell_org_volume / full_length
-    axon_org_sizes = cell_org_sizes[cell_org_axoness == 1]
-    den_org_sizes = cell_org_sizes[cell_org_axoness == 0]
-    axon_org_volume = np.sum(axon_org_sizes) * 10 ** (-9) * np.prod(scaling)
-    den_org_volume = np.sum(den_org_sizes) * 10 ** (-9) * np.prod(scaling)
-    axon_org_volume_density = axon_org_volume / full_cell_dict['axon length']
-    den_org_volume_density = den_org_volume/ full_cell_dict['dendrite length']
-    return [axon_org_volume_density, den_org_volume_density, full_org_volume_density]
+    comp_org_sizes = cell_org_sizes[cell_org_axoness == compartment]
+    comp_org_volume = np.sum(comp_org_sizes) * 10 ** (-9) * np.prod(scaling)
+    if compartment == 2:
+        soma_radius = full_cell_dict['soma radius']
+        soma_volume = (4/3) * np.pi * soma_radius**3
+        comp_volume_density = comp_org_volume / soma_volume
+    else:
+        comp_length = full_cell_dict[f'{comp_dict[compartment]} length']
+        comp_volume_density = comp_org_volume / comp_length
+    return [comp_volume_density, full_org_volume_density]
+
+def get_organelle_comp_area_density_presaved(params):
+    '''
+        Get organelle density from presaved mito arrays with cellid for each compartment and the complete cell.
+        :param params: cellid, org_ids, org_ssv_ids, org_sizes, org_axoness, full_cell_dict (per cell)
+        :return: org_volume_density for axon, dendrite and full cell
+        '''
+    comp_dict = {0:'dendrite', 1:'axon', 2:'soma'}
+    cellid, org_ssv_ids, org_mesh_areas, org_axoness, full_cell_dict, compartment = params
+    cell_org_inds = np.in1d(org_ssv_ids, cellid)
+    cell_org_mesh_areas = org_mesh_areas[cell_org_inds]
+    cell_org_axoness = org_axoness[cell_org_inds]
+    comp_org_mesh_areas = cell_org_mesh_areas[cell_org_axoness == compartment]
+    comp_area_density = np.sum(comp_org_mesh_areas) /  full_cell_dict[f'{comp_dict[compartment]} mesh surface area']
+    return comp_area_density
 
 def check_cutoff_dendrites(cell_input):
     '''

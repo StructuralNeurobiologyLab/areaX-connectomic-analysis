@@ -1,11 +1,10 @@
-#based on ct_mito_violume_density
-#write function for every organell which has a mesh and is a segmentation dataset
-#ct_mito_volume_density is obsolete then
+#based on ct_organell_violume_density
+#write function to get surface area of specific objects vs surface area of compartment
 
 if __name__ == '__main__':
     from analysis_morph_helper import check_comp_lengths_ct
     from analysis_colors import CelltypeColors
-    from analysis_morph_helper import get_percell_organell_volume_density, get_organelle_comp_density_presaved
+    from analysis_morph_helper import get_percell_organell_area_density, get_organelle_comp_area_density_presaved
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -29,35 +28,28 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    full_cells_only = False
+    full_cells_only = True
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'vc'
-    comp_dict = {0:'dendrite', 1:'axon', 2:'soma'}
-    compartment = 1
-    comp_str = comp_dict[compartment]
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240506_j0251{version}_ct_{organelle_key}_{comp_str}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    organelle_key = 'golgi'
+    #0 = dendrite, 1 = axon, 2 = soma
+    compartment = [2]
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240503_j0251{version}_ct_{organelle_key}_{compartment}_area_density_mcl_%i_ax%i_%s_fs%i" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging(f'{organelle_key}_vol_density_ct_log', log_dir=f_name + '/logs/')
-    log.info(f'get volume density {organelle_key} per celltype')
+    log = initialize_logging(f'{organelle_key}_{compartment}_area_density_ct_log', log_dir=f_name + '/logs/')
+    log.info(f'get surface area density {organelle_key} per celltype')
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, color_key))
     log.info(f'use mean of {organelle_key} volume density for regression fit')
     if full_cells_only:
         log.info('Plot for full cells only')
-    if compartment == 2:
-        log.info('Soma selected as compartment. Density will be calculated as sum of organelle volume per soma volume. The soma volume is calculated from the soma radius.'
-                 'Total volume density will be all organelles per total pathlength.')
-    else:
-        log.info(f'{comp_str} selected as compartment. Density will be calculated as sum of organelle volume per compartment skeleton length. '
-                 f'Total volume density will be all organelles per total pathlength.')
     known_mergers = analysis_params.load_known_mergers()
     misclassified_asto_ids = analysis_params.load_potential_astros()
     axon_cts = analysis_params.axon_cts()
@@ -70,7 +62,7 @@ if __name__ == '__main__':
         ct_types = np.arange(0, num_cts)
         sd_orgssv = SegmentationDataset(organelle_key, working_dir=global_params.config.working_dir)
         cached_org_ids = sd_orgssv.ids
-        cached_org_volumes = sd_orgssv.load_numpy_data("size")
+        cached_org_areas = sd_orgssv.load_numpy_data("mesh_area")
     ct_str_list = analysis_params.ct_str(with_glia=with_glia)
     cls = CelltypeColors(ct_dict= ct_dict)
     #ct_palette = cls.ct_palette(key = color_key)
@@ -108,47 +100,48 @@ if __name__ == '__main__':
     log.info(f'Step 2/4: Get {organelle_key} volume density per cell')
     #ellid, cached_so_ids, cached_so_rep_coord, cached_so_volume, full_cell_dict, k, min_comp_len = input
     # generate df for each cell
-    pc_columns = ['cellid', 'mean firing rate singing', f'total {organelle_key} volume density', f'{comp_str} {organelle_key} volume density']
+    comp_dict = {0: 'dendrite', 1:'axon', 2: 'soma'}
+    pc_columns = ['cellid', 'mean firing rate singing']
+    organelle_columns = [f'{comp_dict[comp]} {organelle_key} area density' for comp in compartment]
+    pc_columns = np.hstack([pc_columns, organelle_columns])
     percell_org_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
     percell_org_df['cellid'] = all_suitable_ids
-    for i, ct in enumerate(ct_types):
-        ct_str = ct_dict[ct]
-        log.info(f'process {ct_str}')
-        try:
-            firing_value = firing_rate_dict[ct_str]
-        except KeyError:
-            firing_value = np.nan
-        if ct in axon_cts:
-            if compartment != 1:
-                continue
-            org_input = [[cellid, cached_org_ids, cached_org_volumes, all_cell_dict[ct][cellid], True, organelle_key] for cellid in suitable_ids_dict[ct]]
-            org_output = start_multiprocess_imap(get_percell_organell_volume_density, org_input)
-            org_output = np.array(org_output)
-            comp_volume_density = org_output
-            full_volume_density = comp_volume_density
-        else:
-            #To DO: write function to cache all organelles for full cells with organelle_key
-            ct_org_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_ids_fullcells.npy')
-            ct_org_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_mapping_ssv_ids_fullcells.npy')
-            ct_org_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_axoness_coarse_fullcells.npy')
-            ct_org_sizes = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_sizes_fullcells.npy')
-            #filter for suitable cellids
-            ct_ind = np.in1d(ct_org_map2ssvids, suitable_ids_dict[ct])
-            ct_org_ids = ct_org_ids[ct_ind]
-            ct_org_map2ssvids = ct_org_map2ssvids[ct_ind]
-            ct_org_sizes = ct_org_sizes[ct_ind]
-            ct_org_axoness = ct_org_axoness[ct_ind]
-            org_input = [[cellid, ct_org_map2ssvids, ct_org_sizes, ct_org_axoness, all_cell_dict[ct][cellid], compartment] for cellid in suitable_ids_dict[ct]]
-            org_output = start_multiprocess_imap(get_organelle_comp_density_presaved, org_input)
-            org_output = np.array(org_output, dtype = float)
-            comp_volume_density = org_output[:, 0]
-            full_volume_density = org_output[:, 1]
-        #for percell df
-        ct_inds = np.in1d(percell_org_df['cellid'], suitable_ids_dict[ct])
-        percell_org_df.loc[ct_inds, 'celltype'] = ct_str
-        percell_org_df.loc[ct_inds, 'mean firing rate singing'] = firing_value
-        percell_org_df.loc[ct_inds, f'total {organelle_key} volume density'] = full_volume_density
-        percell_org_df.loc[ct_inds, f'{comp_str} {organelle_key} volume density'] = comp_volume_density
+    for comp in compartment:
+        log.info(f'Get information for compartment {comp}')
+        for i, ct in enumerate(ct_types):
+            ct_str = ct_dict[ct]
+            log.info(f'process {ct_str}')
+            try:
+                firing_value = firing_rate_dict[ct_str]
+            except KeyError:
+                firing_value = np.nan
+            if ct in axon_cts:
+                if comp == 1:
+                    org_input = [[cellid, cached_org_ids, cached_org_areas, all_cell_dict[ct][cellid], True, organelle_key] for cellid in suitable_ids_dict[ct]]
+                    org_output = start_multiprocess_imap(get_percell_organell_area_density, org_input)
+                    comp_area_density = np.array(org_output)
+                else:
+                    continue
+            else:
+                #To DO: write function to cache all organelles for full cells with organelle_key
+                ct_org_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_ids_fullcells.npy')
+                ct_org_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_mapping_ssv_ids_fullcells.npy')
+                ct_org_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_axoness_coarse_fullcells.npy')
+                ct_org_mesh_areas = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_mesh_areas_fullcells.npy')
+                #filter for suitable cellids
+                ct_ind = np.in1d(ct_org_map2ssvids, suitable_ids_dict[ct])
+                ct_org_ids = ct_org_ids[ct_ind]
+                ct_org_map2ssvids = ct_org_map2ssvids[ct_ind]
+                ct_org_mesh_areas = ct_org_mesh_areas[ct_ind]
+                ct_org_axoness = ct_org_axoness[ct_ind]
+                org_input = [[cellid, ct_org_map2ssvids, ct_org_mesh_areas, ct_org_axoness, all_cell_dict[ct][cellid], comp] for cellid in suitable_ids_dict[ct]]
+                org_output = start_multiprocess_imap(get_organelle_comp_area_density_presaved, org_input)
+                comp_area_density = np.array(org_output, dtype = float)
+            #for percell df
+            ct_inds = np.in1d(percell_org_df['cellid'], suitable_ids_dict[ct])
+            percell_org_df.loc[ct_inds, 'celltype'] = ct_str
+            percell_org_df.loc[ct_inds, 'mean firing rate singing'] = firing_value
+            percell_org_df.loc[ct_inds, f'{comp_dict[comp]} {organelle_key} area density'] = comp_area_density
 
     #create overview df for summary params
     # save mean, median and std for all parameters per ct
@@ -157,8 +150,7 @@ if __name__ == '__main__':
     overview_df = pd.DataFrame(index=ct_str)
     overview_df['celltype'] = ct_str
     overview_df['numbers'] = ct_groups.size()
-    param_list = ['mean firing rate singing', f'total {organelle_key} volume density',
-                  f'{comp_str} {organelle_key} volume density']
+    param_list = pc_columns[1:]
     for key in param_list:
         if 'firing rate' in key:
             overview_df[key] = ct_groups[key].mean()
@@ -167,14 +159,13 @@ if __name__ == '__main__':
             overview_df[f'{key} std'] = ct_groups[key].std()
             overview_df[f'{key} median'] = ct_groups[key].median()
 
-    overview_df = overview_df.astype(
-        {'mean firing rate singing': float, f'{comp_str} {organelle_key} volume density mean': float,
-         f'total {organelle_key} volume density mean': float, f'{comp_str} {organelle_key} volume density median': float,
-         f'total {organelle_key} volume density median': float})
+    type_dict = {column: float for column in overview_df if column != 'celltype'}
+    type_dict['numbers'] = int
+    overview_df = overview_df.astype(type_dict)
     overview_df.to_csv(f'{f_name}/overview_df_{organelle_key}_den.csv')
     percell_org_df = percell_org_df.astype(
-        {'mean firing rate singing': float, f'{comp_str} {organelle_key} volume density': float,
-         f'total {organelle_key} volume density': float})
+        {'mean firing rate singing': float})
+    percell_org_df = percell_org_df.astype({column: float for column in param_list})
     percell_org_df.to_csv(f'{f_name}/percell_df_{organelle_key}_den.csv')
 
     log.info('Step 3/4: Calculate statistics and plot results')
@@ -198,14 +189,10 @@ if __name__ == '__main__':
                 ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[1])[key])
                 ranksum_group_df.loc[f'{key} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
                 ranksum_group_df.loc[f'{key} p-value',f'{group[0]} vs {group[1]}'] = ranksum_res[1]
-            if 'soma' in key:
-                ylabel = f'{key} [µm³/µm³]'
-            else:
-                ylabel = f'{key} [µm³/µm]'
             #plot with increasing median as boxplot and violinplot
             sns.boxplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, order=median_order)
             plt.title(key)
-            plt.ylabel(ylabel, fontsize = fontsize)
+            plt.ylabel(f'{key} [µm³/µm]', fontsize = fontsize)
             plt.xlabel('celltype', fontsize = fontsize)
             plt.yticks(fontsize=fontsize)
             plt.xticks(fontsize=fontsize)
@@ -217,7 +204,7 @@ if __name__ == '__main__':
                               dodge=True, size=2, order=median_order)
             sns.violinplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
             plt.title(key)
-            plt.ylabel(ylabel, fontsize=fontsize)
+            plt.ylabel(f'{key} [µm²/µm²]', fontsize=fontsize)
             plt.xlabel('celltype', fontsize=fontsize)
             plt.yticks(fontsize=fontsize)
             plt.xticks(fontsize=fontsize)
@@ -243,14 +230,10 @@ if __name__ == '__main__':
 
     for key in overview_df.keys():
         if ('mean' in key or 'median' in key) and organelle_key in key:
-            if 'soma' in key:
-                xlabel = f'{key} [µm³/µm³]'
-            else:
-                xlabel = f'{key} [µm³/µm]'
             sns.scatterplot(data= known_values_only_ov, x = key, y = 'mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(known_values_only_ov[key], known_values_only_ov['mean firing rate singing'], known_values_only_ov['celltype']):
                 plt.text(x = x, y = y + 10, s = t)
-            plt.xlabel(xlabel, fontsize = fontsize)
+            plt.xlabel(f'{key} [µm²/µm²]', fontsize = fontsize)
             plt.ylabel('mean firing rate singing [Hz]', fontsize = fontsize)
             plt.yticks(fontsize=fontsize)
             plt.xticks(fontsize=fontsize)
@@ -287,7 +270,7 @@ if __name__ == '__main__':
             for x, y, t in zip(known_values_only_ov[key], known_values_only_ov['mean firing rate singing'],
                                known_values_only_ov['celltype']):
                 plt.text(x=x, y=y + 10, s=t)
-            plt.xlabel(xlabel, fontsize=fontsize)
+            plt.xlabel(f'{key} [µm²/µm²]', fontsize=fontsize)
             plt.ylabel('mean firing rate singing [Hz]', fontsize=fontsize)
             plt.yticks(fontsize=fontsize)
             plt.xticks(fontsize=fontsize)
@@ -305,7 +288,7 @@ if __name__ == '__main__':
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)
-            plt.xlabel(xlabel, fontsize = fontsize)
+            plt.xlabel(f'{key} [µm²/µm²]', fontsize = fontsize)
             plt.ylabel('mean firing rate singing [Hz]', fontsize = fontsize)
             plt.yticks(fontsize=fontsize)
             plt.xticks(fontsize=fontsize)
@@ -322,7 +305,7 @@ if __name__ == '__main__':
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)
-            plt.xlabel(xlabel, fontsize=fontsize)
+            plt.xlabel(f'{key} [µm²/µm²]', fontsize=fontsize)
             plt.ylabel('mean firing rate singing [Hz]', fontsize=fontsize)
             plt.yticks(fontsize=fontsize)
             plt.xticks(fontsize=fontsize)
@@ -335,7 +318,7 @@ if __name__ == '__main__':
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x = x, y = y + 10, s = t)
-            plt.xlabel(xlabel, fontsize = fontsize)
+            plt.xlabel(f'{key} [µm³/µm]', fontsize = fontsize)
             plt.ylabel('mean firing rate singing [Hz]', fontsize = fontsize)
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS.svg')
@@ -348,7 +331,7 @@ if __name__ == '__main__':
             sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue='celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
                 plt.text(x=x, y=y + 10, s=t)
-            plt.xlabel(x, fontsize=fontsize)
+            plt.xlabel(f'{key} [µm²/µm²]', fontsize=fontsize)
             plt.ylabel('mean firing rate singing [Hz]', fontsize=fontsize)
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.svg')

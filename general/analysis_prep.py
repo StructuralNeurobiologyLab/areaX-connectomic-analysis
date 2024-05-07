@@ -16,11 +16,13 @@ if __name__ == '__main__':
     #V4
     #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
     #v5
-    global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
-    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
+    #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
+
 
     version = 'v6'
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version=version)
+    analysis_params = Analysis_Params(version=version)
+    global_params.wd = analysis_params.working_dir()
+
     f_name = analysis_params.file_locations
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -32,6 +34,7 @@ if __name__ == '__main__':
     log.info('Compared to v5 (agglo2) this involves; new celltype trainings (gt now involves INT1-3 instead of FS, NGF; also migrating neurons but old skeletons and compartments')
     log.info('syn_prob = %.2f, min syn size = %.2f, with_glia = %s' % (syn_proba, min_syn_size, with_glia))
     log.info("Step 0: Loading synapse data on all cells")
+    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.wd)
 
     # celltypes: j0256: STN = 0, DA = 1, MSN = 2, LMAN = 3, HVC = 4, TAN = 5, GPe = 6, GPi = 7,
@@ -122,7 +125,7 @@ if __name__ == '__main__':
         time_stamps = [time.time()]
         step_idents = ["cell number depending on axon/dendrite lengths %s prepared" % ct_dict[ct]]
         log.info("cell number depending on axon/dendrite lengths %s prepared" % ct_dict[ct])
-
+    '''
     for ia, axct in enumerate(ax_list):
         log.info('Step %.1i/%.1i find synapse amount of celltype %.3s' % (ia + 1, len(ax_list), ct_dict[axct]))
         cell_ids = ssd.ssv_ids[ssd.load_numpy_data(celltype_key) == axct]
@@ -155,7 +158,7 @@ if __name__ == '__main__':
         time_stamps = [time.time()]
         step_idents = ["axon number depending on axon/dendrite lengths %s prepared" % ct_dict[axct]]
         log.info("axon number depending on axon/dendrite lengths %s prepared" % ct_dict[axct])
-
+    '''
     cell_number_info.to_csv(f'{f_name}/cell_numbers.csv')
     time_stamps = [time.time()]
     log.info('Cell number infos saved, analysis finished')

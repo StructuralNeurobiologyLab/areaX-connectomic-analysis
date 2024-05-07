@@ -20,21 +20,23 @@ if __name__ == '__main__':
     import seaborn as sns
     from collections import ChainMap
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from itertools import combinations
+    from scipy.stats import spearmanr, kruskal, ranksums
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     version = 'v6'
     analysis_params = Analysis_Params(version = version)
     global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict()
-    min_comp_len = 200
-    dist_threshold = 15 #nm
+    min_comp_len = 1000
+    dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.8
     syn_dist_threshold = 500 #nm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240320_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240507_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s" % (
         min_comp_len, dist_threshold, syn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -56,7 +58,7 @@ if __name__ == '__main__':
     ct_palette = cls.ct_palette(color_key, num=False)
     result_df_list = []
 
-    log.info('Step 2/3 Get information of vesicle number at the synapses')
+    log.info('Step 2/4: Get information of vesicle number at the synapses')
     # prefilter synapses for synapse prob thresh and min syn size
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = filter_synapse_caches_general(
         sd_synssv,
@@ -175,7 +177,7 @@ if __name__ == '__main__':
         plt.close()
 
 
-    log.info('Step 3/3: Plot results')
+    log.info('Step 3/4: Plot results')
     combined_results = pd.concat(result_df_list)
     combined_results.to_csv(f'{f_name}/all_syns_ves.csv')
     #plot results for whole dataset
@@ -226,5 +228,54 @@ if __name__ == '__main__':
     plt.close()
     #plot a scatter plot with synapse size and number of vesicles (color in celltypes)
     #scatter plot with synapse size and number of close vesicles (color for celltype)
+
+    log.info('Step 4/4: Get overview params and calculate statistics')
+    ct_groups = combined_results.groupby('celltype')
+    unique_cts = np.unique(combined_results['celltype'])
+    param_list = combined_results.columns()
+    param_list = param_list.remove(['cellid', 'celltype'])
+    overview_columns = [[f'{param} median', f'{param} mean', f'{param} std'] for param in param_list]
+    overview_columns = np.concatenate(overview_columns)
+    stats_index = np.hstack(['total', unique_cts])
+    overview_df = pd.DataFrame(columns=overview_columns, index=stats_index)
+    group_comps = list(combinations(unique_cts, 2))
+    ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
+    ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
+    spearman_res = pd.DataFrame(index=stats_index)
+    for param in param_list:
+        overview_df.loc['total', f'{param} median'] = combined_results[param].median()
+        overview_df.loc['total', f'{param} mean'] = combined_results[param].mean()
+        overview_df.loc['total', f'{param} std'] = combined_results[param].std()
+        overview_df.loc[unique_cts, f'{param} median'] = ct_groups[param].median()
+        overview_df.loc[unique_cts, f'{param} mean'] = ct_groups[param].mean()
+        overview_df.loc[unique_cts, f'{param} std'] = ct_groups[param].std()
+        #calculate kruskal wallis for differences between the two groups
+        param_groups = [group[param].values for name, group in
+                      combined_results.groupby('celltype')]
+        kruskal_res = kruskal(*param_groups, nan_policy='omit')
+        log.info(
+            f'Kruskal results for {param} are: stats = {kruskal_res[0]:.2f}, p-value = {kruskal_res[1]:.2f}')
+        #get ranksum results if significant
+        if kruskal_res[1] < 0.05:
+            for group in group_comps:
+                ranksum_res = ranksums(ct_groups.get_group(group[0])[param],
+                                       ct_groups.get_group(group[1])[param])
+                ranksum_group_df.loc[f'{param} stats', f'{group[0]} vs {group[1]}'] = \
+                ranksum_res[0]
+                ranksum_group_df.loc[f'{param} p-value', f'{group[0]} vs {group[1]}'] = \
+                ranksum_res[1]
+        #get spearman correlation of synapse size with vesicle number
+        if 'vesicle' in param:
+            sp_res_total = spearmanr(combined_results['synapse size [µm²]', combined_results[param]])
+            spearman_res.loc['total', f'{param} corr coeff'] = sp_res_total[0]
+            spearman_res.loc['total', f'{param} p-value'] = sp_res_total[1]
+            for i, ct_str in enumerate(unique_cts):
+                sp_res = spearmanr(ct_groups.get_group(i)['synapse size [µm²'], ct_groups.get_group(i)[param])
+                spearman_res.loc[ct_str, f'{param} corr coeff'] = sp_res[0]
+                spearman_res.loc[ct_str, f'{param} p-value'] = sp_res[1]
+
+    overview_df.to_csv(f'{f_name}/overview_df.csv')
+    ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
+    spearman_res.to_csv(f'{f_name}/spearman_results.csv')
 
     log.info(f' Analysis looking at relationships between number of vesicles per synapse and synapse size done')

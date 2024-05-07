@@ -28,8 +28,10 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(version = version)
     global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict(with_glia=False)
-    min_comp_len_cell = 200
-    min_comp_len_ax = 50
+    num_cts = analysis_params.num_cts(with_glia=False)
+    axon_cts = analysis_params.axon_cts()
+    min_comp_len_cell = 1000
+    min_comp_len_ax = 1000
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
@@ -38,7 +40,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240320_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240507_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -48,19 +50,55 @@ if __name__ == '__main__':
         "distance threshold to synapse = %i nm, distance threshold for not at synapse = %i nm, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, min_syn_size, syn_prob_thresh, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key))
     known_mergers = analysis_params.load_known_mergers()
-    log.info("Step 1/4: synapse segmentation dataset")
+    log.info("Step 1/6: synapse segmentation dataset")
 
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     cache_name = analysis_params.file_locations
 
-    log.info('Step 2/4: Prepare dataframes for results')
+    log.info('Step 1/4: Iterate over each celltypes check min length')
+    ct_types = np.arange(0, num_cts)
+    suitable_ids_dict = {}
+    all_suitable_ids = []
+    all_cell_dict = {}
+    all_suitable_cts = []
+    misclassified_asto_ids = analysis_params.load_potential_astros()
+    for ct in ct_types:
+        # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
+        ct_str = ct_dict[ct]
+        cell_dict = analysis_params.load_cell_dict(ct)
+        all_cell_dict[ct] = cell_dict
+        cellids = np.array(list(cell_dict.keys()))
+        merger_inds = np.in1d(cellids, known_mergers) == False
+        cellids = cellids[merger_inds]
+        if ct in axon_cts:
+            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
+                                            axon_only=True, max_path_len=None)
+        else:
+            astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+            cellids = cellids[astro_inds]
+            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
+                                            axon_only=False, max_path_len=None)
+        cellids = np.sort(cellids)
+        suitable_ids_dict[ct] = cellids
+        all_suitable_ids.append(cellids)
+        all_suitable_cts.append([ct_dict[ct] for i in cellids])
+        log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
 
-    cts = list(ct_dict.keys())
-    ax_ct = analysis_params.axon_cts()
-    num_cts = analysis_params.num_cts(with_glia=False)
-    cts_str = [ct_dict[i] for i in range(num_cts)]
+    all_suitable_ids = np.concatenate(all_suitable_ids)
+    all_suitable_cts =  np.concatenate(all_suitable_cts)
+
+    log.info('Step 2/6: Prepare dataframes for results')
+    ct_str_list = analysis_params.ct_str(with_glia=False)
     ct_palette = cls.ct_palette(color_key, num=False)
+    pc_columns = ['cellid', 'celltype', 'fraction of non-synaptic membrane-close vesicles',
+                  'density of non_synaptic membrane-close vesicles', 'density of synaptic membrane-close vesicles',
+                  'vesicle density', 'location']
+    vesicle_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
+    vesicle_df['cellid'] = all_suitable_ids
+    vesicle_df['celltype'] = all_suitable_cts
 
+
+    #to do: remove this and collect results in a way that they fit in one or two large dataframes
     fraction_nonsyn_df = pd.DataFrame(columns=cts_str, index=range(10500))
     density_non_syn_df = pd.DataFrame(columns=cts_str, index=range(10500))
     density_syn_df = pd.DataFrame(columns=cts_str, index=range(10500))
@@ -70,7 +108,7 @@ if __name__ == '__main__':
     median_values_df = pd.DataFrame(columns = columns, index=range(num_cts))
     median_plotting_df = pd.DataFrame(columns = ['celltype', 'vesicle density', 'location'], index=range(num_cts*2))
 
-    log.info('Step 3/4 Get information for vesicles close to membrane and synapse for all celltypes')
+    log.info('Step 3/6: Get information for vesicles close to membrane and synapse for all celltypes')
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = filter_synapse_caches_general(
         sd_synssv,
         syn_prob_thresh=syn_prob_thresh,
@@ -79,25 +117,6 @@ if __name__ == '__main__':
     for ct in tqdm(range(num_cts)):
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
-        if ct in ax_ct:
-            cell_dict = analysis_params.load_cell_dict(ct)
-            cellids = np.array(list(cell_dict.keys()))
-            merger_inds = np.in1d(cellids, known_mergers) == False
-            cellids = cellids[merger_inds]
-            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
-                                            axon_only=True, max_path_len=None)
-        else:
-            cell_dict = analysis_params.load_cell_dict(ct)
-            cellids = np.array(list(cell_dict.keys()))
-            merger_inds = np.in1d(cellids, known_mergers) == False
-            cellids = cellids[merger_inds]
-            if ct == 2:
-                misclassified_asto_ids = analysis_params.load_potential_astros()
-                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-                cellids = cellids[astro_inds]
-            cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
-                                                axon_only=False, max_path_len=None)
-        log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
         log.info('Prefilter synapses for celltype')
         #filter synapses to only have specific celltype
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
@@ -174,14 +193,7 @@ if __name__ == '__main__':
         log.info(f'{ct_str} cells have a median median fraction of membrane-close vesicles '
                  f'not at synapses of {median_fraction:.2f} ')
 
-    #log.info('Step 4/5 calculate statistics')
-    #stats_combinations = combinations(np.arange(num_cts), 2)
-    #columns = ['Fraction of non- synaptic vesicles', 'Density non-synaptic vesicles', 'Density synaptic vesicles']
-    #stats_comb_list = np.array([c for c in stats_combinations])
-    #stats_results = pd.DataFrame(columns = columns, index = np.hstack(['Kruskal', stats_comb_list]))
-
-
-    log.info('Step 5/5: Plot results')
+    log.info('Step 5/6: Plot results')
     fraction_nonsyn_df.to_csv(f'{f_name}/fraction_nonsyn_mem_vesicles.csv')
     density_non_syn_df.to_csv(f'{f_name}/density_nonsyn_mem_vesicles.csv')
     density_syn_df.to_csv(f'{f_name}/density_syn_mem_vesicles.csv')
@@ -208,6 +220,9 @@ if __name__ == '__main__':
     plt.title('Median density of vesicles close to membrane')
     plt.savefig(f'{f_name}/mem_close_comb_median_point.svg')
     plt.close()
+
+    log.info('Step 6/6: Get overview params and calculate statistics')
+
 
     log.info(f'Analysis for vesicles closer to {dist_threshold}nm, split into synaptic '
              f'and non-synaptic in all celltypes done')

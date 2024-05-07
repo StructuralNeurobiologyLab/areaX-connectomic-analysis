@@ -225,7 +225,7 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_known_only.svg')
             plt.close()
             # calculate spearmannr only for known celltypes
-            spearman_res = spearmanr(known_values_only_ov['vesicle density'], known_values_only_ov['mean firing rate singing'], nan_policy='omit')
+            spearman_res = spearmanr(known_values_only_ov[key], known_values_only_ov['mean firing rate singing'], nan_policy='omit')
             spearman_cts = np.unique(known_values_only_ov['celltype'])
             log.info(f'Spearman correlation test result for vesicle density: {spearman_res}, for these celltypes {spearman_cts}')
             # percell_key = key.split(' ')[1:]

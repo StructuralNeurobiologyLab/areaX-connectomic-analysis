@@ -30,20 +30,20 @@ if __name__ == '__main__':
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     full_cells_only = False
-    axon_only = True
+    axon_only = False
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    color_key = 'AxTePkBrv6'
+    color_key = 'TeBKv6MSNyw'
     fontsize = 20
     n_comps_PCA = 2
     n_umap_runs = 5
     process_morph_parameters = False
     use_mito_density = True
-    use_vc_density = False
-    use_ves_density = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240422_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_axonly_axmives" % (
+    use_vc_density = True
+    use_ves_density = False
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240506_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_axmivc" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -203,7 +203,7 @@ if __name__ == '__main__':
 
     else:
         morph_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                     '2403410_j0251v6_ct_morph_analyses_mcl_200_ax200_TePkBrNGF_fs20npca2_umap5/ct_morph_df.csv'
+                     '240410_j0251v6_ct_morph_analyses_mcl_200_ax200_TePkBrNGF_fs20npca2_umap5/ct_morph_df.csv'
         log.info(f'Step 2/9: Use morphological parameters from {morph_path}')
         loaded_morph_df = pd.read_csv(morph_path, index_col = 0)
         if len(all_suitable_ids) > len(loaded_morph_df):
@@ -237,7 +237,7 @@ if __name__ == '__main__':
     if use_vc_density:
         # calculate these values with function ct_organell_volume_density
         vc_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                     '240320_j0251v6_ct_vc_vol_density_mcl_200_ax200_TePkBrNGF_fs20/percell_df_vc_den.csv'
+                     '240506_j0251v6_ct_vc_axon_vol_density_mcl_200_ax200_TePkBrNGF_fs20/percell_df_vc_den.csv'
         log.info(f'Axon vc volume density loaded from {vc_density_path}')
         vc_den_df = pd.read_csv(vc_density_path, index_col=0)
         if len(all_suitable_ids) > len(vc_den_df):
@@ -299,6 +299,7 @@ if __name__ == '__main__':
     ranksum_df.to_csv(f'{f_name}/ranksum_results.csv')
 
     log.info('Step 7/9: Plot results as boxplot')
+    ct_str_list = np.array(ct_str_list)[np.in1d(ct_str_list, ct_str)]
     for key in param_list:
         # plot with increasing median as boxplot and violinplot
         if 'length' in key or 'diameter' in key or 'radius' in key:
@@ -313,7 +314,7 @@ if __name__ == '__main__':
             ylabel = f'{key}'
         else:
             raise ValueError(f'No units were defined for this parameter: {key}')
-        sns.boxplot(data=morph_df, x='celltype', y=key, palette=ct_palette)
+        sns.boxplot(data=morph_df, x='celltype', y=key, palette=ct_palette, order=ct_str_list)
         plt.title(key)
         plt.ylabel(ylabel, fontsize=fontsize)
         plt.xlabel('celltype', fontsize=fontsize)
@@ -324,8 +325,8 @@ if __name__ == '__main__':
         plt.close()
         if full_cells_only:
             sns.stripplot(data=morph_df, x='celltype', y=key, color='black', alpha=0.2,
-                          dodge=True, size=2)
-        sns.violinplot(data=morph_df, x='celltype', y=key, palette=ct_palette, inner="box")
+                          dodge=True, size=2, order=ct_str_list)
+        sns.violinplot(data=morph_df, x='celltype', y=key, palette=ct_palette, inner="box", order=ct_str_list)
         plt.title(key)
         plt.ylabel(ylabel, fontsize=fontsize)
         plt.xlabel('celltype', fontsize=fontsize)

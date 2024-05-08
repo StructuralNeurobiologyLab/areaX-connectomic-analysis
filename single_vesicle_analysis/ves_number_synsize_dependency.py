@@ -18,7 +18,6 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from collections import ChainMap
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     from itertools import combinations
     from scipy.stats import spearmanr, kruskal, ranksums
@@ -28,7 +27,7 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(version = version)
     global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict()
-    min_comp_len = 1000
+    min_comp_len = 2000
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.8
@@ -36,6 +35,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
+    fontsize = 20
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240507_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s" % (
         min_comp_len, dist_threshold, syn_dist_threshold, color_key)
     if not os.path.exists(f_name):
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     cts = list(ct_dict.keys())
     ax_ct = analysis_params.axon_cts()
     num_cts = len(cts)
-    cts_str = [ct_dict[i] for i in range(num_cts)]
+    cts_str = analysis_params.ct_str()
     ct_palette = cls.ct_palette(color_key, num=False)
     result_df_list = []
 
@@ -230,10 +230,11 @@ if __name__ == '__main__':
     #scatter plot with synapse size and number of close vesicles (color for celltype)
 
     log.info('Step 4/4: Get overview params and calculate statistics')
+    param_list = list(combined_results.columns)
+    param_list = param_list[1:-1]
+    combined_results = combined_results.astype({'synapse size [µm²]': float, 'number of vesicles': int, 'number of membrane-close vesicles': int})
     ct_groups = combined_results.groupby('celltype')
     unique_cts = np.unique(combined_results['celltype'])
-    param_list = combined_results.columns()
-    param_list = param_list.remove(['cellid', 'celltype'])
     overview_columns = [[f'{param} median', f'{param} mean', f'{param} std'] for param in param_list]
     overview_columns = np.concatenate(overview_columns)
     stats_index = np.hstack(['total', unique_cts])
@@ -266,11 +267,11 @@ if __name__ == '__main__':
                 ranksum_res[1]
         #get spearman correlation of synapse size with vesicle number
         if 'vesicle' in param:
-            sp_res_total = spearmanr(combined_results['synapse size [µm²]', combined_results[param]])
+            sp_res_total = spearmanr(combined_results['synapse size [µm²]'], combined_results[param])
             spearman_res.loc['total', f'{param} corr coeff'] = sp_res_total[0]
             spearman_res.loc['total', f'{param} p-value'] = sp_res_total[1]
-            for i, ct_str in enumerate(unique_cts):
-                sp_res = spearmanr(ct_groups.get_group(i)['synapse size [µm²'], ct_groups.get_group(i)[param])
+            for ct_str in unique_cts:
+                sp_res = spearmanr(ct_groups.get_group(ct_str)['synapse size [µm²]'], ct_groups.get_group(ct_str)[param])
                 spearman_res.loc[ct_str, f'{param} corr coeff'] = sp_res[0]
                 spearman_res.loc[ct_str, f'{param} p-value'] = sp_res[1]
 
@@ -278,4 +279,19 @@ if __name__ == '__main__':
     ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
     spearman_res.to_csv(f'{f_name}/spearman_results.csv')
 
-    log.info(f' Analysis looking at relationships between number of vesicles per synapse and synapse size done')
+    #plot correlation coeff for spearman
+    ct_palette['total'] = '#707070'
+    plotting_order = np.hstack(['total', cts_str])
+    for param in param_list:
+        if 'vesicle' in param:
+            sns.boxplot(data=spearman_res, y=f'{param} corr coeff', palette=ct_palette, order = plotting_order)
+            plt.title(f'{param} corr coeff for dist2syn {syn_dist_threshold} nm')
+            plt.ylabel(f'{param} corr coeff', fontsize=fontsize)
+            plt.xlabel('celltype', fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.savefig(f'{f_name}/{param}_corr_coeff_cts_box.png')
+            plt.savefig(f'{f_name}/{param}_corr_coeff_cts_box.svg')
+            plt.close()
+
+    log.info(f'Analysis looking at relationships between number of vesicles per synapse and synapse size done')

@@ -12,13 +12,12 @@ if __name__ == '__main__':
     import os as os
     from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd
-    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
     from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
-    import scipy.stats
+    from scipy.stats import kruskal, ranksums
     from itertools import combinations
 
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
@@ -30,8 +29,8 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=False)
     num_cts = analysis_params.num_cts(with_glia=False)
     axon_cts = analysis_params.axon_cts()
-    min_comp_len_cell = 1000
-    min_comp_len_ax = 1000
+    min_comp_len_cell = 2000
+    min_comp_len_ax = 2000
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
@@ -40,7 +39,8 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240507_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+    fontsize = 20
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240508_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -91,22 +91,10 @@ if __name__ == '__main__':
     ct_str_list = analysis_params.ct_str(with_glia=False)
     ct_palette = cls.ct_palette(color_key, num=False)
     pc_columns = ['cellid', 'celltype', 'fraction of non-synaptic membrane-close vesicles',
-                  'density of non_synaptic membrane-close vesicles', 'density of synaptic membrane-close vesicles',
-                  'vesicle density', 'location']
+                  'density of non-synaptic membrane-close vesicles', 'density of synaptic membrane-close vesicles']
     vesicle_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
     vesicle_df['cellid'] = all_suitable_ids
     vesicle_df['celltype'] = all_suitable_cts
-
-
-    #to do: remove this and collect results in a way that they fit in one or two large dataframes
-    fraction_nonsyn_df = pd.DataFrame(columns=cts_str, index=range(10500))
-    density_non_syn_df = pd.DataFrame(columns=cts_str, index=range(10500))
-    density_syn_df = pd.DataFrame(columns=cts_str, index=range(10500))
-    columns = ['celltype', 'fraction of non-synaptic membrane-close vesicles',
-               'density of non_synaptic membrane-close vesicles',
-               'density of synaptic membrane-close vesicles']
-    median_values_df = pd.DataFrame(columns = columns, index=range(num_cts))
-    median_plotting_df = pd.DataFrame(columns = ['celltype', 'vesicle density', 'location'], index=range(num_cts*2))
 
     log.info('Step 3/6: Get information for vesicles close to membrane and synapse for all celltypes')
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = filter_synapse_caches_general(
@@ -117,6 +105,9 @@ if __name__ == '__main__':
     for ct in tqdm(range(num_cts)):
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
         ct_str = ct_dict[ct]
+        log.info(f'Now processing cells from cell type {ct_str}')
+        cellids = suitable_ids_dict[ct]
+        cell_dict = all_cell_dict[ct]
         log.info('Prefilter synapses for celltype')
         #filter synapses to only have specific celltype
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
@@ -135,7 +126,7 @@ if __name__ == '__main__':
         syn_ssv_partners = m_ssv_partners[filtered_inds]
         log.info('Prefilter vesicles for celltype')
         #load caches prefiltered for celltype (if celltype with full cells -> load only those)
-        if ct in ax_ct:
+        if ct in axon_cts:
             ct_ves_ids = np.load(f'{cache_name}/{ct_dict[ct]}_ids.npy')
             ct_ves_coords = np.load(f'{cache_name}/{ct_dict[ct]}_rep_coords.npy')
             ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_dict[ct]}_mapping_ssv_ids.npy')
@@ -152,7 +143,7 @@ if __name__ == '__main__':
         ct_ves_map2ssvids = ct_ves_map2ssvids[ct_ind]
         ct_ves_dist2matrix = ct_ves_dist2matrix[ct_ind]
         ct_ves_coords = ct_ves_coords[ct_ind]
-        if ct not in ax_ct:
+        if ct not in axon_cts:
             ct_ves_axoness = ct_ves_axoness[ct_ind]
             #make sure for full cells vesicles are only in axon
             ax_ind = np.in1d(ct_ves_axoness, 1)
@@ -175,54 +166,88 @@ if __name__ == '__main__':
         fraction_non_syn_mem_vesicles = outputs[:, 0]
         density_non_syn_mem_vesicles = outputs[:, 1]
         density_syn_mem_vesicles = outputs[:, 2]
-        fraction_nonsyn_df.loc[0:len(cellids) - 1, ct_str] = fraction_non_syn_mem_vesicles
-        density_non_syn_df.loc[0:len(cellids) - 1, ct_str] = density_non_syn_mem_vesicles
-        density_syn_df.loc[0:len(cellids) - 1, ct_str] = density_syn_mem_vesicles
-        median_values_df.loc[ct, 'celltype'] = ct_str
-        median_fraction = np.nanmedian(fraction_non_syn_mem_vesicles)
-        median_nonsyn_density = np.nanmedian(density_non_syn_mem_vesicles)
-        median_syn_density = np.nanmedian(density_syn_mem_vesicles)
-        median_values_df.loc[ct, columns[1]] = median_fraction
-        median_values_df.loc[ct, columns[2]] = median_nonsyn_density
-        median_values_df.loc[ct, columns[3]] = median_syn_density
-        median_plotting_df.loc[ct * 2: ct * 2 + 1, 'celltype'] = ct_str
-        median_plotting_df.loc[ct * 2, 'vesicle density'] = median_nonsyn_density
-        median_plotting_df.loc[ct * 2, 'location'] = 'non-synaptic'
-        median_plotting_df.loc[ct * 2 + 1, 'vesicle density'] = median_syn_density
-        median_plotting_df.loc[ct * 2 + 1, 'location'] = 'synaptic'
-        log.info(f'{ct_str} cells have a median median fraction of membrane-close vesicles '
-                 f'not at synapses of {median_fraction:.2f} ')
+        cts_inds = np.in1d(vesicle_df['cellid'], cellids)
+        vesicle_df.loc[cts_inds, 'fraction of non-synaptic membrane-close vesicles'] = fraction_non_syn_mem_vesicles
+        vesicle_df.loc[cts_inds,  'density of non-synaptic membrane-close vesicles'] = density_non_syn_mem_vesicles
+        vesicle_df.loc[cts_inds,  'density of synaptic membrane-close vesicles'] = density_syn_mem_vesicles
 
-    log.info('Step 5/6: Plot results')
-    fraction_nonsyn_df.to_csv(f'{f_name}/fraction_nonsyn_mem_vesicles.csv')
-    density_non_syn_df.to_csv(f'{f_name}/density_nonsyn_mem_vesicles.csv')
-    density_syn_df.to_csv(f'{f_name}/density_syn_mem_vesicles.csv')
-    median_values_df.to_csv(f'{f_name}/median_values_mem_vesicles.csv')
-    median_plotting_df.to_csv(f'{f_name}/median_values_den_plot_vesicles.csv')
-    sns.boxplot(fraction_nonsyn_df, palette=ct_palette)
-    plt.ylabel('fraction of non-synaptic vesicles')
-    plt.title(f'Fraction of vesicles close to membrane and not close to synapse ({syn_dist_threshold} nm)')
-    plt.savefig(f'{f_name}/fraction_nonsyn_mem_{dist_threshold}nm_{syn_dist_threshold}nm.svg')
-    plt.close()
-    sns.boxplot(density_non_syn_df, palette=ct_palette)
-    plt.ylabel('vesicle density [1/µm]')
-    plt.title('Number of vesicles per axon pathlength close to membrane and not to synapse')
-    plt.savefig(f'{f_name}/density_nonsyn_mem_{dist_threshold}nm_{syn_dist_threshold}nm.svg')
-    plt.close()
-    sns.boxplot(density_syn_df, palette=ct_palette)
-    plt.ylabel('vesicle density [1/µm]')
-    plt.title('Number of vesicles per axon pathlength close to membrane and to synapse')
-    plt.savefig(f'{f_name}/density_syn_mem_{dist_threshold}nm_{syn_dist_threshold}nm.svg')
-    plt.close()
+    #filter out cells that don't have any close-membrane vesicles
+    num_cells_before = len(vesicle_df)
+    num_cts_before = vesicle_df.groupby('celltype').size()
+    log.info(f'In total {num_cells_before} cells were processed, in the following celltypes: {num_cts_before}')
+    vesicle_df = vesicle_df.dropna()
+    vesicle_df = vesicle_df.reset_index(drop = True)
+    num_cells_after = len(vesicle_df)
+    ct_groups = vesicle_df.groupby('celltype')
+    num_cts_after = ct_groups.size()
+    log.info(f'Number of cells with membrane close vesicles is {num_cells_after}, in the following celltypes: {num_cts_after}')
+    log.info(f'{num_cells_before - num_cells_after} cells were removed')
+    param_list = pc_columns[2:]
+    vesicle_df = vesicle_df.astype({param:float for param in param_list})
+    vesicle_df.to_csv(f'{f_name}/vesicle_close_membrane_densities_results.csv')
+
+    log.info('Step 5/6: Get overview params and calculate statistics')
+    unique_cts = np.unique(vesicle_df['celltype'])
+    overview_columns = [[f'{param} median', f'{param} mean', f'{param} std'] for param in param_list]
+    overview_columns = np.concatenate(overview_columns)
+    overview_df = pd.DataFrame(columns=overview_columns, index=unique_cts)
+    group_comps = list(combinations(unique_cts, 2))
+    ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
+    ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
+    for param in param_list:
+        overview_df.loc[unique_cts, f'{param} median'] = ct_groups[param].median()
+        overview_df.loc[unique_cts, f'{param} mean'] = ct_groups[param].mean()
+        overview_df.loc[unique_cts, f'{param} std'] = ct_groups[param].std()
+        # calculate kruskal wallis for differences between the two groups
+        param_groups = [group[param].values for name, group in
+                        vesicle_df.groupby('celltype')]
+        kruskal_res = kruskal(*param_groups, nan_policy='omit')
+        log.info(
+            f'Kruskal results for {param} are: stats = {kruskal_res[0]:.2f}, p-value = {kruskal_res[1]:.2f}')
+        # get ranksum results if significant
+        if kruskal_res[1] < 0.05:
+            for group in group_comps:
+                ranksum_res = ranksums(ct_groups.get_group(group[0])[param],
+                                       ct_groups.get_group(group[1])[param])
+                ranksum_group_df.loc[f'{param} stats', f'{group[0]} vs {group[1]}'] = \
+                    ranksum_res[0]
+                ranksum_group_df.loc[f'{param} p-value', f'{group[0]} vs {group[1]}'] = \
+                    ranksum_res[1]
+
+    overview_df.to_csv(f'{f_name}/overview_df.csv')
+    ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
+
+    log.info('Step 6/6: Plot results')
+    for key in vesicle_df.columns:
+        if not 'cellid' in key or not 'celltype' in key:
+            if 'fraction' in key:
+                ylabel = key
+            else:
+                ylabel = f'{key} [1/µm]'
+            sns.boxplot(data = vesicle_df, x = 'celltype', y = key, palette=ct_palette, order=ct_str_list)
+            plt.ylabel(key, fontsize = fontsize)
+            plt.xlabel('celltype', fontsize = fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.title(f'{key} ({syn_dist_threshold} nm)')
+            plt.savefig(f'{f_name}/fraction_nonsyn_mem_{dist_threshold}nm_{syn_dist_threshold}nm.svg')
+            plt.close()
+
+    #plot overview
+    median_plotting_df = pd.DataFrame(columns=['celltype', 'vesicle density', 'location'], index=range(num_cts * 2))
+    median_plotting_df.loc[0:num_cts - 1, 'vesicle density'] = overview_df['density of non-synaptic membrane-close vesicles median']
+    median_plotting_df.loc[0:num_cts - 1, 'location'] = 'non-synaptic'
+    median_plotting_df.loc[num_cts:2*num_cts - 1, 'vesicle density'] = overview_df[
+        'density of synaptic membrane-close vesicles median']
+    median_plotting_df.loc[num_cts:2*num_cts - 1, 'location'] = 'synaptic'
+    raise ValueError
+    median_plotting_df.to_csv(f'{f_name}/vesicle_densities_medians.csv')
     palette = {'non-synaptic': 'black', 'synaptic': '#00BFB2' }
     sns.pointplot(x = 'celltype', y = 'vesicle density', data = median_plotting_df, hue='location', palette=palette, join=False)
     plt.ylabel('median vesicle density [1/µm]')
     plt.title('Median density of vesicles close to membrane')
     plt.savefig(f'{f_name}/mem_close_comb_median_point.svg')
     plt.close()
-
-    log.info('Step 6/6: Get overview params and calculate statistics')
-
 
     log.info(f'Analysis for vesicles closer to {dist_threshold}nm, split into synaptic '
              f'and non-synaptic in all celltypes done')

@@ -29,8 +29,8 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=False)
     num_cts = analysis_params.num_cts(with_glia=False)
     axon_cts = analysis_params.axon_cts()
-    min_comp_len_cell = 2000
-    min_comp_len_ax = 2000
+    min_comp_len_cell = 200
+    min_comp_len_ax = 200
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
@@ -209,44 +209,46 @@ if __name__ == '__main__':
             for group in group_comps:
                 ranksum_res = ranksums(ct_groups.get_group(group[0])[param],
                                        ct_groups.get_group(group[1])[param])
-                ranksum_group_df.loc[f'{param} stats', f'{group[0]} vs {group[1]}'] = \
-                    ranksum_res[0]
-                ranksum_group_df.loc[f'{param} p-value', f'{group[0]} vs {group[1]}'] = \
-                    ranksum_res[1]
+                ranksum_group_df.loc[f'{param} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
+                ranksum_group_df.loc[f'{param} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
 
     overview_df.to_csv(f'{f_name}/overview_df.csv')
     ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
 
     log.info('Step 6/6: Plot results')
     for key in vesicle_df.columns:
-        if not 'cellid' in key or not 'celltype' in key:
-            if 'fraction' in key:
-                ylabel = key
-            else:
-                ylabel = f'{key} [1/µm]'
-            sns.boxplot(data = vesicle_df, x = 'celltype', y = key, palette=ct_palette, order=ct_str_list)
-            plt.ylabel(key, fontsize = fontsize)
-            plt.xlabel('celltype', fontsize = fontsize)
-            plt.yticks(fontsize=fontsize)
-            plt.xticks(fontsize=fontsize)
-            plt.title(f'{key} ({syn_dist_threshold} nm)')
-            plt.savefig(f'{f_name}/fraction_nonsyn_mem_{dist_threshold}nm_{syn_dist_threshold}nm.svg')
-            plt.close()
+        if 'cellid' in key or 'celltype' in key:
+            continue
+        if 'fraction' in key:
+            ylabel = key
+        else:
+            ylabel = f'{key} [1/µm]'
+        sns.boxplot(data = vesicle_df, x = 'celltype', y = key, palette=ct_palette, order=ct_str_list)
+        plt.ylabel(key, fontsize = fontsize)
+        plt.xlabel('celltype', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.title(f'{key} ({syn_dist_threshold} nm)')
+        plt.savefig(f'{f_name}/{key}_{dist_threshold}nm_{syn_dist_threshold}nm.svg')
+        plt.savefig(f'{f_name}/{key}_{dist_threshold}nm_{syn_dist_threshold}nm.png')
+        plt.close()
 
     #plot overview
     median_plotting_df = pd.DataFrame(columns=['celltype', 'vesicle density', 'location'], index=range(num_cts * 2))
-    median_plotting_df.loc[0:num_cts - 1, 'vesicle density'] = overview_df['density of non-synaptic membrane-close vesicles median']
+    median_plotting_df.loc[0:num_cts - 1, 'vesicle density'] = np.array(overview_df['density of non-synaptic membrane-close vesicles median'])
     median_plotting_df.loc[0:num_cts - 1, 'location'] = 'non-synaptic'
-    median_plotting_df.loc[num_cts:2*num_cts - 1, 'vesicle density'] = overview_df[
-        'density of synaptic membrane-close vesicles median']
+    median_plotting_df.loc[0:num_cts - 1, 'celltype'] = unique_cts
+    median_plotting_df.loc[num_cts:2*num_cts - 1, 'vesicle density'] = np.array(overview_df[
+        'density of synaptic membrane-close vesicles median'])
     median_plotting_df.loc[num_cts:2*num_cts - 1, 'location'] = 'synaptic'
-    raise ValueError
+    median_plotting_df.loc[num_cts:2 * num_cts - 1, 'celltype'] = unique_cts
     median_plotting_df.to_csv(f'{f_name}/vesicle_densities_medians.csv')
     palette = {'non-synaptic': 'black', 'synaptic': '#00BFB2' }
-    sns.pointplot(x = 'celltype', y = 'vesicle density', data = median_plotting_df, hue='location', palette=palette, join=False)
+    sns.pointplot(x = 'celltype', y = 'vesicle density', data = median_plotting_df, hue='location', palette=palette, join=False, order = ct_str_list)
     plt.ylabel('median vesicle density [1/µm]')
     plt.title('Median density of vesicles close to membrane')
     plt.savefig(f'{f_name}/mem_close_comb_median_point.svg')
+    plt.savefig(f'{f_name}/mem_close_comb_median_point.png')
     plt.close()
 
     log.info(f'Analysis for vesicles closer to {dist_threshold}nm, split into synaptic '

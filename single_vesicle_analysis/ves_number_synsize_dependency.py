@@ -5,7 +5,6 @@ if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, filter_synapse_caches_general
-    import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_ves_synsize_percell
@@ -27,16 +26,16 @@ if __name__ == '__main__':
     analysis_params = Analysis_Params(version = version)
     global_params.wd = analysis_params.working_dir()
     ct_dict = analysis_params.ct_dict()
-    min_comp_len = 2000
+    min_comp_len = 200
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.8
-    syn_dist_threshold = 500 #nm
+    syn_dist_threshold = 5000 #nm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240507_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240508_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s" % (
         min_comp_len, dist_threshold, syn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -180,28 +179,45 @@ if __name__ == '__main__':
     log.info('Step 3/4: Plot results')
     combined_results = pd.concat(result_df_list)
     combined_results.to_csv(f'{f_name}/all_syns_ves.csv')
+    #plot results per parameter as boxplot
+    for key in combined_results.columns:
+        if 'cellid' in key or 'celltype' in key:
+            continue
+        if 'size' in key:
+            ylabel = f'{key} [µm²]'
+        else:
+            ylabel = key
+        sns.boxplot(data = combined_results, x = 'celltype', y = key, palette=ct_palette, order=cts_str)
+        plt.ylabel(key, fontsize = fontsize)
+        plt.xlabel('celltype', fontsize = fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.title(f'{key} ({syn_dist_threshold} nm)')
+        plt.savefig(f'{f_name}/{key}_{dist_threshold}nm_{syn_dist_threshold}nm.svg')
+        plt.savefig(f'{f_name}/{key}_{dist_threshold}nm_{syn_dist_threshold}nm.png')
+        plt.close()
     #plot results for whole dataset
     sns.regplot(x='synapse size [µm²]', y='number of vesicles', data=combined_results,
                 scatter_kws={'alpha': 0.1},
-                color='black')
+                color='#707070')
     plt.title(f'Vesicle number and synapse size in {ct_str}')
     plt.savefig(f'{f_name}/all_num_ves_{dist_threshold}nm_syns_regscatter.png')
     plt.close()
     sns.regplot(x='synapse size [µm²]', y='number of membrane-close vesicles', data=combined_results,
                 scatter_kws={'alpha': 0.1},
-                color='black')
+                color='#707070')
     plt.title(f'Membrane-close vesicle number and synapse size in {ct_str}')
     plt.savefig(f'{f_name}/all_closemem_ves_{dist_threshold}nm_syns_regscatter.png')
     plt.close()
     sns.regplot(x='synapse size [µm²]', y='number of vesicles', data=combined_results,
                 scatter=False,
-                color='black')
+                color='#707070')
     plt.title(f'Vesicle number and synapse size in {ct_str}')
     plt.savefig(f'{f_name}/all_num_ves_{dist_threshold}nm_syns_reg.svg')
     plt.close()
     sns.regplot(x='synapse size [µm²]', y='number of membrane-close vesicles', data=combined_results,
                 scatter=False,
-                color='black')
+                color='#707070')
     plt.title(f'Membrane-close vesicle number and synapse size in {ct_str}')
     plt.savefig(f'{f_name}/all_closemem_ves_{dist_threshold}nm_syns_reg.svg')
     plt.close()
@@ -280,11 +296,12 @@ if __name__ == '__main__':
     spearman_res.to_csv(f'{f_name}/spearman_results.csv')
 
     #plot correlation coeff for spearman
-    ct_palette['total'] = '#707070'
     plotting_order = np.hstack(['total', cts_str])
+    spearman_res['celltype'] = spearman_res.index
     for param in param_list:
         if 'vesicle' in param:
-            sns.boxplot(data=spearman_res, y=f'{param} corr coeff', palette=ct_palette, order = plotting_order)
+            sns.pointplot(data=spearman_res, x = 'celltype', y=f'{param} corr coeff',
+                          color='#707070', order = plotting_order, join=False)
             plt.title(f'{param} corr coeff for dist2syn {syn_dist_threshold} nm')
             plt.ylabel(f'{param} corr coeff', fontsize=fontsize)
             plt.xlabel('celltype', fontsize=fontsize)

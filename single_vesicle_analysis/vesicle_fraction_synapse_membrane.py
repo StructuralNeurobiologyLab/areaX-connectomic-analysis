@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240508_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240510_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -245,7 +245,10 @@ if __name__ == '__main__':
     median_plotting_df.to_csv(f'{f_name}/vesicle_densities_medians.csv')
     palette = {'non-synaptic': 'black', 'synaptic': '#00BFB2' }
     sns.pointplot(x = 'celltype', y = 'vesicle density', data = median_plotting_df, hue='location', palette=palette, join=False, order = ct_str_list)
-    plt.ylabel('median vesicle density [1/µm]')
+    plt.ylabel('median vesicle density [1/µm]', fontsize=fontsize)
+    plt.xlabel('celltype', fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
     plt.title('Median density of vesicles close to membrane')
     plt.savefig(f'{f_name}/mem_close_comb_median_point.svg')
     plt.savefig(f'{f_name}/mem_close_comb_median_point.png')

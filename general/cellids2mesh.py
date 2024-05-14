@@ -7,6 +7,7 @@ if __name__ == '__main__':
     from syconn.reps.segmentation import SegmentationDataset
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_organell_ids_comps
+    from analysis_conn_helper import filter_synapse_caches_for_ct
     import numpy as np
     from tqdm import tqdm
     from syconn.proc.meshes import write_mesh2kzip, write_meshes2kzip
@@ -28,6 +29,11 @@ if __name__ == '__main__':
     get_orgs_comp_sep = False
     get_only_myelin = False
     get_single_ves_coords = False
+    get_membrane_close_vesicles_separate = True
+    get_syns = True
+    get_syns_comp = 1
+    compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
+
 
     # cellids = [ 126798179, 1155532413, 15724767, 24397945, 32356701, 26790127, 379072583]
     # cellids = [15521116, 10157981]
@@ -41,7 +47,8 @@ if __name__ == '__main__':
     # example cells TAN, GPi, GPe, INT2, INT3, MSN
     #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
     #get wrongly segmented bv and associated astrocytes
-    cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
+    #cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
+    cellids = [10157981, 26790127]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])
@@ -56,6 +63,11 @@ if __name__ == '__main__':
         np_presaved_loc = bio_params.file_locations
         ves_columns = ['coord x', 'coord y', 'coord z', 'coord x blend', 'coord y blend', 'coord z blend']
         blender_scaling = 10 ** (-5)
+    if get_syns:
+        org_color_rgba = np.array([189, 195, 199, 1])
+        min_syn_size = 0.1
+        syn_prob_thresh = 0.6
+        sd_syn_ssv = SegmentationDataset('syn_ssv', working_dir=global_params.wd)
 
     for cellid in tqdm(cellids):
         cell = SuperSegmentationObject(cellid)
@@ -141,11 +153,56 @@ if __name__ == '__main__':
             kzip_out = f'{f_name}/{cellid}_{celltype}_myelin_mesh'
             write_mesh2kzip(kzip_out, myelin_ind.astype(np.float32), myelin_verts.astype(np.float32), None, None,
                             f'{cellid}_myelin.ply')
+        if get_syns:
+            m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
+                pre_cts=[ct_num],
+                post_cts=None,
+                syn_prob_thresh=syn_prob_thresh,
+                min_syn_size=min_syn_size,
+                axo_den_so=True,
+                synapses_caches=None,
+                sd_synssv=sd_syn_ssv)
+            #get only synapses where one partner is cellid
+            cellid_inds = np.any(np.in1d(m_ssv_partners, cellid).reshape(len(m_ssv_partners),2), axis = 1)
+            cellid_ssv_partners = m_ssv_partners[cellid_inds]
+            cellid_axs = m_axs[cellid_inds]
+            cellid_ids = m_ids[cellid_inds]
+            if get_syns_comp is not None:
+                #get only synapses where cell is compartment
+                cellid_ind = np.in1d(cellid_ssv_partners, cellid).reshape(len(cellid_ssv_partners), 2)
+                comp_inds = np.in1d(cellid_axs, get_syns_comp).reshape(len(cellid_ssv_partners), 2)
+                comp_cellid_inds = np.any(cellid_ind == comp_inds, axis=1)
+                cellid_ids = cellid_ids[comp_cellid_inds]
+            cell_syn_ids = cell.lookup_in_attribute_dict('syn_ssv')
+            cell_syns = cell.syn_ssv
+            suitable_inds = np.in1d(cell_syn_ids, cellid_ids)
+            cell_syns = np.array(cell_syns)[suitable_inds]
+            cell_syns_inds = []
+            cell_syns_verts = []
+            cell_syns_norms = []
+            cell_syns_cols = []
+            for syn in cell_syns:
+                indices, vertices, normals = syn.mesh
+                cell_syns_inds.append(indices.astype(np.float32))
+                cell_syns_verts.append(vertices.astype(np.float32))
+                cell_syns_norms.append(normals.astype(np.float32))
+                cell_syns_cols.append(org_color_rgba)
+            if get_syns_comp is not None:
+                kzip_out = f'{f_name}/{cellid}_{celltype}_syn_{compartment_dict[get_syns_comp]}_mesh'
+                ply_f_names = [f'{cellid}_syn_{compartment_dict[get_syns_comp]}_{i}.ply' for i in range(len(cell_syns_inds))]
+            else:
+                kzip_out = f'{f_name}/{cellid}_{celltype}_syn_mesh'
+                ply_f_names = [f'{cellid}_syn_{i}.ply' for i in
+                               range(len(cell_syns_inds))]
+            write_meshes2kzip(kzip_out, cell_syns_inds, cell_syns_verts, cell_syns_norms, cell_syns_cols,
+                              ply_f_names)
         if get_single_ves_coords:
             if ct_num in axon_cts:
                 ct_ves_ids = np.load(f'{np_presaved_loc}/{celltype}_ids.npy')
                 ct_ves_map2ssvids = np.load(f'{np_presaved_loc}/{celltype}_mapping_ssv_ids.npy')
                 ct_ves_coords = np.load(f'{np_presaved_loc}/{celltype}_rep_coords.npy')
+                if get_membrane_close_vesicles_separate:
+                    ct_dist2membrane = np.load(f'{np_presaved_loc}/{celltype}_dist2matrix.npy')
             else:
                 ct_ves_ids = np.load(f'{np_presaved_loc}/{celltype}_ids_fullcells.npy')
                 ct_ves_map2ssvids = np.load(f'{np_presaved_loc}/{celltype}_mapping_ssv_ids_fullcells.npy')
@@ -154,6 +211,8 @@ if __name__ == '__main__':
                 ax_inds = ct_ves_axoness == 1
                 ct_ves_map2ssvids = ct_ves_map2ssvids[ax_inds]
                 ct_ves_coords = ct_ves_coords[ax_inds]
+                if get_membrane_close_vesicles_separate:
+                    ct_dist2membrane = np.load(f'{np_presaved_loc}/{celltype}_dist2matrix_fullcells.npy')
             cell_ves_coords = ct_ves_coords[ct_ves_map2ssvids == cellid]
             cell_ves_coords_df = pd.DataFrame(columns = ves_columns, index = range(len(cell_ves_coords)))
             cell_ves_coords_df['coord x'] = cell_ves_coords[:, 0]

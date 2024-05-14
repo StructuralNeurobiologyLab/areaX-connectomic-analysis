@@ -29,7 +29,7 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    conn_ct = 3
+    conn_ct = None
     #celltypes that are compared
     ct2 = 6
     ct3 = 7
@@ -37,10 +37,10 @@ if __name__ == '__main__':
     fontsize = 20
     kde = True
     if conn_ct == None:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240514_j0251{version}_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
             ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240514_j0251{version}_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
             ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -588,20 +588,20 @@ if __name__ == '__main__':
                 #compare ct2 inter with intra
                 ct2_multi_df = multi_conn_df[multi_conn_df['celltype'] == ct_dict[ct2]]
                 ct2_multi_df_intra = multi_conn_df_intra[multi_conn_df_intra['celltype'] == ct_dict[ct2]]
-                stats, p_vlaue = ranksums(ct2_multi_df['number of synapses'], ct2_multi_df_intra['number of synapses'])
+                stats, p_value = ranksums(ct2_multi_df['number of synapses'], ct2_multi_df_intra['number of synapses'])
                 ranksum_results.loc['multi syn numbers stats', f'{ct_dict[ct2]} inter vs intra'] = stats
                 ranksum_results.loc['multi syn numbers p-value', f'{ct_dict[ct2]} inter vs intra'] = p_value
-                stats, p_vlaue = ranksums(ct2_multi_df['sum syn area'], ct2_multi_df_intra['sum syn area'])
+                stats, p_value = ranksums(ct2_multi_df['sum syn area'], ct2_multi_df_intra['sum syn area'])
                 ranksum_results.loc['multi syn sum sizes stats', f'{ct_dict[ct2]} inter vs intra'] = stats
                 ranksum_results.loc['multi syn sum sizess p-value', f'{ct_dict[ct2]} inter vs intra'] = p_value
             if len_ct3 > 0:
                 #compare ct3 inter with intra
                 ct3_multi_df = multi_conn_df[multi_conn_df['celltype'] == ct_dict[ct3]]
                 ct3_multi_df_intra = multi_conn_df_intra[multi_conn_df_intra['celltype'] == ct_dict[ct3]]
-                stats, p_vlaue = ranksums(ct3_multi_df['number of synapses'], ct3_multi_df_intra['number of synapses'])
+                stats, p_value = ranksums(ct3_multi_df['number of synapses'], ct3_multi_df_intra['number of synapses'])
                 ranksum_results.loc['multi syn numbers stats', f'{ct_dict[ct3]} inter vs intra'] = stats
                 ranksum_results.loc['multi syn numbers p-value', f'{ct_dict[ct3]} inter vs intra'] = p_value
-                stats, p_vlaue = ranksums(ct3_multi_df['sum syn area'], ct3_multi_df_intra['sum syn area'])
+                stats, p_value = ranksums(ct3_multi_df['sum syn area'], ct3_multi_df_intra['sum syn area'])
                 ranksum_results.loc['multi syn sum sizes stats', f'{ct_dict[ct3]} inter vs intra'] = stats
                 ranksum_results.loc['multi syn sum sizess p-value', f'{ct_dict[ct3]} inter vs intra'] = p_value
             if len_ct2 > 0 and len_ct3 > 0:
@@ -613,8 +613,8 @@ if __name__ == '__main__':
                 multi_ct2_sizes = multi_conn_df_intra['sum syn area'][multi_conn_df_intra['celltype'] == ct_dict[ct2]]
                 multi_ct3_sizes = multi_conn_df_intra['sum syn area'][multi_conn_df_intra['celltype'] == ct_dict[ct3]]
                 stats, p_value = ranksums(multi_ct2_sizes, multi_ct3_sizes)
-            ranksum_results.loc['multi syn sum sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = stats
-            ranksum_results.loc['multi syn sum sizess p-value',f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = p_value
+                ranksum_results.loc['multi syn sum sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = stats
+                ranksum_results.loc['multi syn sum sizess p-value',f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = p_value
             ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')
             # plot results
             # plot sum sizes for pairwise cells as histogram

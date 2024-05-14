@@ -533,7 +533,7 @@ if __name__ == '__main__':
                 ranksum_results.loc['all syn sizes stats', f'{ct_dict[ct3]} inter vs intra'] = stats
                 ranksum_results.loc['all syn sizes p-value', f'{ct_dict[ct3]} inter vs intra'] = p_value
             if len(ct2_m_sizes) > 0 and len(ct3_m_sizes) > 0:
-                stats, p_value = ranksums(ct2_den_syn_sizes, ct3_den_syn_sizes)
+                stats, p_value = ranksums(ct2_m_sizes, ct3_m_sizes)
                 ranksum_results.loc['all syn sizes stats', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = stats
                 ranksum_results.loc['all syn sizes p-value', f'to {ct_dict[ct2]} vs to {ct_dict[ct3]} intra'] = p_value
             ranksum_results.to_csv(f'{f_name}/ranksums_results_{ct_dict[ct2]}_{ct_dict[ct3]}.csv')

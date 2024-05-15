@@ -28,9 +28,9 @@ if __name__ == '__main__':
     get_orgs = False
     get_orgs_comp_sep = False
     get_only_myelin = False
-    get_single_ves_coords = False
+    get_single_ves_coords = True
     get_membrane_close_vesicles_separate = True
-    get_syns = True
+    get_syns = False
     get_syns_comp = 1
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
 
@@ -63,6 +63,8 @@ if __name__ == '__main__':
         np_presaved_loc = bio_params.file_locations
         ves_columns = ['coord x', 'coord y', 'coord z', 'coord x blend', 'coord y blend', 'coord z blend']
         blender_scaling = 10 ** (-5)
+        if get_membrane_close_vesicles_separate:
+            dist_threshold = 10
     if get_syns:
         org_color_rgba = np.array([189, 195, 199, 1])
         min_syn_size = 0.1
@@ -213,12 +215,42 @@ if __name__ == '__main__':
                 ct_ves_coords = ct_ves_coords[ax_inds]
                 if get_membrane_close_vesicles_separate:
                     ct_dist2membrane = np.load(f'{np_presaved_loc}/{celltype}_dist2matrix_fullcells.npy')
+                    ct_dist2membrane = ct_dist2membrane[ax_inds]
             cell_ves_coords = ct_ves_coords[ct_ves_map2ssvids == cellid]
-            cell_ves_coords_df = pd.DataFrame(columns = ves_columns, index = range(len(cell_ves_coords)))
-            cell_ves_coords_df['coord x'] = cell_ves_coords[:, 0]
-            cell_ves_coords_df['coord y'] = cell_ves_coords[:, 1]
-            cell_ves_coords_df['coord z'] = cell_ves_coords[:, 2]
-            cell_ves_coords_df['coord x blend'] = cell_ves_coords[:, 0].astype(np.float32) * cell.scaling[0] * blender_scaling
-            cell_ves_coords_df['coord y blend'] = cell_ves_coords[:, 1] * cell.scaling[1].astype(np.float32) * blender_scaling
-            cell_ves_coords_df['coord z blend'] = cell_ves_coords[:, 2] * cell.scaling[2].astype(np.float32) * blender_scaling
-            cell_ves_coords_df.to_csv(f'{f_name}/{cellid}_{celltype}_vesicle_coords.csv')
+            if get_membrane_close_vesicles_separate:
+                cell_dist2membrane = ct_dist2membrane[ct_ves_map2ssvids == cellid]
+                close_coords = cell_ves_coords[cell_dist2membrane < dist_threshold]
+                far_coords = cell_ves_coords[cell_dist2membrane >= dist_threshold]
+                assert(len(cell_ves_coords) == len(close_coords) + len(far_coords))
+                cell_close_coords_df = pd.DataFrame(columns = ves_columns, index=range(len(close_coords)))
+                cell_close_coords_df['coord x'] = close_coords[:, 0]
+                cell_close_coords_df['coord y'] = close_coords[:, 1]
+                cell_close_coords_df['coord z'] = close_coords[:, 2]
+                cell_close_coords_df['coord x blend'] = close_coords[:, 0].astype(np.float32) * cell.scaling[
+                    0] * blender_scaling
+                cell_close_coords_df['coord y blend'] = close_coords[:, 1] * cell.scaling[1].astype(
+                    np.float32) * blender_scaling
+                cell_close_coords_df['coord z blend'] = close_coords[:, 2] * cell.scaling[2].astype(
+                    np.float32) * blender_scaling
+                cell_close_coords_df.to_csv(f'{f_name}/{cellid}_{celltype}_membrane_close_vesicle_coords.csv')
+                cell_far_coords_df = pd.DataFrame(columns=ves_columns, index=range(len(far_coords)))
+                cell_far_coords_df['coord x'] = far_coords[:, 0]
+                cell_far_coords_df['coord y'] = far_coords[:, 1]
+                cell_far_coords_df['coord z'] = far_coords[:, 2]
+                cell_far_coords_df['coord x blend'] = far_coords[:, 0].astype(np.float32) * cell.scaling[
+                    0] * blender_scaling
+                cell_far_coords_df['coord y blend'] = far_coords[:, 1] * cell.scaling[1].astype(
+                    np.float32) * blender_scaling
+                cell_far_coords_df['coord z blend'] = far_coords[:, 2] * cell.scaling[2].astype(
+                    np.float32) * blender_scaling
+                cell_far_coords_df.to_csv(f'{f_name}/{cellid}_{celltype}_membrane_far_vesicle_coords.csv')
+
+            else:
+                cell_ves_coords_df = pd.DataFrame(columns = ves_columns, index = range(len(cell_ves_coords)))
+                cell_ves_coords_df['coord x'] = cell_ves_coords[:, 0]
+                cell_ves_coords_df['coord y'] = cell_ves_coords[:, 1]
+                cell_ves_coords_df['coord z'] = cell_ves_coords[:, 2]
+                cell_ves_coords_df['coord x blend'] = cell_ves_coords[:, 0].astype(np.float32) * cell.scaling[0] * blender_scaling
+                cell_ves_coords_df['coord y blend'] = cell_ves_coords[:, 1] * cell.scaling[1].astype(np.float32) * blender_scaling
+                cell_ves_coords_df['coord z blend'] = cell_ves_coords[:, 2] * cell.scaling[2].astype(np.float32) * blender_scaling
+                cell_ves_coords_df.to_csv(f'{f_name}/{cellid}_{celltype}_vesicle_coords.csv')

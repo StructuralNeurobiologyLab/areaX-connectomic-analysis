@@ -2,79 +2,111 @@
 
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_percell_number_sumsize
     from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
     import os as os
     import pandas as pd
-    from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
     from tqdm import tqdm
+    from itertools import combinations
+    from scipy.stats import kruskal, ranksums
+    import seaborn as sns
+    import matplotlib.pyplot as plt
 
-    global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
-    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
-    start = time.time()
-    ct_dict = {0: "STN", 1: "DA", 2: "MSN", 3: "LMAN", 4: "HVC", 5: "TAN", 6: "GPe", 7: "GPi", 8: "FS", 9: "LTS",
-               10: "NGF"}
+    #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
+
+    version = 'v6'
+    analysis_params = Analysis_Params(version = version)
+    ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len = 200
-    max_MSN_path_len = 7500
     min_syn_size = 0.1
     syn_prob = 0.6
     cls = CelltypeColors()
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'TePkBr'
-    f_name = "cajal/nvmescratch/users/arother/bio_analysis_results/general/221219_j0251v4_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
+    color_key = 'TePkBrNGF'
+    fontsize = 20
+    f_name = f"cajal/nvmescratch/users/arother/bio_analysis_results/general/240515_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
         syn_prob, min_comp_len, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('get average synapse density of axon per celltype', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i, max_MSN_path_len = %i, syn_prob = %.2f, min_syn_size = %.i, colors = %s" % (
-            min_comp_len, max_MSN_path_len, syn_prob, min_syn_size, color_key))
+        "min_comp_len = %i, syn_prob = %.2f, min_syn_size = %.i, colors = %s" % (
+            min_comp_len, syn_prob, min_syn_size, color_key))
     time_stamps = [time.time()]
     step_idents = ['t-0']
-    known_mergers = load_pkl2obj("cajal/nvmescratch/users/arother/j0251v4_prep/merger_arr.pkl")
+    known_mergers = analysis_params.load_known_mergers()
     log.info("Iterate over celltypes to get eachs estimate of synapse density")
+    sd_synssv = SegmentationDataset("syn_ssv", working_dir=global_params.config.working_dir)
     cts = list(ct_dict.keys())
-    ax_ct = [1, 3, 4]
-    res_ct_dict = {i: {} for i in ct_dict}
-    rows = ["mean synapse density [1/µm]", "median synapse density [1/µm]", "mean synapse size density [µm²/µm]", "median synapse size density [µm²/µm]", "mean distance between synapses [µm]", "median distance between synapses [µm]"]
-    mean_result_df = pd.DataFrame(columns=cts, index= rows)
+    ax_ct = analysis_params.axon_cts()
+    ct_str_list = analysis_params.ct_str(with_glia=False)
+    suitable_ids_dict = {}
+    all_suitable_ids = []
+    all_cell_dict = {}
+    all_suitable_cts = []
+    misclassified_asto_ids = analysis_params.load_potential_astros()
+    log.info('Step 1/4: Filter cells')
     for i, ct in enumerate(tqdm(cts)):
         log.info("Start getting random samples from celltype %s, %i/%i" % (ct_dict[ct], i, len(cts)))
         # only get cells with min_comp_len, MSN with max_comp_len or axons with min ax_len
+        cell_dict = analysis_params.load_cell_dict(ct)
+        all_cell_dict[ct] = cell_dict
+        cellids = np.array(list(cell_dict.keys()))
+        merger_inds = np.in1d(cellids, known_mergers) == False
+        cellids = cellids[merger_inds]
         if ct in ax_ct:
-            cell_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/ax_%.3s_dict.pkl" % (ct_dict[ct]))
-            cellids = np.array(list(cell_dict.keys()))
-            merger_inds = np.in1d(cellids, known_mergers) == False
-            cellids = cellids[merger_inds]
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                             axon_only=True, max_path_len=None)
         else:
-            cell_dict = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_dict.pkl" % (ct_dict[ct]))
-            cellids = load_pkl2obj(
-                "/wholebrain/scratch/arother/j0251v4_prep/full_%.3s_arr.pkl" % ct_dict[ct])
-            merger_inds = np.in1d(cellids, known_mergers) == False
-            cellids = cellids[merger_inds]
-            if ct == 2:
-                misclassified_asto_ids = load_pkl2obj('cajal/nvmescratch/users/arother/j0251v4_prep/pot_astro_ids.pkl')
-                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-                cellids = cellids[astro_inds]
+            astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+            cellids = cellids[astro_inds]
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
-                                                axon_only=False, max_path_len=None)
+                                            axon_only=False, max_path_len=None)
+        cellids = np.sort(cellids)
+        suitable_ids_dict[ct] = cellids
+        all_suitable_ids.append(cellids)
+        all_suitable_cts.append([ct_dict[ct] for i in cellids])
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
-        log.info("Get axon pathlength per cell %s" % ct_dict[ct])
-        axon_pathlength = np.zeros(len(cellids))
+
+    all_suitable_ids = np.concatenate(all_suitable_ids)
+    all_suitable_cts = np.concatenate(all_suitable_cts)
+
+    log.info('Step: 2/4: Get synapse density axon per cell')
+
+    syn_columns = ['cellid', 'celltype', 'axon synapse density', 'axon synaptic area density',
+                   'dendrite synapse density', 'dendrite synaptic area density', 'axon synaptic area density per surface area',
+                   'dendrite synaptic area density per surface area', 'soma synaptic area density per surface area',
+                   'axon dist between syns', 'dendrite dist between syns']
+    synapse_res_df = pd.DataFrame(columns=syn_columns, index = range(len(all_suitable_ids)))
+    synapse_res_df['cellid'] = all_suitable_ids
+    synapse_res_df['celltype'] = all_suitable_cts
+
+    morph_columns = ['axon pathlength', 'dendrite pathlength', 'axon surface area', 'dendrite surface area', 'soma surface area']
+    comp_dict = {0: 'dendrite', 1: 'axon', 2:'soma'}
+    comp_nums = list(comp_dict.keys())
+    for ct in cts:
+        ct_str = ct_dict[ct]
+        log.info("Get axon, dendrite pathlength, surface area soma, axon dendrite per cell %s" % ct_str)
+        cellids = suitable_ids_dict[ct]
+        morph_data_df = pd.DataFrame(columns=morph_columns, index = range(len(cellids)))
+        cell_dict = all_cell_dict[ct]
         for i, cellid in enumerate(cellids):
-            axon_pathlength[i] = cell_dict[cellid]["axon length"]
-        log.info("Get number of synapses per cell %s" % ct_dict[ct])
-        #filter synapse caches for synapses with only synapse sof celltypes
+            for comp in comp_nums:
+                if ct in ax_ct and comp != 1:
+                    continue
+                if comp < 2:
+                    morph_data_df.loc[i, f'{comp_dict[comp]} pathlength'] = cell_dict[cellid][f'{comp_dict[comp]} length']
+                morph_data_df.loc[i, f'{comp_dict[comp]} surface area'] = cell_dict[cellid][f'{comp_dict[comp]} mesh surface area']
+        morph_data_df.to_csv(f'{f_name}/{ct_str}_morph_pathlength_surface_areas.csv')
+        log.info("Get number of synapses per cell %s" % ct_str)
+        #filter synapse caches for synapses with only synapses of celltypes
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(sd_synssv,
                                                                                                             pre_cts=[
                                                                                                                 ct],
@@ -88,66 +120,132 @@ if __name__ == '__main__':
         m_ssv_partners = m_ssv_partners[ct_inds]
         m_sizes = m_sizes[ct_inds]
         m_axs = m_axs[ct_inds]
-        #filter synapses to get ones where cellids is axon
+        #iterate over compartments to get synapse number and synaptic area per cell for each compartment
         testct = np.in1d(m_ssv_partners, cellids).reshape(len(m_ssv_partners), 2)
-        testax = np.in1d(m_axs, 1).reshape(len(m_cts), 2)
-        pre_ct_inds = np.any(testct == testax, axis=1)
-        m_cts = m_cts[pre_ct_inds]
-        m_ids = m_ids[pre_ct_inds]
-        m_axs = m_axs[pre_ct_inds]
-        m_ssv_partners = m_ssv_partners[pre_ct_inds]
-        m_sizes = m_sizes[pre_ct_inds]
-        #get number, sum size per cell
-        cell_inds = np.where(m_axs == 1)
-        ct_ssvsids = m_ssv_partners[cell_inds]
-        ct_ssv_inds, unique_ct_ssvs = pd.factorize(ct_ssvsids)
-        ct_syn_sumsizes = np.bincount(ct_ssv_inds, m_sizes)
-        ct_syn_number = np.bincount(ct_ssv_inds)
-        #re-order cellids, unique_ct_ssvs
-        sorted_cellids_inds = np.argsort(cellids)
-        sorted_cellids = cellids[sorted_cellids_inds]
-        sorted_axon_pathlength = axon_pathlength[sorted_cellids_inds]
-        sorted_syn_cellids_inds = np.argsort(unique_ct_ssvs)
-        sorted_unique_ct_ids = unique_ct_ssvs[sorted_syn_cellids_inds]
-        sorted_syn_sumsizes = ct_syn_sumsizes[sorted_syn_cellids_inds]
-        sorted_syn_numbers = ct_syn_number[sorted_syn_cellids_inds]
-        if len(sorted_cellids) != len(sorted_unique_ct_ids):
-            syn_inds = np.in1d(sorted_cellids, sorted_unique_ct_ids)
-            sorted_cellids = sorted_cellids[syn_inds]
-            sorted_axon_pathlength = sorted_axon_pathlength[syn_inds]
-        #get synapse density
-        syn_size_density = sorted_syn_sumsizes / sorted_axon_pathlength
-        syn_num_density = sorted_syn_numbers / sorted_axon_pathlength
-        dist_between_syns = sorted_axon_pathlength / sorted_syn_numbers
-        res_ct_dict[ct]["synapse size density"] = syn_size_density
-        res_ct_dict[ct]["synapse density"] = syn_num_density
-        res_ct_dict[ct]["cellids"] = sorted_cellids
-        res_ct_dict[ct]["mean distance between synapses"] = dist_between_syns
-        rows = ["mean synapse density [1/µm]", "median synapse density [1/µm]", "mean synapse size density [µm²/µm]",
-                "median synapse size density [µm²/µm]", "mean distance between synapses [µm]",
-                "median distance between synapses [µm]"]
-        mean_result_df.loc["mean synapse density [1/µm]", ct] = np.mean(syn_num_density)
-        mean_result_df.loc["median synapse density [1/µm]", ct] = np.median(syn_num_density)
-        mean_result_df.loc["mean synapse size density [µm²/µm]", ct] = np.mean(syn_size_density)
-        mean_result_df.loc["median synapse size density [µm²/µm]", ct] = np.median(syn_size_density)
-        mean_result_df.loc["mean distance between synapses [µm]", ct] = np.mean(dist_between_syns)
-        mean_result_df.loc["median distance between synapses [µm]", ct] = np.median(dist_between_syns)
-        log.info("Calculated average syn density of %s" % ct_dict[ct])
-        step_idents = ["%s" % ct_dict[ct]]
+        for comp in comp_nums:
+            if ct in ax_ct and comp != 1:
+                continue
+            # filter synapses to get ones where cellids is compartment
+            testax = np.in1d(m_axs, comp).reshape(len(m_cts), 2)
+            comp_ct_inds = np.any(testct == testax, axis=1)
+            comp_cts = m_cts[comp_ct_inds]
+            comp_axs = m_axs[comp_ct_inds]
+            comp_ssv_partners = m_ssv_partners[comp_ct_inds]
+            comp_sizes = m_sizes[comp_ct_inds]
+            #get number, sum size per cell
+            ct_inds = np.where(comp_axs == comp)
+            ct_ssv_ids = comp_ssv_partners[ct_inds]
+            comp_syn_numbers, comp_syn_ssv_sizes, comp_unique_ssv_ids = get_percell_number_sumsize(ct_ssv_ids, comp_sizes)
+            #reorder to match order of cellids (which were just sorted above)
+            sorted_cellids_inds = np.argsort(comp_unique_ssv_ids)
+            sorted_unique_ids = comp_unique_ssv_ids[sorted_cellids_inds]
+            sorted_comp_syn_numbers = comp_syn_numbers[sorted_cellids_inds]
+            sorted_comp_syn_sizes = comp_syn_ssv_sizes[sorted_cellids_inds]
+            comp_inds_ct = np.in1d(cellids, sorted_unique_ids)
+            comp_inds_all = np.in1d(all_suitable_ids, sorted_unique_ids)
+            #get synapse density
+            #for axon, dendrite calculate density via pathlength and surface area
+            if comp < 2:
+                comp_ct_pathlength = morph_data_df.loc[comp_inds_ct, f'{comp_dict[comp]} pathlength']
+                comp_syn_density = sorted_comp_syn_numbers / comp_ct_pathlength
+                comp_syn_size_density = sorted_comp_syn_sizes / comp_ct_pathlength
+                synapse_res_df.loc[comp_inds_all, f'{comp_dict[comp]} synapse density'] = comp_syn_density
+                synapse_res_df.loc[comp_inds_all, f'{comp_dict[comp]} synapse area density'] = comp_syn_size_density
+                comp_dist_syns = comp_ct_pathlength / sorted_comp_syn_numbers
+                synapse_res_df.loc[comp_inds_all, f'{comp_dict[comp]} dist between syns'] = comp_dist_syns
+            comp_syn_area_density = sorted_comp_syn_sizes / morph_data_df.loc[comp_inds_ct, f'{comp_dict[comp]} surface area']
+            synapse_res_df.loc[comp_inds_all, f'{comp_dict[comp]} synaptic area density per surface area'] = comp_syn_area_density
 
-    mean_result_df.to_csv("%s/mean_result_parameters.csv" % f_name)
-    write_obj2pkl("%s/syn_results_dict.pkl"  % f_name, res_ct_dict)
+        synapse_res_df.to_csv(f'{f_name}/syn_density_results.csv')
 
-    log.info("Plot results")
-    #make violinplot for values of all cells
-    ct_dict_list = [res_ct_dict[ct] for ct in res_ct_dict]
-    ct_colours = cls.colors[color_key]
-    multiple_ct_for_plotting = ComparingMultipleForPLotting(ct_list = cts, dictionary_list = ct_dict_list, colour_list = ct_colours, filename = f_name)
-    for key in res_ct_dict[ct].keys():
-        result_df = multiple_ct_for_plotting.result_df_per_param(key)
-        multiple_ct_for_plotting.plot_violin(key = key, result_df = result_df, subcell = "synapse", x=None, stripplot = True, outgoing = False)
-        multiple_ct_for_plotting.plot_box(key=key, result_df=result_df, subcell="synapse", x=None, stripplot=True,
-                                             outgoing=False)
+        log.info('Step 3/4: Get overview parameters and calculate results')
+        ct_groups = synapse_res_df.groupby('celltype')
+        params = syn_columns[2:]
+        overview_columns = [[f'{param} mean', f'{param} std', f'{param} median'] for param in params]
+        overview_columns = np.concatenate(overview_columns)
+        unique_cts = np.unique(synapse_res_df['celltype'])
+        overview_df = pd.DataFrame(columns=overview_columns, index=unique_cts)
+        group_comps = list(combinations(unique_cts, 2))
+        ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
+        ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
+        kruskal_df = pd.DataFrame(columns = ['stats', 'p-value'], index = params)
+        axon_ct_str = [ct_dict[ct] for ct in ax_ct]
+        for param in params:
+            overview_df.loc[unique_cts, f'{param} median'] = ct_groups[param].median()
+            overview_df.loc[unique_cts, f'{param} mean'] = ct_groups[param].mean()
+            overview_df.loc[unique_cts, f'{param} std'] = ct_groups[param].std()
+            # calculate kruskal wallis for differences between the two groups
+            param_groups = [group[param].values for name, group in
+                            synapse_res_df.groupby('celltype')]
+            kruskal_res = kruskal(*param_groups, nan_policy='omit')
+            kruskal_df.loc[param, 'stats'] = kruskal_res[0]
+            kruskal_df.loc[param, 'p-value'] = kruskal_res[1]
+            # get ranksum results if significant
+            if kruskal_res[1] < 0.05:
+                for group in group_comps:
+                    if (group[0] in axon_ct_str or group[1] in axon_ct_str) and not 'axon' in param:
+                        continue
+                    ranksum_res = ranksums(ct_groups.get_group(group[0])[param],
+                                           ct_groups.get_group(group[1])[param])
+                    ranksum_group_df.loc[f'{param} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
+                    ranksum_group_df.loc[f'{param} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
 
+        overview_df.to_csv(f'{f_name}/overview_df.csv')
+        ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
+        kruskal_df.to_csv(f'{f_name}/kruskal_res.csv')
+
+        log.info('Steo 4/4:Plot results')
+        ct_palette = cls.ct_palette(color_key, num=False)
+        full_cell_str_list = ct_str_list[np.in1d(ct_str_list, axon_ct_str) == False]
+        non_ax_synapse_res_df = synapse_res_df[np.in1d(synapse_res_df['celltype'], axon_ct_str) == False]
+        for param in params:
+            if 'surface area' in param:
+                ylabel = f'{param} [µm²/µm²]'
+            elif 'area' in param:
+                ylabel = f'{param} [µm²/µm]'
+            elif 'density' in param:
+                ylabel = f'{param} [1/µm]'
+            elif'dist' in param:
+                ylabel = f'{param} [µm]'
+            else:
+                raise ValueError('no ylabel defined for this parameter')
+            if 'axon' in param:
+                sns.boxplot(data=synapse_res_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
+                plt.ylabel(ylabel, fontsize=fontsize)
+                plt.xlabel('celltype', fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.title(f'{param}')
+                plt.savefig(f'{f_name}/{param}_box.svg')
+                plt.savefig(f'{f_name}/{param}_box.png')
+                plt.close()
+                sns.violinplot(data=synapse_res_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
+                plt.ylabel(ylabel, fontsize=fontsize)
+                plt.xlabel('celltype', fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.title(f'{param}')
+                plt.savefig(f'{f_name}/{param}_violin.svg')
+                plt.savefig(f'{f_name}/{param}_violin.png')
+                plt.close()
+            else:
+                sns.boxplot(data=non_ax_synapse_res_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
+                plt.ylabel(ylabel, fontsize=fontsize)
+                plt.xlabel('celltype', fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.title(f'{param}')
+                plt.savefig(f'{f_name}/{param}_box.svg')
+                plt.savefig(f'{f_name}/{param}_box.png')
+                plt.close()
+                sns.violinplot(data=non_ax_synapse_res_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
+                plt.ylabel(ylabel, fontsize=fontsize)
+                plt.xlabel('celltype', fontsize=fontsize)
+                plt.yticks(fontsize=fontsize)
+                plt.xticks(fontsize=fontsize)
+                plt.title(f'{param}')
+                plt.savefig(f'{f_name}/{param}_violin.svg')
+                plt.savefig(f'{f_name}/{param}_violin.png')
+                plt.close()
 
     log.info("Analysis finished")

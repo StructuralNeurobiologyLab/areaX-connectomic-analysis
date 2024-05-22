@@ -560,13 +560,21 @@ def generate_colored_mesh_from_skel_data(args):
     col_lookup = {0: (76, 92, 158, 255), 1: (255, 125, 125, 255), 2: (125, 255, 125, 255),
                   3: (113, 98, 227, 255),
                   4: (255, 255, 125, 255)}
-    cellid, f_name, key = args
-
+    cellid, f_name, key, only_coarse = args
+    if only_coarse:
+        col_lookup = {0: (50, 135, 168, 1), 1: (232, 170, 71, 1), 2: (189, 55, 72, 1)}
+    else:
+        col_lookup = {0: (76, 92, 158, 255), 1: (255, 125, 125, 255), 2: (125, 255, 125, 255),
+                      3: (113, 98, 227, 255),
+                      4: (255, 255, 125, 255)}
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
     # load skeleton axoness, spiness attributes
     nodes = cell.skeleton['nodes'] * cell.scaling
     axoness_labels = cell.skeleton[key]
+    if only_coarse:
+        axoness_labels[axoness_labels == 3] = 1
+        axoness_labels[axoness_labels == 4] = 1
     # load mesh and put skeleton annotations on mesh
     indices, vertices, normals = cell.mesh
     vertices = vertices.reshape((-1, 3))
@@ -576,11 +584,60 @@ def generate_colored_mesh_from_skel_data(args):
 
     # save colored mesh
     cols = np.array([col_lookup[el] for el in vert_axoness_labels.squeeze()], dtype=np.uint8)
-    kzip_out = f'{f_name}/{cellid}_colored_mesh'
+    kzip_out = f'{f_name}/{cellid}_colored_mesh_{key}'
     kzip_out_skel = f'{f_name}/{cellid}_skel'
     write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,
                     f'{cellid}.ply')
     cell.save_skeleton_to_kzip(kzip_out_skel, additional_keys=[key])
+    return
+
+def generate_colored_mesh_from_vert_labels(args):
+    '''
+    Generates mesh coloured according to vertex_label prediction of skeleton.
+    Based partly on syconn2scripts.scripts.point_party.semseg_gt. Saves result as kzip
+    :param args: cellid, path to folder where kzip should be stored, key to color
+    :return:
+    '''
+    cellid, f_name, smooth = args
+    #hexcode colors: 0 = #3287A8, 1 = #E8AA47, 2 = #BD3748,5 = #707070 (5 = unpredicted)
+    col_lookup = {0: (50, 135, 168, 1), 1: (232, 170, 71, 1), 2: (189, 55, 72, 1), 5:(112, 112, 112, 1)}
+    cell = SuperSegmentationObject(cellid)
+    cell_ld = cell.label_dict('vertex')
+    vert_axoness_labels = cell_ld['axoness']
+    vert_axoness_labels[vert_axoness_labels == 3] = 1
+    vert_axoness_labels[vert_axoness_labels == 4] = 1
+    # load mesh and put skeleton annotations on mesh
+    indices, vertices, normals = cell.mesh
+    vertices = vertices.reshape((-1, 3))
+    if smooth is not None:
+        if 5 in vert_axoness_labels:
+            sf = np.round(smooth/2)
+            #iteratively replace each label that is 5 with the majority before and after
+            while 5 in vert_axoness_labels:
+                unpred_inds = np.where(vert_axoness_labels == 5)[0]
+                for ind in unpred_inds:
+                    if ind - sf < 0:
+                        ind_lower = 0
+                    else:
+                        ind_lower = int(ind - sf)
+                    if ind + sf > len(vert_axoness_labels):
+                        ind_upper = len(vert_axoness_labels)
+                    else:
+                        ind_upper = int(ind + sf)
+                    axoness_ind = vert_axoness_labels[ind_lower: ind_upper]
+                    axoness_ind = axoness_ind[axoness_ind != 5]
+                    new_axoness = np.argmax(np.bincount(axoness_ind))
+                    vert_axoness_labels[ind] = new_axoness
+    # save colored mesh
+    cols = np.array([col_lookup[el] for el in vert_axoness_labels.squeeze()], dtype=np.uint8)
+    if smooth is None:
+        kzip_out = f'{f_name}/{cellid}_colored_mesh_vert'
+    else:
+        kzip_out = f'{f_name}/{cellid}_colored_mesh_vert_sm{smooth}'
+    kzip_out_skel = f'{f_name}/{cellid}_skel'
+    write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,
+                    f'{cellid}.ply')
+    cell.save_skeleton_to_kzip(kzip_out_skel)
     return
 
 def generate_colored_mesh_synprob_data(args):

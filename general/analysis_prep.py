@@ -11,6 +11,7 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     import pandas as pd
 
+
     #V3
     #global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
     #V4
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     #                      9:'INT1', 10:'INT2', 11:'INT3', 12:'ASTRO', 13:'OLIGO', 14:'MICRO', 15:'MIGR', 16:'FRAG'}
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     ax_list = analysis_params.axon_cts()
-    ct_list = list(ct_dict.keys())
+    ct_list = list(ct_dict.keys())[::-1]
     ct_str = analysis_params.ct_str(with_glia=with_glia)
     celltype_key = analysis_params.celltype_key()
     log.info(f'Celltype key {celltype_key} is used with version {analysis_params._version}')

@@ -103,6 +103,8 @@ if __name__ == '__main__':
                 if comp < 2:
                     morph_data_df.loc[i, f'{comp_dict[comp]} pathlength'] = cell_dict[cellid][f'{comp_dict[comp]} length']
                 morph_data_df.loc[i, f'{comp_dict[comp]} surface area'] = cell_dict[cellid][f'{comp_dict[comp]} mesh surface area']
+        #exclude cells from analyses where surface area is 0
+
         morph_data_df.to_csv(f'{f_name}/{ct_str}_morph_pathlength_surface_areas.csv')
         log.info("Get number of synapses per cell %s" % ct_str)
         #filter synapse caches for synapses with only synapses of celltypes

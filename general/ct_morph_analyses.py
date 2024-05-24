@@ -38,12 +38,13 @@ if __name__ == '__main__':
     fontsize = 20
     n_comps_PCA = 2
     n_umap_runs = 5
-    process_morph_parameters = False
-    use_mito_density = True
-    use_vc_density = True
+    process_morph_parameters = True
+    use_mito_density = False
+    use_vc_density = False
     use_ves_density = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240506_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_axmivc" % (
+    use_syn_params = False
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240524_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -263,6 +264,29 @@ if __name__ == '__main__':
             ves_den_df_sorted = ves_den_df_sorted.loc[suit_inds]
             morph_df = morph_df.join(ves_den_df_sorted['vesicle density'])
             param_list = np.hstack([param_list, 'vesicle density'])
+    morph_df.to_csv(f'{f_name}/ct_morph_df.csv')
+
+    if use_syn_params:
+        syn_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                           ''
+        log.info(f'Axon, dendrite and soma synapse surface area density loaded from {syn_density_path}')
+        syn_den_df = pd.read_csv(syn_density_path, index_col=0)
+        if len(all_suitable_ids) > len(syn_den_df):
+            raise ValueError(
+                'Not all selected cellids are part of this table with synapse densities, please load other one')
+        else:
+            syn_den_df_sorted = syn_den_df.sort_values('cellid')
+            suit_inds = np.in1d(syn_den_df_sorted['cellid'], sorted_suitable_ids)
+            syn_den_df_sorted = syn_den_df_sorted.loc[suit_inds]
+            morph_df = morph_df.join(syn_den_df_sorted['axon synaptic area density per surface area'])
+            morph_df = morph_df.join(syn_den_df_sorted['dendrite synaptic area density per surface area'])
+            morph_df = morph_df.join(syn_den_df_sorted['soma synaptic area density per surface area'])
+            param_list = np.hstack([param_list, 'axon synaptic area density per surface area',
+                                    'dendrite synaptic area density per surface area', 'soma synaptic area density per surface area'])
+
+        morph_df.to_csv(f'{f_name}/ct_morph_df.csv')
+
+
     morph_df.to_csv(f'{f_name}/ct_morph_df.csv')
 
     log.info('Step 6/9: Calculate statistics and get overview params')

@@ -413,7 +413,8 @@ def get_compartment_mesh_area(cell):
     :param cell: sso
     :return: dictionary with mesh_areas of axon, dendrite and soma in µm²
     """
-    comp_meshes = compartmentalize_mesh_fromskel(cell)
+    #set nearest neighbour to one as this is also done to map comparmtent to synapses
+    comp_meshes = compartmentalize_mesh_fromskel(cell, k = 1)
     compartments = ["axon", "dendrite", "soma"]
     mesh_areas = {}
     for comp in compartments:
@@ -557,12 +558,9 @@ def generate_colored_mesh_from_skel_data(args):
     :return:
     '''
     # color lookup from HA
-    col_lookup = {0: (76, 92, 158, 255), 1: (255, 125, 125, 255), 2: (125, 255, 125, 255),
-                  3: (113, 98, 227, 255),
-                  4: (255, 255, 125, 255)}
-    cellid, f_name, key, only_coarse = args
+    cellid, f_name, key, only_coarse, k = args
     if only_coarse:
-        col_lookup = {0: (50, 135, 168, 1), 1: (232, 170, 71, 1), 2: (189, 55, 72, 1)}
+        col_lookup = {0: (50, 135, 168, 255), 1: (232, 170, 71, 255), 2: (189, 55, 72, 255)}
     else:
         col_lookup = {0: (76, 92, 158, 255), 1: (255, 125, 125, 255), 2: (125, 255, 125, 255),
                       3: (113, 98, 227, 255),
@@ -579,7 +577,7 @@ def generate_colored_mesh_from_skel_data(args):
     indices, vertices, normals = cell.mesh
     vertices = vertices.reshape((-1, 3))
     kdt = cKDTree(nodes)
-    dists, node_inds = kdt.query(vertices)
+    dists, node_inds = kdt.query(vertices, k = k)
     vert_axoness_labels = axoness_labels[node_inds]
 
     # save colored mesh
@@ -598,9 +596,9 @@ def generate_colored_mesh_from_vert_labels(args):
     :param args: cellid, path to folder where kzip should be stored, key to color
     :return:
     '''
-    cellid, f_name, smooth = args
+    cellid, f_name, smooth, smooth_all = args
     #hexcode colors: 0 = #3287A8, 1 = #E8AA47, 2 = #BD3748,5 = #707070 (5 = unpredicted)
-    col_lookup = {0: (50, 135, 168, 1), 1: (232, 170, 71, 1), 2: (189, 55, 72, 1), 5:(112, 112, 112, 1)}
+    col_lookup = {0: (50, 135, 168, 255), 1: (232, 170, 71, 255), 2: (189, 55, 72, 255), 5:(112, 112, 112, 255)}
     cell = SuperSegmentationObject(cellid)
     cell_ld = cell.label_dict('vertex')
     vert_axoness_labels = cell_ld['axoness']
@@ -610,30 +608,48 @@ def generate_colored_mesh_from_vert_labels(args):
     indices, vertices, normals = cell.mesh
     vertices = vertices.reshape((-1, 3))
     if smooth is not None:
-        if 5 in vert_axoness_labels:
-            sf = np.round(smooth/2)
-            #iteratively replace each label that is 5 with the majority before and after
-            while 5 in vert_axoness_labels:
-                unpred_inds = np.where(vert_axoness_labels == 5)[0]
-                for ind in unpred_inds:
-                    if ind - sf < 0:
-                        ind_lower = 0
-                    else:
-                        ind_lower = int(ind - sf)
-                    if ind + sf > len(vert_axoness_labels):
-                        ind_upper = len(vert_axoness_labels)
-                    else:
-                        ind_upper = int(ind + sf)
-                    axoness_ind = vert_axoness_labels[ind_lower: ind_upper]
-                    axoness_ind = axoness_ind[axoness_ind != 5]
-                    new_axoness = np.argmax(np.bincount(axoness_ind))
-                    vert_axoness_labels[ind] = new_axoness
+        sf = np.round(smooth / 2)
+        if smooth_all:
+            for ind in range(len(vert_axoness_labels)):
+                if ind - sf < 0:
+                    ind_lower = 0
+                else:
+                    ind_lower = int(ind - sf)
+                if ind + sf > len(vert_axoness_labels):
+                    ind_upper = len(vert_axoness_labels)
+                else:
+                    ind_upper = int(ind + sf)
+                axoness_ind = vert_axoness_labels[ind_lower: ind_upper]
+                axoness_ind = axoness_ind[axoness_ind != 5]
+                new_axoness = np.argmax(np.bincount(axoness_ind))
+                vert_axoness_labels[ind] = new_axoness
+        else:
+            if 5 in vert_axoness_labels:
+                #iteratively replace each label that is 5 with the majority before and after
+                while 5 in vert_axoness_labels:
+                    unpred_inds = np.where(vert_axoness_labels == 5)[0]
+                    for ind in unpred_inds:
+                        if ind - sf < 0:
+                            ind_lower = 0
+                        else:
+                            ind_lower = int(ind - sf)
+                        if ind + sf > len(vert_axoness_labels):
+                            ind_upper = len(vert_axoness_labels)
+                        else:
+                            ind_upper = int(ind + sf)
+                        axoness_ind = vert_axoness_labels[ind_lower: ind_upper]
+                        axoness_ind = axoness_ind[axoness_ind != 5]
+                        new_axoness = np.argmax(np.bincount(axoness_ind))
+                        vert_axoness_labels[ind] = new_axoness
     # save colored mesh
     cols = np.array([col_lookup[el] for el in vert_axoness_labels.squeeze()], dtype=np.uint8)
     if smooth is None:
         kzip_out = f'{f_name}/{cellid}_colored_mesh_vert'
     else:
-        kzip_out = f'{f_name}/{cellid}_colored_mesh_vert_sm{smooth}'
+        if smooth_all:
+            kzip_out = f'{f_name}/{cellid}_colored_mesh_vert_sm_all{smooth}'
+        else:
+            kzip_out = f'{f_name}/{cellid}_colored_mesh_vert_sm_unpred{smooth}'
     kzip_out_skel = f'{f_name}/{cellid}_skel'
     write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,
                     f'{cellid}.ply')

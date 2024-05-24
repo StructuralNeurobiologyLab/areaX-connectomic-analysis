@@ -7,6 +7,7 @@ from collections import defaultdict
 from syconn.proc.meshes import mesh_area_calc
 from multiprocessing import pool
 from syconn.reps.super_segmentation import SuperSegmentationObject
+from syconn.mp.mp_utils import start_multiprocess_imap
 
 
 def get_per_cell_morphology_params(cellid):
@@ -53,8 +54,7 @@ def find_full_cells(ssd, celltype, key):
     """
     #for agglo2: celltype_cnn_e3, for v5: celltype_pts_e3
     celltype_ids = ssd.ssv_ids[ssd.load_numpy_data(key) == celltype]
-    p = pool.Pool()
-    output = p.map(get_per_cell_morphology_params, tqdm(celltype_ids))
+    output = start_multiprocess_imap(get_per_cell_morphology_params, celltype_ids)
     output = np.array(output)
     cellids = output[:, 0]
     param_dicts = output[:, 1]

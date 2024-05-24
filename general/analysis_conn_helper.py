@@ -44,7 +44,8 @@ def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size
     return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob
 
 
-def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8, min_syn_size = 0.1, axo_den_so = True, sd_synssv = None, synapses_caches = None, return_syn_prob = None):
+def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8, min_syn_size = 0.1,
+                                 axo_den_so = True, sd_synssv = None, synapses_caches = None, return_syn_prob = None, with_sign = False):
     """
     prefilter synapse caches according to celltype and different parameters
     :param sd_synssv: segmentation dataset
@@ -57,6 +58,7 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
     :param axo_den_so: if true only axo-dendritic oraxo-somatic synapses allowed
     :param synapses_caches: if given, takes synapse parameters from cache and filers them
     :param return_syn_prob: if given, filter and return syn_prob
+    :param with_sign: if true also filter syn_sign
     :return: cached array with different parameters for celltype, axoness, ssv_partners, synapse sizes, spiness
     """
     if sd_synssv is None and synapses_caches is None:
@@ -70,6 +72,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         m_sizes = sd_synssv.load_numpy_data("mesh_area") / 2
         m_spiness = sd_synssv.load_numpy_data("partner_spiness")
         m_rep_coord = sd_synssv.load_numpy_data("rep_coord")
+        if with_sign:
+            m_syn_sign = sd_synssv.load_numpy_data('syn_sign')
     else:
         m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = synapses_caches
         #m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord, syn_prob = synapses_caches
@@ -85,6 +89,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         m_sizes = m_sizes[m]
         m_spiness = m_spiness[m]
         m_rep_coord = m_rep_coord[m]
+        if with_sign:
+            m_syn_sign = m_syn_sign[m]
     # select only those of given_celltypes
     # if post and pre not specified both celltypes can be on both sides
     if post_cts is None:
@@ -100,6 +106,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
                 m_rep_coord = m_rep_coord[ct_inds]
                 if return_syn_prob:
                     syn_prob = syn_prob[ct_inds]
+                if with_sign:
+                    m_syn_sign = m_syn_sign[ct_inds]
         else:
             ct = pre_cts[0]
             ct_inds = np.any(m_cts == ct, axis=1)
@@ -112,6 +120,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
             m_rep_coord = m_rep_coord[ct_inds]
             if return_syn_prob:
                 syn_prob = syn_prob[ct_inds]
+            if with_sign:
+                m_syn_sign = m_syn_sign[ct_inds]
     else:
         #make sure to exclude pre and postsynaptic cells from wrong celltypes
         #exclude synapses without precelltypes
@@ -125,6 +135,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         m_rep_coord = m_rep_coord[ct_inds]
         if return_syn_prob:
             syn_prob = syn_prob[ct_inds]
+        if with_sign:
+            m_syn_sign = m_syn_sign[ct_inds]
         #filter those where prects are not where axon is, only if axo_den_so
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, pre_cts).reshape(len(m_cts), 2)
@@ -139,6 +151,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
             m_rep_coord = m_rep_coord[pre_ct_inds]
             if return_syn_prob:
                 syn_prob = syn_prob[pre_ct_inds]
+            if with_sign:
+                m_syn_sign = m_syn_sign[pre_ct_inds]
         # exclude synapses without postcelltypes
         ct_inds = np.any(np.in1d(m_cts, post_cts).reshape(len(m_cts), 2), axis=1)
         m_cts = m_cts[ct_inds]
@@ -150,6 +164,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         m_rep_coord = m_rep_coord[ct_inds]
         if return_syn_prob:
             syn_prob = syn_prob[ct_inds]
+        if with_sign:
+            m_syn_sign = m_syn_sign[ct_inds]
         #filter those where postcts are where axon is not, only if axo_den_so
         if axo_den_so ==  True:
             testct = np.in1d(m_cts, post_cts).reshape(len(m_cts), 2)
@@ -164,6 +180,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
             m_rep_coord = m_rep_coord[post_ct_inds]
             if return_syn_prob:
                 syn_prob = syn_prob[post_ct_inds]
+            if with_sign:
+                m_syn_sign = m_syn_sign[post_ct_inds]
     # filter those with size below min_syn_size
     if min_syn_size is not None:
         size_inds = m_sizes > min_syn_size
@@ -176,6 +194,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         m_rep_coord = m_rep_coord[size_inds]
     if return_syn_prob:
         syn_prob = syn_prob[size_inds]
+    if with_sign:
+        m_syn_sign = m_syn_sign[size_inds]
     # only axo-dendritic or axo-somatic synapses allowed
     if axo_den_so:
         axs_inds = np.any(m_axs == 1, axis=1)
@@ -188,6 +208,8 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         m_rep_coord = m_rep_coord[axs_inds]
         if return_syn_prob:
             syn_prob = syn_prob[axs_inds]
+        if with_sign:
+            m_syn_sign = m_syn_sign[axs_inds]
         den_so = np.array([0, 2])
         den_so_inds = np.any(np.in1d(m_axs, den_so).reshape(len(m_axs), 2), axis=1)
         m_cts = m_cts[den_so_inds]
@@ -199,8 +221,12 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         m_rep_coord = m_rep_coord[den_so_inds]
         if return_syn_prob:
             syn_prob = syn_prob[den_so_inds]
+        if with_sign:
+            m_syn_sign = m_syn_sign[den_so_inds]
     if return_syn_prob:
         return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob
+    elif with_sign:
+        return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, m_syn_sign
     else:
         return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord
         #return m_cts, m_axs, m_ssv_partners, m_sizes, m_rep_coord

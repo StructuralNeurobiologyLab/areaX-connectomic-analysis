@@ -25,16 +25,22 @@ if __name__ == '__main__':
     ct1 = 6
     ct2 = 7
     color_key = 'STNGPINTv6'
-    fontsize = 14
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251{version}_%s_%s_connectivity_comparison_f{fontsize}" % (
+    fontsize = 20
+    #select which incoming an outgoing celltypes should be plottet extra as well
+    zoom_cts = ['GPe', 'GPi']
+    if len(zoom_cts) > 0:
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_%s_connectivity_comparison_f{fontsize}_zoom{zoom_cts}" % (
             ct_dict[ct1], ct_dict[ct2])
+    else:
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_%s_connectivity_comparison_f{fontsize}" % (
+                ct_dict[ct1], ct_dict[ct2])
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Connectivity comparison', log_dir=f_name + '/logs/')
     ct_colors = CelltypeColors(ct_dict = ct_dict)
     ct_palette = ct_colors.ct_palette(key=color_key)
 
-    conn_filename = 'cajal/scratch/users/arother/bio_analysis_results/general/240220_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_STNGPNGF_annot_bw_fs_20'
+    conn_filename = 'cajal/scratch/users/arother/bio_analysis_results/general/240411_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_TePkBrNGF_annot_bw_fs_20'
     log.info(f'Step 1/3: Load connectivity data from {conn_filename}')
     conn_dict = load_pkl2obj(f'{conn_filename}/synapse_dict_per_ct.pkl')
 
@@ -139,4 +145,16 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/comp_syn_box_{key}.png')
         plt.savefig(f'{f_name}/comp_syn_box_{key}.svg')
         plt.close()
+        if len(zoom_cts) > 0:
+            zoom_result_df = plot_result_df[np.in1d(plot_result_df['conn celltype'], zoom_cts)]
+            sns.boxplot(data=zoom_result_df, x='conn celltype', y=key, hue='plt celltype', palette=ct_palette)
+            if 'incoming' in key:
+                plt.xlabel('presynaptic celltypes')
+            else:
+                plt.xlabel('postsynaptic celltypes')
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.savefig(f'{f_name}/comp_syn_box_{key}_zoom.png')
+            plt.savefig(f'{f_name}/comp_syn_box_{key}_zoom.svg')
+            plt.close()
     ranksum_results.to_csv(f'{f_name}/ranksum_results_{ct_dict[ct1]}_{ct_dict[ct2]}.csv')

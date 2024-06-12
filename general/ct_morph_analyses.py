@@ -30,21 +30,21 @@ if __name__ == '__main__':
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     full_cells_only = False
-    axon_only = False
+    axon_only = True
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    color_key = 'TeBKv6MSNyw'
+    color_key = 'AxTePkBrv6'
     fontsize = 20
-    n_comps_PCA = 2
+    n_comps_PCA = 1
     n_umap_runs = 5
-    process_morph_parameters = True
-    use_mito_density = False
+    process_morph_parameters = False
+    use_mito_density = True
     use_vc_density = False
-    use_ves_density = False
+    use_ves_density = True
     use_syn_params = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240524_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240612_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_axonly_mives" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
     else:
         morph_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                     '240410_j0251v6_ct_morph_analyses_mcl_200_ax200_TePkBrNGF_fs20npca2_umap5/ct_morph_df.csv'
+                     '240524_j0251v6_ct_morph_analyses_mcl_200_ax200_TeBKv6MSNyw_fs20npca2_umap5/ct_morph_df.csv'
         log.info(f'Step 2/9: Use morphological parameters from {morph_path}')
         loaded_morph_df = pd.read_csv(morph_path, index_col = 0)
         if len(all_suitable_ids) > len(loaded_morph_df):
@@ -524,10 +524,10 @@ if __name__ == '__main__':
             plt.xlabel('UMAP 1', fontsize = fontsize)
             plt.ylabel('UMAP 2', fontsize = fontsize)
             plt.legend()
-            plt.savefig(f'{f_name}/ax_umap_{i}.png')
-            plt.savefig(f'{f_name}/ax_umap_{i}.svg')
             plt.xticks(fontsize=fontsize)
             plt.yticks(fontsize=fontsize)
+            plt.savefig(f'{f_name}/ax_umap_{i}.png')
+            plt.savefig(f'{f_name}/ax_umap_{i}.svg')
             plt.close()
     log.info('Morphological analyses of celltypes done.')
 

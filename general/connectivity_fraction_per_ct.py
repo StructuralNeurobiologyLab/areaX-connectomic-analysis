@@ -37,18 +37,18 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     celltype_key = analysis_params.celltype_key()
-    min_comp_len_ax = 500
-    min_comp_len_cells = 500
+    min_comp_len_ax = 50
+    min_comp_len_cells = 200
     syn_prob = 0.6
     min_syn_size = 0.1
     exclude_known_mergers = True
     cls = CelltypeColors(ct_dict=ct_dict)
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP', 'STNGPINTv6', 'RdTeINTv6', 'TePkBrNGF'}
-    color_key = 'TePkBrNGF'
+    color_key = 'STNGPINTv6'
     plot_connmatrix_only = False
     fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240411_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240529_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i_stn_nogp_only" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -57,6 +57,7 @@ if __name__ == '__main__':
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
         min_comp_len_cells, min_comp_len_ax, syn_prob, min_syn_size, exclude_known_mergers, color_key))
+    log.info('Only stn cellids that do not connect to GPe or GPi are used')
 
     #this script should iterate over all celltypes
     axon_cts = analysis_params.axon_cts()
@@ -86,6 +87,10 @@ if __name__ == '__main__':
                 misclassified_asto_ids = analysis_params.load_potential_astros()
                 astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 cellids = cellids[astro_inds]
+            if ct == 4:
+                stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
+                                           '240529_stn_msn_nogp_ids_comps/stn_nogp_msn_gpe.csv', index_col=0)
+                cellids = np.array(stn_no_gp_df['cellid'])
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cells,
                                                 axon_only=False,
                                                 max_path_len=None)

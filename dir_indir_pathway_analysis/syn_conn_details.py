@@ -29,7 +29,7 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     min_syn_size = 0.1
     #celltype that gives input or output
-    conn_ct = None
+    conn_ct = 3
     #celltypes that are compared
     ct2 = 6
     ct3 = 7
@@ -37,10 +37,10 @@ if __name__ == '__main__':
     fontsize = 20
     kde = True
     if conn_ct == None:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240524_j0251{version}_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
             ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240524_j0251{version}_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
             ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -268,7 +268,7 @@ if __name__ == '__main__':
             syn_numbers, sum_sizes, unique_pre_ids = get_percell_number_sumsize(
                 cell_syn_sizes_df['cellid pre'], cell_syn_sizes_df['syn sizes'])
             len_multi_syns = len(syn_numbers)
-            start = i * num_post_ids
+            start = i * num_pre_ids
             end = start + len_multi_syns - 1
             multi_conn_df.loc[start: end, 'number of synapses'] = syn_numbers
             multi_conn_df.loc[start:end, 'sum syn area'] = sum_sizes
@@ -554,17 +554,18 @@ if __name__ == '__main__':
                 index=range(num_pre_ids * num_post_ids))
             for i, cell_id in enumerate(tqdm(all_unique_post_ids)):
                 cell_syn_sizes_df = syn_sizes_intra_df[syn_sizes_intra_df['cellid post'] == cell_id]
+                assert(len(np.unique(cell_syn_sizes_df['celltype'])) == 1)
                 ct_str = np.unique(cell_syn_sizes_df['celltype'])[0]
                 syn_numbers, sum_sizes, unique_pre_ids = get_percell_number_sumsize(
                     cell_syn_sizes_df['cellid pre'], cell_syn_sizes_df['syn sizes'])
                 len_multi_syns = len(syn_numbers)
-                start = i * num_post_ids
+                start = i * num_pre_ids
                 end = start + len_multi_syns - 1
-                multi_conn_df.loc[start: end, 'number of synapses'] = syn_numbers
-                multi_conn_df.loc[start:end, 'sum syn area'] = sum_sizes
-                multi_conn_df.loc[start: end, 'celltype'] = ct_str
-                multi_conn_df.loc[start: end, 'cellid pre'] = unique_pre_ids
-                multi_conn_df.loc[start: end, 'cellid post'] = cell_id
+                multi_conn_df_intra.loc[start: end, 'number of synapses'] = syn_numbers
+                multi_conn_df_intra.loc[start:end, 'sum syn area'] = sum_sizes
+                multi_conn_df_intra.loc[start: end, 'celltype'] = ct_str
+                multi_conn_df_intra.loc[start: end, 'cellid pre'] = unique_pre_ids
+                multi_conn_df_intra.loc[start: end, 'cellid post'] = cell_id
 
             multi_conn_df_intra = multi_conn_df_intra.dropna()
             multi_conn_df_intra = multi_conn_df_intra.reset_index(drop=True)
@@ -972,7 +973,7 @@ if __name__ == '__main__':
             plt.close()
         # plot again as histogramm summarized with 1, 2-5, 5-10, >10
         sum_bins = [1, 2, 6, 11, np.max(hist_df['bins']) + 1]
-        sum_bin_labels = ['1', '2-5', '5-10', '<10']
+        sum_bin_labels = ['1', '2-5', '5-10', '>10']
         sum_bin_cats = np.array(pd.cut(hist_df['bins'], sum_bins, right=False, labels=sum_bin_labels))
         hist_df['sum bins'] = sum_bin_cats
         len_bin_labels = len(sum_bin_labels)

@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240515_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240612_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
         syn_prob, min_comp_len, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -154,19 +154,29 @@ if __name__ == '__main__':
             comp_syn_area_density = sorted_comp_syn_sizes / morph_data_df.loc[comp_inds_ct, f'{comp_dict[comp]} surface area']
             synapse_res_df.loc[comp_inds_all, f'{comp_dict[comp]} synaptic area density per surface area'] = np.array(comp_syn_area_density)
 
-    num_cells_before = len(synapse_res_df)
-    num_cts_before = synapse_res_df.groupby('celltype').size()
-    log.info(f'In total {num_cells_before} cells were processed, in the following celltypes: {num_cts_before}')
-    synapse_res_df = synapse_res_df[synapse_res_df['axon synapse density'] > 0]
-    num_cells_after = len(synapse_res_df)
-    ct_groups = synapse_res_df.groupby('celltype')
-    num_cts_after = ct_groups.size()
-    log.info(
-        f'Number of cells with axon synapses is {num_cells_after}, in the following celltypes: {num_cts_after}')
-    log.info(f'{num_cells_before - num_cells_after} cells were removed')
     params = syn_columns[2:]
     synapse_res_df = synapse_res_df.astype({param: np.float for param in params})
     synapse_res_df.to_csv(f'{f_name}/syn_density_results.csv')
+    #make dictionary with dataframe with cells that are specific to each compartment
+    ct_groups_comp_dict = {}
+    syn_result_df_dict = {}
+    num_cells_before = len(synapse_res_df)
+    num_cts_before = synapse_res_df.groupby('celltype').size()
+    log.info(f'In total {num_cells_before} cells were processed, in the following celltypes: {num_cts_before}')
+    for comp in comp_nums:
+        comp_str = comp_dict[comp]
+        comp_res_df = synapse_res_df[synapse_res_df[f'{comp} synapse density'] > 0]
+        syn_result_df_dict[comp] = comp_res_df
+        comp_ct_groups = comp_res_df.groupby('celltype')
+        num_cells_comp = len(comp_res_df)
+        ct_num_comp = comp_ct_groups.size()
+        ct_groups_comp_dict[comp] = comp_ct_groups
+        log.info(
+            f'Number of cells with {comp} synapses is {num_cells_comp}, in the following celltypes: {ct_num_comp}')
+        log.info(f'{num_cells_before - num_cells_comp} do not have synapses in this compartment')
+
+    raise ValueError
+    #To DO: rewrite function to use different dataframes depending on compartment from here on
 
     log.info('Step 3/4: Get overview parameters and calculate results')
     overview_columns = [[f'{param} mean', f'{param} std', f'{param} median'] for param in params]

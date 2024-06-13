@@ -31,7 +31,8 @@ if __name__ == '__main__':
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240612_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
+    zero_soma_fill = True
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240613_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
         syn_prob, min_comp_len, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -39,6 +40,8 @@ if __name__ == '__main__':
     log.info(
         "min_comp_len = %i, syn_prob = %.2f, min_syn_size = %.i, colors = %s" % (
             min_comp_len, syn_prob, min_syn_size, color_key))
+    if zero_soma_fill:
+        log.info('Cells without soma synapses will not be excluded for soma synapse densities but values set to 0.')
     time_stamps = [time.time()]
     step_idents = ['t-0']
     known_mergers = analysis_params.load_known_mergers()
@@ -76,7 +79,7 @@ if __name__ == '__main__':
     all_suitable_ids = np.concatenate(all_suitable_ids)
     all_suitable_cts = np.concatenate(all_suitable_cts)
 
-    log.info('Step: 2/4: Get synapse density axon per cell')
+    log.info('Step: 2/3: Get synapse density axon per cell')
 
     syn_columns = ['cellid', 'celltype', 'axon synapse density', 'axon synaptic area density',
                    'axon synaptic area density per surface area',
@@ -165,20 +168,22 @@ if __name__ == '__main__':
     log.info(f'In total {num_cells_before} cells were processed, in the following celltypes: {num_cts_before}')
     for comp in comp_nums:
         comp_str = comp_dict[comp]
-        comp_res_df = synapse_res_df[synapse_res_df[f'{comp} synapse density'] > 0]
-        syn_result_df_dict[comp] = comp_res_df
+        comp_res_df = synapse_res_df[synapse_res_df[f'{comp_str} synaptic area density per surface area'] > 0]
+        syn_result_df_dict[comp_str] = comp_res_df
         comp_ct_groups = comp_res_df.groupby('celltype')
         num_cells_comp = len(comp_res_df)
         ct_num_comp = comp_ct_groups.size()
-        ct_groups_comp_dict[comp] = comp_ct_groups
+        ct_groups_comp_dict[comp_str] = comp_ct_groups
         log.info(
-            f'Number of cells with {comp} synapses is {num_cells_comp}, in the following celltypes: {ct_num_comp}')
+            f'Number of cells with {comp_str} synapses is {num_cells_comp}, in the following celltypes: {ct_num_comp}')
         log.info(f'{num_cells_before - num_cells_comp} do not have synapses in this compartment')
+    if zero_soma_fill:
+        log.info(
+            'As not having any soma synaspes might be a feature, the full cells with dendritic synapses that have no soma synapses will get a value of 0')
+        syn_result_df_dict['soma'] = syn_result_df_dict['dendrite'].fillna(0)
+        ct_groups_comp_dict['soma'] = syn_result_df_dict['soma'].groupby('celltype')
 
-    raise ValueError
-    #To DO: rewrite function to use different dataframes depending on compartment from here on
-
-    log.info('Step 3/4: Get overview parameters and calculate results')
+    log.info('Step 3/3: Get overview parameters and calculate and plot results')
     overview_columns = [[f'{param} mean', f'{param} std', f'{param} median'] for param in params]
     overview_columns = np.concatenate(overview_columns)
     unique_cts = np.unique(synapse_res_df['celltype'])
@@ -188,103 +193,71 @@ if __name__ == '__main__':
     ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
     axon_ct_str = [ct_dict[ct] for ct in ax_ct]
     full_cell_str_list = np.array(ct_str_list)[np.in1d(ct_str_list, axon_ct_str) == False]
-    non_ax_synapse_res_df = synapse_res_df[np.in1d(synapse_res_df['celltype'], axon_ct_str) == False]
-    num_cells_before = len(non_ax_synapse_res_df)
-    non_ax_synapse_res_df = non_ax_synapse_res_df[non_ax_synapse_res_df['dendrite synapse density'] > 0]
-    num_cells_after = len(non_ax_synapse_res_df)
-    non_ax_ct_groups = non_ax_synapse_res_df.groupby('celltype')
-    num_cts_after = ct_groups.size()
-    log.info(
-        f'Number of cells with dendrite synapses is {num_cells_after} (before ({num_cells_before}), in the following celltypes: {num_cts_after}')
-    log.info(f'{num_cells_before - num_cells_after} cells were removed')
-    log.info('As not having any soma synaspes might be a feature, the remaining full cells that have no soma synapses will get a value of 0')
-    non_ax_synapse_res_df = non_ax_synapse_res_df.fillna(0)
     kruskal_df = pd.DataFrame(columns = ['stats', 'p-value'], index = params)
     log.info(f'Only parameters regarding axon will be done on all celltypes, for the rest projecting axon celltypes {axon_ct_str} will be excluded')
-    for param in params:
-        # calculate kruskal wallis for differences between the two groups
-        if 'axon' in param:
+    ct_palette = cls.ct_palette(color_key, num=False)
+    for comp in comp_nums:
+        comp_str = comp_dict[comp]
+        results_df = syn_result_df_dict[comp_str]
+        ct_res_groups = ct_groups_comp_dict[comp_str]
+        for param in params:
+            if comp_str not in param:
+                continue
+            #get overview params
+            overview_df.loc[unique_cts, f'{param} median'] = ct_res_groups[param].median()
+            overview_df.loc[unique_cts, f'{param} mean'] = ct_res_groups[param].mean()
+            overview_df.loc[unique_cts, f'{param} std'] = ct_res_groups[param].std()
+            # calculate kruskal wallis for differences between the two groups
             param_groups = [group[param].values for name, group in
-                            synapse_res_df.groupby('celltype')]
-            overview_df.loc[unique_cts, f'{param} median'] = ct_groups[param].median()
-            overview_df.loc[unique_cts, f'{param} mean'] = ct_groups[param].mean()
-            overview_df.loc[unique_cts, f'{param} std'] = ct_groups[param].std()
-        else:
-            param_groups = [group[param].values for name, group in
-                            non_ax_synapse_res_df.groupby('celltype')]
-            overview_df.loc[full_cell_str_list, f'{param} median'] = non_ax_ct_groups[param].median()
-            overview_df.loc[full_cell_str_list, f'{param} mean'] = non_ax_ct_groups[param].mean()
-            overview_df.loc[full_cell_str_list, f'{param} std'] = non_ax_ct_groups[param].std()
-        kruskal_res = kruskal(*param_groups, nan_policy='omit')
-        kruskal_df.loc[param, 'stats'] = kruskal_res[0]
-        kruskal_df.loc[param, 'p-value'] = kruskal_res[1]
-        # get ranksum results if significant
-        if kruskal_res[1] < 0.05:
-            for group in group_comps:
-                if (group[0] in axon_ct_str or group[1] in axon_ct_str) and not 'axon' in param:
-                    continue
-                ranksum_res = ranksums(ct_groups.get_group(group[0])[param],
-                                       ct_groups.get_group(group[1])[param])
-                ranksum_group_df.loc[f'{param} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
-                ranksum_group_df.loc[f'{param} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
+                            results_df.groupby('celltype')]
+            kruskal_res = kruskal(*param_groups, nan_policy='omit')
+            kruskal_df.loc[param, 'stats'] = kruskal_res[0]
+            kruskal_df.loc[param, 'p-value'] = kruskal_res[1]
+            # get ranksum results if significant
+            if kruskal_res[1] < 0.05:
+                for group in group_comps:
+                    if (group[0] in axon_ct_str or group[1] in axon_ct_str) and not 'axon' in param:
+                        continue
+                    ranksum_res = ranksums(ct_res_groups.get_group(group[0])[param],
+                                           ct_res_groups.get_group(group[1])[param])
+                    ranksum_group_df.loc[f'{param} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
+                    ranksum_group_df.loc[f'{param} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
+            #plot results
+            if 'surface area' in param:
+                ylabel = f'{param} [µm²/µm²]'
+            elif 'area' in param:
+                ylabel = f'{param} [µm²/µm]'
+            elif 'density' in param:
+                ylabel = f'{param} [1/µm]'
+            elif'dist' in param:
+                ylabel = f'{param} [µm]'
+            else:
+                raise ValueError('no ylabel defined for this parameter')
+            if comp == 1:
+                plot_order = ct_str_list
+            else:
+                plot_order = full_cell_str_list
+            sns.boxplot(data=results_df, x='celltype', y=param, palette=ct_palette, order=plot_order)
+            plt.ylabel(ylabel, fontsize=fontsize)
+            plt.xlabel('celltype', fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.title(f'{param}')
+            plt.savefig(f'{f_name}/{param}_box.svg')
+            plt.savefig(f'{f_name}/{param}_box.png')
+            plt.close()
+            sns.violinplot(data=synapse_res_df, x='celltype', y=param, palette=ct_palette, order=plot_order)
+            plt.ylabel(ylabel, fontsize=fontsize)
+            plt.xlabel('celltype', fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.title(f'{param}')
+            plt.savefig(f'{f_name}/{param}_violin.svg')
+            plt.savefig(f'{f_name}/{param}_violin.png')
+            plt.close()
 
     overview_df.to_csv(f'{f_name}/overview_df.csv')
     ranksum_group_df.to_csv(f'{f_name}/ranksum_results.csv')
     kruskal_df.to_csv(f'{f_name}/kruskal_res.csv')
-
-    log.info('Steo 4/4:Plot results')
-    ct_palette = cls.ct_palette(color_key, num=False)
-    for param in params:
-        if 'surface area' in param:
-            ylabel = f'{param} [µm²/µm²]'
-        elif 'area' in param:
-            ylabel = f'{param} [µm²/µm]'
-        elif 'density' in param:
-            ylabel = f'{param} [1/µm]'
-        elif'dist' in param:
-            ylabel = f'{param} [µm]'
-        else:
-            raise ValueError('no ylabel defined for this parameter')
-        if 'axon' in param:
-            sns.boxplot(data=synapse_res_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
-            plt.ylabel(ylabel, fontsize=fontsize)
-            plt.xlabel('celltype', fontsize=fontsize)
-            plt.yticks(fontsize=fontsize)
-            plt.xticks(fontsize=fontsize)
-            plt.title(f'{param}')
-            plt.savefig(f'{f_name}/{param}_box.svg')
-            plt.savefig(f'{f_name}/{param}_box.png')
-            plt.close()
-            sns.violinplot(data=synapse_res_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
-            plt.ylabel(ylabel, fontsize=fontsize)
-            plt.xlabel('celltype', fontsize=fontsize)
-            plt.yticks(fontsize=fontsize)
-            plt.xticks(fontsize=fontsize)
-            plt.title(f'{param}')
-            plt.savefig(f'{f_name}/{param}_violin.svg')
-            plt.savefig(f'{f_name}/{param}_violin.png')
-            plt.close()
-        else:
-            sns.boxplot(data=non_ax_synapse_res_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
-            plt.ylabel(ylabel, fontsize=fontsize)
-            plt.xlabel('celltype', fontsize=fontsize)
-            plt.yticks(fontsize=fontsize)
-            plt.xticks(fontsize=fontsize)
-            plt.title(f'{param}')
-            plt.savefig(f'{f_name}/{param}_box.svg')
-            plt.savefig(f'{f_name}/{param}_box.png')
-            plt.close()
-            try:
-                sns.violinplot(data=non_ax_synapse_res_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
-            except ValueError:
-                raise ValueError
-            plt.ylabel(ylabel, fontsize=fontsize)
-            plt.xlabel('celltype', fontsize=fontsize)
-            plt.yticks(fontsize=fontsize)
-            plt.xticks(fontsize=fontsize)
-            plt.title(f'{param}')
-            plt.savefig(f'{f_name}/{param}_violin.svg')
-            plt.savefig(f'{f_name}/{param}_violin.png')
-            plt.close()
 
     log.info("Analysis finished")

@@ -29,8 +29,8 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    full_cells_only = False
-    axon_only = True
+    full_cells_only = True
+    axon_only = False
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
@@ -40,11 +40,11 @@ if __name__ == '__main__':
     n_umap_runs = 5
     process_morph_parameters = False
     use_mito_density = True
-    use_vc_density = False
+    use_vc_density = True
     use_ves_density = True
     use_syn_params = False
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240612_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_axonly_mives" % (
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_fc_syn" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
     if use_syn_params:
         syn_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                           ''
+                           '240613_j0251v6_avg_syn_den_sb_0.60_mcl_200_TePkBrNGF/syn_density_results.csv'
         log.info(f'Axon, dendrite and soma synapse surface area density loaded from {syn_density_path}')
         syn_den_df = pd.read_csv(syn_density_path, index_col=0)
         if len(all_suitable_ids) > len(syn_den_df):

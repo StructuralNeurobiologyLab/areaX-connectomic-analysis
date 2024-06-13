@@ -29,7 +29,7 @@ if __name__ == '__main__':
     syn_prob = 0.6
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'TePkBrNGF'
+    color_key = 'STNGPINTv6'
     fontsize = 20
     zero_soma_fill = True
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240613_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s" % (

@@ -29,8 +29,8 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    full_cells_only = True
-    axon_only = False
+    full_cells_only = False
+    axon_only = True
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
@@ -40,11 +40,11 @@ if __name__ == '__main__':
     n_umap_runs = 5
     process_morph_parameters = False
     use_mito_density = True
-    use_vc_density = True
+    use_vc_density = False
     use_ves_density = True
-    use_syn_params = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240612_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_fc_syn" % (
+    use_syn_params = True
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240613_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_ax_only_synmives" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -279,12 +279,16 @@ if __name__ == '__main__':
             suit_inds = np.in1d(syn_den_df_sorted['cellid'], sorted_suitable_ids)
             syn_den_df_sorted = syn_den_df_sorted.loc[suit_inds]
             morph_df = morph_df.join(syn_den_df_sorted['axon synaptic area density per surface area'])
-            morph_df = morph_df.join(syn_den_df_sorted['dendrite synaptic area density per surface area'])
-            morph_df = morph_df.join(syn_den_df_sorted['soma synaptic area density per surface area'])
-            param_list = np.hstack([param_list, 'axon synaptic area density per surface area',
-                                    'dendrite synaptic area density per surface area', 'soma synaptic area density per surface area'])
-
-        morph_df.to_csv(f'{f_name}/ct_morph_df.csv')
+            if not axon_only:
+                morph_df = morph_df.join(syn_den_df_sorted['dendrite synaptic area density per surface area'])
+                morph_df = morph_df.join(syn_den_df_sorted['soma synaptic area density per surface area'])
+                param_list = np.hstack([param_list, 'axon synaptic area density per surface area',
+                                        'dendrite synaptic area density per surface area',
+                                        'soma synaptic area density per surface area'])
+            else:
+                param_list = np.hstack([param_list, 'axon synaptic area density per surface area'])
+            log.info('nan values for each compartment are replaced with 0 to allow for PCA')
+            morph_df = morph_df.fillna(0)
 
 
     morph_df.to_csv(f'{f_name}/ct_morph_df.csv')
@@ -378,6 +382,8 @@ if __name__ == '__main__':
             axon_params = np.hstack([axon_params, 'axon vc volume density'])
         if use_ves_density:
             axon_params = np.hstack([axon_params, 'vesicle density'])
+        if use_syn_params:
+            axon_params = np.hstack([axon_params, 'axon synaptic area density per surface area'])
         log.info(f'Params for PCA for projecting axon celltypes: {axon_params}')
         axon_morph_df = morph_df.loc[axon_inds]
         #only take non-NaN values with parameters needed for axon, fill with 0
@@ -389,7 +395,7 @@ if __name__ == '__main__':
         # new dataframe with principal components and labels
         if n_comps_PCA == 1:
             pca_df = pd.DataFrame(data=principal_components, columns=['PC1'])
-            pca_df['celltype'] = ax_labels
+            pca_df['celltype'] = np.array(ax_labels)
             pca_df.to_csv(f'{f_name}/pca_proj_axons_principal_component.csv')
             log.info('Step 3/3: Plot results')
             sns.histplot(x='PC1', data=pca_df, hue='celltype', palette=ct_palette, common_norm=False,
@@ -414,7 +420,7 @@ if __name__ == '__main__':
             plt.close()
         elif n_comps_PCA == 2:
             pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
-            pca_df['celltype'] = ax_labels
+            pca_df['celltype'] = np.array(ax_labels)
             pca_df.to_csv(f'{f_name}/pca_proj_axons_two_principal_components.csv')
 
             log.info('Step 3/3: Plot results')
@@ -442,7 +448,7 @@ if __name__ == '__main__':
         # new dataframe with principal components and labels
         if n_comps_PCA == 1:
             pca_df = pd.DataFrame(data=principal_components, columns=['PC1'])
-            pca_df['celltype'] = fc_labels
+            pca_df['celltype'] = np.array(fc_labels)
             pca_df.to_csv(f'{f_name}/pca_full_cells_principal_component.csv')
             log.info('Step 3/3: Plot results')
             sns.histplot(x='PC1', data=pca_df, hue='celltype', palette=ct_palette, common_norm=False,
@@ -467,12 +473,12 @@ if __name__ == '__main__':
             plt.close()
         elif n_comps_PCA == 2:
             pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
-            pca_df['celltype'] = fc_labels
+            pca_df['celltype'] = np.array(fc_labels)
             pca_df.to_csv(f'{f_name}/pca_full_cells_two_principal_components.csv')
 
             log.info('Step 3/3: Plot results')
             g = sns.JointGrid(data=pca_df, x='PC1', y='PC2', hue="celltype", palette=ct_palette)
-            g.plot_joint(sns.scatterplot)
+            g.plot_joint(sns.scatterplot, palette = ct_palette)
             g.plot_marginals(sns.histplot, fill=True, alpha=0.3,
                              kde=False, bins=10, palette=ct_palette)
             g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize=fontsize)

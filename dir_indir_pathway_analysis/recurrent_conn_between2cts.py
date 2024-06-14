@@ -52,7 +52,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(key=color_key)
 
-    log.info('Step 1/3: Get suitable cellids')
+    log.info('Step 1/6: Get suitable cellids')
     known_mergers = bio_params.load_known_mergers()
     misclassified_asto_ids = bio_params.load_potential_astros()
     cts = [ct1, ct2]
@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     all_suitable_ids = np.concatenate(all_suitable_ids)
 
-    log.info('Step 2/3: Filter synapses for celltypes')
+    log.info('Step 2/6: Filter synapses for celltypes')
     # prefilter synapses for synapse prob thresh and min syn size
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = filter_synapse_caches_general(
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     plt.yticks(fontsize=fontsize)
     plt.title(f'{ct1_str} to {ct2_str} connectivity')
     plt.savefig(f'{f_name}/{ct1_str}_out_{ct2_str}_num_partners_hist_perc.png')
-    plt.savefig(f'{f_name}/{{ct1_str}_out_{ct2_str}_num_partners_hist_perc.svg')
+    plt.savefig(f'{f_name}/{ct1_str}_out_{ct2_str}_num_partners_hist_perc.svg')
     plt.close()
     sns.histplot(data=ct1_2_ct2_cell_number, color=ct_palette[ct1_str], common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True)
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     plt.close()
     #get synapses from ct2 -> ct1
 
-    log.info(f'Step 4/X: Get number and sumsize per cell for {ct2_str} to {ct1_str} synapses')
+    log.info(f'Step 4/6: Get number and sumsize per cell for {ct2_str} to {ct1_str} synapses')
     ct2_2_ct1_cts, ct2_2_ct1_ids, ct2_2_ct1_axs, ct2_2_ct1_ssv_partners, ct2_2_ct1_sizes, ct2_2_ct1_spiness, ct2_2_ct1_rep_coord = filter_synapse_caches_for_ct(
         pre_cts=[ct2],
         post_cts=[ct1],
@@ -332,7 +332,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/{ct1_str}_in_{ct2_str}_num_partners_hist.svg')
     plt.close()
 
-    log.info('Step 5/X: Calculate overlap between incoming and outgoing cells from same celltype')
+    log.info('Step 5/6: Calculate overlap between incoming and outgoing cells from same celltype')
     #compare ct1 outgoing dict with ct1 incoming dict
     #only do for cells that get and receive input
     ct1_in_out_ids = ct1_proj_ssvs[np.in1d(ct1_proj_ssvs, ct1_rec_ssvs)]
@@ -341,16 +341,124 @@ if __name__ == '__main__':
              f'{100*len(ct1_in_out_ids)/len(ct1_rec_ssvs):.2f} percent of receiving cells.')
     #for each cell get percent overlap in number of cells, syn number, summed size
     #save in dataframe
-    columns = ['cellid', 'celltype', 'fraction cell overlap in', 'fraction syn number overlap in', 'fraction syn sum size overlap in',
+    columns = ['cellid', 'celltype', 'number partner cells in', 'number partner cells out', 'fraction cell overlap in', 'fraction syn number overlap in', 'fraction syn sum size overlap in',
                'fraction cell overlap out', 'fraction syn number overlap out', 'fraction syn sum size overlap out']
     ct1_overlap_df = pd.DataFrame(columns=columns, index = range(len(ct1_in_out_ids)))
     ct1_overlap_df['cellid'] = ct1_in_out_ids
     ct1_overlap_df['celltype'] = ct1_str
+    #iterate over each cell to calculate overlap
+    for ii, ct1_id in enumerate(tqdm(ct1_in_out_ids)):
+        ct2_ids_to = ct1_out_ct2_ids_dict[ct1_id]
+        ct2_syn_nums_to = ct1_out_syn_numbers_dict[ct1_id]
+        ct2_sum_syns_to = ct1_out_sumsizes_dict[ct1_id]
+        ct2_ids_from = ct1_in_ct2_ids_dict[ct1_id]
+        ct2_syn_nums_from = ct1_in_syn_numbers_dict[ct1_id]
+        ct2_sum_syns_from = ct1_in_sumsizes_dict[ct1_id]
+        ct1_overlap_df.loc[ii, 'number partner cells in'] = len(ct2_ids_from)
+        ct1_overlap_df.loc[ii, 'number partner cells out'] = len(ct2_ids_to)
+        mask_both_out = np.in1d(ct2_ids_to, ct2_ids_from)
+        mask_both_in = np.in1d(ct2_ids_from, ct2_ids_to)
+        ids_both = ct2_ids_to[mask_both_out]
+        ct1_overlap_df.loc[ii, 'fraction cell overlap in'] = len(ids_both) / len(ct2_ids_from)
+        ct1_overlap_df.loc[ii, 'fraction cell overlap out'] = len(ids_both) / len(ct2_ids_to)
+        syn_nums_both_out = ct2_syn_nums_to[mask_both_out]
+        syn_nums_both_in = ct2_syn_nums_from[mask_both_in]
+        ct1_overlap_df.loc[ii, 'fraction syn number overlap in'] = np.sum(syn_nums_both_in) / np.sum(ct2_syn_nums_from)
+        ct1_overlap_df.loc[ii, 'fraction syn number overlap out'] = np.sum(syn_nums_both_out) / np.sum(ct2_syn_nums_to)
+        sum_sizes_both_out = ct2_sum_syns_to[mask_both_out]
+        sum_sizes_both_in = ct2_sum_syns_from[mask_both_in]
+        ct1_overlap_df.loc[ii, 'fraction syn sum size overlap in'] = np.sum(sum_sizes_both_in) / np.sum(ct2_sum_syns_from)
+        ct1_overlap_df.loc[ii, 'fraction syn sum size overlap out'] = np.sum(sum_sizes_both_out) / np.sum(ct2_sum_syns_to)
+    ct1_overlap_df.to_csv(f'{f_name}/{ct1_str}_overlap_df.csv')
+    #ct2
+    ct2_in_out_ids = ct2_proj_ssvs[np.in1d(ct2_proj_ssvs, ct2_rec_ssvs)]
+    log.info(f'{len(ct2_in_out_ids)} {ct2_str} cells project to and get input from {ct1_str}')
+    log.info(f'This is {100 * len(ct2_in_out_ids) / len(ct2_proj_ssvs):.2f} percent of projecting cells and '
+             f'{100 * len(ct2_in_out_ids) / len(ct2_rec_ssvs):.2f} percent of receiving cells.')
+    ct2_overlap_df = pd.DataFrame(columns=columns, index=range(len(ct2_in_out_ids)))
+    ct2_overlap_df['cellid'] = ct2_in_out_ids
+    ct2_overlap_df['celltype'] = ct2_str
+    # iterate over each cell to calculate overlap
+    for ii, ct2_id in enumerate(tqdm(ct2_in_out_ids)):
+        ct1_ids_to = ct2_out_ct1_ids_dict[ct2_id]
+        ct1_syn_nums_to = ct2_out_syn_numbers_dict[ct2_id]
+        ct1_sum_syns_to = ct2_out_sumsizes_dict[ct2_id]
+        ct1_ids_from = ct2_in_ct1_ids_dict[ct2_id]
+        ct1_syn_nums_from = ct2_in_syn_numbers_dict[ct2_id]
+        ct1_sum_syns_from = ct2_in_sumsizes_dict[ct2_id]
+        ct2_overlap_df.loc[ii, 'number partner cells in'] = len(ct1_ids_from)
+        ct2_overlap_df.loc[ii, 'number partner cells out'] = len(ct1_ids_to)
+        mask_both_out = np.in1d(ct1_ids_to, ct1_ids_from)
+        mask_both_in = np.in1d(ct1_ids_from, ct1_ids_to)
+        ids_both = ct1_ids_to[mask_both_out]
+        ct2_overlap_df.loc[ii, 'fraction cell overlap in'] = len(ids_both) / len(ct1_ids_from)
+        ct2_overlap_df.loc[ii, 'fraction cell overlap out'] = len(ids_both) / len(ct1_ids_to)
+        syn_nums_both_out = ct1_syn_nums_to[mask_both_out]
+        syn_nums_both_in = ct1_syn_nums_from[mask_both_in]
+        ct2_overlap_df.loc[ii, 'fraction syn number overlap in'] = np.sum(syn_nums_both_in) / np.sum(ct1_syn_nums_from)
+        ct2_overlap_df.loc[ii, 'fraction syn number overlap out'] = np.sum(syn_nums_both_out) / np.sum(ct1_syn_nums_to)
+        sum_sizes_both_out = ct1_sum_syns_to[mask_both_out]
+        sum_sizes_both_in = ct1_sum_syns_from[mask_both_in]
+        ct2_overlap_df.loc[ii, 'fraction syn sum size overlap in'] = np.sum(sum_sizes_both_in) / np.sum(ct1_sum_syns_from)
+        ct2_overlap_df.loc[ii, 'fraction syn sum size overlap out'] = np.sum(sum_sizes_both_out) / np.sum(ct1_sum_syns_to)
+    ct2_overlap_df.to_csv(f'{f_name}/{ct2_str}_overlap_df.csv')
 
-    raise ValueError
+    log.info('Step 6/6: Get overview params and plot results')
+    param_list = list(ct1_overlap_df.keys())[2:]
+    param_list = np.hstack([param_list, 'number cells both'])
+    overview_df = pd.DataFrame(columns = [f'median {ct1_str}', f'mean {ct1_str}', f'std {ct1_str}', f'median {ct2_str}', f'mean {ct2_str}', f'std {ct2_str}', f'total {ct1_str}', f'total {ct2_str}'], index = param_list)
+    for param in param_list:
+        if 'both' in param:
+            overview_df.loc[param, f'total {ct1_str}'] = len(ct1_overlap_df)
+            overview_df.loc[param, f'total {ct2_str}'] = len(ct2_overlap_df)
+        else:
+            overview_df.loc[param, f'median {ct1_str}'] = ct1_overlap_df[param].median()
+            overview_df.loc[param, f'mean {ct1_str}'] = ct1_overlap_df[param].mean()
+            overview_df.loc[param, f'std {ct1_str}'] = ct1_overlap_df[param].std()
+            overview_df.loc[param, f'median {ct2_str}'] = ct2_overlap_df[param].median()
+            overview_df.loc[param, f'mean {ct2_str}'] = ct2_overlap_df[param].mean()
+            overview_df.loc[param, f'std {ct2_str}'] = ct2_overlap_df[param].std()
+            #plot parameters as histogramm
+            sns.histplot(data=ct1_overlap_df, x = param, color=ct_palette[ct1_str], common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
+            plt.ylabel(f'% of {ct1_str} cells', fontsize=fontsize)
+            plt.xlabel(param, fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.title(f'{ct1_str} {param}')
+            plt.savefig(f'{f_name}/{ct1_str}_{param}_hist_perc.png')
+            plt.savefig(f'{f_name}/{ct1_str}_{param}_hist_perc.svg')
+            plt.close()
+            sns.histplot(data=ct1_overlap_df, x=param, color=ct_palette[ct1_str], common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True)
+            plt.ylabel(f'number of {ct1_str} cells', fontsize=fontsize)
+            plt.xlabel(param, fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.title(f'{ct1_str} {param}')
+            plt.savefig(f'{f_name}/{ct1_str}_{param}_hist.png')
+            plt.savefig(f'{f_name}/{ct1_str}_{param}_hist.svg')
+            plt.close()
+            sns.histplot(data=ct2_overlap_df, x=param, color=ct_palette[ct2_str], common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
+            plt.ylabel(f'% of {ct2_str} cells', fontsize=fontsize)
+            plt.xlabel(param, fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.title(f'{ct2_str} {param}')
+            plt.savefig(f'{f_name}/{ct2_str}_{param}_hist_perc.png')
+            plt.savefig(f'{f_name}/{ct2_str}_{param}_hist_perc.svg')
+            plt.close()
+            sns.histplot(data=ct2_overlap_df, x=param, color=ct_palette[ct2_str], common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True)
+            plt.ylabel(f'number of {ct2_str} cells', fontsize=fontsize)
+            plt.xlabel(param, fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.title(f'{ct2_str} {param}')
+            plt.savefig(f'{f_name}/{ct2_str}_{param}_hist.png')
+            plt.savefig(f'{f_name}/{ct2_str}_{param}_hist.svg')
+            plt.close()
 
-    #calculate overlap between the two in terms of cellids
-    #calculate overlap between the two in terms of syn number
-    #plot for both celltypes
 
-    #get statistics, overview params
+    overview_df.to_csv(f'{f_name}/recurr_conn_overview_{ct1_str}_{ct2_str}.csv')

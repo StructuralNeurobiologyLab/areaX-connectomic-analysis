@@ -293,4 +293,31 @@ def get_ves_comp_density_presaved(params):
     axon_ves_density = num_axon_vesicles / full_cell_dict['axon length']
     return axon_ves_density
 
+def get_non_synaptic_vesicle_coords(params):
+    '''
+    Uses kdtree to get distance of vesicle to synapse and returns only vesicle coordinates that are not close to synapse.
+    Assumed synapses are already filtered.
+    :param params: cellid, vesicle coordinates, mapping from vesicle to cellid; synapse coordinates,
+    distance threshold to count as non-synaptic
+    :return:
+    '''
+    scaling = [10, 10, 25]
+    cellid, ves_ids, ves_coords, mapped_ssv_ids, syn_coords, non_syn_distance_threshold = params
+    if len(syn_coords) == 0:
+        return [np.nan, np.nan, np.nan]
+    # filter vesicles belonging to cell
+    cell_ves_ind = np.in1d(mapped_ssv_ids, cellid)
+    cell_ves_coords = ves_coords[cell_ves_ind]
+    cell_ves_ids = ves_ids[cell_ves_ind]
+    # get number vesicles close to membrane
+    # make kdTree out of vesicle coords
+    ves_kdtree = scipy.spatial.cKDTree(cell_ves_coords * scaling)
+    # search which vesicle indices fruther than certain synapse threshold
+    ves_inds_synsmore = ves_kdtree.query_ball_point(syn_coords * scaling, r=non_syn_distance_threshold)
+    ves_inds_synsmore_flatten = np.unique(np.hstack(ves_inds_synsmore)).astype(int)
+    ves_ids_synsmore = cell_ves_ids[ves_inds_synsmore_flatten]
+    ves_far_inds = np.in1d(cell_ves_ids, ves_ids_synsmore) == False
+    ves_far_coords = cell_ves_coords[ves_far_inds]
+    ves_far_ids = cell_ves_ids[ves_far_inds]
+    return [ves_far_ids, ves_far_coords]
 

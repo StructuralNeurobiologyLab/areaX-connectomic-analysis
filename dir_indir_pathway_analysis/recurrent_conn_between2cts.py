@@ -34,8 +34,8 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGPINTv6'
-    ct1 = 4
-    ct2 = 6
+    ct1 = 3
+    ct2 = 5
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     fontsize = 20
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     syn_prob = syn_prob[suit_ct_inds]
     synapse_cache = [m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob]
     #get synapses from ct1 -> ct2
-    log.info(f'Step 3/X: Get number and sumsize per cell for {ct1_str} to {ct2_str} synapses')
+    log.info(f'Step 3/6: Get number and sumsize per cell for {ct1_str} to {ct2_str} synapses')
     ct1_2_ct2_cts, ct1_2_ct2_ids, ct1_2_ct2_axs, ct1_2_ct2_ssv_partners, ct1_2_ct2_sizes, ct1_2_ct2_spiness, ct1_2_ct2_rep_coord = filter_synapse_caches_for_ct(pre_cts=[ct1],
                                                                                                         post_cts=[ct2],
                                                                                                         syn_prob_thresh=None,

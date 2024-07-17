@@ -93,7 +93,7 @@ if __name__ == '__main__':
     cellids = np.sort(cellids)
     log.info(f'{len(cellids)} {ct_str} cells fulfull criteria')
 
-    log.info('Step 2/7: Get coordinates of all close-mebrane vesicles')
+    log.info('Step 2/7: Get coordinates of all close-membrane vesicles')
     # load caches prefiltered for celltype
     if celltype in axon_cts:
         ct_ves_ids = np.load(f'{cache_name}/{ct_str}_ids.npy')
@@ -238,6 +238,7 @@ if __name__ == '__main__':
     log.info(f'Step 5/7: Get synapses within {release_thresh} µm to close-membrane vesicles')
     non_syn_ves_coords_con_nm = non_syn_ves_coords_con * global_params.config['scaling']
     syn_coords_nm = m_rep_coord * global_params.config['scaling']
+    #to do: check if correct indices and if easier to use query_ball_tree
     syns_tree = KDTree(syn_coords_nm)
     synapse_inds = syns_tree.query_ball_point(non_syn_ves_coords_con_nm, r = release_thresh * 1000)
     synapse_inds = np.unique(np.concatenate(synapse_inds).astype(np.uint32))

@@ -550,6 +550,27 @@ def compute_overlap_skeleton(sso_id, sso_ids, all_node_positions, kdtree_radius 
         overlap[i] = overlap_cell
     return overlap
 
+def get_cell_close_surface_area(cell_input):
+    '''
+    To a given set of coordinates, see if the cell is in a given radius.
+    if so, count the number of coordinates the cell is close to and calculate the summed surface area of the cell
+    which is close to the coordinates.
+    :param cell_input: cellid, coordinates, radius to coordinate
+    :return: number of coordinates close, summed area close, cell surface area
+    '''
+    cellid, des_coords, radius = cell_input
+    cell = SuperSegmentationObject(cellid)
+    cell_mesh = cell.mesh
+    indices, vertices, normals = cell_mesh
+    # get cell surface mesh area in µm²
+    cell_surface_area = mesh_area_calc(cell_mesh)
+    #get coordinates close to cell surface
+    vertices = vertices.reshape((-1, 3))
+    coord_kdtree = cKDTree(des_coords)
+    vert_inds = coord_kdtree.query_ball_point(vertices, r = radius * 1000)
+    vert_tree = cKDTree(vertices)
+
+
 def generate_colored_mesh_from_skel_data(args):
     '''
     Generates mesh coloured according to axoness_avg10000 prediction of skeleton.

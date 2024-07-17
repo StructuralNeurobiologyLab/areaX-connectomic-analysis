@@ -1,0 +1,224 @@
+#close membrane analysis distance to surface of cells
+#use cell meshes to see what in certain radius of vesicle
+#similar to closemem_dist2dataset_syns
+
+if __name__ == '__main__':
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_cell_close_surface_area
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from syconn.handler.config import initialize_logging
+    from syconn import global_params
+    from syconn.reps.segmentation import SegmentationDataset
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
+    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_non_synaptic_vesicle_coords
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
+    import os as os
+    import pandas as pd
+    import numpy as np
+    from tqdm import tqdm
+    from syconn.mp.mp_utils import start_multiprocess_imap
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from scipy.spatial import KDTree
+    from syconn.handler.basics import load_pkl2obj
+
+    version = 'v6'
+    analysis_params = Analysis_Params(version = version)
+    global_params.wd = analysis_params.working_dir()
+    with_glia = False
+    ct_dict = analysis_params.ct_dict(with_glia=with_glia)
+    min_comp_len = 200
+    full_cell = True
+    dist_threshold = 10  # nm
+    min_syn_size = 0.1
+    syn_prob_thresh = 0.6
+    nonsyn_dist_threshold = 3000  # nm
+    release_thresh = 1 #µm
+    cls = CelltypeColors(ct_dict = ct_dict)
+    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
+    color_key = 'TePkBrNGF'
+    celltype = 5
+    ct_str = ct_dict[celltype]
+    fontsize = 20
+    suitable_ids_only = True
+    annot_matrix = True
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240717_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
+        min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
+    if not os.path.exists(f_name):
+        os.mkdir(f_name)
+    log = initialize_logging(f'close_mem_2_cell_surface_analysis_{ct_str}', log_dir=f_name + '/logs/')
+    log.info("min_comp_len = %i, colors = %s" % (min_comp_len, color_key))
+    log.info(f'min syn size = {min_syn_size} µm², syn prob thresh = {syn_prob_thresh}, threshold for close to membrane = {dist_threshold} nm, '
+             f'threshold to putative release site = {release_thresh} µm, non syn dist threshold = {nonsyn_dist_threshold} nm')
+    if full_cell:
+        log.info('Only full cells will be processed')
+    if with_glia:
+        log.info('Putative glia synapses are not filtered out')
+    else:
+        log.info('Putative glia synapses are filtered out')
+    if suitable_ids_only:
+        id_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                     '240524_j0251v6_ct_morph_analyses_mcl_200_ax200_TeBKv6MSNyw_fs20npca2_umap5/ct_morph_df.csv'
+        log.info(f'Only suitable ids will be used, loaded from {id_path}')
+        loaded_morph_df = pd.read_csv(id_path, index_col=0)
+        suitable_ids = loaded_morph_df['cellid']
+        suitable_cts = loaded_morph_df['celltype']
+        log.info(f'{len(suitable_ids)} cells were selected to be suitable for analysis')
+    else:
+        ssd = SuperSegmentationDataset(working_dir=global_params.wd)
+        suitable_ids = ssd.ssv_ids
+        suitable_cts = ssd.load_numpy_data('celltype_pts_e3')
+
+
+    known_mergers = analysis_params.load_known_mergers()
+    misclassified_asto_ids = analysis_params.load_potential_astros()
+    cache_name = analysis_params.file_locations
+    all_cts = np.arange(0, len(ct_dict.keys()))
+
+    log.info('Step 1/7: Filter suitable cellids')
+    cell_dict = analysis_params.load_cell_dict(celltype)
+    # get ids with min compartment length
+    cellids = np.array(list(cell_dict.keys()))
+    merger_inds = np.in1d(cellids, known_mergers) == False
+    cellids = cellids[merger_inds]
+    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+    cellids = cellids[astro_inds]
+    axon_cts = analysis_params.axon_cts()
+    if full_cell and celltype not in axon_cts:
+        cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                                                axon_only=False,
+                                                max_path_len=None)
+    else:
+        cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
+                                        axon_only=True,
+                                        max_path_len=None)
+    cellids = np.sort(cellids)
+    log.info(f'{len(cellids)} {ct_str} cells fulfull criteria')
+
+    log.info('Step 2/7: Get coordinates of all close-membrane vesicles')
+    # load caches prefiltered for celltype
+    if celltype in axon_cts:
+        ct_ves_ids = np.load(f'{cache_name}/{ct_str}_ids.npy')
+        ct_ves_coords = np.load(f'{cache_name}/{ct_str}_rep_coords.npy')
+        ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_str}_mapping_ssv_ids.npy')
+        ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_str}_dist2matrix.npy')
+    else:
+        ct_ves_ids = np.load(f'{cache_name}/{ct_str}_ids_fullcells.npy')
+        ct_ves_coords = np.load(f'{cache_name}/{ct_str}_rep_coords_fullcells.npy')
+        ct_ves_map2ssvids = np.load(f'{cache_name}/{ct_str}_mapping_ssv_ids_fullcells.npy')
+        ct_ves_dist2matrix = np.load(f'{cache_name}/{ct_str}_dist2matrix_fullcells.npy')
+        ct_ves_axoness = np.load(f'{cache_name}/{ct_str}_axoness_coarse_fullcells.npy')
+    # filter for selected cellids
+    ct_ind = np.in1d(ct_ves_map2ssvids, cellids)
+    ct_ves_ids = ct_ves_ids[ct_ind]
+    ct_ves_map2ssvids = ct_ves_map2ssvids[ct_ind]
+    ct_ves_dist2matrix = ct_ves_dist2matrix[ct_ind]
+    ct_ves_coords = ct_ves_coords[ct_ind]
+    if celltype not in axon_cts:
+        ct_ves_axoness = ct_ves_axoness[ct_ind]
+        # make sure for full cells vesicles are only in axon
+        ax_ind = np.in1d(ct_ves_axoness, 1)
+        ct_ves_ids = ct_ves_ids[ax_ind]
+        ct_ves_map2ssvids = ct_ves_map2ssvids[ax_ind]
+        ct_ves_dist2matrix = ct_ves_dist2matrix[ax_ind]
+        ct_ves_coords = ct_ves_coords[ax_ind]
+    assert len(np.unique(ct_ves_map2ssvids)) <= len(cellids)
+    all_ves_number = len(ct_ves_ids)
+    #get all mebrane close vesicles
+    dist_inds = ct_ves_dist2matrix < dist_threshold
+    ct_ves_ids = ct_ves_ids[dist_inds]
+    ct_ves_map2ssvids = ct_ves_map2ssvids[dist_inds]
+    ct_ves_coords = ct_ves_coords[dist_inds]
+    log.info(f'In celltype {ct_str}, {len(ct_ves_ids)} out of {all_ves_number} vesicles are membrane close ({100*len(ct_ves_ids)/ all_ves_number:.2f} %)')
+    cellids_close_mem = np.sort(np.unique(ct_ves_map2ssvids))
+    log.info(f'{len(cellids_close_mem)} out of {len(cellids)} have close-membrane vesicles ({100*len(cellids_close_mem)/ len(cellids):.2f} %).')
+
+    log.info('Step 3/X: Get non-synaptic vesicles')
+    #get synapses outgoing from this celltype
+    sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
+    ct_syn_cts, ct_syn_ids, ct_syn_axs, ct_syn_ssv_partners, ct_syn_sizes, ct_syn_spiness, ct_syn_rep_coord = filter_synapse_caches_for_ct(
+        pre_cts=[celltype],
+        post_cts=None,
+        syn_prob_thresh=syn_prob_thresh,
+        min_syn_size=min_syn_size,
+        axo_den_so=True,
+        synapses_caches=None, sd_synssv = sd_synssv)
+    # filter so that only filtered cellids are included and are all presynaptic
+    ct_inds = np.in1d(ct_syn_ssv_partners, cellids_close_mem).reshape(len(ct_syn_ssv_partners), 2)
+    comp_inds = np.in1d(ct_syn_axs, 1).reshape(len(ct_syn_ssv_partners), 2)
+    filtered_inds = np.all(ct_inds == comp_inds, axis=1)
+    ct_syn_coords = ct_syn_rep_coord[filtered_inds]
+    ct_syn_axs = ct_syn_axs[filtered_inds]
+    ct_syn_ssv_partners = ct_syn_ssv_partners[filtered_inds]
+    #get non-synaptic vesicles
+    cell_input = [[cellid, ct_ves_ids, ct_ves_coords, ct_ves_map2ssvids, ct_syn_coords, nonsyn_dist_threshold] for
+                  cellid in cellids_close_mem]
+    cell_output = start_multiprocess_imap(get_non_synaptic_vesicle_coords, cell_input)
+    cell_output = np.array(cell_output, dtype='object')
+    # output still list of arrays
+    non_syn_ves_ids = cell_output[:, 0]
+    non_syn_ves_coords = cell_output[:, 1]
+    # get all ves ids
+    non_syn_ves_ids_con = np.concatenate(non_syn_ves_ids)
+    non_syn_ves_coords_con = np.concatenate(non_syn_ves_coords)
+    log.info(
+        f'{len(non_syn_ves_ids_con)} vesicles are close-membrane non-synaptic ({100 * len(non_syn_ves_ids_con) / len(ct_ves_ids):.2f} %)')
+    # make dataframe with all vesicles
+    columns = ['cellid', 'ves coord x', 'ves coord y', 'ves coord z']
+    non_syn_ves_coords_df = pd.DataFrame(columns=columns, index=non_syn_ves_ids_con)
+    for i, cellid in enumerate(tqdm(cellids_close_mem)):
+        cell_ves_ids = non_syn_ves_ids[i]
+        cell_ves_coords = non_syn_ves_coords[i]
+        non_syn_ves_coords_df.loc[cell_ves_ids, 'cellid'] = cellid
+        non_syn_ves_coords_df.loc[cell_ves_ids, 'ves coord x'] = cell_ves_coords[:, 0]
+        non_syn_ves_coords_df.loc[cell_ves_ids, 'ves coord y'] = cell_ves_coords[:, 1]
+        non_syn_ves_coords_df.loc[cell_ves_ids, 'ves coord z'] = cell_ves_coords[:, 2]
+
+    non_syn_ves_coords_df.to_csv(
+        f'{f_name}/non_syn_{nonsyn_dist_threshold}_close_mem_{dist_threshold}_{ct_str}_ves_coords.csv')
+
+    log.info('Step 3/X: Get coordinates of all suitable cells')
+    #for all cells load their vertex coordinates
+    mesh_input = [[cellid, cell_ves_coords, release_thresh] for cellid in suitable_ids]
+    raise ValueError
+    ct_mesh_output = start_multiprocess_imap(get_cell_close_surface_area, mesh_input)
+
+    ct_mesh_output = np.array(ct_mesh_output, dtype=object)
+    ct_ves_number = ct_mesh_output[:, 0]
+    ct_summed_surface_area = ct_mesh_output[:, 1]
+    ct_mesh_surface_areas = ct_mesh_output[:, 2]
+    #put results in per cell df
+    columns = ['cellid', 'celltype', 'number vesicles close', 'summed surface area close', 'surface mesh area']
+    result_percell_df = pd.DataFrame(columns= columns, index = range(len(suitable_ids)))
+    result_percell_df['cellid'] = suitable_ids
+    result_percell_df['celltype'] = suitable_cts
+    result_percell_df['surface mesh area'] = ct_mesh_surface_areas
+    result_percell_df['number vesicles close'] = ct_ves_number
+    result_percell_df['summed surface area close'] = ct_mesh_surface_areas
+    result_percell_df.to_csv(f'{f_name}/percell_surface_mesh_areas.csv')
+
+    log.info('Step 4/X: Get overview params')
+    ct_groups = mesh_area_percell_df.groupby('celltype')
+    sum_surface_areas = ct_groups['surface mesh area'].sum()
+    sum_surface_areas_df = pd.DataFrame(sum_surface_areas)
+    sum_surface_areas_df.to_csv(f'{f_name}/sum_surface_areas_ct.csv')
+    #actually do it other way around: iterate over each cell and check there with kdtree of coordinates
+    #check there number of vesicles the cell is close to, surface area the cell is close to
+
+    log.info('Step 4/X: ')
+    all_vertices = np.concatenate(ct_vertices)
+    vert_tree = KDTree(all_vertices)
+
+
+
+    # step 4: get cell ids closest to close membrane vesicles
+
+    # step 5: normalise with summed surface areas of cell types
+
+    # step 6: get overview params, plot results and calculate statistics
+
+
+    log.info('Analysis finsihed.')
+
+

@@ -39,7 +39,7 @@ if __name__ == '__main__':
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240614_j0251{version}_{ct1_str}_{ct2_str}_recurr_conn_mcl_%i_synprob_%.2f_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240705_j0251{version}_{ct1_str}_{ct2_str}_recurr_conn_mcl_%i_synprob_%.2f_%s_fs%i" % (
     min_comp_len_cell, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -342,11 +342,12 @@ if __name__ == '__main__':
     #for each cell get percent overlap in number of cells, syn number, summed size
     #save in dataframe
     columns = ['cellid', 'celltype', 'number partner cells in', 'number partner cells out', 'fraction cell overlap in', 'fraction syn number overlap in', 'fraction syn sum size overlap in',
-               'fraction cell overlap out', 'fraction syn number overlap out', 'fraction syn sum size overlap out']
+               'fraction cell overlap out', 'fraction syn number overlap out', 'fraction syn sum size overlap out', 'binary specificity']
     ct1_overlap_df = pd.DataFrame(columns=columns, index = range(len(ct1_in_out_ids)))
     ct1_overlap_df['cellid'] = ct1_in_out_ids
     ct1_overlap_df['celltype'] = ct1_str
     #iterate over each cell to calculate overlap
+    #also check if most output goes to most input
     for ii, ct1_id in enumerate(tqdm(ct1_in_out_ids)):
         ct2_ids_to = ct1_out_ct2_ids_dict[ct1_id]
         ct2_syn_nums_to = ct1_out_syn_numbers_dict[ct1_id]
@@ -369,6 +370,13 @@ if __name__ == '__main__':
         sum_sizes_both_in = ct2_sum_syns_from[mask_both_in]
         ct1_overlap_df.loc[ii, 'fraction syn sum size overlap in'] = np.sum(sum_sizes_both_in) / np.sum(ct2_sum_syns_from)
         ct1_overlap_df.loc[ii, 'fraction syn sum size overlap out'] = np.sum(sum_sizes_both_out) / np.sum(ct2_sum_syns_to)
+        #check here if highest input is also highest output
+        highest_id_incoming = ct2_ids_from[np.argmax(ct2_sum_syns_from)]
+        highest_id_outgoing = ct2_ids_to[np.argmax(ct2_sum_syns_to)]
+        if highest_id_incoming == highest_id_outgoing:
+            ct1_overlap_df.loc[ii, 'binary specificity'] = 1
+        else:
+            ct1_overlap_df.loc[ii, 'binary specificity'] = 0
     ct1_overlap_df.to_csv(f'{f_name}/{ct1_str}_overlap_df.csv')
     #ct2
     ct2_in_out_ids = ct2_proj_ssvs[np.in1d(ct2_proj_ssvs, ct2_rec_ssvs)]
@@ -401,6 +409,12 @@ if __name__ == '__main__':
         sum_sizes_both_in = ct1_sum_syns_from[mask_both_in]
         ct2_overlap_df.loc[ii, 'fraction syn sum size overlap in'] = np.sum(sum_sizes_both_in) / np.sum(ct1_sum_syns_from)
         ct2_overlap_df.loc[ii, 'fraction syn sum size overlap out'] = np.sum(sum_sizes_both_out) / np.sum(ct1_sum_syns_to)
+        highest_id_incoming = ct1_ids_from[np.argmax(ct1_sum_syns_from)]
+        highest_id_outgoing = ct1_ids_to[np.argmax(ct1_sum_syns_to)]
+        if highest_id_incoming == highest_id_outgoing:
+            ct2_overlap_df.loc[ii, 'binary specificity'] = 1
+        else:
+            ct2_overlap_df.loc[ii, 'binary specificity'] = 0
     ct2_overlap_df.to_csv(f'{f_name}/{ct2_str}_overlap_df.csv')
 
     log.info('Step 6/6: Get overview params and plot results')
@@ -411,6 +425,13 @@ if __name__ == '__main__':
         if 'both' in param:
             overview_df.loc[param, f'total {ct1_str}'] = len(ct1_overlap_df)
             overview_df.loc[param, f'total {ct2_str}'] = len(ct2_overlap_df)
+        elif 'binary' in param:
+            bin_spec_cells_ct1 = ct1_overlap_df[ct1_overlap_df['binary specificity'] == 1]
+            frac_bin_spec_ct1 = len(bin_spec_cells_ct1) / len(ct1_overlap_df)
+            overview_df.loc[param, f'fraction of cells binary specific {ct1_str}'] = frac_bin_spec_ct1
+            bin_spec_cells_ct2 = ct2_overlap_df[ct2_overlap_df['binary specificity'] == 1]
+            frac_bin_spec_ct2 = len(bin_spec_cells_ct2) / len(ct2_overlap_df)
+            overview_df.loc[param, f'fraction of cells binary specific {ct2_str}'] = frac_bin_spec_ct2
         else:
             overview_df.loc[param, f'median {ct1_str}'] = ct1_overlap_df[param].median()
             overview_df.loc[param, f'mean {ct1_str}'] = ct1_overlap_df[param].mean()

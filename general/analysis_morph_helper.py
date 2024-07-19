@@ -9,7 +9,7 @@ from syconn.handler.basics import load_pkl2obj
 from scipy.spatial import cKDTree
 from syconn.proc.meshes import write_mesh2kzip
 import pandas as pd
-
+from collections import Counter
 
 def get_cell_length(cellid):
     '''
@@ -567,8 +567,42 @@ def get_cell_close_surface_area(cell_input):
     #get coordinates close to cell surface
     vertices = vertices.reshape((-1, 3))
     coord_kdtree = cKDTree(des_coords)
-    vert_inds = coord_kdtree.query_ball_point(vertices, r = radius * 1000)
     vert_tree = cKDTree(vertices)
+    coord_inds = coord_kdtree.query_ball_tree(vert_tree, r = radius * 1000)
+    con_coord_inds = np.concatenate(coord_inds)
+    if len(con_coord_inds) == 0:
+        return [0, 0, cell_surface_area]
+    else:
+        #get number of vesicles which is close to cell
+        non_empty_coord_inds = [coord_ind for coord_ind in coord_inds if len(coord_ind) > 0]
+        number_close_vesicles = len(non_empty_coord_inds)
+        #calculate surface area close to vesicles
+        unique_vertice_inds = np.unique(con_coord_inds).astype(int)
+        #similar code to compartmentalize_mesh_fromskel
+        #mask vertices
+        vertex_mask = np.zeros(len(vertices))
+        vertex_mask[unique_vertice_inds] = 1
+        #mask indices
+        ind_comp = vertex_mask[indices]
+        indices = indices.reshape(-1, 3)
+        ind_comp = ind_comp.reshape(-1, 3)
+        ind_comp_maj = np.zeros((len(indices)), dtype=np.uint8)
+        for ii in range(len(indices)):
+            triangle = ind_comp[ii]
+            cnt = Counter(triangle)
+            ax, n = cnt.most_common(1)[0]
+            ind_comp_maj[ii] = ax
+        comp_ind = indices[ind_comp_maj == 1].flatten()
+        unique_comp_ind = np.unique(comp_ind)
+        remap_dict = {}
+        for i in range(len(unique_comp_ind)):
+            remap_dict[unique_comp_ind[i]] = i
+        if len(normals) > 0:
+            normals = normals.reshape(-1, 3)[unique_vertice_inds]
+        comp_ind = np.array([remap_dict[i] for i in comp_ind], dtype=np.uint)
+        close_vertices = vertices[unique_comp_ind].flatten()
+        summed_surface_area = mesh_area_calc([comp_ind, close_vertices, normals])
+        return [number_close_vesicles, summed_surface_area, cell_surface_area]
 
 
 def generate_colored_mesh_from_skel_data(args):

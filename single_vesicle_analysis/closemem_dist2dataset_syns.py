@@ -31,7 +31,7 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    min_comp_len = 50
+    min_comp_len = 200
     full_cell = True
     dist_threshold = 10  # nm
     min_syn_size = 0.1
@@ -45,8 +45,8 @@ if __name__ == '__main__':
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = False
-    annot_matrix = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240624_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s" % (
+    annot_matrix = False
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240718_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s_noannot" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -240,7 +240,8 @@ if __name__ == '__main__':
     syn_coords_nm = m_rep_coord * global_params.config['scaling']
     #to do: check if correct indices and if easier to use query_ball_tree
     syns_tree = KDTree(syn_coords_nm)
-    synapse_inds = syns_tree.query_ball_point(non_syn_ves_coords_con_nm, r = release_thresh * 1000)
+    ves_tree = KDTree(non_syn_ves_coords_con_nm)
+    synapse_inds = ves_tree.query_ball_tree(syns_tree, r = release_thresh * 1000)
     synapse_inds = np.unique(np.concatenate(synapse_inds).astype(np.uint32))
     close_syn_sizes = m_sizes[synapse_inds]
     close_syn_ssv_partners = m_ssv_partners[synapse_inds]

@@ -12,7 +12,6 @@ if __name__ == '__main__':
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_non_synaptic_vesicle_coords
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
     import os as os
     import pandas as pd
     import numpy as np
@@ -20,8 +19,8 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from scipy.spatial import KDTree
-    from syconn.handler.basics import load_pkl2obj
+    from scipy.stats import kruskal, ranksums
+    from itertools import combinations
 
     version = 'v6'
     analysis_params = Analysis_Params(version = version)
@@ -43,7 +42,7 @@ if __name__ == '__main__':
     fontsize = 20
     suitable_ids_only = True
     annot_matrix = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240717_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240719_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -69,14 +68,18 @@ if __name__ == '__main__':
         ssd = SuperSegmentationDataset(working_dir=global_params.wd)
         suitable_ids = ssd.ssv_ids
         suitable_cts = ssd.load_numpy_data('celltype_pts_e3')
-
+        suitable_cts = [ct_dict[ct] for ct in suitable_cts]
+    ct_str_list = analysis_params.ct_str(with_glia=with_glia)
+    #remove suitable ids from ct that is looked at to avoid over-representation of own surface area
+    suitable_ids = suitable_ids[suitable_cts != ct_str]
+    suitable_cts = suitable_cts[suitable_cts != ct_str]
 
     known_mergers = analysis_params.load_known_mergers()
     misclassified_asto_ids = analysis_params.load_potential_astros()
     cache_name = analysis_params.file_locations
     all_cts = np.arange(0, len(ct_dict.keys()))
 
-    log.info('Step 1/7: Filter suitable cellids')
+    log.info('Step 1/4: Filter suitable cellids')
     cell_dict = analysis_params.load_cell_dict(celltype)
     # get ids with min compartment length
     cellids = np.array(list(cell_dict.keys()))
@@ -96,7 +99,7 @@ if __name__ == '__main__':
     cellids = np.sort(cellids)
     log.info(f'{len(cellids)} {ct_str} cells fulfull criteria')
 
-    log.info('Step 2/7: Get coordinates of all close-membrane vesicles')
+    log.info('Step 2/4: Get coordinates of all close-membrane vesicles')
     # load caches prefiltered for celltype
     if celltype in axon_cts:
         ct_ves_ids = np.load(f'{cache_name}/{ct_str}_ids.npy')
@@ -134,7 +137,7 @@ if __name__ == '__main__':
     cellids_close_mem = np.sort(np.unique(ct_ves_map2ssvids))
     log.info(f'{len(cellids_close_mem)} out of {len(cellids)} have close-membrane vesicles ({100*len(cellids_close_mem)/ len(cellids):.2f} %).')
 
-    log.info('Step 3/X: Get non-synaptic vesicles')
+    log.info('Step 3/4: Get non-synaptic vesicles')
     #get synapses outgoing from this celltype
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     ct_syn_cts, ct_syn_ids, ct_syn_axs, ct_syn_ssv_partners, ct_syn_sizes, ct_syn_spiness, ct_syn_rep_coord = filter_synapse_caches_for_ct(
@@ -178,45 +181,122 @@ if __name__ == '__main__':
     non_syn_ves_coords_df.to_csv(
         f'{f_name}/non_syn_{nonsyn_dist_threshold}_close_mem_{dist_threshold}_{ct_str}_ves_coords.csv')
 
-    log.info('Step 3/X: Get coordinates of all suitable cells')
+    log.info('Step 3/4: Get coordinates of all suitable cells')
     #for all cells load their vertex coordinates
-    mesh_input = [[cellid, cell_ves_coords, release_thresh] for cellid in suitable_ids]
-    raise ValueError
+    cell_ves_coords_nm = non_syn_ves_coords_con * global_params.config['scaling']
+    mesh_input = [[cellid, cell_ves_coords_nm, release_thresh] for cellid in suitable_ids]
     ct_mesh_output = start_multiprocess_imap(get_cell_close_surface_area, mesh_input)
-
     ct_mesh_output = np.array(ct_mesh_output, dtype=object)
     ct_ves_number = ct_mesh_output[:, 0]
     ct_summed_surface_area = ct_mesh_output[:, 1]
     ct_mesh_surface_areas = ct_mesh_output[:, 2]
     #put results in per cell df
-    columns = ['cellid', 'celltype', 'number vesicles close', 'summed surface area close', 'surface mesh area']
+    columns = ['cellid', 'celltype', 'number vesicles close', 'summed surface area close', 'surface mesh area',
+               'ratio number vesicles', 'ratio summed surface area close', 'fraction surface mesh area', 'freq number vesicles',
+               'freq surface area close']
     result_percell_df = pd.DataFrame(columns= columns, index = range(len(suitable_ids)))
     result_percell_df['cellid'] = suitable_ids
     result_percell_df['celltype'] = suitable_cts
     result_percell_df['surface mesh area'] = ct_mesh_surface_areas
     result_percell_df['number vesicles close'] = ct_ves_number
-    result_percell_df['summed surface area close'] = ct_mesh_surface_areas
-    result_percell_df.to_csv(f'{f_name}/percell_surface_mesh_areas.csv')
+    result_percell_df['summed surface area close'] = ct_summed_surface_area
+    #get ratio between number of vesicles and summed surface area per cell
+    result_percell_df['ratio number vesicles'] = result_percell_df['number vesicles close'] / result_percell_df['surface mesh area']
+    result_percell_df['ratio summed surface area close'] = result_percell_df['summed surface area close'] / result_percell_df['surface mesh area']
+    #normalise values by multiplying with fraction of surface mesh area
+    summed_surface_area = np.sum(result_percell_df['surface mesh area'])
+    total_number_vesicles = np.sum(result_percell_df['number vesicles close'])
+    total_surface_area_close = np.sum(result_percell_df['summed surface area close'])
+    result_percell_df['fraction surface mesh area'] = result_percell_df['surface mesh area'] / summed_surface_area
+    fraction_number_vesicles = result_percell_df['number vesicles close'] / total_number_vesicles
+    fraction_close_surface_area = result_percell_df['summed surface area close'] / total_surface_area_close
+    result_percell_df['freq number vesicles'] = fraction_number_vesicles / result_percell_df['fraction surface mesh area']
+    result_percell_df['freq surface area close'] = fraction_close_surface_area / result_percell_df['fraction surface mesh area']
+    params = columns[2:]
+    result_percell_df= result_percell_df.astype({param: float for param in params})
+    result_percell_df.to_csv(f'{f_name}/percell_results.csv')
 
-    log.info('Step 4/X: Get overview params')
-    ct_groups = mesh_area_percell_df.groupby('celltype')
-    sum_surface_areas = ct_groups['surface mesh area'].sum()
-    sum_surface_areas_df = pd.DataFrame(sum_surface_areas)
-    sum_surface_areas_df.to_csv(f'{f_name}/sum_surface_areas_ct.csv')
-    #actually do it other way around: iterate over each cell and check there with kdtree of coordinates
-    #check there number of vesicles the cell is close to, surface area the cell is close to
+    log.info('Step 4/4: Get overview params, calculate statistics and plot results')
+    cls = CelltypeColors(ct_dict=ct_dict)
+    ct_palette = cls.ct_palette(key=color_key)
+    ct_groups = result_percell_df.groupby('celltype')
+    unique_ct_str = np.unique(result_percell_df['celltype'])
+    ct_str_list = np.array(ct_str_list)[np.in1d(ct_str_list, unique_ct_str)]
+    overview_df = pd.DataFrame(index = range(len(unique_ct_str)))
+    overview_df['celltype'] = unique_ct_str
+    overview_df['numbers'] = np.array(ct_groups.size())
+    kruskal_results_df = pd.DataFrame(columns = ['stats', 'p-value'], index = params)
+    group_comps = list(combinations(unique_ct_str, 2))
+    ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
+    ranksum_df = pd.DataFrame(columns=ranksum_columns)
+    for param in params:
+        #get overview params
+        overview_df[f'{param} sum'] = np.array(ct_groups[param].sum())
+        overview_df[f'{param} mean'] = np.array(ct_groups[param].mean())
+        overview_df[f'{param} std'] = np.array(ct_groups[param].std())
+        overview_df[f'{param} median'] = np.array(ct_groups[param].median())
+        #calculate kruskal wallis result
+        key_groups = [group[param].values for name, group in
+                      result_percell_df.groupby('celltype')]
+        kruskal_res = kruskal(*key_groups, nan_policy='omit')
+        kruskal_results_df.loc[param, 'stats'] = kruskal_res[0]
+        kruskal_results_df.loc[param, 'p-value'] = kruskal_res[1]
+        if kruskal_res[1] < 0.05:
+            for group in group_comps:
+                ranksum_res = ranksums(ct_groups.get_group(group[0])[param], ct_groups.get_group(group[1])[param])
+                ranksum_df.loc[f'{param} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
+                ranksum_df.loc[f'{param} p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
+        #plot results
+        if 'surface area' in param and (not 'ratio' in param or not 'fraction' in param):
+            ylabel = f'{param} [µm²]'
+        elif 'ratio' in param and 'number' in param:
+            ylabel = f'{param} [1/µm²]'
+        else:
+            ylabel = param
+        sns.boxplot(data=result_percell_df, x='celltype', y=param, palette=ct_palette, order=ct_str_list)
+        plt.title(param)
+        plt.ylabel(ylabel, fontsize=fontsize)
+        plt.xlabel('celltype', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.savefig(f'{f_name}/{param}_box.png')
+        plt.savefig(f'{f_name}/{param}_box.svg')
+        plt.close()
+        '''
+        sns.violinplot(data=result_percell_df, x='celltype', y=param, palette=ct_palette, inner="box", order=ct_str_list)
+        plt.title(param)
+        plt.ylabel(ylabel, fontsize=fontsize)
+        plt.xlabel('celltype', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.savefig(f'{f_name}/{param}_violin.png')
+        plt.savefig(f'{f_name}/{param}_violin.svg')
+        plt.close()
+        '''
+        #also plot overview df params as barplot
+        sns.barplot(data = overview_df, x = 'celltype', y = f'{param} sum', palette=ct_palette, order=ct_str_list)
+        plt.title(f'{param} sum')
+        plt.ylabel(ylabel, fontsize=fontsize)
+        plt.xlabel('celltype', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.savefig(f'{f_name}/{param}_sum_ct_bar.png')
+        plt.savefig(f'{f_name}/{param}_sum_ct_bar.svg')
+        plt.close()
+        sns.barplot(data=overview_df, x='celltype', y=f'{param} median', palette=ct_palette, order=ct_str_list)
+        plt.title(f'{param} median')
+        plt.ylabel(ylabel, fontsize=fontsize)
+        plt.xlabel('celltype', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.savefig(f'{f_name}/{param}_median_ct_bar.png')
+        plt.savefig(f'{f_name}/{param}_median_ct_bar.svg')
+        plt.close()
 
-    log.info('Step 4/X: ')
-    all_vertices = np.concatenate(ct_vertices)
-    vert_tree = KDTree(all_vertices)
+    overview_df.to_csv(f'{f_name}/overview_df.csv')
+    kruskal_results_df.to_csv(f'{f_name}/kruskal_results.csv')
+    ranksum_df.to_csv(f'{f_name}/ranksum_results.csv')
 
-
-
-    # step 4: get cell ids closest to close membrane vesicles
-
-    # step 5: normalise with summed surface areas of cell types
-
-    # step 6: get overview params, plot results and calculate statistics
 
 
     log.info('Analysis finsihed.')

@@ -37,7 +37,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
-    celltype = 5
+    celltype = 0
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = True
@@ -61,8 +61,8 @@ if __name__ == '__main__':
                      '240524_j0251v6_ct_morph_analyses_mcl_200_ax200_TeBKv6MSNyw_fs20npca2_umap5/ct_morph_df.csv'
         log.info(f'Only suitable ids will be used, loaded from {id_path}')
         loaded_morph_df = pd.read_csv(id_path, index_col=0)
-        suitable_ids = loaded_morph_df['cellid']
-        suitable_cts = loaded_morph_df['celltype']
+        suitable_ids = np.array(loaded_morph_df['cellid'])
+        suitable_cts = np.array(loaded_morph_df['celltype'])
         log.info(f'{len(suitable_ids)} cells were selected to be suitable for analysis')
     else:
         ssd = SuperSegmentationDataset(working_dir=global_params.wd)
@@ -77,7 +77,6 @@ if __name__ == '__main__':
     known_mergers = analysis_params.load_known_mergers()
     misclassified_asto_ids = analysis_params.load_potential_astros()
     cache_name = analysis_params.file_locations
-    all_cts = np.arange(0, len(ct_dict.keys()))
 
     log.info('Step 1/4: Filter suitable cellids')
     cell_dict = analysis_params.load_cell_dict(celltype)
@@ -214,6 +213,7 @@ if __name__ == '__main__':
     result_percell_df['freq surface area close'] = fraction_close_surface_area / result_percell_df['fraction surface mesh area']
     params = columns[2:]
     result_percell_df= result_percell_df.astype({param: float for param in params})
+    result_percell_df = result_percell_df.astype({'celltype': str})
     result_percell_df.to_csv(f'{f_name}/percell_results.csv')
 
     log.info('Step 4/4: Get overview params, calculate statistics and plot results')
@@ -262,7 +262,6 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{param}_box.png')
         plt.savefig(f'{f_name}/{param}_box.svg')
         plt.close()
-        '''
         sns.violinplot(data=result_percell_df, x='celltype', y=param, palette=ct_palette, inner="box", order=ct_str_list)
         plt.title(param)
         plt.ylabel(ylabel, fontsize=fontsize)
@@ -272,7 +271,6 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{param}_violin.png')
         plt.savefig(f'{f_name}/{param}_violin.svg')
         plt.close()
-        '''
         #also plot overview df params as barplot
         sns.barplot(data = overview_df, x = 'celltype', y = f'{param} sum', palette=ct_palette, order=ct_str_list)
         plt.title(f'{param} sum')

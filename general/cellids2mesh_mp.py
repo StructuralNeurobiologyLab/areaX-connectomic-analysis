@@ -1,13 +1,10 @@
 
 if __name__ == '__main__':
     from syconn import global_params
-    from syconn.reps.super_segmentation import SuperSegmentationObject
-    from syconn.reps.segmentation import SegmentationDataset
     from analysis_params import Analysis_Params
     from cellid2mesh_helper import whole_cellid2mesh, comp2mesh
     from analysis_morph_helper import check_comp_lengths_ct
     import numpy as np
-    from tqdm import tqdm
     import os as os
     from syconn.handler.config import initialize_logging
     from syconn.mp.mp_utils import start_multiprocess_imap
@@ -19,19 +16,22 @@ if __name__ == '__main__':
     axon_cts = bio_params.axon_cts()
 
     f_name = 'cajal/scratch/users/arother/exported_meshes'
-    ct = 5
+    ct = 0
     ct_str = ct_dict[ct]
     min_comp_len = 200
+    #if None is selected the full cells will be exported; otherwise expects list of compartments
+    #possible compartments: 'axon', 'dendrite', 'soma'
+    #if all three are given, the full cell mesh will be exported but seperated into compartments
     compartments = None
     if compartments is None:
         foldername = f'{f_name}/240719_j0251{version}_{ct_str}_full_cells_mcl_{min_comp_len}/'
     elif len(compartments) == 3:
         foldername = f'{f_name}/240719_j0251{version}_{ct_str}_all_comps_sep_mcl_{min_comp_len}/'
     else:
-        foldername = f'{f_name}/240719_j0251{version}_{ct_str}_{compartments[0]}_mcl_{min_comp_len}'
-    if not os.path.exists(f_name):
-        os.mkdir(f_name)
-    log = initialize_logging(f'log_cellid2mesh_{ct_str}', log_dir=f_name)
+        foldername = f'{f_name}/240719_j0251{version}_{ct_str}_{compartments[0]}_mcl_{min_comp_len}/'
+    if not os.path.exists(foldername):
+        os.mkdir(foldername)
+    log = initialize_logging(f'log_cellid2mesh_{ct_str}', log_dir=foldername)
     log.info(f' desired compartment = {compartments}, min comp len = {min_comp_len} µm')
 
     log.info('Step 1/2: Get suitable cell ids')

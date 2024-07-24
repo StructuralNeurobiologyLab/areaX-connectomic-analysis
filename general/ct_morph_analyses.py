@@ -29,8 +29,8 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    full_cells_only = False
-    axon_only = True
+    full_cells_only = True
+    axon_only = False
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     use_vc_density = False
     use_ves_density = True
     use_syn_params = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240613_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240723_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
              f"npca{n_comps_PCA}_umap{n_umap_runs}_ax_only_synmives" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
@@ -119,6 +119,7 @@ if __name__ == '__main__':
     morph_df = pd.DataFrame(columns=columns, index=range(len(all_suitable_ids)))
     morph_df['cellid'] = all_suitable_ids
     morph_df['celltype'] = all_celltypes
+    raise ValueError
     param_list = columns[2:]
 
     if process_morph_parameters:

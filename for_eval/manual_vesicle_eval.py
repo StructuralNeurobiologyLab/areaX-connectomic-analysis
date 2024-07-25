@@ -71,7 +71,7 @@ if __name__ == '__main__':
     #one plot with true and false vesicles as overview
     sns.histplot(data = eval_df, x = 'single vesicle?', stat='percent', hue = 'prediction',
                  palette=ct_palette, common_norm= False, multiple= 'dodge', shrink=0.8,
-                 ec = None, alpha = 1)
+                 ec = None, alpha = 1, )
     plt.xlabel('single vesicle?', fontsize = fontsize)
     plt.ylabel('percent of vesicles', fontsize = fontsize)
     plt.title('overview single vesicles')
@@ -122,6 +122,32 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/true_in_axon_perc.png')
     plt.savefig(f'{f_name}/true_in_axon_perc.svg')
     plt.close()
+    #plot true percentage depending on cell type
+    unique_cts = np.unique(eval_df['celltype'])
+    num_cts = len(unique_cts)
+    ct_overview_df = pd.DataFrame(columns = ['celltype', 'number of vesicles total', 'fraction true vesicles', 'prediction'], index = range(num_cts * 2))
+    ct_overview_df.loc[0 : num_cts - 1, 'celltype'] = unique_cts
+    ct_overview_df.loc[num_cts: num_cts * 2 - 1, 'celltype'] = unique_cts
+    ct_overview_df.loc[0: num_cts - 1, 'prediction'] = 'multi class'
+    ct_overview_df.loc[num_cts: num_cts * 2 - 1, 'prediction'] = 'single class'
+    all_ct_groups_mc = eval_df[eval_df['prediction'] == 'multi class'].groupby('celltype')
+    all_ct_groups_sc = eval_df[eval_df['prediction'] == 'single class'].groupby('celltype')
+    ct_overview_df.loc[0 : num_cts - 1, 'number of vesicles total'] = np.array(all_ct_groups_mc.size())
+    ct_overview_df.loc[num_cts: num_cts * 2 - 1, 'number of vesicles total'] = np.array(all_ct_groups_sc.size())
+    true_groups_mc = eval_true_df[eval_true_df['prediction'] == 'multi class'].groupby('celltype')
+    true_groups_sc = eval_true_df[eval_true_df['prediction'] == 'single class'].groupby('celltype')
+    ct_overview_df.loc[0: num_cts - 1, 'fraction true vesicles'] = 100  * np.array(true_groups_mc.size()) / np.array(all_ct_groups_mc.size())
+    ct_overview_df.loc[num_cts: num_cts * 2 - 1, 'fraction true vesicles'] = 100 * np.array(true_groups_sc.size()) / np.array(all_ct_groups_sc.size())
+    ct_overview_df.to_csv(f'{f_name}/ct_overview_df.csv')
+    sns.barplot(data = ct_overview_df, x = 'celltype', y = 'fraction true vesicles', hue = 'prediction', palette=ct_palette)
+    plt.xlabel('celltype', fontsize=fontsize)
+    plt.ylabel('percent of vesicles', fontsize=fontsize)
+    plt.title('fraction true vesicles all ct')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/true_perc_celltype.png')
+    plt.savefig(f'{f_name}/true_perc_celltype.svg')
+    plt.close()
     #plot percentage of vesicles close to axon membrane depending on distance measurement
     eval_true_df.loc[eval_true_df['close to membrane?'] == 'y', 'close to membrane?'] = 'True'
     eval_true_df.loc[eval_true_df['close to membrane?'] == 'n', 'close to membrane?'] = 'False'
@@ -137,22 +163,99 @@ if __name__ == '__main__':
             continue
         else:
             eval_true_df.loc[i, 'close to cell membrane?'] = 'False'
-    #get fraction of true cells depending on distance
+    #get fraction of true close-membrane cells depending on distance
     distance_thresholds = [5, 10, 15, np.inf]
     dist_columns = ['number vesicles', 'fraction close membrane vesicles', 'distance', 'prediction']
-    distance_df = pd.DataFrame(columns = dist_columns,index = range((len(distance_thresholds) + 1) * 2))
-    for i,di in enumerate(distance_thresholds):
-        if di == np.inf:
-            distance_df.loc[i*2: i*2 + 1, 'distance'] = '>15'
+    distance_df = pd.DataFrame(columns = dist_columns,index = range(len(distance_thresholds) * 2))
+    for di,dist in enumerate(distance_thresholds):
+        if dist == np.inf:
+            distance_df.loc[di*2: di*2 + 1, 'distance'] = '>15'
         else:
-            distance_df.loc[i * 2: i * 2 + 1, 'distance'] = di
-        distance_df.loc[i*2: i*2 + 1, 'prediction'] = np.array(true_groups.group_keys())
+            distance_df.loc[di * 2: di * 2 + 1, 'distance'] = dist
+        distance_df.loc[di*2: di*2 + 1, 'prediction'] = np.unique(eval_true_df['prediction'])
         #get number and fraction of true groups for each distance bin
+        dist_df = eval_true_df[eval_true_df['dist 2 membrane'] <= dist]
+        if di > 0:
+            dist_df = dist_df[dist_df['dist 2 membrane'] > distance_thresholds[di - 1]]
+        dist_df_groups = dist_df.groupby('prediction')
+        distance_df.loc[di*2: di*2 + 1, 'number vesicles'] = np.array(dist_df_groups.size())
+        close_mem_dist_df = dist_df[dist_df['close to cell membrane?'] == 'True']
+        close_dist_df_groups = close_mem_dist_df.groupby('prediction')
+        fraction_close_vesicles = np.array(close_dist_df_groups.size()) / np.array(dist_df_groups.size())
+        distance_df.loc[di*2: di*2 + 1, 'fraction close membrane vesicles'] = fraction_close_vesicles
+    distance_df.to_csv(f'{f_name}/distance_close_membrane.csv')
+    sns.barplot(data=distance_df, x='distance', y= 'number vesicles', hue='prediction',
+                 palette=ct_palette)
+    plt.xlabel('distance [nm]', fontsize=fontsize)
+    plt.ylabel('number vesicles', fontsize=fontsize)
+    plt.title('close membrane vesicles')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/num_ves_dist_close_membrane.png')
+    plt.savefig(f'{f_name}/num_ves_dist_close_membrane.svg')
+    plt.close()
+    sns.barplot(data=distance_df, x='distance', y='fraction close membrane vesicles', hue='prediction',
+                palette=ct_palette)
+    plt.xlabel('distance [nm]', fontsize=fontsize)
+    plt.ylabel('fraction close membrane vesicles', fontsize=fontsize)
+    plt.title('close membrane vesicles')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/frac_ves_dist_close_membrane.png')
+    plt.savefig(f'{f_name}/frac_ves_dist_close_membrane.svg')
+    plt.close()
 
+    #get fraction of cells at synapse depending on distance
+    eval_true_df.loc[eval_true_df['at synapse?'] == 'y', 'at synapse?'] = 'True'
+    eval_true_df.loc[eval_true_df['at synapse?'] == 'n', 'at synapse?'] = 'False'
+    syn_distance_thresholds = np.arange(100, 1100, 100)
+    syn_distance_thresholds = np.hstack([syn_distance_thresholds, np.inf])
+    syn_dist_columns = ['number vesicles', 'fraction close synapse vesicles', 'distance', 'prediction']
+    syn_distance_df = pd.DataFrame(columns=dist_columns, index=range(len(syn_distance_thresholds) * 2))
+    for di, dist in enumerate(syn_distance_thresholds):
+        if dist == np.inf:
+            syn_distance_df.loc[di * 2: di * 2 + 1, 'distance'] = '>1000'
+        else:
+            syn_distance_df.loc[di * 2: di * 2 + 1, 'distance'] = dist
+        syn_distance_df.loc[di * 2: di * 2 + 1, 'prediction'] = np.unique(eval_true_df['prediction'])
+        # get number and fraction of true groups for each distance bin
+        dist_df = eval_true_df[eval_true_df['dist 2 synapse'] <= dist]
+        if di > 0:
+            dist_df = dist_df[dist_df['dist 2 synapse'] > syn_distance_thresholds[di - 1]]
+        dist_df_groups = dist_df.groupby('prediction')
+        syn_distance_df.loc[di * 2: di * 2 + 1, 'number vesicles'] = np.array(dist_df_groups.size())
+        close_syn_dist_df = dist_df[dist_df['at synapse?'] == 'True']
+        if len(close_syn_dist_df) == 0:
+            syn_distance_df.loc[di * 2: di * 2 + 1, 'fraction close synapse vesicles'] = 0
+        else:
+            close_dist_df_groups = close_syn_dist_df.groupby('prediction')
+            fraction_close_vesicles = np.array(close_dist_df_groups.size()) / np.array(dist_df_groups.size())
+            syn_distance_df.loc[di * 2: di * 2 + 1, 'fraction close synapse vesicles'] = fraction_close_vesicles
+    syn_distance_df.to_csv(f'{f_name}/distance_close_synapse.csv')
+    sns.barplot(data=syn_distance_df, x='distance', y='number vesicles', hue='prediction',
+                palette=ct_palette)
+    plt.xlabel('distance [nm]', fontsize=fontsize)
+    plt.ylabel('number vesicles', fontsize=fontsize)
+    plt.title('close membrane vesicles')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/num_ves_dist_close_synapse.png')
+    plt.savefig(f'{f_name}/num_ves_dist_close_synapse.svg')
+    plt.close()
+    sns.barplot(data=syn_distance_df, x='distance', y='fraction close synapse vesicles', hue='prediction',
+                palette=ct_palette)
+    plt.xlabel('distance [nm]', fontsize=fontsize)
+    plt.ylabel('fraction close synapse vesicles', fontsize=fontsize)
+    plt.title('close synapse vesicles')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/frac_ves_dist_close_synapse.png')
+    plt.savefig(f'{f_name}/frac_ves_dist_close_synapse.svg')
+    plt.close()
 
-
+    eval_true_df.to_csv(f'{f_name}/eval_true_df.csv')
     overview_df.to_csv(f'{f_name}/overview_df.csv')
-
+    raise ValueError
 
     #plot also if in axon or not
 

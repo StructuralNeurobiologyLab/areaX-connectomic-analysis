@@ -48,11 +48,12 @@ if __name__ == '__main__':
     plot_connmatrix_only = False
     fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240529_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i_stn_nogp_only" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240809_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i_gt_cells_only" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     save_svg = True
+    use_gt_cells_only = True
     log = initialize_logging('Celltypes input output percentages', log_dir=f_name + '/logs/')
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
@@ -71,29 +72,41 @@ if __name__ == '__main__':
     suitable_ids_dict = {}
     all_suitable_ids = []
     cts_numbers_perct = pd.DataFrame(columns=['total number of cells', 'number of suitable cells', 'percentage of suitable cells'], index=celltypes)
+    if use_gt_cells_only:
+        gt_path = "cajal/nvmescratch/projects/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv"
+        gt_df = pd.read_csv(gt_path, names = ["cellids", "celltype"])
+        log.info(f'Only cells from gt used, loaded from {gt_path}')
     for ct in tqdm(range(num_cts)):
         ct_str = ct_dict[ct]
         cell_dict = analysis_params.load_cell_dict(ct)
-        cellids = np.array(list(cell_dict.keys()))
-        if exclude_known_mergers:
-            merger_inds = np.in1d(cellids, known_mergers) == False
-            cellids = cellids[merger_inds]
-        if ct in axon_cts:
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax, axon_only=True,
-                              max_path_len=None)
-            cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(cellids)
+        if use_gt_cells_only:
+            cellids_checked = np.array(gt_df['cellids'][gt_df['celltype'] == ct_dict[ct]])
+            all_cellids = ssd.ssv_ids[ssd.load_numpy_data(celltype_key) == ct]
+            cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(all_cellids)
+            del all_cellids
         else:
-            if ct == 3:
-                misclassified_asto_ids = analysis_params.load_potential_astros()
-                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-                cellids = cellids[astro_inds]
-            if ct == 4:
-                stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
-                                           '240529_stn_msn_nogp_ids_comps/stn_nogp_msn_gpe.csv', index_col=0)
-                cellids = np.array(stn_no_gp_df['cellid'])
-            cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cells,
-                                                axon_only=False,
-                                                max_path_len=None)
+            cellids = np.array(list(cell_dict.keys()))
+            if exclude_known_mergers:
+                merger_inds = np.in1d(cellids, known_mergers) == False
+                cellids = cellids[merger_inds]
+            if ct in axon_cts:
+                cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax, axon_only=True,
+                                  max_path_len=None)
+                cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(cellids)
+            else:
+                if ct == 3:
+                    misclassified_asto_ids = analysis_params.load_potential_astros()
+                    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+                    cellids = cellids[astro_inds]
+                #if ct == 4:
+                    #stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
+                    #                           '240529_stn_msn_nogp_ids_comps/stn_nogp_msn_gpe.csv', index_col=0)
+                    #cellids = np.array(stn_no_gp_df['cellid'])
+
+                    #cellids = np.array(gt_df['cellids'][gt_df['celltype'] == ct_dict[ct]])
+                cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cells,
+                                                    axon_only=False,
+                                                    max_path_len=None)
             #new wd has celltype_cnn_e3 for same celltypes as agglo2 and celltype_pts_e3 for other celltypes
             all_cellids = ssd.ssv_ids[ssd.load_numpy_data(celltype_key) == ct]
             cts_numbers_perct.loc[ct_str, 'total number of cells'] = len(all_cellids)

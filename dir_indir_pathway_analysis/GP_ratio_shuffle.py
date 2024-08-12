@@ -30,13 +30,18 @@ if __name__ == '__main__':
     gpi_ct = 7
     n_it = 3
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240412_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
+    binary_syns = True
+    if binary_syns:
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240812_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
+    else:
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240812_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
     log.info(f' min comp len = {min_comp_len}, number of iterations = {n_it}')
     log.info("Analysis of GP ratio vs random starts")
-
+    if binary_syns:
+        log.info('Synapse sizes are all set to 1')
     # load information about MSN groups and GP ratio
     kde = True
     f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240229_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f20" % (
@@ -56,6 +61,8 @@ if __name__ == '__main__':
     # get the synapses between MSN and GP from syn_sizes_df Dataframe
     log.info(f'Use syn sizes info from {f_name_saving1}')
     syn_sizes_df = pd.read_csv(f'{f_name_saving1}/syn_sizes_toGP.csv', index_col=0)
+    if binary_syns:
+        syn_sizes_df['syn sizes'] = 1
 
     log.info('Step 1/5: Calculate probabilites to use for shuffling')
     shuffle_cats = np.array(['observed', 'random', 'random with syn ratio', 'random with syn area ratio', 'random GP cell number ratio',
@@ -131,7 +138,7 @@ if __name__ == '__main__':
         syn_sizes_df.loc[rndm_inds == False, f'random GP cell volume ratio {i}'] = 'GPe'
 
 
-    log.info('Step 3/564: Plot size distributions for observed and shuffled data')
+    log.info('Step 3/5: Plot size distributions for observed and shuffled data')
     gp_palette = {'GPe': '#592A87', 'GPi': '#2AC644'}
     for sc in shuffle_cats:
         for i in range(n_it):

@@ -28,20 +28,20 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict()
     min_comp_len = 200
     dist_threshold = 10 #nm
-    min_syn_size = 0.1
-    syn_prob_thresh = 0.8
-    syn_dist_threshold = 5000 #nm
+    min_syn_size = 0.05
+    syn_prob_thresh = 0.6
+    syn_dist_threshold = 500 #nm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240508_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240814_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s_smallersyns" % (
         min_comp_len, dist_threshold, syn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Vesicle - synsize - dependency', log_dir=f_name + '/logs/')
     log.info(
-        "min_comp_len = %i, min_syn_size = %.1f, syn_prob_thresh = %.1f, distance threshold to membrane = %s nm, "
+        "min_comp_len = %i, min_syn_size = %.2f, syn_prob_thresh = %.1f, distance threshold to membrane = %s nm, "
         "distance threshold to synapse = %i nm, colors = %s" % (
             min_comp_len, min_syn_size, syn_prob_thresh, dist_threshold, syn_dist_threshold, color_key))
 
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     combined_results.to_csv(f'{f_name}/all_syns_ves.csv')
     #plot results per parameter as boxplot
     for key in combined_results.columns:
-        if 'cellid' in key or 'celltype' in key:
+        if 'cellid' in key or 'celltype' in key or 'coord' in key:
             continue
         if 'size' in key:
             ylabel = f'{key} [µm²]'
@@ -247,7 +247,7 @@ if __name__ == '__main__':
 
     log.info('Step 4/4: Get overview params and calculate statistics')
     param_list = list(combined_results.columns)
-    param_list = param_list[1:-1]
+    param_list = param_list[1:-4]
     combined_results = combined_results.astype({'synapse size [µm²]': float, 'number of vesicles': int, 'number of membrane-close vesicles': int})
     ct_groups = combined_results.groupby('celltype')
     unique_cts = np.unique(combined_results['celltype'])

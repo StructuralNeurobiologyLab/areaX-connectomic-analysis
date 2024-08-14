@@ -612,8 +612,9 @@ def generate_colored_mesh_from_skel_data(args):
     :param args: cellid, path to folder where kzip should be stored, key to color
     :return:
     '''
+
     # color lookup from HA
-    cellid, f_name, key, only_coarse, k = args
+    cellid, f_name, key, only_coarse, k, ct_dict = args
     if only_coarse:
         col_lookup = {0: (50, 135, 168, 255), 1: (232, 170, 71, 255), 2: (189, 55, 72, 255)}
     else:
@@ -622,6 +623,10 @@ def generate_colored_mesh_from_skel_data(args):
                       4: (255, 255, 125, 255)}
     cell = SuperSegmentationObject(cellid)
     cell.load_skeleton()
+    if ct_dict is not None:
+        cell.load_attr_dict()
+        ct_num = cell.attr_dict['celltype_pts_e3']
+        celltype = ct_dict[ct_num]
     # load skeleton axoness, spiness attributes
     nodes = cell.skeleton['nodes'] * cell.scaling
     axoness_labels = cell.skeleton[key]
@@ -637,7 +642,10 @@ def generate_colored_mesh_from_skel_data(args):
 
     # save colored mesh
     cols = np.array([col_lookup[el] for el in vert_axoness_labels.squeeze()], dtype=np.uint8)
-    kzip_out = f'{f_name}/{cellid}_colored_mesh_{key}'
+    if ct_dict is not None:
+        kzip_out = f'{f_name}/{cellid}_{celltype}_colored_mesh_{key}'
+    else:
+        kzip_out = f'{f_name}/{cellid}_colored_mesh_{key}'
     kzip_out_skel = f'{f_name}/{cellid}_skel'
     write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,
                     f'{cellid}.ply')

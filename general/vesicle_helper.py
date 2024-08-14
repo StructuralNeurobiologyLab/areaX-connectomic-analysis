@@ -178,6 +178,9 @@ def get_ves_synsize_percell(cell_input):
     output_df['synapse size [µm²]'] = syn_sizes
     output_df['number of vesicles'] = number_ves_per_synapse
     output_df['cellid'] = cellid
+    output_df['syn coord x'] = syn_coords[:, 0]
+    output_df['syn coord y'] = syn_coords[:, 1]
+    output_df['syn coord z'] = syn_coords[:, 2]
     #now filter according to distance to matrix
     cell_axo_ves_coords_thresh = cell_ves_coords[cell_dist2matrix < distance_threshold]
     #search which vesicle indices are within certain distance of synapse and close to membrane

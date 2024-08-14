@@ -16,20 +16,20 @@ if __name__ == '__main__':
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
-    f_name = 'cajal/scratch/users/arother/230804_neuron_example_meshes'
+    f_name = 'cajal/scratch/users/arother/exported_meshes/230804_neuron_example_meshes'
     #f_name = 'cajal/scratch/users/arother/240115_LMAN_example_meshes'
 
     bio_params = Analysis_Params(version = 'v6')
     ct_dict = bio_params.ct_dict(with_glia = True)
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
-    whole_cell = True
+    whole_cell = False
     organelle_class = ['vc']
     get_orgs = False
     get_orgs_comp_sep = False
     get_only_myelin = False
-    get_single_ves_coords = False
-    get_membrane_close_vesicles_separate = False
+    get_single_ves_coords = True
+    get_membrane_close_vesicles_separate = True
     get_syns = False
     get_syns_comp = 1
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
     #get wrongly segmented bv and associated astrocytes
     #cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
-    cellids = [1190822162, 2069615083, 1143990345, 2017622103]
+    cellids = [33643243, 26252706, 820388630]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])

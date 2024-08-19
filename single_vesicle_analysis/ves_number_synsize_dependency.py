@@ -30,7 +30,7 @@ if __name__ == '__main__':
     dist_threshold = 10 #nm
     min_syn_size = 0.05
     syn_prob_thresh = 0.6
-    syn_dist_threshold = 500 #nm
+    syn_dist_threshold = 2000 #nm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'

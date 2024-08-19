@@ -25,7 +25,7 @@ if __name__ == '__main__':
     min_comp_len_ax = 50
     min_syn_size = 0.1
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240726_j0251{version}_rfc_syn_eval_mcl_%i_ax%i_ms_%f" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240919_j0251{version}_rfc_syn_eval_mcl_%i_ax%i_ms_%f" % (
                  min_comp_len_cell, min_comp_len_ax, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

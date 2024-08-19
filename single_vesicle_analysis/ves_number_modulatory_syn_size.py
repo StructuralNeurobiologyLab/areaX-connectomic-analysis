@@ -5,8 +5,7 @@
 #independent of close or far from membrane
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_cell_close_surface_area
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, filter_synapse_caches_general
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -17,12 +16,11 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
     import numpy as np
-    from tqdm import tqdm
     from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from scipy.stats import kruskal, ranksums
-    from itertools import combinations
+    from scipy.stats import ranksums
+    from scipy.spatial import KDTree
 
     version = 'v6'
     analysis_params = Analysis_Params(version = version)
@@ -35,32 +33,29 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     nonsyn_dist_threshold = None  # nm
     release_thresh = 5 #µm
-    cls = CelltypeColors(ct_dict = ct_dict)
-    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'TePkBrNGF'
     celltype = 5
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = True
     #spiness is list of spiness values that should be selected
     #spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
-    spiness = None
+    spiness = [2]
     #pre and post_cts is list of cell type numbers to be filtered for in synapses
     #if selected glia synapses will be filtered out automatically
-    pre_cts = None
-    post_cts = None
+    pre_cts = [1, 2, 7]
+    post_cts = [4]
     if pre_cts is None and post_cts is not None:
         raise ValueError('to select a postsynaptic cell type you need to select a presynaptic cell type also')
     if nonsyn_dist_threshold is None:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240814_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_%s" % (
-            min_comp_len, release_thresh, color_key)
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240816_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_3inSTN_shaft_only" % (
+            min_comp_len, release_thresh)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240814_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_%s" % (
-            min_comp_len, nonsyn_dist_threshold, release_thresh, color_key)
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240816_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i" % (
+            min_comp_len, nonsyn_dist_threshold, release_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'close_mem_2_cell_surface_analysis_{ct_str}', log_dir=f_name + '/logs/')
-    log.info("min_comp_len = %i, colors = %s" % (min_comp_len, color_key))
+    log.info("min_comp_len = %i" % (min_comp_len))
     log.info(f'min syn size = {min_syn_size} µm², syn prob thresh = {syn_prob_thresh}, '
              f'threshold to putative release site = {release_thresh} µm, non syn dist threshold = {nonsyn_dist_threshold} nm')
     if full_cell:
@@ -95,7 +90,7 @@ if __name__ == '__main__':
     misclassified_asto_ids = analysis_params.load_potential_astros()
     cache_name = analysis_params.file_locations
 
-    log.info('Step 1/X: Filter suitable cellids')
+    log.info('Step 1/5: Filter suitable cellids')
     cell_dict = analysis_params.load_cell_dict(celltype)
     # get ids with min compartment length
     cellids = np.array(list(cell_dict.keys()))
@@ -115,7 +110,7 @@ if __name__ == '__main__':
     cellids = np.sort(cellids)
     log.info(f'{len(cellids)} {ct_str} cells fulfill criteria')
 
-    log.info('Step 2/X: Get all vesicle coordinates from these cells')
+    log.info('Step 2/5: Get all vesicle coordinates from these cells')
     # load caches prefiltered for celltype
     if celltype in axon_cts:
         ct_ves_ids = np.load(f'{cache_name}/{ct_str}_ids.npy')
@@ -172,9 +167,10 @@ if __name__ == '__main__':
         non_syn_ves_coords_con = np.concatenate(non_syn_ves_coords)
         log.info(
             f'{len(non_syn_ves_ids_con)} vesicles are non-synaptic ({100 * len(non_syn_ves_ids_con) / len(ct_ves_ids):.2f} %)')
+        ct_ves_coords = non_syn_ves_coords_con
 
 
-    log.info('Step 3/X: Get suitable synapses')
+    log.info('Step 3/5: Get suitable synapses')
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     # filter for min syn size and syn prob to get all suitable synapses in dataset
     m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob = filter_synapse_caches_general(
@@ -183,8 +179,13 @@ if __name__ == '__main__':
         min_syn_size=min_syn_size)
     synapse_caches = [m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob]
     if pre_cts is not None:
-        log.info(f' Synapses are only selected between the following pre-synaptic celltypes {pre_cts} and postsynptic cell types {post_cts}')
-        ct_syn_cts, ct_syn_ids, ct_syn_axs, ct_syn_ssv_partners, ct_syn_sizes, ct_syn_spiness, ct_syn_rep_coord = filter_synapse_caches_for_ct(
+        pre_ct_strs = [ct_dict[ct] for ct in pre_cts]
+        if post_cts is not None:
+            post_ct_strs = [ct_dict[ct] for ct in post_cts]
+        else:
+            post_ct_strs = post_cts
+        log.info(f' Synapses are only selected between the following pre-synaptic celltypes {pre_ct_strs} and postsynptic cell types {post_ct_strs}')
+        m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord = filter_synapse_caches_for_ct(
             pre_cts=pre_cts,
             post_cts=post_cts,
             syn_prob_thresh=None,
@@ -242,14 +243,98 @@ if __name__ == '__main__':
         f' The highest quantile (0.75) of syn area is at {highest_quantile:.2f} µm². {len(large_syn_coords)} synapses are >= this number '
         f'and will be selected as large synapses.')
 
-    log.info(f'Step 4/X: Get number of vesicles in {release_thresh} µm distance around synapses.')
-    #use kdt.query to get distance
-    #get all vesicles up to release thresh radius around all synapses
+    log.info(f'Step 4/5: Get number of vesicles in {release_thresh} µm distance around synapses.')
+    scaling = global_params.config['scaling']
+    small_syns_tree = KDTree(small_syn_coords * scaling)
+    large_syns_tree = KDTree(large_syn_coords * scaling)
+    #get all vesicles that are within a max of release_thresh dist and calculate distance (nm)
+    #then use this to count number in each distance
+    #vesicles are only counted once, so if two synapses are close to same vesicles, it is only counted once with the closest distance
+    ves_dists_small, small_syn_inds = small_syns_tree.query(ct_ves_coords * scaling, distance_upper_bound=release_thresh * 1000)
+    ves_dists_large, large_syn_inds = large_syns_tree.query(ct_ves_coords * scaling,
+                                                            distance_upper_bound=release_thresh * 1000)
+    #remove all vesicles that are not in close range to any small or large synapse
+    ves_dists_small = ves_dists_small[ves_dists_small < np.inf]
+    ves_dists_large = ves_dists_large[ves_dists_large < np.inf]
+    num_small_close_ves = len(ves_dists_small)
+    log.info(f'{num_small_close_ves} vesicles are within {release_thresh} µm to small synapses, '
+             f'{len(ves_dists_large)} vesicles to large synapses.')
+    #make dataframe with all vesicles
+    num_all_ves = num_small_close_ves + len(ves_dists_large)
+    ves_dist_df = pd.DataFrame(columns = ['dist 2 syn', 'distance bin', 'synapse type'], index = range(num_all_ves))
+    ves_dist_df.loc[0: num_small_close_ves - 1, 'dist 2 syn'] = ves_dists_small
+    ves_dist_df.loc[0: num_small_close_ves - 1, 'synapse type'] = 'small'
+    ves_dist_df.loc[num_small_close_ves: num_all_ves -1, 'dist 2 syn'] = ves_dists_large
+    ves_dist_df.loc[num_small_close_ves: num_all_ves -1, 'synapse type'] = 'large'
+    #sort into distance bins with 200 µm
+    dist_cat_bins = np.arange(0, release_thresh * 1000 + 200, 200)
+    dist_cat_labels = dist_cat_bins[1:]
+    ves_dist_cats = np.array(pd.cut(ves_dist_df['dist 2 syn'], dist_cat_bins, right=False, labels=dist_cat_labels))
+    ves_dist_df['distance bin'] = ves_dist_cats
+    #save only if not too many vesicles due to disc storage
+    if len(ves_dist_df) < 100000:
+        ves_dist_df.to_csv(f'{f_name}/vesicle_distance_df.csv')
 
-    #get distance of each vesicle to synapse that is within this radius
-    #either all together or iterate over synapses
-    #for each synapse count number in distnce bin up to release threshold in 0.2 µm bins
-#step 4: for each synapse get all vesicles in 5 µm radius
-# then get distance of each vesicle to synapse (or do both of these together)
-#save up to 5 µm radius
-#make distance bins 
+    log.info('Step 5/5: Get overview statistics and plot results')
+    # do ranksums for statistics
+    syn_type_groups = ves_dist_df.groupby('synapse type')
+    stats, p_value = ranksums(np.array(syn_type_groups.get_group('small')['dist 2 syn']),
+                              np.array(syn_type_groups.get_group('large')['dist 2 syn']))
+    log.info(f'Ranksums result on distances: stats = {stats:.2f}, p-value = {p_value}.')
+    #get number of vesicles in each distance bin
+    num_cats = len(dist_cat_labels)
+    overview_df = pd.DataFrame(columns = ['number vesicles', 'distance bin', 'synapse type'], index = range(num_cats * 2))
+    overview_df.loc[0 : num_cats - 1, 'distance bin'] = dist_cat_labels
+    overview_df.loc[0 : num_cats -1, 'synapse type'] = 'small'
+    small_ves_hist = np.histogram(syn_type_groups.get_group('small')['dist 2 syn'], bins=dist_cat_bins)
+    overview_df.loc[0 : num_cats - 1, 'number vesicles'] = small_ves_hist[0]
+    overview_df.loc[num_cats: 2*num_cats - 1, 'distance bin'] = dist_cat_labels
+    overview_df.loc[num_cats: 2*num_cats - 1, 'synapse type'] = 'small'
+    large_ves_hist = np.histogram(syn_type_groups.get_group('large')['dist 2 syn'], bins=dist_cat_bins)
+    overview_df.loc[num_cats: 2*num_cats - 1, 'number vesicles'] = large_ves_hist[0]
+    overview_df.to_csv(f'{f_name}/hist_numbers_ov.csv')
+
+    #plot results showing number of vesicles and dist 2 synapse in bins on x-axis
+    size_palette = {'small': '#232121', 'large': '#15AEAB'}
+    sns.histplot(x='dist 2 syn', data=ves_dist_df, hue='synapse type', palette=size_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, bins=dist_cat_bins)
+    plt.ylabel('number of vesicles', fontsize=fontsize)
+    plt.xlabel('distance to synapse [nm]', fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.title('vesicle distance to closest synapse')
+    plt.savefig(f'{f_name}/num_ves_dist2syn_hist_cats.png')
+    plt.savefig(f'{f_name}/num_ves_dist2syn_hist_cats.svg')
+    plt.close()
+    sns.histplot(x='dist 2 syn', data=ves_dist_df, hue='synapse type', palette=size_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, bins=dist_cat_bins, stat = 'percent')
+    plt.ylabel('% of vesicles', fontsize=fontsize)
+    plt.xlabel('distance to synapse [nm]', fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.title('vesicle distance to closest synapse')
+    plt.savefig(f'{f_name}/num_ves_dist2syn_hist_cats_perc.png')
+    plt.savefig(f'{f_name}/num_ves_dist2syn_hist_cats_perc.svg')
+    plt.close()
+    sns.histplot(x='dist 2 syn', data=ves_dist_df, hue='synapse type', palette=size_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True)
+    plt.ylabel('number of vesicles', fontsize=fontsize)
+    plt.xlabel('distance to synapse [nm]', fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.title('vesicle distance to closest synapse')
+    plt.savefig(f'{f_name}/num_ves_dist2syn_hist.png')
+    plt.savefig(f'{f_name}/num_ves_dist2syn_hist.svg')
+    plt.close()
+    sns.histplot(x='dist 2 syn', data=ves_dist_df, hue='synapse type', palette=size_palette, common_norm=False,
+                 fill=False, element="step", linewidth=3, legend=True, stat='percent')
+    plt.ylabel('% of vesicles', fontsize=fontsize)
+    plt.xlabel('distance to synapse [nm]', fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.title('vesicle distance to closest synapse')
+    plt.savefig(f'{f_name}/num_ves_dist2syn_hist_perc.png')
+    plt.savefig(f'{f_name}/num_ves_dist2syn_hist_perc.svg')
+    plt.close()
+
+    log.info('Analysis finished.')

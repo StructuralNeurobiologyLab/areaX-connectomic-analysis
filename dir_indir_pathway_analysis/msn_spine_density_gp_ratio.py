@@ -21,6 +21,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from scipy.stats import ranksums, kruskal, spearmanr
     from itertools import combinations
+    from tqdm import tqdm
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
 
@@ -34,15 +35,15 @@ if __name__ == '__main__':
     syn_prob = 0.6
     min_syn_size = 0.1
     conn_ct = 4
-    ct1 = 9
-    ct2 = 3
+    ct1 = 6
+    ct2 = 7
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     fontsize_jointplot = 20
     kde = True
     check_dens= False
     color_key = 'STNGPINTv6'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_{ct1_str}_{ct2_str}ratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_fullden7" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240820_j0251{version}_%s_{conn_ct}_{ct1_str}_{ct2_str}ratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}" % (
     ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -62,12 +63,12 @@ if __name__ == '__main__':
 
     log.info(f'Step 1/7: Load and check all {ct_dict[conn_ct]} cells')
     known_mergers = analysis_params.load_known_mergers()
+    misclassified_asto_ids = analysis_params.load_potential_astros()
 
     cell_dict = analysis_params.load_cell_dict(celltype=conn_ct)
     cell_ids = np.array(list(cell_dict.keys()))
     merger_inds = np.in1d(cell_ids, known_mergers) == False
     cell_ids = cell_ids[merger_inds]
-    misclassified_asto_ids = analysis_params.load_potential_astros()
     astro_inds = np.in1d(cell_ids, misclassified_asto_ids) == False
     cell_ids = cell_ids[astro_inds]
     cell_ids = check_comp_lengths_ct(cellids=cell_ids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
@@ -128,7 +129,7 @@ if __name__ == '__main__':
     conn_result_df['ratio branching points vs primary dendrites'] = number_branching_points/ number_primary_dendrites
     conn_result_df.to_csv(f'{f_name}/{ct_dict[conn_ct]}_morph_results.csv')
     '''
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240320_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f20" % (
+    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240229_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f20" % (
         ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     log.info(f'Use morph parameters from {f_name_saving1}')
     conn_result_df= pd.read_csv(f'{f_name_saving1}/{ct_dict[conn_ct]}_morph_results.csv', index_col = 0)
@@ -200,6 +201,17 @@ if __name__ == '__main__':
     conn_result_df.loc[ct1_df_inds, f'syn number to {ct1_str}'] = ct1_syn_numbers_sorted
     conn_result_df.loc[ct1_df_inds, f'syn size to {ct1_str}'] = ct1_sum_sizes_sorted
     conn_result_df.loc[ct1_df_inds, f'mean syn size to {ct1_str}'] = ct1_sum_sizes_sorted/ ct1_syn_numbers_sorted
+    #get number of partner cells to ct1
+    num_ct1_partners = np.empty(len(unique_conn_ct1))
+    for i, conn_cellid in enumerate(tqdm(unique_conn_ct1)):
+        ct1_conn_partners = ct1_ssv_partners[np.where(ct1_ssv_partners == conn_cellid)[0]]
+        ct1_conn_partners = ct1_conn_partners[np.where(ct1_conn_partners != conn_cellid)]
+        num_ct1 = len(np.unique(ct1_conn_partners))
+        num_ct1_partners[i] = num_ct1
+
+    num_ct1_partners_sorted = num_ct1_partners[sort_inds_ct1]
+    conn_result_df[f'number {ct1_str} partners'] = 0
+    conn_result_df.loc[ct1_df_inds, f'number {ct1_str} partners'] = num_ct1_partners_sorted
 
     #get per cell information about synapses to ct2
     ct2_inds = np.where(m_cts == ct2)[0]
@@ -217,6 +229,21 @@ if __name__ == '__main__':
     conn_result_df.loc[ct2_df_inds, f'syn number to {ct2_str}'] = ct2_syn_numbers_sorted
     conn_result_df.loc[ct2_df_inds, f'syn size to {ct2_str}'] = ct2_sum_sizes_sorted
     conn_result_df.loc[ct2_df_inds, f'mean syn size to {ct2_str}'] = ct2_sum_sizes_sorted / ct2_syn_numbers_sorted
+    # get number of partner cells to ct1
+    num_ct2_partners = np.empty(len(unique_conn_ct2))
+    for i, conn_cellid in enumerate(tqdm(unique_conn_ct2)):
+        ct2_conn_partners = ct2_ssv_partners[np.where(ct2_ssv_partners == conn_cellid)[0]]
+        ct2_conn_partners = ct2_conn_partners[np.where(ct2_conn_partners != conn_cellid)]
+        num_ct2 = len(np.unique(ct2_conn_partners))
+        num_ct2_partners[i] = num_ct2
+
+    num_ct2_partners_sorted = num_ct2_partners[sort_inds_ct2]
+    conn_result_df[f'number {ct2_str} partners'] = 0
+    conn_result_df.loc[ct2_df_inds, f'number {ct2_str} partners'] = num_ct2_partners_sorted
+    conn_result_df['number cell partners'] = conn_result_df[f'number {ct2_str} partners'] + conn_result_df[f'number {ct1_str} partners']
+
+    #get number of synapses to GP
+    conn_result_df['syn number total'] = conn_result_df[f'syn number to {ct1_str}'] + conn_result_df[f'syn number to {ct2_str}']
     #get ratio per conn ct cell and put in dataframe: ct2/(ct2 + ct1)
     nonzero_inds = np.any([conn_result_df[f'syn number to {ct2_str}'] > 0, conn_result_df[f'syn number to {ct1_str}'] > 0], axis = 0)
     conn_result_df.loc[nonzero_inds, f'{ct1_str}, {ct2_str} ratio syn number'] = conn_result_df.loc[nonzero_inds, f'syn number to {ct2_str}'] / \
@@ -225,7 +252,10 @@ if __name__ == '__main__':
                                                                  (conn_result_df.loc[nonzero_inds, f'syn size to {ct1_str}'] + conn_result_df.loc[nonzero_inds, f'syn size to {ct2_str}'])
     conn_result_df.loc[nonzero_inds, f'{ct1_str}, {ct2_str} ratio mean syn size'] = conn_result_df.loc[nonzero_inds, f'mean syn size to {ct2_str}']/ \
                                                                  (conn_result_df.loc[nonzero_inds, f'mean syn size to {ct1_str}'] + conn_result_df.loc[nonzero_inds, f'mean syn size to {ct2_str}'])
-
+    #get abs(GP ratio - 0.5) for syn area ratio, syn size ratio
+    conn_result_df.loc[nonzero_inds, f'abs({ct1_str}, {ct2_str} ratio - 0.5)'] = np.abs(conn_result_df.loc[nonzero_inds, f'{ct1_str}, {ct2_str} ratio syn number'] - 0.5)
+    conn_result_df.loc[nonzero_inds, f'abs({ct1_str}, {ct2_str} area ratio - 0.5)'] = np.abs(
+        conn_result_df.loc[nonzero_inds, f'{ct1_str}, {ct2_str} ratio sum syn size'] - 0.5)
     conn_result_df.to_csv(f'{f_name}/{ct_dict[conn_ct]}_morph_{ct1_str}_{ct2_str}ratio.csv')
     #get syn sizes for all cells
     lenct_syns = len(ct1_sizes) + len(ct2_sizes)
@@ -462,7 +492,8 @@ if __name__ == '__main__':
     example_inds = np.in1d(conn_result_df['cellid'], example_cellids)
     #plot correlation between morphological parameters and GP ratio
     #calculate spearman corr
-    ratio_key_list = [f'{ct1_str}, {ct2_str} ratio syn number', f'{ct1_str}, {ct2_str} ratio sum syn size']
+    ratio_key_list = [f'{ct1_str}, {ct2_str} ratio syn number', f'{ct1_str}, {ct2_str} ratio sum syn size',
+                      f'abs({ct1_str}, {ct2_str} ratio - 0.5)', f'abs({ct1_str}, {ct2_str} area ratio - 0.5)']
     spearman_result_df = pd.DataFrame(columns = ['stats', 'p-value'])
     zero_inds = np.all([conn_result_df[f'syn number to {ct2_str}'] == 0, conn_result_df[f'syn number to {ct1_str}'] == 0], axis = 0)
     plot_corr_df = conn_result_df[zero_inds == False]
@@ -485,6 +516,8 @@ if __name__ == '__main__':
         else:
             xhist = key
         for rkey in ratio_key_list:
+            if 'abs' in rkey and not ('number cell partners' in key or 'syn number total' in key):
+                continue
             g = sns.JointGrid(data=plot_corr_df, x=key, y=rkey)
             g.plot_joint(sns.kdeplot, color = ct_palette[conn_ct_str])
             g.plot_joint(sns.scatterplot, color = 'black', alpha = 0.3)

@@ -11,14 +11,14 @@ if __name__ == '__main__':
 
     version = 'v6'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240819_j0251{version}_manual_syn_rfc_eval"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240827_j0251{version}_manual_syn_rfc_eval"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'rfc_syn_eval_res_log', log_dir=f_name)
 
     eval_path = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/' \
                 '240726_j0251v6_rfc_syn_eval_mcl_200_ax50_ms_0.100000/' \
-                        'random_syn_coords_evaluation_results_withprobs.csv'
+                        '240823_random_syn_coords_evaluation_results_with_probs.csv'
     log.info(f'evaluation results laoded from {eval_path}')
     eval_df = pd.read_csv(eval_path)
     eval_df.loc[eval_df['final'] == 'y', 'final'] = 'True'
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     log.info(f'In cateogry with all synapses, {len(eval_all_syns_df)} syns were evaluated.')
     log.info(f'{all_syns_true_num} synapses of them were evaluated as true.')
     eval_filtered_syns_df = eval_df[eval_df['category'] == 'filtered syns']
-    log.info(f'In cateogry with only filtered synapses, {len(eval_filtered_syns_df)} syns were evaluated.')
+    log.info(f'In category with only filtered synapses, {len(eval_filtered_syns_df)} syns were evaluated.')
     filtered_syns_true_df = eval_filtered_syns_df[eval_df['final'] == 'True']
     filtered_syns_true_num = len(filtered_syns_true_df)
     log.info(f'{filtered_syns_true_num} synapses of them were evaluated as true.')

@@ -141,6 +141,19 @@ class Analysis_Params(object):
             raise FileNotFoundError('no msn subgroup ids for either this type or this compartment length saved')
         return ids
 
+    def load_handpicked_ids(self, celltype, ct_dict = None):
+        'Loads celltypes but only if file name has handpicked in it'
+        if ct_dict is None:
+            ct_dict = self._ct_dict
+        try:
+            cell_array = load_pkl2obj(f'{self.file_locations}/handpicked_{ct_dict[celltype]:}_ids.pkl')
+        except FileNotFoundError:
+            try:
+                cell_array = np.load(f'{self.file_locations}/handpicked_{ct_dict[celltype]:}_ids.npy')
+            except FileNotFoundError:
+                raise FileNotFoundError('no handpicked cells exist for this celltype')
+        return cell_array
+
 
 
         

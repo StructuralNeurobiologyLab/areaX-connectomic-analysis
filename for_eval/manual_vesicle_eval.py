@@ -31,23 +31,12 @@ if __name__ == '__main__':
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'single_ves_eval_log', log_dir=f_name)
-    #single class training evaluation
-    single_class_path = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/' \
-                '230220_j0251v4_ct_random_ves_eval_mcl_200_dt_15_st_500_5000/' \
-                        'random_selected_vesicles_rm_annotation_for_analyses.csv'
-    #multi class training
-    multi_class_path = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/' \
-                '231218_j0251v5_ct_random_ves_eval_mcl_200_dt_15_st_500_5000_v6gt/' \
-                '231218_rm_annotation_random_selected_vesicles_for_analysis.csv'
-    log.info(f'Vesicle evaluation for single class will be loaded from {single_class_path}')
-    log.info(f'Vesicle evaluation for multiclass class will be loaded from {multi_class_path}')
-    single_class_df = pd.read_csv(single_class_path)
-    multi_class_df = pd.read_csv(multi_class_path)
+
+    eval_path = 'cajal/scratch/arother/bio_analysis_results/for_eval/240723_j0251v6_manual_ves_eval/' \
+                '240904_random_single_vesicles_evaluation_RM_with_dist_results.csv'
+    log.info(f'Load manual evaluation results from {eval_path}')
+    eval_df = pd.read_csv(eval_path)
     ct_palette = {'single class': '#E8AA47', 'multi class': '#3287A8'}
-    #combine into one dataframe
-    single_class_df['prediction'] = 'single class'
-    multi_class_df['prediction'] = 'multi class'
-    eval_df = pd.concat([single_class_df, multi_class_df], ignore_index=True)
     # put unsure/yes and unsure/no into yes/no groups, only single class had unsure label
     eval_df.loc[eval_df['single vesicle?'] == 'u/y', 'single vesicle?'] = 'y'
     eval_df.loc[eval_df['single vesicle?'] == 'u/n', 'single vesicle?'] = 'n'

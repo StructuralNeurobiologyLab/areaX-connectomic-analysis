@@ -38,7 +38,8 @@ if __name__ == '__main__':
     organelle_key = 'golgi'
     #0 = dendrite, 1 = axon, 2 = soma
     compartment = [2]
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240503_j0251{version}_ct_{organelle_key}_{compartment}_area_density_mcl_%i_ax%i_%s_fs%i" % (
+    with_FS = False
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240904_j0251{version}_ct_{organelle_key}_{compartment}_area_density_mcl_%i_ax%i_%s_fs%i_withFS_glm" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -50,6 +51,8 @@ if __name__ == '__main__':
     log.info(f'use mean of {organelle_key} volume density for regression fit')
     if full_cells_only:
         log.info('Plot for full cells only')
+    if with_FS:
+        log.info('Literature value for FS will be used to predict FS density')
     known_mergers = analysis_params.load_known_mergers()
     misclassified_asto_ids = analysis_params.load_potential_astros()
     axon_cts = analysis_params.axon_cts()
@@ -218,11 +221,7 @@ if __name__ == '__main__':
     #plot once with and once without unknown literature values
     known_values_only_ov = overview_df.dropna()
     known_cts_only = np.unique(known_values_only_ov['celltype'])
-    fs_dict = {'celltype': 'FS', 'mean firing rate singing': firing_rate_dict['FS']}
-    fs_df = pd.DataFrame(fs_dict, index = ['FS'])
-    overview_df = pd.concat([overview_df, fs_df])
     ov_palette = {known_cts_only[i]: '#232121' for i in range(len(known_cts_only))}
-    ov_palette['FS'] = '#232121'
     for ct in overview_df['celltype']:
         if ct not in known_cts_only and ct != 'FS':
             ov_palette[ct] = '#15AEAB'
@@ -263,9 +262,9 @@ if __name__ == '__main__':
             start_xseq = np.min(known_values_only_ov[key])
             end_xseq = np.max(known_values_only_ov[key])
             num_xseq = len(known_values_only_ov)
-            xseq = np.linspace(start_xseq, end_xseq, num=num_xseq)
+            xseq_known_only = np.linspace(start_xseq, end_xseq, num=num_xseq)
             #plot scatterplot again with fitted line
-            plt.plot(xseq, intercept + coefficient * xseq, color = '#707070', lw = 1.5, linestyle = 'dashed')
+            plt.plot(xseq_known_only, intercept + coefficient * xseq_known_only, color = '#707070', lw = 1.5, linestyle = 'dashed')
             sns.scatterplot(data=known_values_only_ov, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
             for x, y, t in zip(known_values_only_ov[key], known_values_only_ov['mean firing rate singing'],
                                known_values_only_ov['celltype']):
@@ -312,30 +311,81 @@ if __name__ == '__main__':
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_fit.png')
             plt.savefig(f'{f_name}/{key}_firing_rate_pred_fit.svg')
             plt.close()
-            #also predict 'FS' org density value
-            fs_org_pred = (firing_rate_dict['FS'] - intercept) / coefficient
-            overview_df.loc['FS', key] = fs_org_pred
-            sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue = 'celltype', palette=ov_palette, legend=False)
-            for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
-                plt.text(x = x, y = y + 10, s = t)
-            plt.xlabel(f'{key} [µm³/µm]', fontsize = fontsize)
-            plt.ylabel('mean firing rate singing [Hz]', fontsize = fontsize)
-            plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS.png')
-            plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS.svg')
-            plt.close()
-            start_xseq = np.min(overview_df[key])
-            end_xseq = np.max(overview_df[key])
-            num_xseq = len(overview_df)
-            xseq = np.linspace(start_xseq, end_xseq, num=num_xseq)
-            plt.plot(xseq, intercept + coefficient * xseq, color='#707070', lw=1.5, linestyle='dashed')
-            sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue='celltype', palette=ov_palette, legend=False)
-            for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
+
+            #see if exponential curve would be a better fit
+            #log_y = np.log(known_values_only_ov['mean firing rate singing'])
+            glm_model = sm.GLM(known_values_only_ov['mean firing rate singing'], X_with_intercept,family=sm.families.Poisson(link=sm.families.links.log()))
+            results = glm_model.fit()
+            a = np.exp(results.params[0])
+            b = results.params[1]
+            log.info(f'params for {key} and mean firing rate: a = {a}, b = {b}')
+            log.info(f'Summary:  {results.summary()}')
+            #plot with fitted curve
+            plt.plot(xseq_known_only, a * np.exp(b * xseq_known_only), color='#707070', lw=1.5, linestyle='dashed')
+            sns.scatterplot(data=known_values_only_ov, x=key, y='mean firing rate singing', hue='celltype',
+                            palette=ov_palette, legend=False)
+            for x, y, t in zip(known_values_only_ov[key], known_values_only_ov['mean firing rate singing'],
+                               known_values_only_ov['celltype']):
                 plt.text(x=x, y=y + 10, s=t)
             plt.xlabel(f'{key} [µm²/µm²]', fontsize=fontsize)
             plt.ylabel('mean firing rate singing [Hz]', fontsize=fontsize)
-            plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.png')
-            plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.svg')
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.savefig(f'{f_name}/{key}_firing_rate_known_only_fit_exp.png')
+            plt.savefig(f'{f_name}/{key}_firing_rate_known_only_fit_exp.svg')
             plt.close()
+            # get prediction for unkown numbers
+            overview_df['mean firing rate singing exp'] = overview_df['mean firing rate singing']
+            for ct in range(num_cts):
+                ct_str = ct_dict[ct]
+                if ct_str in firing_rate_dict.keys():
+                    continue
+                key_ct_value = overview_df.loc[ct_str, key]
+                firing_pred = a * np.exp(b * key_ct_value)
+                overview_df.loc[ct_str, 'mean firing rate singing exp'] = firing_pred
             overview_df.to_csv(f'{f_name}/overview_df_with_preds_{key}.csv')
+            plt.plot(xseq, a * np.exp(b * xseq), color='#707070', lw=1.5, linestyle='dashed')
+            sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing exp', hue='celltype', palette=ov_palette,
+                            legend=False)
+            for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing exp'], overview_df['celltype']):
+                plt.text(x=x, y=y + 10, s=t)
+            plt.xlabel(f'{key} [µm²/µm²]', fontsize=fontsize)
+            plt.ylabel('mean firing rate singing [Hz]', fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.savefig(f'{f_name}/{key}_firing_rate_pred_fit_exp.png')
+            plt.savefig(f'{f_name}/{key}_firing_rate_pred_fit_exp.svg')
+            plt.close()
 
+            if with_FS:
+                fs_dict = {'celltype': 'FS', 'mean firing rate singing': firing_rate_dict['FS'], 'mean firing rate singing exp': firing_rate_dict['FS']}
+                fs_df = pd.DataFrame(fs_dict, index=['FS'])
+                ov_palette['FS'] = '#232121'
+                overview_df = pd.concat([overview_df, fs_df])
+                #also predict 'FS' org density value
+                fs_org_pred = (firing_rate_dict['FS'] - intercept) / coefficient
+                overview_df.loc['FS', key] = fs_org_pred
+                plt.plot(xseq, intercept + coefficient * xseq, color='#707070', lw=1.5, linestyle='dashed')
+                sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing', hue='celltype', palette=ov_palette, legend=False)
+                for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing'], overview_df['celltype']):
+                    plt.text(x=x, y=y + 10, s=t)
+                plt.xlabel(f'{key} [µm²/µm²]', fontsize=fontsize)
+                plt.ylabel('mean firing rate singing [Hz]', fontsize=fontsize)
+                plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.png')
+                plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit.svg')
+                plt.close()
+
+                fs_org_pred = (np.log(firing_rate_dict['FS']) - np.log(a)) / b
+                overview_df.loc['FS', key] = fs_org_pred
+                plt.plot(xseq, a * np.exp(b * xseq), color='#707070', lw=1.5, linestyle='dashed')
+                sns.scatterplot(data=overview_df, x=key, y='mean firing rate singing exp', hue='celltype',
+                                palette=ov_palette, legend=False)
+                for x, y, t in zip(overview_df[key], overview_df['mean firing rate singing exp'], overview_df['celltype']):
+                    plt.text(x=x, y=y + 10, s=t)
+                plt.xlabel(f'{key} [µm²/µm²]', fontsize=fontsize)
+                plt.ylabel('mean firing rate singing [Hz]', fontsize=fontsize)
+                plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit_exp.png')
+                plt.savefig(f'{f_name}/{key}_firing_rate_pred_withFS_fit_exp.svg')
+                plt.close()
+                overview_df.to_csv(f'{f_name}/overview_df_with_preds_{key}.csv')
     log.info('Analysis done')

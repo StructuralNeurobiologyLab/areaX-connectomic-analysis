@@ -24,8 +24,8 @@ if __name__ == '__main__':
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
     whole_cell = False
-    organelle_class = ['vc']
-    get_orgs = False
+    organelle_class = ['golgi']
+    get_orgs = True
     get_orgs_comp_sep = False
     get_only_myelin = False
     get_single_ves_coords = True
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
     #get wrongly segmented bv and associated astrocytes
     #cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
-    cellids = [33643243, 26252706, 820388630]
+    cellids = [832232717, 26790127]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])

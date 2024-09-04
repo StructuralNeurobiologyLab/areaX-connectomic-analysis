@@ -16,7 +16,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     f_name = analysis_params.file_locations
     # organelles = 'mi', 'vc', 'er', 'golgi
-    organell_keys = ['golgi']
+    organell_keys = ['mi', 'vc']
     full_cell_only = True
     log = initialize_logging(f'{organell_keys}_full_cells',
                              log_dir=f_name + '/logs/')

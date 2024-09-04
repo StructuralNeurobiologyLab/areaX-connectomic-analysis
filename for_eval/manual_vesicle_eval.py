@@ -27,16 +27,16 @@ if __name__ == '__main__':
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240723_j0251{version}_manual_ves_eval"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240904_j0251{version}_manual_ves_eval"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'single_ves_eval_log', log_dir=f_name)
 
-    eval_path = 'cajal/scratch/arother/bio_analysis_results/for_eval/240723_j0251v6_manual_ves_eval/' \
+    eval_path = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/240723_j0251v6_manual_ves_eval/' \
                 '240904_random_single_vesicles_evaluation_RM_with_dist_results.csv'
     log.info(f'Load manual evaluation results from {eval_path}')
     eval_df = pd.read_csv(eval_path)
-    ct_palette = {'single class': '#E8AA47', 'multi class': '#3287A8'}
+    ct_palette = {'single class': '#232121', 'multi class': '#15AEAB'}
     # put unsure/yes and unsure/no into yes/no groups, only single class had unsure label
     eval_df.loc[eval_df['single vesicle?'] == 'u/y', 'single vesicle?'] = 'y'
     eval_df.loc[eval_df['single vesicle?'] == 'u/n', 'single vesicle?'] = 'n'
@@ -138,20 +138,8 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/true_perc_celltype.svg')
     plt.close()
     #plot percentage of vesicles close to axon membrane depending on distance measurement
-    eval_true_df.loc[eval_true_df['close to membrane?'] == 'y', 'close to membrane?'] = 'True'
-    eval_true_df.loc[eval_true_df['close to membrane?'] == 'n', 'close to membrane?'] = 'False'
-    eval_true_df['close to cell membrane?'] = np.array(eval_true_df['close to membrane?'])
-    eval_true_df.loc[eval_true_df['close to membrane?'] == 'True', 'close to cell membrane?'] = 'True'
-    eval_true_df.loc[eval_true_df['close to membrane?'] == 'False', 'close to cell membrane?'] = 'False'
-    #rewrite table so that every entry that is close to membrane but not to axon, synapse or cell membrane
-    #is set to False; also all entries with axon/mito are set to axon
-    for i, label in enumerate(eval_true_df['kind of membrane?']):
-        if type(label) != str:
-            continue
-        if 'axon' in label or 'synapse' in label:
-            continue
-        else:
-            eval_true_df.loc[i, 'close to cell membrane?'] = 'False'
+    eval_true_df.loc[eval_true_df['close to cell membrane?'] == 'y', 'close to cell membrane?'] = 'True'
+    eval_true_df.loc[eval_true_df['close to cell membrane?'] == 'n', 'close to cell membrane?'] = 'False'
     #get fraction of true close-membrane cells depending on distance
     distance_thresholds = [5, 10, 15, np.inf]
     dist_columns = ['number vesicles', 'fraction close membrane vesicles', 'distance', 'prediction']

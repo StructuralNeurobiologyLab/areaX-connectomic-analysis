@@ -28,13 +28,14 @@ if __name__ == '__main__':
     msn_ct = 3
     gpe_ct = 6
     gpi_ct = 7
-    n_it = 3
+    n_it = 1000
+    n_plot_it = 3
     fontsize = 20
     binary_syns = True
     if binary_syns:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240812_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240906_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240812_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240906_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -68,11 +69,11 @@ if __name__ == '__main__':
     shuffle_cats = np.array(['observed', 'random', 'random with syn ratio', 'random with syn area ratio', 'random GP cell number ratio',
                  'random GP cell volume ratio'])
     shuffle_cats_its = []
-    for i in range(n_it):
+    for i in range(n_plot_it):
         shuffle_cats_its.append(np.array([f'{sc} {i}' for sc in shuffle_cats]))
     shuffle_cats_its = np.concatenate(shuffle_cats_its)
     #shuffle_cats = np.array(['observed', 'random', 'random with syn ratio'])
-    for i in range(n_it):
+    for i in range(n_plot_it):
         syn_sizes_df[f'observed {i}'] = syn_sizes_df['to celltype']
     #make shuffling analysis also with median synapse size
     syn_sizes_df['med syn size'] = np.zeros(len(syn_sizes_df)) + np.median(syn_sizes_df['syn sizes'])
@@ -115,6 +116,17 @@ if __name__ == '__main__':
     len_sizes = len(syn_sizes_df)
 
     log.info('Step 2/5: Shuffle syn sizes with different probabilities')
+    #get mean of observed
+    mean_observed = np.mean(syn_sizes_df[f'observed 0'])
+    #TO DO: rearrange code to save distributions for plotting for a few and mean values for all iterations
+    mean_df = pd.DataFrame(columns = ['mean', 'shuffle category'], index = range(len(n_it) * (len(shuffle_cats) - 1) + 1))
+    mean_df.loc[0, 'mean'] = mean_observed
+    mean_df.loc[0, 'shuffle category'] = 'observed'
+    for i in range(n_it):
+        for sc in shuffle_cats:
+            #get probability for each category
+            #directly calculate ratio here
+            #save in df for first few cases
     for i in range(n_it):
         #random
         rndm_inds = np.random.choice(bool_choice, len_sizes)

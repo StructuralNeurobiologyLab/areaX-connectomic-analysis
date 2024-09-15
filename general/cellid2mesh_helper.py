@@ -11,7 +11,7 @@ def whole_cellid2mesh(cell_input):
     :return:
     '''
 
-    cellid, f_name, version = cell_input
+    cellid, f_name, version, with_skel = cell_input
     bio_params = Analysis_Params(version=version)
     ct_dict = bio_params.ct_dict(with_glia=True)
     cell = SuperSegmentationObject(cellid)
@@ -22,6 +22,9 @@ def whole_cellid2mesh(cell_input):
     kzip_out = f'{f_name}/{cellid}_{celltype}_mesh'
     write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), normals, None,
                     f'{cellid}.ply')
+    if with_skel:
+        kzip_out_skel = f'{f_name}/{cellid}_skel'
+        cell.save_skeleton_to_kzip(kzip_out_skel)
 
 def comp2mesh(cell_input):
     '''

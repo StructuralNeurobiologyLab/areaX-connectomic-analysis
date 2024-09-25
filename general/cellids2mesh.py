@@ -24,12 +24,12 @@ if __name__ == '__main__':
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
     whole_cell = False
-    organelle_class = ['golgi']
+    organelle_class = ['golgi', 'er']
     get_orgs = True
     get_orgs_comp_sep = False
     get_only_myelin = False
-    get_single_ves_coords = True
-    get_membrane_close_vesicles_separate = True
+    get_single_ves_coords = False
+    get_membrane_close_vesicles_separate = False
     get_syns = False
     get_syns_comp = 1
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
@@ -48,17 +48,18 @@ if __name__ == '__main__':
     #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
     #get wrongly segmented bv and associated astrocytes
     #cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
-    cellids = [832232717, 26790127]
+    cellids = [1644151292]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])
-        if get_orgs_comp_sep:
-            org_id_dict = {}
-            org_coord_dict = {}
-            for oc in organelle_class:
-                sd_org = SegmentationDataset(oc, working_dir=global_params.wd)
-                org_id_dict[oc] = sd_org.ids
-                org_coord_dict[oc] = sd_org.load_numpy_data('rep_coord')
+        sd_org_dict = {}
+        org_id_dict = {}
+        org_coord_dict = {}
+        for oc in organelle_class:
+            sd_org = SegmentationDataset(oc, working_dir=global_params.wd)
+            org_id_dict[oc] = sd_org.ids
+            org_coord_dict[oc] = sd_org.load_numpy_data('rep_coord')
+            sd_org_dict[oc] = sd_org
     if get_single_ves_coords:
         np_presaved_loc = bio_params.file_locations
         ves_columns = ['coord x', 'coord y', 'coord z', 'coord x blend', 'coord y blend', 'coord z blend']
@@ -84,7 +85,10 @@ if __name__ == '__main__':
                             f'{cellid}.ply')
         if get_orgs:
             for oc in organelle_class:
-                orgs = np.array(cell.get_seg_objects(oc))
+                if oc == 'er':
+                    orgs = [sd_org_dict[oc].get_segmentation_object(cellid)]
+                else:
+                    orgs = np.array(cell.get_seg_objects(oc))
                 if get_orgs_comp_sep:
                     cell_org_ids = cell.lookup_in_attribute_dict(oc)
                     comp_org_dict = get_organell_ids_comps([cellid, org_id_dict[oc], org_coord_dict[oc], cell_org_ids])

@@ -33,7 +33,7 @@ if __name__ == '__main__':
     syn_dist_threshold_far = 5000 #nm
     size_dist_cat = 5
     size_syn_cat = 3
-    gt_version = 'v6'
+    gt_version = 'v7'
     color_key = 'TePkBr'
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/231218_j0251{version}_ct_random_ves_eval_mcl_%i_dt_%i_st_%i_%i_{gt_version}gt" % (
         min_comp_len, dist_thresholds[-1], syn_dist_threshold_close, syn_dist_threshold_far)

@@ -109,7 +109,9 @@ if __name__ == '__main__':
     p_GPi_volume = volume_GPi / GP_total_volume
     prob_df.loc['cell volume ratio', 'to GPi'] = p_GPi_volume
     prob_df.loc['cell volume ratio', 'to GPe'] = volume_GPe / GP_total_volume
-
+    prob_dict = {shuffle_cats[i + 2]: prob_df.loc[i, 'to GPi'] for i in range(len(shuffle_cats))}
+    prob_dict['random'] = 0.5
+    #raise ValueError
     prob_df.to_csv(f'{f_name}/prob_ratios_for_shuffling.csv')
 
     bool_choice = [True, False]
@@ -122,11 +124,56 @@ if __name__ == '__main__':
     mean_df = pd.DataFrame(columns = ['mean', 'shuffle category'], index = range(len(n_it) * (len(shuffle_cats) - 1) + 1))
     mean_df.loc[0, 'mean'] = mean_observed
     mean_df.loc[0, 'shuffle category'] = 'observed'
-    for i in range(n_it):
-        for sc in shuffle_cats:
+    temp_df = pd.DataFrame(index = range(len(syn_sizes_df)))
+    temp_df['syn sizes'] = syn_sizes_df['syn sizes']
+    temp_df['cellid'] = syn_sizes_df['cellid']
+    msn_ids = np.sort(np.unique(syn_sizes_df['cellid']))
+    num_msn = len(msn_ids)
+    shuffle_df = pd.DataFrame(columns=['cellid', 'GP ratio sum syn area', 'shuffle category'],
+                              index=range(num_msn * len(shuffle_cats) * n_plot_it))
+    for ni in range(n_it):
+        for i, sc in enumerate(shuffle_cats):
             #get probability for each category
+            sc_prob_gpi = prob_dict[sc]
+            rndm_inds = np.random.choice(bool_choice, len_sizes, p = [sc_prob_gpi, 1 - sc_prob_gpi])
+            temp_df.loc[rndm_inds, sc] = 'GPi'
+            temp_df.loc[rndm_inds == False, sc] = 'GPe'
+            if ni in n_plot_it:
+                syn_sizes_df.loc[rndm_inds, f'{sc} {ni}'] = 'GPi'
+                syn_sizes_df.loc[rndm_inds == False, f'{sc} {ni}'] = 'GPe'
             #directly calculate ratio here
+            gpe_syn_info = temp_df[temp_df[sc] == 'GPe']
+            gpi_syn_info = temp_df[temp_df[sc] == 'GPi']
+            gpe_msn_inds, unique_msngpe_ids = pd.factorize(gpe_syn_info['cellid'])
+            gpe_syn_msn_sizes = np.bincount(gpe_msn_inds, gpe_syn_info['syn sizes'])
+            gpe_argsort = np.argsort(unique_msngpe_ids)
+            sorted_msngpe_ids = unique_msngpe_ids[gpe_argsort]
+            sorted_gpe_syn_sizes = gpe_syn_msn_sizes[gpe_argsort]
+            gpi_msn_inds, unique_msngpi_ids = pd.factorize(gpi_syn_info['cellid'])
+            gpi_syn_msn_sizes = np.bincount(gpi_msn_inds, gpi_syn_info['syn sizes'])
+            gpi_argsort = np.argsort(unique_msngpi_ids)
+            sorted_msngpi_ids = unique_msngpi_ids[gpi_argsort]
+            sorted_gpi_syn_sizes = gpi_syn_msn_sizes[gpi_argsort]
+            gpe_syn_area = np.zeros(len(msn_ids))
+            gpe_msn_inds = np.in1d(msn_ids, sorted_msngpe_ids)
+            gpe_syn_area[gpe_msn_inds] = sorted_gpe_syn_sizes
+            gpi_syn_area = np.zeros(len(msn_ids))
+            gpi_uni_area = np.zeros(len(msn_ids))
+            gpi_msn_inds = np.in1d(msn_ids, sorted_msngpi_ids)
+            gpi_syn_area[gpi_msn_inds] = sorted_gpi_syn_sizes
+            GP_syn_area_ratio = gpi_syn_area / (gpe_syn_area + gpi_syn_area)
+            if ni in n_plot_it:
+            shuffle_df.loc[(i * n_it + ni) * num_msn: (i * n_it + ni + 1) * num_msn - 1, 'cellid'] = msn_ids
+            shuffle_df.loc[(i * n_it + ni) * num_msn: (i * n_it + ni + 1) * num_msn - 1,
+            'GP ratio sum syn area'] = GP_syn_area_ratio
+            shuffle_df.loc[(i * n_it + ni) * num_msn: (i * n_it + ni + 1) * num_msn - 1,
+            'shuffle category'] = sc
+            shuffle_df.loc[(i * n_it + ni) * num_msn: (i * n_it + ni + 1) * num_msn - 1,
+            'iteration'] = ni
             #save in df for first few cases
+
+
+
     for i in range(n_it):
         #random
         rndm_inds = np.random.choice(bool_choice, len_sizes)
@@ -153,7 +200,7 @@ if __name__ == '__main__':
     log.info('Step 3/5: Plot size distributions for observed and shuffled data')
     gp_palette = {'GPe': '#592A87', 'GPi': '#2AC644'}
     for sc in shuffle_cats:
-        for i in range(n_it):
+        for i in range(n_plot_it):
             sns.histplot(x='syn sizes', data=syn_sizes_df, hue=f'{sc} {i}', palette=gp_palette, common_norm=False,
                          fill=False, element="step", linewidth=3, legend=True, stat='percent')
             plt.ylabel('% of synapses', fontsize = fontsize)
@@ -177,9 +224,7 @@ if __name__ == '__main__':
 
     log.info('Step 4/5: Calculate per MSN GP syn area ratio')
     #calculate ratio for actual synapses but also for synapses of univariante size
-    msn_ids = np.sort(np.unique(syn_sizes_df['cellid']))
-    num_msn = len(msn_ids)
-    shuffle_df = pd.DataFrame(columns=['cellid', 'GP ratio sum syn area', 'shuffle category'], index = range(num_msn * len(shuffle_cats) * n_it))
+
 
     for i, sc in enumerate(shuffle_cats):
         for ni in range(n_it):

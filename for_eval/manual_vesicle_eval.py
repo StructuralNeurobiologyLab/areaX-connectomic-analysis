@@ -2,24 +2,14 @@
 #plot results
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_cell_close_surface_area
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from syconn.reps.segmentation import SegmentationDataset
-    from syconn.reps.super_segmentation import SuperSegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_non_synaptic_vesicle_coords
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np
-    from tqdm import tqdm
-    from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from scipy.stats import kruskal, ranksums
-    from itertools import combinations
 
     version = 'v6'
     analysis_params = Analysis_Params(version=version)
@@ -27,13 +17,13 @@ if __name__ == '__main__':
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240904_j0251{version}_manual_ves_eval"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240926_j0251{version}_manual_ves_eval"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'single_ves_eval_log', log_dir=f_name)
 
     eval_path = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/240723_j0251v6_manual_ves_eval/' \
-                '240904_random_single_vesicles_evaluation_RM_with_dist_results.csv'
+                '240920_random_single_vesicles_evaluation_RM_with_dists.csv'
     log.info(f'Load manual evaluation results from {eval_path}')
     eval_df = pd.read_csv(eval_path)
     ct_palette = {'single class': '#232121', 'multi class': '#15AEAB'}
@@ -71,7 +61,8 @@ if __name__ == '__main__':
     plt.close()
     log.info('Plot categories of false labels')
     #if no other structure detected, label as no clear vesicle
-    eval_false_df.loc[:,'other structure'] = eval_false_df['other structure'].fillna('no clear vesicle')
+    eval_false_df.loc[:,'other structure'] = eval_false_df['other structure'].fillna('other')
+    eval_false_df = eval_false_df.astype({'other structure': str})
     for false_cat in np.unique(eval_false_df['other structure']):
         false_cat_df = eval_false_df[eval_false_df['other structure'] == false_cat]
         if len(np.unique(false_cat_df['prediction'])) == 1:

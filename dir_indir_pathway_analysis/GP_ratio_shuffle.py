@@ -28,14 +28,14 @@ if __name__ == '__main__':
     msn_ct = 3
     gpe_ct = 6
     gpi_ct = 7
-    n_it = 100
+    n_it = 1000
     n_plot_it = 3
     fontsize = 20
     binary_syns = True
     if binary_syns:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241002_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241003_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241002_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241003_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -287,9 +287,9 @@ if __name__ == '__main__':
         #TO DO: plot observed value as one line and rest as distributions
         sns.histplot(x=column, data=non_obs_df, hue='shuffle category', palette=cat_palette,
                      common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent', bins=100)
-        plt.axvline(np.array(observed_df[column]), color = cat_palette['observed'])
-        plt.ylabel('% of cells', fontsize=fontsize)
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent', bins=200)
+        plt.axvline(np.array(observed_df[column]), color = cat_palette['observed'], linewidth = 3)
+        plt.ylabel('% of trials', fontsize=fontsize)
         plt.xlabel(xlabel, fontsize=fontsize)
         plt.yticks(fontsize=fontsize)
         plt.xticks(fontsize=fontsize)
@@ -305,9 +305,9 @@ if __name__ == '__main__':
         it_shuffle_df_spec = mean_df[spec_inds]
         sns.histplot(x=column, data=non_obs_df, hue='shuffle category', palette=cat_palette,
                      common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent', bins = 100)
-        plt.axvline(np.array(observed_df[column]), color = cat_palette['observed'])
-        plt.ylabel('% of cells', fontsize=fontsize)
+                     fill=False, element="step", linewidth=3, legend=True, stat='percent', bins = 200)
+        plt.axvline(np.array(observed_df[column]), color = cat_palette['observed'], linewidth = 3)
+        plt.ylabel('% of trials', fontsize=fontsize)
         plt.xlabel(xlabel, fontsize=fontsize)
         plt.yticks(fontsize=fontsize)
         plt.xticks(fontsize=fontsize)
@@ -317,9 +317,33 @@ if __name__ == '__main__':
         plt.close()
 
     log.info('Step 5/5: calculate statistics')
-    raise ValueError
     #p-vaslue if observed mean can be part of distribution
     #scipy ttest1samp
+    t_columns = [[f'{co} stats 2', f'{co} p-value 2', f'{co} stats >', f'{co} p-value >'] for co in mean_df.columns[:-1]]
+    t_columns = np.hstack(t_columns)
+    ttest_res_df = pd.DataFrame(columns = t_columns, index = shuffle_cats[1:])
+    for sc in shuffle_cats:
+        if 'observed' in sc:
+            continue
+        sc_mean_df = mean_df[mean_df['shuffle category'] == sc]
+        for column in mean_df.columns:
+            if 'shuffle' in column:
+                continue
+            obs_value = np.array(observed_df[column], dtype=np.float32)
+            sc_mean_df_col = np.array(sc_mean_df[column], dtype=np.float32)
+            #see scipy.stats docu for more infos
+            #two-sided means alternative is the mean is different than population mean
+            #this is to test if observed mean could be mean of distribution we randomly created
+            stats, p_value = ttest_1samp(sc_mean_df_col, obs_value, alternative='two-sided')
+            ttest_res_df.loc[sc, f'{column} stats 2'] = stats[0]
+            ttest_res_df.loc[sc, f'{column} p-value 2'] = p_value[0]
+            #greater as alternative means underlying sample distribution is greater than population mean
+            #this is to show that the observed mean is leaning more towards the specificity than excpeted
+            stats, p_value = ttest_1samp(sc_mean_df_col, obs_value, alternative='greater')
+            ttest_res_df.loc[sc, f'{column} stats >'] = stats[0]
+            ttest_res_df.loc[sc, f'{column} p-value >'] = p_value[0]
+
+    ttest_res_df.to_csv(f'{f_name}/ttest_1samp_res_df.csv')
 
     log.info('Analysis done')
 

@@ -22,7 +22,7 @@ if __name__ == '__main__':
     version = 'v6'
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
-    organelle = 'golgi'
+    organelle = 'er'
     sd_org = SegmentationDataset(organelle, working_dir=global_params.config.working_dir)
     ct_dict = bio_params.ct_dict(with_glia = True)
     n_samples = 15
@@ -43,9 +43,10 @@ if __name__ == '__main__':
     cts_str = np.array(bio_params.ct_str(with_glia=True))
     #remove class fragments
     cts_str = cts_str[np.in1d(cts_str, 'FRAG') == False]
-    axon_cts = bio_params.axon_cts()
-    axon_str = [ct_dict[ct] for ct in axon_cts]
-    cts_str = cts_str[np.in1d(cts_str, axon_str) == False]
+    if organelle == 'golgi':
+        axon_cts = bio_params.axon_cts()
+        axon_str = [ct_dict[ct] for ct in axon_cts]
+        cts_str = cts_str[np.in1d(cts_str, axon_str) == False]
     num_cts = len(cts_str)
     celltype_gt = pd.read_csv(
         f"cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_{gt_version}_j0251_72_seg_20210127_agglo2_IDs.csv",

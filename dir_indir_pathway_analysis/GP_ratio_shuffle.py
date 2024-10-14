@@ -31,11 +31,11 @@ if __name__ == '__main__':
     n_it = 1000
     n_plot_it = 3
     fontsize = 20
-    binary_syns = True
+    binary_syns = False
     if binary_syns:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241003_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241014_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241003_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241014_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')

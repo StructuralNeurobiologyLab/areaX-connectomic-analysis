@@ -158,6 +158,7 @@ if __name__ == '__main__':
     all_celltypes = np.concatenate(all_celltypes)
 
     start_density_df = len(density_df)
+    filtered_syn_ids = []
     for i, ver in enumerate(versions):
         wd = wds[ver]
         sd = SegmentationDataset('syn_ssv', working_dir=wd)
@@ -197,15 +198,17 @@ if __name__ == '__main__':
         density_df.loc[start_density_df + i, 'summed size'] = np.sum(m_sizes)
         density_df.loc[start_density_df + i, 'volume density'] = np.sum(m_sizes) / dataset_size
         #get syn prob of filtered synapses
-        filtered_inds = np.in1d(syn_prob_df['syn id'], m_ids)
-        ver_id = syn_prob_df['version'] == ver
-        raise ValueError
-        syn_prob_df = syn_prob_df[np.all(filtered_ids, ver_id, axis = 1)]
+        filtered_syn_ids.append(m_ids)
 
     density_df.to_csv(f'{f_name}/synmivc_density_comp.csv')
+    # sort values with respect to syn id
+    syn_prob_df = pd.DataFrame(syn_prob_df, index= np.array(syn_prob_df['syn id']))
+    filtered_syn_ids = np.concatenate(filtered_syn_ids)
+    syn_prob_df_filtered = syn_prob_df.loc[filtered_syn_ids]
+    raise ValueError
 
     log.info('Step 4/5: Get syn prob distribution of filtered synapses')
-    sns.histplot(data=syn_prob_df, x='syn prob', hue='version', palette=ver_palette, fill=False,
+    sns.histplot(data=syn_prob_df_filtered, x='syn prob', hue='version', palette=ver_palette, fill=False,
                  kde=False, element='step', linewidth=3)
     plt.xlabel('synapse probability', fontsize=fontsize)
     plt.ylabel('number of synapses', fontsize=fontsize)
@@ -214,7 +217,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/{version1}_{version2}_synprob_hist_filtered.png')
     plt.savefig(f'{f_name}/{version1}_{version2}_synprob_hist_filtered.svg')
     plt.close()
-    sns.histplot(data=syn_prob_df, x='syn prob', hue='version', palette=ver_palette, stat='percent', fill=False,
+    sns.histplot(data=syn_prob_df_filtered, x='syn prob', hue='version', palette=ver_palette, stat='percent', fill=False,
                  kde=False, element='step', linewidth=3)
     plt.xlabel('synapse probability', fontsize=fontsize)
     plt.ylabel('% of synapses', fontsize=fontsize)
@@ -242,10 +245,10 @@ if __name__ == '__main__':
 
     syn_prob = 0.6
     log.info(f'Also get syn density with the additional filter of syn_prob = {syn_prob}')
-    syn_prob_df = syn_prob_df[syn_prob_df['syn prob'] > syn_prob]
+    syn_prob_df_filtered = syn_prob_df_filtered[syn_prob_df_filtered['syn prob'] > syn_prob]
     start_density_df = len(density_df)
     for i, ver in enumerate(versions):
-        ver_syn_prob_df = syn_prob_df[syn_prob_df['version'] == ver]
+        ver_syn_prob_df = syn_prob_df_filtered[syn_prob_df_filtered['version'] == ver]
         ver_summed_size = np.array(ver_syn_prob_df['syn size'].sum())
         density_df.loc[start_density_df + i, 'organelle'] = 'filtered syns with prob'
         density_df.loc[start_density_df + i, 'version'] = ver

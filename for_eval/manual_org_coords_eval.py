@@ -35,7 +35,7 @@ if __name__ == '__main__':
     #get overview df with numbers of different classes
     log.info('Get overview over true and false organelles')
     ov_columns = ['number total', 'fraction true', 'fraction false']
-    overview_df = pd.DataFrame(columns=ov_columns)
+    overview_df = pd.DataFrame(columns=ov_columns, index = range(1))
     overview_df['number total'] = len(eval_df)
     eval_true_df = eval_df[eval_df[f'{organelle}?'] == 'True']
     eval_true_df = eval_true_df.reset_index(drop=True)
@@ -44,7 +44,9 @@ if __name__ == '__main__':
     overview_df['fraction true'] = len(eval_true_df) / overview_df['number total']
     overview_df['fraction false'] = len(eval_false_df) / overview_df['number total']
     #one plot with true and false vesicles as overview
-    sns.barplot(data = eval_df, x = f'{organelle}?', color=ct_palette[organelle])
+    sns.histplot(data=eval_df, x=f'{organelle}?', stat='percent',
+                 color=ct_palette[organelle], common_norm=False, multiple='dodge', shrink=0.8,
+                 ec=None, alpha=1)
     plt.xlabel(f'{organelle}?', fontsize = fontsize)
     plt.ylabel('percent of coordinates', fontsize = fontsize)
     plt.title(f'overview {organelle}')
@@ -62,7 +64,9 @@ if __name__ == '__main__':
 
     overview_df.to_csv(f'{f_name}/overview_df.csv')
     #plot categories of false labels
-    sns.barplot(data=eval_false_df, x='other structure', stat='percent', color=ct_palette[organelle])
+    sns.histplot(data=eval_false_df, x='other structure', stat='percent',
+                 color=ct_palette[organelle], common_norm=False, multiple='dodge', shrink=0.8,
+                 ec=None, alpha=1)
     plt.xlabel('reason false label', fontsize=fontsize)
     plt.ylabel('percent of coords', fontsize=fontsize)
     plt.title('overview false labels')
@@ -85,8 +89,8 @@ if __name__ == '__main__':
     ct_overview_df.to_csv(f'{f_name}/ct_overview_df.csv')
     sns.barplot(data = ct_overview_df, x = 'celltype', y = f'fraction true {organelle}', color=ct_palette[organelle])
     plt.xlabel('celltype', fontsize=fontsize)
-    plt.ylabel('percent of vesicles', fontsize=fontsize)
-    plt.title('fraction true vesicles all ct')
+    plt.ylabel('percent of coords', fontsize=fontsize)
+    plt.title(f'fraction true {organelle} all ct')
     plt.yticks(fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/true_perc_celltype_{organelle}.png')

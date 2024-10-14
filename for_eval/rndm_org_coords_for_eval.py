@@ -8,6 +8,7 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
+    from syconn.reps.super_segmentation import SuperSegmentationObject
     from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import \
         get_vesicle_distance_information_per_cell
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
@@ -27,12 +28,12 @@ if __name__ == '__main__':
     n_samples = 15
     gt_version = 'v7'
     color_key = 'TePkBr'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240925_j0251{version}_ct_random_{organelle}_eval_n{n_samples}_{gt_version}gt"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/241014_j0251{version}_ct_random_{organelle}_eval_n{n_samples}_{gt_version}gt"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'rndm_{organelle}_coords_eval',
                              log_dir=f_name)
-    log.info(f'Select random er coords from gt cells')
+    log.info(f'Select random {organelle} coords from gt cells')
     log.info(f'GT version is {gt_version}')
 
     log.info(f'{n_samples} random samples are selected per cell type. Fragment class will not be evaluated')
@@ -43,7 +44,8 @@ if __name__ == '__main__':
     #remove class fragments
     cts_str = cts_str[np.in1d(cts_str, 'FRAG') == False]
     axon_cts = bio_params.axon_cts()
-    cts_str = cts_str[np.in1d(cts_str, axon_cts) == False]
+    axon_str = [ct_dict[ct] for ct in axon_cts]
+    cts_str = cts_str[np.in1d(cts_str, axon_str) == False]
     num_cts = len(cts_str)
     celltype_gt = pd.read_csv(
         f"cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_{gt_version}_j0251_72_seg_20210127_agglo2_IDs.csv",
@@ -53,24 +55,34 @@ if __name__ == '__main__':
     ct_gt = np.array(celltype_gt['celltype'])
     assert(len(np.unique(ct_gt)) == num_cts)
 
-    log.info('Step 2/2: Load ER meshes and select random samples per celltype')
+    log.info(f'Step 2/2: Load {organelle} meshes and select random samples per celltype')
     rndm_org_coords = pd.DataFrame(columns = ['cellid', 'celltype', 'coord x', 'coord y', 'coord z'], index = range(num_cts * n_samples))
-    for i, ct in enumerate(cts_str):
+    for i, ct_str in enumerate(cts_str):
         #get organelle meshes from the cells of this cell type
-        ct_str = ct_dict[ct]
         ct_df = celltype_gt[celltype_gt['celltype'] == ct_str]
         ct_ids = ct_df['cellids']
         log.info(f'{len(ct_ids)} were found for cell type {ct_str}')
         ct_org_vert_coords = []
         ct_org_cellids = []
         for ct_id in ct_ids:
-            org_obj = sd_org.get_segmentation_object(ct_id)
-            org_inds, org_verts, org_norm = org_obj.mesh
-            #get coordinates in voxel space to investigate in neuroglancer
-            org_verts = np.round(org_verts.reshape((-1, 3))/ [10, 10, 25])
-            org_cellid = np.zeros(len(org_verts)) + ct_id
-            ct_org_vert_coords.append(org_verts)
-            ct_org_cellids.append(org_cellid)
+            if organelle == 'er':
+                #er is only one object per cell
+                org_obj = sd_org.get_segmentation_object(ct_id)
+                org_inds, org_verts, org_norm = org_obj.mesh
+                #get coordinates in voxel space to investigate in neuroglancer
+                org_verts = np.round(org_verts.reshape((-1, 3))/ [10, 10, 25])
+                org_cellid = np.zeros(len(org_verts)) + ct_id
+                ct_org_vert_coords.append(org_verts)
+                ct_org_cellids.append(org_cellid)
+            else:
+                cell = SuperSegmentationObject(ct_id)
+                obj_organelles = cell.get_seg_objects(organelle)
+                for org_obj in obj_organelles:
+                    org_inds, org_verts, org_norm = org_obj.mesh
+                    org_verts = np.round(org_verts.reshape((-1, 3)) / [10, 10, 25])
+                    org_cellid = np.zeros(len(org_verts)) + ct_id
+                    ct_org_vert_coords.append(org_verts)
+                    ct_org_cellids.append(org_cellid)
         ct_org_vert_coords = np.concatenate(ct_org_vert_coords)
         ct_org_cellids = np.concatenate(ct_org_cellids)
         rndm_inds = np.random.choice(range(len(ct_org_vert_coords)), n_samples, replace=False)

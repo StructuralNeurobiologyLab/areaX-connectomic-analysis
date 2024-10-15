@@ -91,20 +91,16 @@ if __name__ == '__main__':
 
     log.info('Step 2/5: Get syn prob distribution of all synapses')
     num_syns_total = density_df[density_df['organelle'] == 'syn_ssv']['number'].sum()
-    syn_prob_df = pd.DataFrame(columns = ['syn prob', 'syn id', 'version', 'syn size'], index = range(num_syns_total))
+    syn_prob_df = pd.DataFrame(columns = ['syn prob', 'version'], index = range(num_syns_total))
     start = 0
     for ver in versions:
         wd = wds[ver]
         sd = SegmentationDataset('syn_ssv', working_dir=wd)
-        syn_ids = sd.ids
         syn_prob = sd.load_numpy_data('syn_prob')
-        syn_size = sd.load_numpy_data('mesh_area') / 2
-        num_syns = len(syn_ids)
-        syn_prob_df.loc[start: start + num_syns - 1, 'syn id'] = syn_ids
+        num_syns = len(syn_prob)
         syn_prob_df.loc[start: start + num_syns - 1, 'syn prob'] = syn_prob
         syn_prob_df.loc[start: start + num_syns - 1, 'version'] = ver
-        syn_prob_df.loc[start: start + num_syns - 1, 'syn size'] = syn_size
-        start += len(syn_ids)
+        start += num_syns
 
     #syn_prob_df.to_csv(f'{f_name}/syn_prob_df_comp_{version1}_{version2}.csv')
     sns.histplot(data = syn_prob_df, x = 'syn prob', hue = 'version', palette= ver_palette, fill=False,
@@ -158,54 +154,56 @@ if __name__ == '__main__':
     all_celltypes = np.concatenate(all_celltypes)
 
     start_density_df = len(density_df)
-    filtered_syn_ids = []
+    syn_prob_df_filtered = pd.DataFrame(columns = ['syn prob', 'version', 'syn size'], index = range(num_syns_total))
+    start = 0
     for i, ver in enumerate(versions):
         wd = wds[ver]
         sd = SegmentationDataset('syn_ssv', working_dir=wd)
-        m_ids = sd.ids
         m_axs = sd.load_numpy_data("partner_axoness")
         m_axs[m_axs == 4] = 1
         m_axs[m_axs == 3] = 1
         m_ssv_partners = sd.load_numpy_data("neuron_partners")
         m_sizes = sd.load_numpy_data("mesh_area") / 2
+        syn_prob = sd.load_numpy_data('syn_prob')
         # get rid of synapses without axon
         ax_inds = np.any(np.in1d(m_axs, 1).reshape(len(m_axs), 2), axis=1)
         m_axs = m_axs[ax_inds]
         m_sizes = m_sizes[ax_inds]
-        m_ids = m_ids[ax_inds]
         m_ssv_partners = m_ssv_partners[ax_inds]
+        syn_prob = syn_prob[ax_inds]
         ##filter for axo-dendritic
         #only check if no axo-axonic ones in there, that axon must be there already from above
         den_so = np.array([0, 2])
         den_so_inds = np.any(np.in1d(m_axs, den_so).reshape(len(m_axs), 2), axis=1)
-        m_ids = m_ids[den_so_inds]
+        syn_prob = syn_prob[den_so_inds]
         m_ssv_partners = m_ssv_partners[den_so_inds]
         m_sizes = m_sizes[den_so_inds]
         #filter for min syn size
         size_inds = m_sizes > min_syn_size
-        m_ids = m_ids[size_inds]
+        syn_prob = syn_prob[size_inds]
         m_ssv_partners = m_ssv_partners[size_inds]
         m_sizes = m_sizes[size_inds]
         #filter for suitable cellids
         suit_ct_inds = np.any(np.in1d(m_ssv_partners, all_suitable_ids).reshape(len(m_ssv_partners), 2), axis=1)
-        m_ids = m_ids[suit_ct_inds]
+        syn_prob = syn_prob[suit_ct_inds]
         m_sizes = m_sizes[suit_ct_inds]
-        log.info(f'{len(m_ids)} synapses suitable from {version1}')
+        log.info(f'{len(m_sizes)} synapses suitable from {ver}')
         #get number, surface area and density
         density_df.loc[start_density_df + i, 'organelle'] = 'filtered syns'
         density_df.loc[start_density_df + i, 'version'] = ver
-        density_df.loc[start_density_df + i, 'number'] = len(syn_ids)
+        density_df.loc[start_density_df + i, 'number'] = len(m_sizes)
         density_df.loc[start_density_df + i, 'summed size'] = np.sum(m_sizes)
         density_df.loc[start_density_df + i, 'volume density'] = np.sum(m_sizes) / dataset_size
         #get syn prob of filtered synapses
-        filtered_syn_ids.append(m_ids)
+        num_syns = len(m_sizes)
+        syn_prob_df_filtered.loc[start: start + num_syns - 1, 'syn prob'] = syn_prob
+        syn_prob_df_filtered.loc[start: start + num_syns - 1, 'version'] = ver
+        syn_prob_df_filtered.loc[start: start + num_syns - 1, 'syn size'] = m_sizes
+        start += num_syns
 
     density_df.to_csv(f'{f_name}/synmivc_density_comp.csv')
-    # sort values with respect to syn id
-    syn_prob_df = pd.DataFrame(syn_prob_df, index= np.array(syn_prob_df['syn id']))
-    filtered_syn_ids = np.concatenate(filtered_syn_ids)
-    syn_prob_df_filtered = syn_prob_df.loc[filtered_syn_ids]
-    raise ValueError
+    syn_prob_df_filtered = syn_prob_df_filtered.dropna()
+
 
     log.info('Step 4/5: Get syn prob distribution of filtered synapses')
     sns.histplot(data=syn_prob_df_filtered, x='syn prob', hue='version', palette=ver_palette, fill=False,

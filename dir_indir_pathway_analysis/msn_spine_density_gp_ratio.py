@@ -34,16 +34,16 @@ if __name__ == '__main__':
     min_comp_len = 200
     syn_prob = 0.6
     min_syn_size = 0.1
-    conn_ct = 4
+    conn_ct = 3
     ct1 = 6
     ct2 = 7
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     fontsize_jointplot = 20
     kde = True
-    check_dens= False
+    check_dens= True
     color_key = 'STNGPINTv6'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240820_j0251{version}_%s_{conn_ct}_{ct1_str}_{ct2_str}ratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241015_j0251{version}_%s_{conn_ct}_{ct1_str}_{ct2_str}ratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_fullden" % (
     ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -682,7 +682,9 @@ if __name__ == '__main__':
     conn_result_df = conn_result_df.astype({'spine density': float, 'dendritic length': float,
                                             'number primary dendrites': int, 'number branching points': int,
                                             'ratio branching points vs primary dendrites': float,
-                                            f'{ct1_str}, {ct2_str} ratio syn number': float, f'{ct1_str}, {ct2_str} ratio sum syn size': float})
+                                            f'{ct1_str}, {ct2_str} ratio syn number': float, f'{ct1_str}, {ct2_str} ratio sum syn size': float,
+                                            f'syn number to {ct1_str}': int, f'syn number to {ct2_str}': int, f'abs({ct1_str}, {ct2_str} ratio - 0.5)': float,
+                                            f'abs({ct1_str}, {ct2_str} area ratio - 0.5)': float, 'syn number total':int})
     for key in conn_result_df.keys():
         if 'celltype' in key or 'cellid' in key or 'cs' in key:
             continue

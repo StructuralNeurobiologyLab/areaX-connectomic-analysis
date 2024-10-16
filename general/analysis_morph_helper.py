@@ -10,6 +10,7 @@ from scipy.spatial import cKDTree
 from syconn.proc.meshes import write_mesh2kzip
 import pandas as pd
 from collections import Counter
+import matplotlib.colors as co
 
 def get_cell_length(cellid):
     '''
@@ -437,7 +438,7 @@ def check_comp_lengths_ct(cellids, fullcelldict = None, min_comp_len = 200, axon
             try:
                 cell_axon_length = fullcelldict[cellid]["axon length"]
             except KeyError:
-                all_cell_dict = load_pkl2obj("wholebrain/scratch/arother/j0251v4_prep/combined_fullcell_ax_dict.pkl")
+                all_cell_dict = load_pkl2obj("cajal/nvmescratch/users/arother/j0251v4_prep/combined_fullcell_ax_dict.pkl")
                 cell_axon_length = all_cell_dict[cellid]["axon length"]
             if cell_axon_length < min_comp_len:
                 continue
@@ -719,7 +720,7 @@ def generate_colored_mesh_from_vert_labels(args):
     cell.save_skeleton_to_kzip(kzip_out_skel)
     return
 
-def generate_colored_mesh_synprob_data(args):
+def generate_colored_mesh_synprob_data(cell_input):
     '''
     Generates mesh coloured according to synapse_probability values for cells of synapses its part of.
     Does use all synapses cell is a part of, if synapses should be filtered this needs to be done before applying this function.
@@ -728,9 +729,11 @@ def generate_colored_mesh_synprob_data(args):
     dictionary (categories to sort probability in should be keys)
     :return:
     '''
-    cellid, f_name, syn_ssv_partners, syn_rep_coords, syn_prob, col_lookup = args
+    cellid, f_name, syn_ssv_partners, syn_rep_coords, syn_prob, col_lookup = cell_input
     #filter synapses for cellid
     cell = SuperSegmentationObject(cellid)
+    cell.load_attr_dict()
+    ct_num = cell.attr_dict['celltype_pts_e3']
     cell_inds = np.where(syn_ssv_partners == cellid)[0]
     cell_syn_coords = syn_rep_coords[cell_inds]
     cell_syn_prob = syn_prob[cell_inds]
@@ -747,13 +750,20 @@ def generate_colored_mesh_synprob_data(args):
     labels = list(col_lookup.keys())
     if 1.0 not in cats:
         cats.append(1.0)
+
     vert_synprob_labels_cats = np.array(pd.cut(vert_synprob_labels, cats, right = False, labels = labels))
+    #set all nan values to -1, and add new color for meshes not mapped to any synprob
+    if np.any(np.isnan(vert_synprob_labels_cats)):
+        vert_synprob_labels_cats[np.isnan(vert_synprob_labels_cats)] = -1.0
+        nan_col = '#707070'
+        nan_col_rgba_int = co.to_rgba_array(nan_col)[0] * 255
+        col_lookup[-1.0] = nan_col_rgba_int
     # save colored mesh
     cols = np.array([col_lookup[el] for el in vert_synprob_labels_cats], dtype=np.uint8)
-    kzip_out = f'{f_name}/{cellid}_colored_mesh'
-    kzip_out_skel = f'{f_name}/{cellid}_skel'
+    kzip_out = f'{f_name}/{cellid}_{ct_num}_colored_mesh'
+    kzip_out_skel = f'{f_name}/{cellid}_{ct_num}_skel'
     write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), None, cols,
-                    f'{cellid}.ply')
+                    f'{cellid}_{ct_num}.ply')
     cell.save_skeleton_to_kzip(kzip_out_skel)
     return
 

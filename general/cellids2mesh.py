@@ -23,14 +23,14 @@ if __name__ == '__main__':
     ct_dict = bio_params.ct_dict(with_glia = True)
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
-    whole_cell = False
+    whole_cell = True
     organelle_class = ['golgi', 'er']
-    get_orgs = True
+    get_orgs = False
     get_orgs_comp_sep = False
     get_only_myelin = False
     get_single_ves_coords = False
     get_membrane_close_vesicles_separate = False
-    get_syns = False
+    get_syns = True
     get_syns_comp = 1
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
     #get wrongly segmented bv and associated astrocytes
     #cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
-    cellids = [1644151292]
+    cellids = [11675355, 453097983, 83542452]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])

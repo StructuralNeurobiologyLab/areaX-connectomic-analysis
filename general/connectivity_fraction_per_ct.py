@@ -48,12 +48,12 @@ if __name__ == '__main__':
     plot_connmatrix_only = False
     fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240809_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i_gt_cells_only" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241016_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_annot_bw_fs_%i_GPi_no_autapse" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     save_svg = True
-    use_gt_cells_only = True
+    use_gt_cells_only = False
     log = initialize_logging('Celltypes input output percentages', log_dir=f_name + '/logs/')
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, syn_prob = %.1f, min_syn_size = %.1f, known mergers excluded = %s, colors = %s" % (
@@ -104,6 +104,18 @@ if __name__ == '__main__':
                     #cellids = np.array(stn_no_gp_df['cellid'])
 
                     #cellids = np.array(gt_df['cellids'][gt_df['celltype'] == ct_dict[ct]])
+                if ct == 7:
+                    ct_autapse_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                      '240723_j0251v6_all_cellids_for_exclusion/' \
+                       '241016_all_full_cell_ids_no_msn_manuall_checks_2.csv'
+                    log.info(f'Load information about manually checked autapses for GPi from {ct_autapse_path}')
+                    ct_autapse_df = pd.read_csv(ct_autapse_path)
+                    #get only GPi and remove mergers
+                    ct_autapse_df = ct_autapse_df[ct_autapse_df['celltype'] == ct_str]
+                    ct_autapse_df = ct_autapse_df[ct_autapse_df['include?'] == 'y']
+                    #cellids = np.array(ct_autapse_df['cellid'][ct_autapse_df['autapse?'] == 'y']).astype(int)
+                    cellids = np.array(ct_autapse_df['cellid'][ct_autapse_df['autapse?'] == 'n']).astype(int)
+
                 cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cells,
                                                     axon_only=False,
                                                     max_path_len=None)

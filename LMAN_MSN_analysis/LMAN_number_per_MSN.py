@@ -33,7 +33,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
-                       f"240227_j0251{version}_lman_number_msn_mcl{min_comp_len}_syn{syn_prob}"
+                       f"241016_j0251{version}_lman_number_msn_mcl{min_comp_len}_syn{syn_prob}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('LMAN MSN connectivity estimate', log_dir=f_name + '/logs/')

@@ -83,7 +83,7 @@ class ResultsForPlotting():
                 param_label = key
         return param_label
 
-    def plot_hist(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False):
+    def plot_hist(self, key, subcell, cells = True, norm_hist = False, bins = None, xlabel = None, celltype2 = None, outgoing = False, logscale = False):
         """
         plots array given with key in histogram plot
         :param key: key of dictionary that should be plotted
@@ -100,15 +100,24 @@ class ResultsForPlotting():
         if bins is None:
             bins = "auto"
         if norm_hist:
-            sns.histplot(self.dictionary[key], fill=False, element="step", bins=bins, common_norm=True, legend=True,
-                         color = self.color, linewidth = 3)
+            if logscale:
+                sns.histplot(self.dictionary[key], fill=False, element="step", bins=bins, common_norm=True, legend=True,
+                             color = self.color, linewidth = 3, log_scale=True)
+            else:
+                sns.histplot(self.dictionary[key], fill=False, element="step", bins=bins, common_norm=True, legend=True,
+                             color=self.color, linewidth=3, log_scale=False)
             if cells:
                 plt.ylabel("fraction of cells")
             else:
                 plt.ylabel("fraction of %s" % subcell)
         else:
-            sns.histplot(self.dictionary[key], fill=False, element="step", bins=bins, common_norm=False, legend=True,
-                         color=self.color, linewidth = 3)
+            if logscale:
+                sns.histplot(self.dictionary[key], fill=False, element="step", bins=bins, common_norm=False, legend=True,
+                             color=self.color, linewidth = 3, log_scale=True)
+            else:
+                sns.histplot(self.dictionary[key], fill=False, element="step", bins=bins, common_norm=False,
+                             legend=True,
+                             color=self.color, linewidth=3, log_scale=False)
             if cells:
                 plt.ylabel("count of cells")
             else:
@@ -123,21 +132,39 @@ class ResultsForPlotting():
             if outgoing:
                 plt.title("%s from %s to %s" % (key, self.celltype, celltype2))
                 if norm_hist:
-                    plt.savefig("%s/%s_%s2%s_hist_norm.svg" % (self.filename, key, self.celltype, celltype2))
+                    if logscale:
+                        plt.savefig("%s/%s_%s2%s_hist_norm_log.svg" % (self.filename, key, self.celltype, celltype2))
+                    else:
+                        plt.savefig("%s/%s_%s2%s_hist_norm.svg" % (self.filename, key, self.celltype, celltype2))
                 else:
-                    plt.savefig("%s/%s_%s2%s_hist.svg" % (self.filename, key, self.celltype, celltype2))
+                    if logscale:
+                        plt.savefig("%s/%s_%s2%s_hist_log.svg" % (self.filename, key, self.celltype, celltype2))
+                    else:
+                        plt.savefig("%s/%s_%s2%s_hist.svg" % (self.filename, key, self.celltype, celltype2))
             else:
-               plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
-               if norm_hist:
-                   plt.savefig("%s/%s_%s2%s_hist_norm.svg" % (self.filename, key, celltype2, self.celltype))
-               else:
-                   plt.savefig("%s/%s_%s2%s_hist.svg" % (self.filename, key, celltype2, self.celltype))
+                plt.title("%s from %s to %s" % (key, celltype2, self.celltype))
+                if norm_hist:
+                    if logscale:
+                        plt.savefig("%s/%s_%s2%s_hist_norm_log.svg" % (self.filename, key, celltype2, self.celltype))
+                    else:
+                        plt.savefig("%s/%s_%s2%s_hist_norm.svg" % (self.filename, key, celltype2, self.celltype))
+                else:
+                    if logscale:
+                        plt.savefig("%s/%s_%s2%s_hist_log.svg" % (self.filename, key, celltype2, self.celltype))
+                    else:
+                        plt.savefig("%s/%s_%s2%s_hist.svg" % (self.filename, key, celltype2, self.celltype))
         else:
-           plt.title("%s in %s %s" % (key, self.celltype, subcell))
-           if norm_hist:
-               plt.savefig("%s/%s%_s_%s_hist_norm.svg" % (self.filename, subcell, key, self.celltype))
-           else:
-               plt.savefig("%s/%s_%s_%s_hist.svg" % (self.filename, subcell, key, self.celltype))
+            plt.title("%s in %s %s" % (key, self.celltype, subcell))
+            if norm_hist:
+                if logscale:
+                    plt.savefig("%s/%s%_s_%s_hist_norm_log.svg" % (self.filename, subcell, key, self.celltype))
+                else:
+                    plt.savefig("%s/%s%_s_%s_hist_norm.svg" % (self.filename, subcell, key, self.celltype))
+            else:
+                if logscale:
+                    plt.savefig("%s/%s_%s_%s_hist_log.svg" % (self.filename, subcell, key, self.celltype))
+                else:
+                    plt.savefig("%s/%s_%s_%s_hist.svg" % (self.filename, subcell, key, self.celltype))
         plt.close()
 
     def multiple_param_labels(self, labels, ticks):

@@ -15,6 +15,8 @@ if __name__ == '__main__':
     import scipy
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    import seaborn as sns
+    import matplotlib.pyplot as plt
 
 
     #global_params.wd = "/ssdscratch/songbird/j0251/j0251_72_seg_20210127_agglo2"
@@ -209,6 +211,28 @@ if __name__ == '__main__':
     msn_ssv_inds, unique_msn_ssvs = pd.factorize(msn_ssvsids)
     msn_syn_sumsizes = np.bincount(msn_ssv_inds, m_sizes)
     msn_syn_number = np.bincount(msn_ssv_inds)
+    # For each MSN get GPi id with highest synaptic area
+    max_syn_area_GPi = np.zeros((len(unique_msn_ssvs)))
+    max_syn_area_GPi_id = np.zeros((len(unique_msn_ssvs)))
+    #get number of synapses for max area to GPi
+    maxarea_syn_number_GPi = np.zeros((len(unique_msn_ssvs)))
+    MSN_percell_GPi_proj_dict = {msn_id: {} for msn_id in unique_msn_ssvs}
+    for i, msn_id in enumerate(tqdm(unique_msn_ssvs)):
+        id_inds = np.where(m_ssv_partners == msn_id)[0]
+        id_ssv_partners = m_ssv_partners[id_inds]
+        id_sizes = m_sizes[id_inds]
+        gpi_inds = np.where(id_ssv_partners != msn_id)
+        msngpi_ssvsids = id_ssv_partners[gpi_inds]
+        msngpi_ssv_inds, unique_msngpi_ssvs = pd.factorize(msngpi_ssvsids)
+        msngpi_syn_sumsizes = np.bincount(msngpi_ssv_inds, id_sizes)
+        msn_gpisyn_number = np.bincount(msngpi_ssv_inds)
+        max_area_ind = np.argmax(msngpi_syn_sumsizes)
+        max_syn_area_GPi[i] = msngpi_syn_sumsizes[max_area_ind]
+        max_syn_area_GPi_id[i] = unique_msngpi_ssvs[max_area_ind]
+        maxarea_syn_number_GPi[i] = msn_gpisyn_number[max_area_ind]
+        for gi, gpi_id in enumerate(unique_msngpi_ssvs):
+            MSN_percell_GPi_proj_dict[msn_id][gpi_id] = msngpi_syn_sumsizes[gi]
+
 
     gpi_inds = np.where(m_cts == gpi_ct)
     gpi_ssvsids = m_ssv_partners[gpi_inds]
@@ -220,9 +244,14 @@ if __name__ == '__main__':
     permsn_gpi_ids_grouped = gpi_ssv_pd.groupby(by=msn_ssv_inds)
     permsn_gpi_groups = permsn_gpi_ids_grouped.groups
 
+
     msn_ssv_pd = pd.DataFrame(msn_ssvsids)
     pergpi_msn_ids_grouped = msn_ssv_pd.groupby(by=gpi_ssv_inds)
     pergpi_msn_groups = pergpi_msn_ids_grouped.groups
+
+
+
+
 
     GPi_rec_dict_percell = {id: {"MSN ids": np.unique(msn_ssvsids[pergpi_msn_groups[i]]),
                                    "number MSN cells": len(np.unique(msn_ssvsids[pergpi_msn_groups[i]]))} for
@@ -234,12 +263,15 @@ if __name__ == '__main__':
                       "sum size synapses per MSN": gpi_syn_sumsizes / number_msn_pergpi}
 
     MSN_proj_dict_percell = {id: {"GPi ids": np.unique(gpi_ssvsids[permsn_gpi_groups[i]]),
-                                   "number MSN cells": len(np.unique(gpi_ssvsids[permsn_gpi_groups[i]]))} for
+                                   "number MSN cells": len(np.unique(gpi_ssvsids[permsn_gpi_groups[i]])),
+                                  'max area GPi id': max_syn_area_GPi_id[i]} for
                               i, id in enumerate(unique_msn_ssvs)}
     number_gpi_permsn = np.array([len(np.unique(gpi_ssvsids[permsn_gpi_groups[i]])) for i in range(len(unique_msn_ssvs))])
     MSN_proj_dict = {"MSN ids": unique_msn_ssvs, "number of synapses to GPi": msn_syn_number, "sum size synapses to GPi": msn_syn_sumsizes,
                      "number of GPi cells": number_gpi_permsn, "number of synapses per GPi": msn_syn_number/ number_gpi_permsn,
-                     "sum size synapses per GPi": msn_syn_sumsizes/ number_gpi_permsn}
+                     "sum size synapses per GPi": msn_syn_sumsizes/ number_gpi_permsn, 'max syn area to GPi': max_syn_area_GPi,
+                     'max syn area GPi id': max_syn_area_GPi_id, 'max syn area syn number GPi': maxarea_syn_number_GPi}
+
 
     log.info("Average number of MSNs per GPi = %.2f" % np.mean(number_msn_pergpi))
     log.info("Average number of GPi per MSN = %.2f" % np.mean(number_gpi_permsn))
@@ -250,15 +282,26 @@ if __name__ == '__main__':
     # compute number of GPi per LMAN
     # compute average soma distance between gpi of same lman
     number_gpi_perlman = np.zeros(len(LMAN_proj_dict_percell.keys()))
+    number_gpimax_perlman = np.zeros(len(LMAN_proj_dict_percell.keys()))
     hperc_samegpi_msn_lman = np.zeros(len(LMAN_proj_dict_percell.keys()))
+    hperc_samegpi_max_msn_lman = np.zeros(len(LMAN_proj_dict_percell.keys()))
     avg_soma_dist_gpi = np.zeros(len(LMAN_proj_dict_percell.keys()))
     max_soma_dist_gpi = np.zeros(len(LMAN_proj_dict_percell.keys()))
+    indirect_LMAN_GPi_dict = {lman_id: {} for lman_id in LMAN_proj_dict_percell.keys()}
+    top5_lman_gpi_perc = pd.DataFrame(columns=['lman id', 'fraction syn area', 'ranking'], index = range(len(LMAN_proj_dict_percell.keys()) * 5))
     for i, lman_id in enumerate(tqdm(LMAN_proj_dict_percell)):
         lman = LMAN_proj_dict_percell[lman_id]
         gpi_percell = []
+        max_gpi_percell = []
         for msn_id in lman["MSN ids"]:
             try:
                 gpi_percell.append(MSN_proj_dict_percell[msn_id]["GPi ids"])
+                max_gpi_percell.append(MSN_proj_dict_percell[msn_id]['max area GPi id'])
+                for gpi_id in MSN_proj_dict_percell[msn_id]['GPi ids']:
+                    try:
+                        indirect_LMAN_GPi_dict[lman_id][gpi_id] += MSN_percell_GPi_proj_dict[msn_id][gpi_id]
+                    except KeyError:
+                        indirect_LMAN_GPi_dict[lman_id][gpi_id] = MSN_percell_GPi_proj_dict[msn_id][gpi_id]
             except KeyError:
                 continue
         gpi_percell = np.concatenate(np.array(gpi_percell))
@@ -268,6 +311,23 @@ if __name__ == '__main__':
         count_gpis = np.bincount(gpi_inds)
         max_count_gpis = np.max(count_gpis)
         hperc_samegpi_msn_lman[i] = max_count_gpis/len(gpi_percell)
+        maxgpi_inds, unique_maxgpi_percell = pd.factorize(max_gpi_percell)
+        number_gpimax_perlman[i] = len(unique_maxgpi_percell)
+        lman["indirect max GPi ids"] = unique_maxgpi_percell.astype(int)
+        lman['number indirect max GPi ids'] = len(unique_maxgpi_percell)
+        count_maxgpis = np.bincount(maxgpi_inds)
+        max_count_maxgpis = np.max(count_maxgpis)
+        hperc_samegpi_max_msn_lman[i] = max_count_maxgpis / len(max_gpi_percell)
+        indir_lman_gpi_syn_area = np.zeros(len(indirect_LMAN_GPi_dict[lman_id].keys()))
+        for gi, gpi_id in enumerate(indirect_LMAN_GPi_dict[lman_id].keys()):
+            indir_lman_gpi_syn_area[gi] = indirect_LMAN_GPi_dict[lman_id][gpi_id]
+        total_gpi_syn_area = np.sum(indir_lman_gpi_syn_area)
+        indir_lman_gpi_syn_area_top5 = np.sort(indir_lman_gpi_syn_area)[-5:][::-1]
+        indir_lman_gpi_syn_area_top5_frac = indir_lman_gpi_syn_area_top5 / total_gpi_syn_area
+        for ri in range(5):
+            top5_lman_gpi_perc.loc[i*5 + ri, 'lman id'] = lman_id
+            top5_lman_gpi_perc.loc[i * 5 + ri, 'ranking'] = ri + 1
+            top5_lman_gpi_perc.loc[i * 5 + ri, 'fraction syn area'] = indir_lman_gpi_syn_area_top5_frac[ri]
         if len(unique_gpi_percell) > 0:
             soma_centres = np.zeros((len(unique_gpi_percell), 3))
             for gi, gpi_id in enumerate(unique_gpi_percell):
@@ -278,6 +338,8 @@ if __name__ == '__main__':
         else:
             avg_soma_dist_gpi[i] = 0
             max_soma_dist_gpi[i] = 0
+
+    top5_lman_gpi_perc.to_csv(f'{f_name}/top5_indir_gpi_syn_areas_lman.csv')
 
     # compute number of LMAN per GPi
     # compute highest percentage of MSN that receive input from one LMAN
@@ -300,20 +362,30 @@ if __name__ == '__main__':
     #compute distance between GPi somata targeted by same LMAN
 
     LMAN_proj_dict["number of GPi"] = number_gpi_perlman
+    LMAN_proj_dict["number of max GPi"] = number_gpimax_perlman
     GPi_rec_dict["number of LMAN"] = number_lman_pergpi
     LMAN_proj_dict["percentage of largest MSN group to same GPi"] = hperc_samegpi_msn_lman
+    LMAN_proj_dict["percentage of largest MSN group to same max GPi"] = hperc_samegpi_max_msn_lman
     GPi_rec_dict["percentage of largest MSN group from same LMAN"] = hperc_samelman_msn_gpi
     LMAN_proj_dict["average soma distance GPi"] = avg_soma_dist_gpi
     LMAN_proj_dict["maximum soma distance GPi"] = max_soma_dist_gpi
 
     log.info("Average number of GPi from same LMAN via MSN = %.2f" % np.mean(number_gpi_perlman))
+    log.info('Average number of different GPis that had the highest syn area from MSN, from same LMAN via MSN  = %.2f' % np.mean(number_gpimax_perlman))
     log.info("Average number of LMAN from same GPi via MSN = %.2f" % np.mean(number_lman_pergpi))
     log.info("Average percentage of largest MSN group from LMAN to same GPi = %.2f" % np.mean(hperc_samegpi_msn_lman))
+    log.info("Average percentage of largest MSN group from LMAN to same max (hgihest syn area from MSN) GPi = %.2f" % np.mean(hperc_samegpi_max_msn_lman))
     log.info("Average percentage of largest MSN group to GPi from same LMAN = %.2f" % np.mean(hperc_samelman_msn_gpi))
     log.info("Average soma distance of GPi per LMAN = %.2f" % np.mean(avg_soma_dist_gpi))
     log.info("Median number of GPi from same LMAN via MSN = %.2f" % np.median(number_gpi_perlman))
+    log.info(
+        'Median number of different GPis that had the highest syn area from MSN, from same LMAN via MSN  = %.2f' % np.median(
+            number_gpimax_perlman))
     log.info("Median number of LMAN from same GPi via MSN = %.2f" % np.median(number_lman_pergpi))
     log.info("Median percentage of largest MSN group from LMAN to same GPi = %.2f" % np.median(hperc_samegpi_msn_lman))
+    log.info(
+        "Median percentage of largest MSN group from LMAN to same max (hgihest syn area from MSN) GPi = %.2f" % np.median(
+            hperc_samegpi_max_msn_lman))
     log.info("Median percentage of largest MSN group to GPi from same LMAN = %.2f" % np.median(hperc_samelman_msn_gpi))
     log.info("Number of GPi cells = %i" % len(unique_gpi_ssvs))
     log.info("Number of MSN cells = %i" % len(unique_msn_ssvs))
@@ -325,6 +397,8 @@ if __name__ == '__main__':
     write_obj2pkl("%s/msn_proj_dict_percell.pkl" % f_name, MSN_proj_dict_percell)
     write_obj2pkl("%s/lman_dict.pkl" % f_name, LMAN_proj_dict)
     write_obj2pkl("%s/lman_dict_percell.pkl" % f_name, LMAN_proj_dict_percell)
+    write_obj2pkl(f'{f_name}/msn_perGPi_proj_dict.pkl', MSN_percell_GPi_proj_dict)
+    write_obj2pkl(f'{f_name}/indir_LMAN_GPi_proj_dict.pkl', indirect_LMAN_GPi_dict)
 
     gpi_rec_pd = pd.DataFrame(GPi_rec_dict)
     gpi_rec_pd.to_csv("%s/gpi_dict.csv" % f_name)
@@ -345,6 +419,8 @@ if __name__ == '__main__':
             continue
         if "synapse" in key:
             msn_results.plot_hist(key, subcell="synapse", cells=False)
+            if 'size' in key:
+                msn_results.plot_hist(key, subcell='synapse', cells=False, logscale=True)
         else:
             msn_results.plot_hist(key, subcell="cells", cells=True)
     for key in GPi_rec_dict:
@@ -352,6 +428,8 @@ if __name__ == '__main__':
             continue
         if "synapse" in key:
             gpi_results.plot_hist(key, subcell="synapse", cells=False)
+            if 'size' in key:
+                gpi_results.plot_hist(key, subcell='synapse', cells=False, logscale=True)
         else:
             gpi_results.plot_hist(key, subcell="cells", cells=True)
 
@@ -361,5 +439,17 @@ if __name__ == '__main__':
         if not "GPi" in key:
             continue
         lman_results.plot_hist(key, subcell="cells", cells=True)
+
+    #plot results top 5
+    fontsize = 20
+    sns.boxplot(data=top5_lman_gpi_perc, x='ranking', y='fraction syn area', color = 'black')
+    plt.title('Fraction of syn area top 5 GPi indirectly connected to LMAN')
+    plt.ylabel('fraction syn area GPi', fontsize=fontsize)
+    plt.xlabel('ranking', fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/top5_gpi_indir_lman_syn_area_box.png')
+    plt.savefig(f'{f_name}/top5_gpi_indir_lman_syn_area_box_box.svg')
+    plt.close()
 
     log.info("LMAN, MSN, GPi number estimate analysis done")

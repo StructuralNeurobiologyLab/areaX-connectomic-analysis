@@ -94,7 +94,7 @@ if __name__ == '__main__':
     overview_df.loc[excl_inds, 'number merger with glia'] = np.array(ct_glia_groups.size())
     overview_df.loc[excl_inds, 'fraction merger with glia'] = overview_df['number merger with glia'] / overview_df['number total']
     merger_cell_df = merger_df[merger_df['merger with'] != 'glia']
-    ct_mc_groups = incomp_df.groupby('celltype')
+    ct_mc_groups = merger_cell_df.groupby('celltype')
     unique_mc_cts = np.unique(merger_cell_df['celltype'])
     if len(unique_in_cts) < len(unique_cts):
         excl_inds = np.in1d(unique_cts, unique_mc_cts)

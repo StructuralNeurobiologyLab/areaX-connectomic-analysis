@@ -36,11 +36,11 @@ if __name__ == '__main__':
     color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'golgi'
+    organelle_key = 'mi'
     comp_dict = {0:'dendrite', 1:'axon', 2:'soma'}
-    compartment = 2
+    compartment = 1
     comp_str = comp_dict[compartment]
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240904_j0251{version}_ct_{organelle_key}_{comp_str}_vol_density_mcl_%i_ax%i_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241024_j0251{version}_ct_{organelle_key}_{comp_str}_vol_density_mcl_%i_ax%i_%s_fs%i_nm" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         log.info(f'{comp_str} selected as compartment. Density will be calculated as sum of organelle volume per compartment skeleton length. '
                  f'Total volume density will be all organelles per total pathlength.')
     known_mergers = analysis_params.load_known_mergers()
-    misclassified_asto_ids = analysis_params.load_potential_astros()
+    #misclassified_asto_ids = analysis_params.load_potential_astros()
     axon_cts = analysis_params.axon_cts()
     num_cts = analysis_params.num_cts(with_glia=with_glia)
     np_presaved_loc = analysis_params.file_locations
@@ -94,8 +94,8 @@ if __name__ == '__main__':
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
                                             axon_only=True, max_path_len=None)
         else:
-            astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-            cellids = cellids[astro_inds]
+            #astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+            #cellids = cellids[astro_inds]
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
                                                 axon_only=False, max_path_len=None)
         cellids = np.sort(cellids)

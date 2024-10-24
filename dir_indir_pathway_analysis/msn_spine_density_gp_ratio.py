@@ -43,7 +43,7 @@ if __name__ == '__main__':
     kde = True
     check_dens= True
     color_key = 'STNGPINTv6'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241015_j0251{version}_%s_{conn_ct}_{ct1_str}_{ct2_str}ratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_fullden" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241024_j0251{version}_%s_{conn_ct}_{ct1_str}_{ct2_str}ratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_fullden" % (
     ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -69,8 +69,8 @@ if __name__ == '__main__':
     cell_ids = np.array(list(cell_dict.keys()))
     merger_inds = np.in1d(cell_ids, known_mergers) == False
     cell_ids = cell_ids[merger_inds]
-    astro_inds = np.in1d(cell_ids, misclassified_asto_ids) == False
-    cell_ids = cell_ids[astro_inds]
+    #astro_inds = np.in1d(cell_ids, misclassified_asto_ids) == False
+    #cell_ids = cell_ids[astro_inds]
     cell_ids = check_comp_lengths_ct(cellids=cell_ids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                     axon_only=False,
                                     max_path_len=None)

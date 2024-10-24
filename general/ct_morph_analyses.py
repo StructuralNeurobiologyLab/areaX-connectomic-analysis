@@ -38,12 +38,12 @@ if __name__ == '__main__':
     fontsize = 20
     n_comps_PCA = 1
     n_umap_runs = 5
-    process_morph_parameters = False
+    process_morph_parameters = True
     use_mito_density = True
-    use_vc_density = False
-    use_ves_density = True
+    use_vc_density = True
+    use_ves_density = False
     use_syn_params = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240723_j0251{version}_ct_morph_analyses_mcl_%i_ax%i_%s_fs%i" \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241024_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
              f"npca{n_comps_PCA}_umap{n_umap_runs}_ax_only_synmives" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
@@ -119,7 +119,6 @@ if __name__ == '__main__':
     morph_df = pd.DataFrame(columns=columns, index=range(len(all_suitable_ids)))
     morph_df['cellid'] = all_suitable_ids
     morph_df['celltype'] = all_celltypes
-    raise ValueError
     param_list = columns[2:]
 
     if process_morph_parameters:

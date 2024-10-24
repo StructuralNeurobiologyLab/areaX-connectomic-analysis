@@ -33,7 +33,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 20
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240422_j0251{version}_GPe_i_myelin_mito_radius_mcl%i_fs%i_med%i" % \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241024_j0251{version}_GPe_i_myelin_mito_radius_newmerger_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

@@ -769,7 +769,7 @@ def generate_colored_mesh_synprob_data(cell_input):
 
 def get_per_cell_mito_myelin_info(input):
     '''
-    Function to get information about myelin fraction, mitochondria density and axon radius per cell.
+    Function to get information about myelin fraction, axon mitochondria density and axon radius per cell.
     Also calculates the cell volume from cell.size in µm³
     :param input: cellid, cached mitochondria information, cell dict which cached cellids for cell
     :return: median radius per cell, mitochondria volume density, myelin fraction
@@ -785,10 +785,10 @@ def get_per_cell_mito_myelin_info(input):
     if np.isnan(abs_myelin_cell):
         return [np.nan, np.nan, np.nan]
     #input for organell analysis: cellid, org_ssv_ids, org_sizes, org_axoness, full_cell_dict = params
-    organell_input = [cellid, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict]
+    organell_input = [cellid, mi_ssv_ids, mi_sizes, mi_axoness, full_cell_dict, 1]
     mito_results = get_organelle_comp_density_presaved(organell_input)
     axo_mito_volume_density_cell = mito_results[0]
-    total_mito_volume_density_cell = mito_results[2]
+    total_mito_volume_density_cell = mito_results[1]
     axon_inds = np.nonzero(cell.skeleton["axoness_avg10000"] == 1)[0]
     axon_radii_cell = get_compartment_radii(cell, comp_inds=axon_inds)
     ax_median_radius_cell = np.median(axon_radii_cell)

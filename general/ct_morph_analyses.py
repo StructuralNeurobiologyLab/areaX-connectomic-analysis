@@ -59,7 +59,7 @@ if __name__ == '__main__':
     if full_cells_only:
         log.info('Plot for full cells only')
     known_mergers = analysis_params.load_known_mergers()
-    misclassified_asto_ids = analysis_params.load_potential_astros()
+    #misclassified_asto_ids = analysis_params.load_potential_astros()
     axon_cts = analysis_params.axon_cts()
     num_cts = analysis_params.num_cts(with_glia=with_glia)
     np_presaved_loc = analysis_params.file_locations
@@ -94,8 +94,8 @@ if __name__ == '__main__':
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
                                             axon_only=True, max_path_len=None)
         else:
-            astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-            cellids = cellids[astro_inds]
+            #astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+            #cellids = cellids[astro_inds]
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
                                                 axon_only=False, max_path_len=None)
         cellids = np.sort(cellids)

@@ -442,7 +442,7 @@ if __name__ == '__main__':
 
     #plot results top 5
     fontsize = 20
-    sns.boxplot(data=top5_lman_gpi_perc, x='ranking', y='fraction syn area', color = 'black')
+    sns.boxplot(data=top5_lman_gpi_perc, x='ranking', y='fraction syn area', color = '#707070')
     plt.title('Fraction of syn area top 5 GPi indirectly connected to LMAN')
     plt.ylabel('fraction syn area GPi', fontsize=fontsize)
     plt.xlabel('ranking', fontsize=fontsize)

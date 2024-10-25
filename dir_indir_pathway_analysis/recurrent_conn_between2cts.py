@@ -34,12 +34,12 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGPINTv6'
-    ct1 = 3
-    ct2 = 5
+    ct1 = 4
+    ct2 = 7
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240705_j0251{version}_{ct1_str}_{ct2_str}_recurr_conn_mcl_%i_synprob_%.2f_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_{ct1_str}_{ct2_str}_recurr_conn_mcl_%i_synprob_%.2f_%s_fs%i" % (
     min_comp_len_cell, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     log.info('Step 1/6: Get suitable cellids')
     known_mergers = bio_params.load_known_mergers()
-    misclassified_asto_ids = bio_params.load_potential_astros()
+    #misclassified_asto_ids = bio_params.load_potential_astros()
     cts = [ct1, ct2]
     suitable_ids_dict = {}
     all_suitable_ids = []
@@ -66,8 +66,8 @@ if __name__ == '__main__':
         if exclude_known_mergers:
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
-            astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-            cellids = cellids[astro_inds]
+            #astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+            #cellids = cellids[astro_inds]
         cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cell,
                                                     axon_only=False,
                                                     max_path_len=None)

@@ -29,10 +29,10 @@ if __name__ == '__main__':
     #select which incoming an outgoing celltypes should be plottet extra as well
     zoom_cts = ['GPe', 'GPi']
     if len(zoom_cts) > 0:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_%s_connectivity_comparison_f{fontsize}_zoom{zoom_cts}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_%s_%s_connectivity_comparison_f{fontsize}_zoom{zoom_cts}" % (
             ct_dict[ct1], ct_dict[ct2])
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_%s_connectivity_comparison_f{fontsize}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_%s_%s_connectivity_comparison_f{fontsize}" % (
                 ct_dict[ct1], ct_dict[ct2])
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     ct_colors = CelltypeColors(ct_dict = ct_dict)
     ct_palette = ct_colors.ct_palette(key=color_key)
 
-    conn_filename = 'cajal/scratch/users/arother/bio_analysis_results/general/240411_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_TePkBrNGF_annot_bw_fs_20'
+    conn_filename = 'cajal/scratch/users/arother/bio_analysis_results/general/241024_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_STNGPINTv6_annot_newmerger_bw_fs_20'
     log.info(f'Step 1/3: Load connectivity data from {conn_filename}')
     conn_dict = load_pkl2obj(f'{conn_filename}/synapse_dict_per_ct.pkl')
 

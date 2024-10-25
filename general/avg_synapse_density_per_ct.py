@@ -32,7 +32,7 @@ if __name__ == '__main__':
     color_key = 'STNGPINTv6'
     fontsize = 20
     zero_soma_fill = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/240613_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s_newmerger" % (
         syn_prob, min_comp_len, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     all_suitable_ids = []
     all_cell_dict = {}
     all_suitable_cts = []
-    misclassified_asto_ids = analysis_params.load_potential_astros()
+    #misclassified_asto_ids = analysis_params.load_potential_astros()
     log.info('Step 1/4: Filter cells')
     for i, ct in enumerate(tqdm(cts)):
         cell_dict = analysis_params.load_cell_dict(ct)
@@ -66,8 +66,8 @@ if __name__ == '__main__':
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                             axon_only=True, max_path_len=None)
         else:
-            astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-            cellids = cellids[astro_inds]
+            #astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+            #cellids = cellids[astro_inds]
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                             axon_only=False, max_path_len=None)
         cellids = np.sort(cellids)

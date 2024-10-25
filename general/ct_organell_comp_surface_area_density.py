@@ -35,11 +35,11 @@ if __name__ == '__main__':
     color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'mi'
+    organelle_key = 'golgi'
     #0 = dendrite, 1 = axon, 2 = soma
     compartment = [2]
     with_FS = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241024_j0251{version}_ct_{organelle_key}_{compartment}_area_density_mcl_%i_ax%i_%s_fs%i_new_merger" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_ct_{organelle_key}_{compartment}_area_density_mcl_%i_ax%i_%s_fs%i_new_merger" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/LMAN_MSN_analysis/" \
-                       f"241016_j0251{version}_lman_number_msn_mcl{min_comp_len}_syn{syn_prob}"
+                       f"241025_j0251{version}_lman_number_msn_mcl{min_comp_len}_syn{syn_prob}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('LMAN MSN connectivity estimate', log_dir=f_name + '/logs/')
@@ -55,9 +55,9 @@ if __name__ == '__main__':
     known_mergers =bio_params.load_known_mergers()
     merger_inds = np.in1d(MSN_ids, known_mergers) == False
     MSN_ids = MSN_ids[merger_inds]
-    misclassified_asto_ids = bio_params.load_potential_astros()
-    astro_inds = np.in1d(MSN_ids, misclassified_asto_ids) == False
-    MSN_ids = MSN_ids[astro_inds]
+    #misclassified_asto_ids = bio_params.load_potential_astros()
+    #astro_inds = np.in1d(MSN_ids, misclassified_asto_ids) == False
+    #MSN_ids = MSN_ids[astro_inds]
     MSN_ids = check_comp_lengths_ct(cellids=MSN_ids, fullcelldict=MSN_dict, min_comp_len=min_comp_len,
                                     axon_only=False,
                                     max_path_len=None)

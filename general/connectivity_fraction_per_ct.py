@@ -44,11 +44,11 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     cls = CelltypeColors(ct_dict=ct_dict)
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP', 'STNGPINTv6', 'RdTeINTv6', 'TePkBrNGF'}
-    color_key = 'TePkBrNGF'
-    plot_connmatrix_only = True
+    color_key = 'STNGPINTv6'
+    plot_connmatrix_only = False
     fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241024_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i_STN_noGP_only" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -98,10 +98,11 @@ if __name__ == '__main__':
                 #    misclassified_asto_ids = analysis_params.load_potential_astros()
                 #    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 #    cellids = cellids[astro_inds]
-                #if ct == 4:
-                    #stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
-                    #                           '240529_stn_msn_nogp_ids_comps/stn_nogp_msn_gpe.csv', index_col=0)
-                    #cellids = np.array(stn_no_gp_df['cellid'])
+                if ct == 4:
+                    stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
+                                               '241025_j0251v6_STN_4_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20/STN_spine_density_GPe_GPiratio.csv', index_col=0)
+                    stn_no_gp_df = stn_no_gp_df[stn_no_gp_df['celltype'] == 'STN none']
+                    cellids = np.array(stn_no_gp_df['cellid'])
 
                     #cellids = np.array(gt_df['cellids'][gt_df['celltype'] == ct_dict[ct]])
                 #if ct == 7:

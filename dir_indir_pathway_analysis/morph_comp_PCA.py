@@ -38,7 +38,7 @@ if __name__ == '__main__':
     cts_str = [ct_dict[ct] for ct in cts]
     color_key = 'RdTeINTv6'
     n_comps_PCA = 1
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240422_j0251{version}_{cts_str}_morph_comp_radius_spiness_examplecells_mcl%i_fs%i_med%i_{color_key}_nc{n_comps_PCA}" % \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_{cts_str}_morph_comp_radius_spiness_examplecells_mcl%i_fs%i_med%i_{color_key}_nc{n_comps_PCA}" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

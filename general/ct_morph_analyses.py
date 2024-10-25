@@ -34,17 +34,17 @@ if __name__ == '__main__':
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    color_key = 'AxTePkBrv6'
+    color_key = 'TeBKv6MSNyw'
     fontsize = 20
     n_comps_PCA = 1
     n_umap_runs = 5
     process_morph_parameters = True
-    use_mito_density = True
-    use_vc_density = True
+    use_mito_density = False
+    use_vc_density = False
     use_ves_density = False
-    use_syn_params = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241024_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_ax_only_synmives" % (
+    use_syn_params = False
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_fc" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

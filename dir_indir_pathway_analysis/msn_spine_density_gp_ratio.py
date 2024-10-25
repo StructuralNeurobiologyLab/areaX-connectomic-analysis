@@ -43,7 +43,7 @@ if __name__ == '__main__':
     kde = True
     check_dens= True
     color_key = 'STNGPINTv6'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241024_j0251{version}_%s_{conn_ct}_{ct1_str}_{ct2_str}ratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_fullden" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_%s_{conn_ct}_{ct1_str}_{ct2_str}ratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f{fontsize_jointplot}_fullden" % (
     ct_dict[conn_ct], min_comp_len, syn_prob, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     log.info(f'Step 1/7: Load and check all {ct_dict[conn_ct]} cells')
     known_mergers = analysis_params.load_known_mergers()
-    misclassified_asto_ids = analysis_params.load_potential_astros()
+    #misclassified_asto_ids = analysis_params.load_potential_astros()
 
     cell_dict = analysis_params.load_cell_dict(celltype=conn_ct)
     cell_ids = np.array(list(cell_dict.keys()))
@@ -150,8 +150,8 @@ if __name__ == '__main__':
     ct1_ids = np.array(list(ct1_dict.keys()))
     merger_inds = np.in1d(ct1_ids, known_mergers) == False
     ct1_ids = ct1_ids[merger_inds]
-    astro_inds = np.in1d(ct1_ids, misclassified_asto_ids) == False
-    ct1_ids = ct1_ids[astro_inds]
+    #astro_inds = np.in1d(ct1_ids, misclassified_asto_ids) == False
+    #ct1_ids = ct1_ids[astro_inds]
     ct1_ids = check_comp_lengths_ct(cellids=ct1_ids, fullcelldict=ct1_dict, min_comp_len=min_comp_len,
                                     axon_only=False,
                                     max_path_len=None)
@@ -160,8 +160,8 @@ if __name__ == '__main__':
     ct2_ids = np.array(list(ct2_dict.keys()))
     merger_inds = np.in1d(ct2_ids, known_mergers) == False
     ct2_ids = ct2_ids[merger_inds]
-    astro_inds = np.in1d(ct2_ids, misclassified_asto_ids) == False
-    ct2_ids = ct2_ids[astro_inds]
+    #astro_inds = np.in1d(ct2_ids, misclassified_asto_ids) == False
+    #ct2_ids = ct2_ids[astro_inds]
     ct2_ids = check_comp_lengths_ct(cellids=ct2_ids, fullcelldict=ct2_dict, min_comp_len=min_comp_len,
                                     axon_only=False,
                                     max_path_len=None)

@@ -37,10 +37,10 @@ if __name__ == '__main__':
     fontsize = 20
     kde = True
     if conn_ct == None:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}" % (
             ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240529_j0251{version}_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}_stn_gt" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_%s_%s_%s_syn_multisyn_mcl_%i_synprob_%.2f_kde%i_f{fontsize}_stn_gt" % (
             ct_dict[conn_ct], ct_dict[ct2], ct_dict[ct3], min_comp_len, syn_prob_thresh, kde)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     
     log.info('Step 1/4: Load and check all cells')
     known_mergers = analysis_params.load_known_mergers()
-    misclassified_astro_ids = analysis_params.load_potential_astros()
+    #misclassified_astro_ids = analysis_params.load_potential_astros()
     if conn_ct is not None:
         cts = [conn_ct, ct2, ct3]
     else:
@@ -63,8 +63,8 @@ if __name__ == '__main__':
         ct_ids = np.array(list(cell_info_dict.keys()))
         merger_inds = np.in1d(ct_ids, known_mergers) == False
         ct_ids = ct_ids[merger_inds]
-        astro_inds = np.in1d(ct_ids, misclassified_astro_ids) == False
-        ct_ids = ct_ids[astro_inds]
+        #astro_inds = np.in1d(ct_ids, misclassified_astro_ids) == False
+        #ct_ids = ct_ids[astro_inds]
         ct_ids = check_comp_lengths_ct(cellids=ct_ids, fullcelldict=cell_info_dict, min_comp_len=min_comp_len,
                                         axon_only=False,
                                         max_path_len=None)

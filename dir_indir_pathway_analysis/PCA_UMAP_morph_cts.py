@@ -28,7 +28,7 @@ if __name__ == '__main__':
     #color_key = 'STNGP'
     color_key = 'STNGPINTv6'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241024_j0251{version}_%s_%s_morph_PCA_{fontsize}" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_%s_%s_morph_PCA_{fontsize}" % (
             ct_dict[ct1], ct_dict[ct2])
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -63,11 +63,13 @@ if __name__ == '__main__':
         pca_df['celltype'] = labels
         pca_df.to_csv(f'{f_name}/pca_principal_component.csv')
         log.info('Step 3/3: Plot results')
-        plot_histogram_selection(dataframe=pca_df, x_data='PC1',
-                                 color_palette=ct_palette, label='pca_one_comp', count='cells', foldername=f_name,
-                                 hue_data='celltype', title=f'Separation by first principal component', fontsize = fontsize)
-        sns.histplot(x='PC1', data=pca_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True)
+        #errors with histogram and hue in seaborn 0.13.2 with this code, switch to displot
+        #plot_histogram_selection(dataframe=pca_df, x_data='PC1',
+        #                         color_palette=ct_palette, label='pca_one_comp', count='cells', foldername=f_name,
+        #                         hue_data='celltype', title=f'Separation by first principal component', fontsize = fontsize)
+        sns.displot(data=pca_df, x='PC1', hue='celltype', kind='hist', element="step",
+                    fill=False, common_norm=False, multiple="dodge",
+                    palette=ct_palette, linewidth=3)
         plt.ylabel(f'number of cells', fontsize=fontsize)
         plt.xlabel('PC1', fontsize=fontsize)
         plt.xticks(fontsize=fontsize)
@@ -76,8 +78,9 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/pca_one_comp_hist.png')
         plt.savefig(f'{f_name}/pca_obe_comp_hist.svg')
         plt.close()
-        sns.histplot(x='PC1', data=pca_df, hue='celltype', palette=ct_palette, common_norm=False,
-                     fill=False, element="step", linewidth=3, legend=True, stat='percent')
+        sns.displot(data=pca_df, x='PC1', hue='celltype', kind='hist', element="step",
+                    fill=False, common_norm=False, multiple="dodge",
+                    palette=ct_palette, linewidth=3, stat='percent')
         plt.ylabel(f'% of cells', fontsize=fontsize)
         plt.xlabel('PC1', fontsize=fontsize)
         plt.xticks(fontsize=fontsize)

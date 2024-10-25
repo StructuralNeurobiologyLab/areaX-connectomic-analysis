@@ -37,8 +37,8 @@ if __name__ == '__main__':
 
     #load GPi ids from merger list, remove mergers and separate autapse GPi from non-autapse GPi
     ct_autapse_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                      '240723_j0251v6_all_cellids_for_exclusion/' \
-                       '241016_all_full_cell_ids_no_msn_manuall_checks_2.csv'
+                        '240723_j0251v6_all_cellids_for_exclusion/' \
+                       '241024_all_full_cell_ids_no_msn_manuall_checks_final.csv'
 
     log.info(f'Load information about manually checked autapses from {ct_autapse_path}')
     ct_autapse_df = pd.read_csv(ct_autapse_path)

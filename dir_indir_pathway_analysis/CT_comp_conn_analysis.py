@@ -32,18 +32,19 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGPINTv6'
-    post_ct = 5
+    post_ct = 7
     post_ct_str = ct_dict[post_ct]
     #comp color keys: 'MudGrays', 'GreenGrays', 'TeYw', 'NeRe', 'BeRd, TeBk', 'TeGy'}
     comp_color_key = 'TeGy'
     save_svg = True
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240425_j0251{version}_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/2401025_j0251{version}_%s_input_comps_mcl_%i_ax%i_synprob_%.2f_%s_%s_fs%i_GPi_only" % (
     post_ct_str, min_comp_len_cell, min_comp_len_ax, syn_prob, color_key, comp_color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Analysis of synaptic inputs to compartments of %s' % post_ct_str, log_dir=f_name + '/logs/')
-    cts_for_loading = np.arange(12)
+    #cts_for_loading = np.arange(12)
+    cts_for_loading = [7]
     cts_str_analysis = [ct_dict[ct] for ct in cts_for_loading]
     num_cts = len(cts_for_loading)
     log.info(
@@ -71,10 +72,6 @@ if __name__ == '__main__':
         if exclude_known_mergers:
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
-            if ct == 2:
-                misclassified_asto_ids = bio_params.load_potential_astros()
-                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-                cellids = cellids[astro_inds]
         if ct in axon_cts:
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
                                                     axon_only=True,
@@ -218,36 +215,38 @@ if __name__ == '__main__':
     step_idents = ['get compartment specific synapse information']
 
     log.info("Step 3/3 Plot results for comparison between celltypes and calculate statistics")
-    kruskal_res_df = pd.DataFrame(columns = ['stats', 'p-value'])
-    cts_for_stats = cts_for_loading[np.in1d(cts_for_loading, exclude_ct_from_stats) == False]
+    if len(cts_for_loading) > 1:
+        kruskal_res_df = pd.DataFrame(columns = ['stats', 'p-value'])
+        cts_for_stats = cts_for_loading[np.in1d(cts_for_loading, exclude_ct_from_stats) == False]
     for ik, key in enumerate(tqdm(complete_param_titles)):
         #use ranksum test (non-parametric) to calculate results
         param_title = param_titles[ik]
         if 'cell' in key:
             #make plots for data which is summarised per postsynaptic cell
-            ranksum_results = pd.DataFrame()
-            for comp in compartments:
-                comp_res_pc = pd.DataFrame(data = all_comps_results_dict_percell[all_comps_results_dict_percell['compartment'] == comp],
-                                           columns = all_comps_results_dict_percell.columns).astype(all_comps_results_dict_percell.dtypes)
-                comp_res_pc[param_title] = comp_res_pc[param_title].astype(float)
-                comp_param_groups = [group[param_title].values for name, group in
-                    comp_res_pc.groupby('celltype')]
-                kruskal_res = kruskal(*comp_param_groups, nan_policy='omit')
-                kruskal_res_df.loc[f'{comp} {param_title}', 'stats'] = kruskal_res[0]
-                kruskal_res_df.loc[f'{comp} {param_title}', 'p-value'] = kruskal_res[1]
-                for c1 in cts_for_stats:
-                    c1_str = ct_dict[c1]
-                    c1_res = comp_res_pc[comp_res_pc['celltype'] == c1_str][param_title]
-                    p_c1 = np.array(c1_res).astype(float)
-                    for c2 in cts_for_stats:
-                        if c1 >= c2:
-                            continue
-                        c2_str = ct_dict[c2]
-                        c2_res = comp_res_pc[comp_res_pc['celltype'] == c2_str][param_title]
-                        p_c2 = np.array(c2_res).astype(float)
-                        stats, p_value = ranksums(p_c1, p_c2, nan_policy = 'omit')
-                        ranksum_results.loc["stats " + comp + ' of ' + post_ct_str, c1_str + " vs " + c2_str] = stats
-                        ranksum_results.loc["p value " + comp + ' of ' + post_ct_str, c1_str + " vs " + c2_str] = p_value
+            if len(cts_for_loading) > 1:
+                ranksum_results = pd.DataFrame()
+                for comp in compartments:
+                    comp_res_pc = pd.DataFrame(data = all_comps_results_dict_percell[all_comps_results_dict_percell['compartment'] == comp],
+                                               columns = all_comps_results_dict_percell.columns).astype(all_comps_results_dict_percell.dtypes)
+                    comp_res_pc[param_title] = comp_res_pc[param_title].astype(float)
+                    comp_param_groups = [group[param_title].values for name, group in
+                        comp_res_pc.groupby('celltype')]
+                    kruskal_res = kruskal(*comp_param_groups, nan_policy='omit')
+                    kruskal_res_df.loc[f'{comp} {param_title}', 'stats'] = kruskal_res[0]
+                    kruskal_res_df.loc[f'{comp} {param_title}', 'p-value'] = kruskal_res[1]
+                    for c1 in cts_for_stats:
+                        c1_str = ct_dict[c1]
+                        c1_res = comp_res_pc[comp_res_pc['celltype'] == c1_str][param_title]
+                        p_c1 = np.array(c1_res).astype(float)
+                        for c2 in cts_for_stats:
+                            if c1 >= c2:
+                                continue
+                            c2_str = ct_dict[c2]
+                            c2_res = comp_res_pc[comp_res_pc['celltype'] == c2_str][param_title]
+                            p_c2 = np.array(c2_res).astype(float)
+                            stats, p_value = ranksums(p_c1, p_c2, nan_policy = 'omit')
+                            ranksum_results.loc["stats " + comp + ' of ' + post_ct_str, c1_str + " vs " + c2_str] = stats
+                            ranksum_results.loc["p value " + comp + ' of ' + post_ct_str, c1_str + " vs " + c2_str] = p_value
                 # make violinplot, boxplot per compartment with all celltypes
                 ylabel = param_title
                 sns.stripplot(x = 'celltype', y = param_title, data=comp_res_pc, color = 'black', alpha=0.2,
@@ -276,7 +275,8 @@ if __name__ == '__main__':
                 if save_svg:
                     plt.savefig('%s/%s_syn_comps_%s_percell_box.png' % (f_name, param_title, comp))
                 plt.close()
-            ranksum_results.to_csv(f'{f_name}/{param_title}_ranksum_results.csv')
+            if len(cts_for_loading) > 1:
+                ranksum_results.to_csv(f'{f_name}/{param_title}_ranksum_results.csv')
             #make plot with all compartments
             all_comps_results_dict_percell[param_title] = all_comps_results_dict_percell[param_title].astype(float)
             ylabel = param_title
@@ -321,9 +321,9 @@ if __name__ == '__main__':
                 plt.savefig('%s/%s_syn_cts_box.svg' % (f_name, param_title))
             plt.close()
 
-    kruskal_res_df.to_csv(f'{f_name}/kruskal_results.csv')
-
-    ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
+    if len(cts_for_loading) > 1:
+        kruskal_res_df.to_csv(f'{f_name}/kruskal_results.csv')
+        ranksum_results.to_csv("%s/ranksum_results.csv" % f_name)
 
     log.info('Compartment synapse analysis done')
     time_stamps = time.time()

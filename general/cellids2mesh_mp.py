@@ -17,32 +17,36 @@ if __name__ == '__main__':
     axon_cts = bio_params.axon_cts()
 
     #f_name = 'cajal/scratch/users/arother/exported_meshes'
-    f_name = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/240909_rndm_astro/'
+    f_name = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/241029_migr/'
 
     ct = 12
     ct_str = ct_dict[ct]
-    min_comp_len = 200
+    min_comp_len = 0
+    load_handpicked = 15
     #if None is selected the full cells will be exported; otherwise expects list of compartments
     #possible compartments: 'axon', 'dendrite', 'soma'
     #if all three are given, the full cell mesh will be exported but seperated into compartments
     compartments = None
     with_skel = True
-    cellid_path = f'{f_name}/random_astro_ids_50.csv'
+    if load_handpicked is None:
+        cellid_path = f'{bio_params.file_locations}/random_astro_ids_50.csv'
     if compartments is None:
-        foldername = f'{f_name}/240909_j0251{version}_{ct_str}_full_cells_mcl_{min_comp_len}/'
+        foldername = f'{f_name}/241029_j0251{version}_{ct_str}_full_cells_mcl_{min_comp_len}/'
     elif len(compartments) == 3:
-        foldername = f'{f_name}/240909_j0251{version}_{ct_str}_all_comps_sep_mcl_{min_comp_len}/'
+        foldername = f'{f_name}/241029_j0251{version}_{ct_str}_all_comps_sep_mcl_{min_comp_len}/'
     else:
-        foldername = f'{f_name}/2400909_j0251{version}_{ct_str}_{compartments[0]}_mcl_{min_comp_len}/'
-    if not os.path.exists(foldername):
-        os.mkdir(foldername)
+        foldername = f'{f_name}/241029_j0251{version}_{ct_str}_{compartments[0]}_mcl_{min_comp_len}/'
+        if not os.path.exists(foldername):
+            os.mkdir(foldername)
     log = initialize_logging(f'log_cellid2mesh_{ct_str}', log_dir=foldername)
     log.info(f' desired compartment = {compartments}, min comp len = {min_comp_len} µm')
     if with_skel:
         log.info('Skeletons will also be exported.')
 
     log.info('Step 1/2: Get suitable cell ids')
-    if cellid_path is not None:
+    if load_handpicked is not None:
+        cellids = bio_params.load_handpicked_ids(load_handpicked)
+    elif cellid_path is not None:
         log.info(f'cellids will be loaded from {cellid_path}')
         cellid_df = pd.read_csv(cellid_path)
         cellids = np.array(cellid_df['cellid'])

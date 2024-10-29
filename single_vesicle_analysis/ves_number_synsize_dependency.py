@@ -28,14 +28,14 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict()
     min_comp_len = 200
     dist_threshold = 10 #nm
-    min_syn_size = 0.05
+    min_syn_size = 0.1
     syn_prob_thresh = 0.6
     syn_dist_threshold = 2000 #nm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240814_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s_smallersyns" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/241028_j0251{version}_number_ves_synsize_mcl_%i_dt_%i_st_%i_%s_smallersyns" % (
         min_comp_len, dist_threshold, syn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -75,10 +75,6 @@ if __name__ == '__main__':
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                             axon_only=True, max_path_len=None)
         else:
-            if ct == 2:
-                misclassified_asto_ids = load_pkl2obj(f'{cache_name}/pot_astro_ids.pkl')
-                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-                cellids = cellids[astro_inds]
             cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
                                                 axon_only=False, max_path_len=None)
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))

@@ -41,8 +41,8 @@ if __name__ == '__main__':
     #color keys: 'MSN','TeYw','MudGrays'}
     color_key = 'STNGPINTv6'
     ct1 = 7
-    ct2 = 6
-    ct3 = 3
+    ct2 = 4
+    ct3 = 6
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     ct3_str = ct_dict[ct3]
@@ -51,11 +51,11 @@ if __name__ == '__main__':
     if np.any(np.in1d(comp_cts, axon_cts)):
         axon_ct_present = True
         f_name = f'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/' \
-                 f'240305_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{min_comp_len_ax}_{color_key}'
+                 f'241028_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{min_comp_len_ax}_{color_key}'
     else:
         axon_ct_present = False
         f_name = f'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/' \
-                 f'240305_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{color_key}'
+                 f'241028_j0251{version}_cellnumber_pathway_analysis_{ct1_str}_{ct2_str}_{ct3_str}_{min_comp_len}_{color_key}'
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'Pathway cell number analysis {ct1_str}, {ct2_str}, {ct3_str}', log_dir=f_name + '/logs/')
@@ -81,10 +81,6 @@ if __name__ == '__main__':
         if exclude_known_mergers:
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
-            if ct == 2:
-                misclassified_asto_ids = bio_params.load_potential_astros()
-                astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-                cellids = cellids[astro_inds]
         if ct in axon_cts:
             cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_ax,
                                                     axon_only=True,
@@ -119,13 +115,21 @@ if __name__ == '__main__':
     synapse_cache = [m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob]
     #make dataframe with all summary statistics
     sum_columns = [f'{ct1_str} to {ct2_str}', f'{ct2_str} from {ct1_str}', f'{ct2_str} to {ct3_str}', f'{ct3_str} from {ct2_str}']
-    sum_index = ['number of cells', 'percent of cells', 'total synaptic area', 'median synapse number', 'median synapse size',
+    sum_index = ['number of cells', 'percent of cells', 'total synaptic area', 'total synaptic area dataset normed','median synapse number', 'median synapse size',
                  'mean synapse number', 'mean synapse size', 'std synapse number', 'std synapse size',
                  'number of other cells median', 'number of other cells mean', 'number of other cells std',
                  'median syn number per other cell', 'median syn area per other cell',
                  'mean syn number per other cell', 'mean syn area per other cell',
                  'std syn number per other cell', 'std syn area per other cell']
     summary_df = pd.DataFrame(columns=sum_columns, index = sum_index)
+
+    #get summed synapse size of suitable synapse in full dataset
+    all_syn_path = 'cajal/scratch/users/arother/bio_analysis_results/general/241024_j0251v6_cts_percentages_mcl_50_ax50_synprob_0.60_TePkBrNGF_newmergers_bw_fs_20/' \
+                   'outgoing_syn_sizes_matrix_abs_sum.csv'
+    summed_syns_all_df = pd.read_csv(all_syn_path, index_col = 0)
+    total_sumsize = summed_syns_all_df.sum().sum()
+    log.info(f'total synapse number was loaded from {all_syn_path} and is {total_sumsize:.2f} µm²')
+
 
     log.info(f'Step 3/5: Identify {ct2_str} cells that get {ct1_str} input')
     #prefilter synapses between ct1 and ct2, only use suitable cellids
@@ -150,6 +154,8 @@ if __name__ == '__main__':
     log.info(f'Total synaptic strength from {ct1_str} to {ct2_str} are {np.sum(m_sizes):.2f} µm² from {len(m_sizes)} synapses')
     summary_df.loc['total synaptic area',f'{ct1_str} to {ct2_str}'] = np.sum(m_sizes)
     summary_df.loc['total synaptic area', f'{ct2_str} from {ct1_str}'] = np.sum(m_sizes)
+    summary_df.loc['total synaptic area dataset normed', f'{ct1_str} to {ct2_str}'] = np.sum(m_sizes)/ total_sumsize
+    summary_df.loc['total synaptic area dataset normed', f'{ct2_str} from {ct1_str}'] = np.sum(m_sizes)/ total_sumsize
     #get syn numbers and syn sizes per cell connectivity for ct1
     ct1_syn_numbers, ct1_syn_ssv_sizes, ct1_proj_ssvs = get_ct_syn_number_sumsize(syn_sizes=m_sizes,
                                                                              syn_ssv_partners=m_ssv_partners,
@@ -272,6 +278,8 @@ if __name__ == '__main__':
     log.info(f'Total synaptic strength from {ct2_str} to {ct3_str} are {np.sum(m_sizes):.2f} µm² from {len(m_sizes)} synapses')
     summary_df.loc['total synaptic area', f'{ct2_str} to {ct3_str}'] = np.sum(m_sizes)
     summary_df.loc['total synaptic area', f'{ct3_str} from {ct2_str}'] = np.sum(m_sizes)
+    summary_df.loc['total synaptic area dataset normed', f'{ct2_str} to {ct3_str}'] = np.sum(m_sizes) / total_sumsize
+    summary_df.loc['total synaptic area dataset normed', f'{ct3_str} from {ct2_str}'] = np.sum(m_sizes) / total_sumsize
     # get ct2 cells that project to ct3
     ct2ct3_syn_numbers, ct2ct3_syn_ssv_sizes, ct2_proj_ssvs = get_ct_syn_number_sumsize(syn_sizes=m_sizes,
                                                                                   syn_ssv_partners=m_ssv_partners,

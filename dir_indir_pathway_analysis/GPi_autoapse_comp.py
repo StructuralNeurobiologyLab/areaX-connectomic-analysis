@@ -20,11 +20,11 @@ if __name__ == '__main__':
     min_comp_len = 200
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
-    ct = 7
+    ct = 6
     ct_str = ct_dict[ct]
     use_selected_ids = True
-    fontsize = 16
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241016_j0251{version}_{ct_str}_autapse_comp_mcl_%i_ms_%.1f_%i" % (
+    fontsize = 20
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241028_j0251{version}_{ct_str}_autapse_comp_mcl_%i_ms_%.1f_%i" % (
         min_comp_len, min_syn_size, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     cellids_no_autapse = np.array(ct_autapse_df['cellid'][ct_autapse_df['autapse?'] == 'n']).astype(int)
     log.info(f'{len(cellids_autapse)} cells have at least one autapse ({100 * len(cellids_autapse)/ len(ct_autapse_df):.2f} %)')
     morph_info_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                      '240613_j0251v6_ct_morph_analyses_mcl_200_ax200_TeBKv6MSNyw_fs20npca2_umap5_fc_noMSN_synaxmives/' \
+                      '241028_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_fc_synmives/' \
                        'ct_morph_df.csv'
     log.info(f'morphological information loaded from {morph_info_path}')
     morph_df = pd.read_csv(morph_info_path, index_col=0)

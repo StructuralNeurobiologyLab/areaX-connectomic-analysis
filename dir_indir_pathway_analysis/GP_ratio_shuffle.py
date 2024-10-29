@@ -33,9 +33,9 @@ if __name__ == '__main__':
     fontsize = 20
     binary_syns = False
     if binary_syns:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241014_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241028_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241014_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241028_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -45,23 +45,21 @@ if __name__ == '__main__':
         log.info('Synapse sizes are all set to 1')
     # load information about MSN groups and GP ratio
     kde = True
-    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240229_j0251v6_%s_GPratio_spine_density_mcl_%i_synprob_%.2f_kde%i_f20" % (
-        ct_dict[msn_ct], min_comp_len, syn_prob, kde)
+    f_name_saving1 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251v6_MSN_3_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20"
     log.info(f'Use morph parameters from {f_name_saving1}')
-    msn_result_df = pd.read_csv(f'{f_name_saving1}/MSN_morph_GPratio.csv', index_col=0)
+    msn_result_df = pd.read_csv(f'{f_name_saving1}/MSN_morph_GPe_GPiratio.csv', index_col=0)
     np.random.seed(42)
 
     #load information about GP cells
     fontsize_jointplot = 20
     use_median = True
-    f_name_saving2 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251v6_GPe_i_myelin_mito_radius_mcl%i_fs%i_med%i" % \
-             (min_comp_len, fontsize_jointplot, use_median)
+    f_name_saving2 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241024_j0251v6_GPe_i_myelin_mito_radius_newmerger_mcl200_fs20_med1"
     log.info(f'Use morph parameters from {f_name_saving2}')
     gp_morph_df = pd.read_csv(f'{f_name_saving2}/GPe_GPi_params.csv', index_col=0)
 
     # get the synapses between MSN and GP from syn_sizes_df Dataframe
     log.info(f'Use syn sizes info from {f_name_saving1}')
-    syn_sizes_df = pd.read_csv(f'{f_name_saving1}/syn_sizes_toGP.csv', index_col=0)
+    syn_sizes_df = pd.read_csv(f'{f_name_saving1}/syn_sizes_toGPe_GPi.csv', index_col=0)
     if binary_syns:
         syn_sizes_df['syn sizes'] = 1
 

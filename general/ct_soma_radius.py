@@ -18,21 +18,24 @@ if __name__ == '__main__':
     from itertools import combinations
     from scipy.stats import kruskal, ranksums
 
-    global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
-    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
-    analysis_params = Analysis_Params(working_dir=global_params.wd, version='v5')
+    #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
+
+    version = 'v6'
+    analysis_params = Analysis_Params(version=version)
     ct_dict = analysis_params.ct_dict(with_glia=False)
+    global_params.wd = analysis_params.working_dir()
+    ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     celltype_key = analysis_params.celltype_key()
     min_comp_len_cells = 200
     exclude_known_mergers = True
-    cls = CelltypeColors()
+    cls = CelltypeColors(ct_dict=ct_dict)
     fontsize = 12
     save_svg = False
     use_skel = False #if true would use skeleton labels for getting soma; vertex labels more exact
     use_median = True  # if true use median of vertex coordinates to find centre
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
-    color_key = 'TePkBr'
-    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/230811_j0251v5_cts_soma_radius_mcl_%i_%s_fs%i" % (
+    color_key = 'TePkBrNGF'
+    f_name = "cajal/scratch/users/arother/bio_analysis_results/general/241029_j0251v5_cts_soma_radius_mcl_%i_%s_fs%i" % (
     min_comp_len_cells,color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -70,10 +73,6 @@ if __name__ == '__main__':
         if exclude_known_mergers:
             merger_inds = np.in1d(cellids, known_mergers) == False
             cellids = cellids[merger_inds]
-        if ct == 2:
-            misclassified_asto_ids = analysis_params.load_potential_astros()
-            astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-            cellids = cellids[astro_inds]
         cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict,
                                                 min_comp_len=min_comp_len_cells,
                                                 axon_only=False,

@@ -987,7 +987,7 @@ def get_org_density_volume_presaved(params):
         cell_org_inds = np.in1d(org_ids, cellid)
         cell_org_sizes = org_sizes[cell_org_inds]
     cell = SuperSegmentationObject(cellid)
-    cell_volume = cell.size*10 ** (-9) * np.prod(scaling)
+    cell_volume = np.abs(cell.size)*10 ** (-9) * np.prod(scaling)
     #convert to µm³
     cell_org_volume = np.sum(cell_org_sizes) *10 ** (-9) * np.prod(scaling)
     cell_org_volume_density = cell_org_volume / cell_volume

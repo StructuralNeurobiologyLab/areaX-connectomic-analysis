@@ -28,36 +28,38 @@ if __name__ == '__main__':
     min_comp_len_cell = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'GliaOPC'
-    cls = CelltypeColors(ct_dict=ct_dict)
-    ct_palette = cls.ct_palette(key=color_key)
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'mi'
+    organelle_key = 'er'
     cts = [12, 13, 14, 17, 15, 3, 7]
     handpicked_glia = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_ct_{organelle_key}_vol_density_full_mcl_%i_%s_fs%i_nm" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241106_j0251{version}_ct_{organelle_key}_vol_density_full_mcl_%i_%s_fs%i_nm" % (
         min_comp_len_cell, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'{organelle_key}_vol_density_ct_log', log_dir=f_name + '/logs/')
     log.info(f'get volume density {organelle_key} per celltype')
     log.info(
-        "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
+        "min_comp_len = %i for full cells, colors = %s" % (
             min_comp_len_cell, color_key))
     log.info(f'use mean of {organelle_key} volume density for regression fit')
+    glia_cts = analysis_params._glia_cts
     if handpicked_glia:
         log.info('Manually selected glia cells will be used for glia cells in analysis')
         if 17 in cts:
             log.info('manually selected OPC are included in analysis')
             ct_dict[17] = 'OPC'
+            glia_cts = np.hstack([glia_cts, 17])
     else:
         if 17 in cts:
             raise ValueError('OPC can only be part of analysis when glia are manually selected.')
     known_mergers = analysis_params.load_known_mergers()
     axon_cts = analysis_params.axon_cts()
-    cts_str = [ct_dict[ct] for ct in cts]
+    cts_str_loading = [ct_dict[ct] for ct in cts]
+    cls = CelltypeColors(ct_dict=ct_dict)
+    ct_palette = cls.ct_palette(key=color_key)
 
-    glia_cts = analysis_params._glia_cts
+
     if np.any(np.in1d(cts, axon_cts)):
         raise ValueError('Analysis currently not enabled for projecting axons, only full cells')
 
@@ -88,7 +90,7 @@ if __name__ == '__main__':
         cellids = np.sort(cellids)
         suitable_ids_dict[ct] = cellids
         all_suitable_ids.append(cellids)
-        all_suitable_cts.append([[ct] for i in cellids])
+        all_suitable_cts.append([[ct_str] for i in cellids])
         log.info("%i cells of celltype %s match criteria" % (len(cellids), ct_dict[ct]))
 
     all_suitable_ids = np.concatenate(all_suitable_ids)
@@ -163,8 +165,8 @@ if __name__ == '__main__':
     param_groups = [group[param].values for name, group in
                   percell_org_df.groupby('celltype')]
     kruskal_res = kruskal(*param_groups, nan_policy='omit')
-    log.info(f'Kruskal Wallis test result for {param_groups}: {kruskal_res}')
-    if kruskal_res[0] < 0.05:
+    log.info(f'Kruskal Wallis test result for {param}: {kruskal_res}')
+    if kruskal_res[1] < 0.05:
         # ranksum results
         for group in group_comps:
             ranksum_res = ranksums(ct_groups.get_group(group[0])[param], ct_groups.get_group(group[1])[param])
@@ -174,7 +176,7 @@ if __name__ == '__main__':
 
     #plot results
     ylabel = f'{param} [µm³/µm³]'
-    sns.boxplot(data=percell_org_df, x='celltype', y=param, palette=ct_palette, order=ct_str)
+    sns.boxplot(data=percell_org_df, x='celltype', y=param, palette=ct_palette, order=cts_str_loading)
     plt.title(param)
     plt.ylabel(ylabel, fontsize=fontsize)
     plt.xlabel('celltype', fontsize=fontsize)
@@ -185,7 +187,7 @@ if __name__ == '__main__':
     plt.close()
     sns.stripplot(data=percell_org_df, x='celltype', y=param, color='black', alpha=0.2,
                   dodge=True, size=2, order=ct_str)
-    sns.violinplot(data=percell_org_df, x='celltype', y=param, palette=ct_palette, inner="box", order=ct_str)
+    sns.violinplot(data=percell_org_df, x='celltype', y=param, palette=ct_palette, inner="box", order=cts_str_loading)
     plt.title(param)
     plt.ylabel(ylabel, fontsize=fontsize)
     plt.xlabel('celltype', fontsize=fontsize)

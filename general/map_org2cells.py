@@ -19,9 +19,9 @@ if __name__ == '__main__':
         ct_dict[17] = 'OPC'
     f_name = analysis_params.file_locations
     # organelles = 'mi', 'vc', 'er', 'golgi
-    organell_keys = ['mi', 'vc', 'golgi']
+    organell_keys = ['golgi']
     handpicked = True
-    log = initialize_logging(f'{organell_keys}_map2cells',
+    log = initialize_logging(f'241106_{organell_keys}_map2cells',
                              log_dir=f_name + '/logs/')
     log.info(f'Cache cellid of celltypes that are full cells, with_glia = {with_glia}')
     ct_str_lst = [ct_dict[ct] for ct in cts]

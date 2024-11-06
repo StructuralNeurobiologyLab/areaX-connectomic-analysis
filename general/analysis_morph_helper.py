@@ -970,6 +970,29 @@ def get_mito_density_presaved(params):
     mito_volume_density = cell_mi_volume/ length
     return mito_volume_density
 
+def get_org_density_volume_presaved(params):
+    '''
+    Get organell density from presaved mito arrays with cellid.
+    if organelle is ER, then cellid is er is and mapping not necessary.
+    In this case, the org_ssv_ids are none
+    :param params: cellid, org_ids, org_sizes, organelle name
+    :return: mito_volume_density
+    '''
+
+    scaling = [10, 10, 25]
+    cellid, org_ids, org_sizes, org = params
+    if org == 'er':
+        cell_org_sizes = org_sizes[org_ids == cellid]
+    else:
+        cell_org_inds = np.in1d(org_ids, cellid)
+        cell_org_sizes = org_sizes[cell_org_inds]
+    cell = SuperSegmentationObject(cellid)
+    cell_volume = cell.size*10 ** (-9) * np.prod(scaling)
+    #convert to µm³
+    cell_org_volume = np.sum(cell_org_sizes) *10 ** (-9) * np.prod(scaling)
+    cell_org_volume_density = cell_org_volume / cell_volume
+    return cell_org_volume_density
+
 def get_mito_comp_density_presaved(params):
     '''
         Get mito density from presaved mito arrays with cellid for each compartment and the complete cell.

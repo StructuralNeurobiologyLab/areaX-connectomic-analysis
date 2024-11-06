@@ -141,7 +141,12 @@ if __name__ == '__main__':
                     morph_df.loc[id_ind, 'dendrite surface area'] = cell_dict[cellid]['dendrite mesh surface area']
                     morph_df.loc[id_ind, 'soma surface area'] = cell_dict[cellid]['soma mesh surface area']
                     cell = SuperSegmentationObject(cellid)
-                    cell_volume = np.abs(cell.size * np.prod(cell.scaling) * 10**(-9)) #in µm³
+                    cell_size = cell.size
+                    if cell_size < 0:
+                        cell.calculate_size()
+                        cell_size = cell.size
+                        assert (cell_size > 0)
+                    cell_volume = cell_size * np.prod(cell.scaling) * 10**(-9) #in µm³
                     morph_df.loc[id_ind, 'cell volume'] = cell_volume
                 ct_inds = morph_df['celltype'] == ct_dict[ct]
                 cell_input = [[cell_id, min_comp_len_cell, cell_dict[cell_id]] for cell_id in ct_ids]

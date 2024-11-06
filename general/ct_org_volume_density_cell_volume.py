@@ -30,7 +30,7 @@ if __name__ == '__main__':
     color_key = 'GliaOPC'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'er'
+    organelle_key = 'mi'
     cts = [12, 13, 14, 17, 15, 3, 7]
     handpicked_glia = True
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241106_j0251{version}_ct_{organelle_key}_vol_density_full_mcl_%i_%s_fs%i_nm" % (

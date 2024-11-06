@@ -979,7 +979,6 @@ def get_org_density_volume_presaved(params):
     :return: mito_volume_density
     '''
 
-    scaling = [10, 10, 25]
     cellid, org_ids, org_sizes, org = params
     if org == 'er':
         cell_org_sizes = org_sizes[org_ids == cellid]
@@ -987,9 +986,14 @@ def get_org_density_volume_presaved(params):
         cell_org_inds = np.in1d(org_ids, cellid)
         cell_org_sizes = org_sizes[cell_org_inds]
     cell = SuperSegmentationObject(cellid)
-    cell_volume = np.abs(cell.size)*10 ** (-9) * np.prod(scaling)
+    cell_size = cell.size
+    if cell_size < 0:
+        cell.calculate_size()
+        cell_size = cell.size
+        assert(cell_size > 0)
+    cell_volume = np.abs(cell.size)*10 ** (-9) * np.prod(cell.scaling)
     #convert to µm³
-    cell_org_volume = np.sum(cell_org_sizes) *10 ** (-9) * np.prod(scaling)
+    cell_org_volume = np.sum(cell_org_sizes) *10 ** (-9) * np.prod(cell.scaling)
     cell_org_volume_density = cell_org_volume / cell_volume
     return cell_org_volume_density
 

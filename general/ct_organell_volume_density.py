@@ -38,9 +38,9 @@ if __name__ == '__main__':
     #organelles = 'mi', 'vc', 'er', 'golgi
     organelle_key = 'mi'
     comp_dict = {0:'dendrite', 1:'axon', 2:'soma'}
-    compartment = 1
+    compartment = 2
     comp_str = comp_dict[compartment]
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_ct_{organelle_key}_{comp_str}_vol_density_mcl_%i_ax%i_%s_fs%i_nm" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241106_j0251{version}_ct_{organelle_key}_{comp_str}_vol_density_mcl_%i_ax%i_%s_fs%i_nm" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -152,6 +152,7 @@ if __name__ == '__main__':
 
     #create overview df for summary params
     # save mean, median and std for all parameters per ct
+    raise ValueError
     ct_str = np.unique(percell_org_df['celltype'])
     ct_groups = percell_org_df.groupby('celltype')
     overview_df = pd.DataFrame(index=ct_str)

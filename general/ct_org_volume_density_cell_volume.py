@@ -107,7 +107,7 @@ if __name__ == '__main__':
         sd_er = SegmentationDataset('er')
         org_ids = sd_er.ids
         org_sizes = sd_er.load_numpy_data('size')
-    for i, ct in enumerate(cts):
+    for i, ct in enumerate(cts[::-1]):
         ct_str = ct_dict[ct]
         log.info(f'process {ct_str}')
         if organelle_key == 'er':
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/{organelle_key}_vol_density_box.svg')
     plt.close()
     sns.stripplot(data=percell_org_df, x='celltype', y=param, color='black', alpha=0.2,
-                  dodge=True, size=2, order=ct_str)
+                  dodge=True, size=2, order=cts_str_loading)
     sns.violinplot(data=percell_org_df, x='celltype', y=param, palette=ct_palette, inner="box", order=cts_str_loading)
     plt.title(param)
     plt.ylabel(ylabel, fontsize=fontsize)

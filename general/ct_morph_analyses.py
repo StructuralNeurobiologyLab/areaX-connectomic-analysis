@@ -40,11 +40,11 @@ if __name__ == '__main__':
     n_umap_runs = 5
     process_morph_parameters = False
     use_mito_density = True
-    use_vc_density = False
-    use_ves_density = True
+    use_vc_density = True
+    use_ves_density = False
     use_syn_params = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241028_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_fc_synmives" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241107_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_fc_MSN_only_synfullmivc" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -209,7 +209,7 @@ if __name__ == '__main__':
 
     else:
         morph_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                     '241025_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TePkBrNGF_fs20npca1_umap5/ct_morph_df.csv'
+                     '241107_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5/ct_morph_df.csv'
         log.info(f'Step 2/9: Use morphological parameters from {morph_path}')
         loaded_morph_df = pd.read_csv(morph_path, index_col = 0)
         if len(all_suitable_ids) > len(loaded_morph_df):
@@ -230,15 +230,39 @@ if __name__ == '__main__':
         log.info(f'Axon mito volume density loaded from {mito_density_path}')
         mito_den_df = pd.read_csv(mito_density_path, index_col=0)
         if len(all_suitable_ids) > len(mito_den_df):
-            raise ValueError('Not all selected cellids are part of this table with mitochondria volume densities, please load other one')
+            raise ValueError('Not all selected cellids are part of this table with axon mitochondria volume densities, please load other one')
         else:
             mito_den_df_sorted = mito_den_df.sort_values('cellid')
             suit_inds = np.in1d(mito_den_df_sorted['cellid'], sorted_suitable_ids)
             mito_den_df_sorted = mito_den_df_sorted.loc[suit_inds]
-            #morph_df = morph_df.join(mito_den_df_sorted['total mi volume density'])
             morph_df = morph_df.join(mito_den_df_sorted['axon mi volume density'])
-            #param_list = np.hstack([param_list, 'total mi volume density', 'axon mi volume density'])
             param_list = np.hstack([param_list, 'axon mi volume density'])
+        den_mito_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                     '241025_j0251v6_ct_mi_dendrite_vol_density_mcl_200_ax200_TePkBrNGF_fs20_nm/percell_df_mi_den.csv'
+        log.info(f'Dendrite mito volume density loaded from {mito_density_path}')
+        mito_den_den_df = pd.read_csv(den_mito_density_path, index_col=0)
+        if len(all_suitable_ids) > len(mito_den_den_df):
+            raise ValueError('Not all selected cellids are part of this table with dendrite mitochondria volume densities, please load other one')
+        else:
+            mito_den_den_df_sorted = mito_den_den_df.sort_values('cellid')
+            suit_inds = np.in1d(mito_den_den_df_sorted['cellid'], sorted_suitable_ids)
+            mito_den_den_df_sorted = mito_den_den_df_sorted.loc[suit_inds]
+            #need to join them based on matching cellid as index will not match since computed only for full cells
+            morph_df = morph_df.merge(mito_den_den_df_sorted[['cellid', 'dendrite mi volume density']], on = 'cellid')
+            param_list = np.hstack([param_list, 'dendrite mi volume density'])
+        soma_mito_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                                '241106_j0251v6_ct_mi_soma_vol_density_mcl_200_ax200_TePkBrNGF_fs20_nm/percell_df_mi_den.csv'
+        log.info(f'Soma mito volume density loaded from {mito_density_path}')
+        mito_soma_den_df = pd.read_csv(soma_mito_density_path, index_col=0)
+        if len(all_suitable_ids) > len(mito_soma_den_df):
+            raise ValueError(
+                'Not all selected cellids are part of this table with soma mitochondria volume densities, please load other one')
+        else:
+            mito_soma_den_df_sorted = mito_soma_den_df.sort_values('cellid')
+            suit_inds = np.in1d(mito_soma_den_df_sorted['cellid'], sorted_suitable_ids)
+            mito_soma_den_df_sorted = mito_soma_den_df_sorted.loc[suit_inds]
+            morph_df = morph_df.merge(mito_soma_den_df_sorted[['cellid', 'soma mi volume density']], on= 'cellid')
+            param_list = np.hstack([param_list, 'soma mi volume density'])
 
     if use_vc_density:
         # calculate these values with function ct_organell_volume_density
@@ -252,7 +276,7 @@ if __name__ == '__main__':
             vc_den_df_sorted = vc_den_df.sort_values('cellid')
             suit_inds = np.in1d(vc_den_df_sorted['cellid'], sorted_suitable_ids)
             vc_den_df_sorted = vc_den_df_sorted.loc[suit_inds]
-            morph_df = morph_df.join(vc_den_df_sorted['axon vc volume density'])
+            morph_df = morph_df.merge(vc_den_df_sorted[['cellid', 'axon vc volume density']], on='cellid')
             param_list = np.hstack([param_list, 'axon vc volume density'])
 
     if use_ves_density:
@@ -267,7 +291,7 @@ if __name__ == '__main__':
             ves_den_df_sorted = ves_den_df.sort_values('cellid')
             suit_inds = np.in1d(ves_den_df_sorted['cellid'], sorted_suitable_ids)
             ves_den_df_sorted = ves_den_df_sorted.loc[suit_inds]
-            morph_df = morph_df.join(ves_den_df_sorted['vesicle density'])
+            morph_df = morph_df.merge(ves_den_df_sorted[['cellid', 'vesicle density']], on='cellid')
             param_list = np.hstack([param_list, 'vesicle density'])
     morph_df.to_csv(f'{f_name}/ct_morph_df.csv')
 
@@ -283,14 +307,16 @@ if __name__ == '__main__':
             syn_den_df_sorted = syn_den_df.sort_values('cellid')
             suit_inds = np.in1d(syn_den_df_sorted['cellid'], sorted_suitable_ids)
             syn_den_df_sorted = syn_den_df_sorted.loc[suit_inds]
-            morph_df = morph_df.join(syn_den_df_sorted['axon synaptic area density per surface area'])
             if not axon_only:
-                morph_df = morph_df.join(syn_den_df_sorted['dendrite synaptic area density per surface area'])
-                morph_df = morph_df.join(syn_den_df_sorted['soma synaptic area density per surface area'])
+                morph_df = morph_df.merge(syn_den_df_sorted[['cellid', 'axon synaptic area density per surface area',
+                                                             'dendrite synaptic area density per surface area',
+                                                             'soma synaptic area density per surface area']], on = 'cellid')
                 param_list = np.hstack([param_list, 'axon synaptic area density per surface area',
                                         'dendrite synaptic area density per surface area',
                                         'soma synaptic area density per surface area'])
             else:
+                morph_df = morph_df.merge(syn_den_df_sorted[['cellid', 'axon synaptic area density per surface area']],
+                                          on='cellid')
                 param_list = np.hstack([param_list, 'axon synaptic area density per surface area'])
             log.info('nan values for each compartment are replaced with 0 to allow for PCA')
             morph_df = morph_df.fillna(0)
@@ -369,7 +395,7 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_violin.svg')
         plt.close()
 
-    #morph_df = morph_df[morph_df['celltype'] == 'MSN']
+    morph_df = morph_df[morph_df['celltype'] == 'MSN']
 
     log.info('Step 8/9: Get PCA of results')
     log.info(f'Number of components for PCA = {n_comps_PCA}')

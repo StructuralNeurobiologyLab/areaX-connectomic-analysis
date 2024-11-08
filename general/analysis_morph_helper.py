@@ -5,7 +5,9 @@ import scipy
 from tqdm import tqdm
 from syconn.proc.meshes import mesh_area_calc, compartmentalize_mesh_fromskel
 from syconn.reps.super_segmentation import SuperSegmentationObject
+from syconn.reps.segmentation import SegmentationObject
 from syconn.handler.basics import load_pkl2obj
+from syconn.reps.rep_helper import colorcode_vertices
 from scipy.spatial import cKDTree
 from syconn.proc.meshes import write_mesh2kzip
 import pandas as pd
@@ -285,9 +287,13 @@ def get_percell_organell_volume_density(input):
     '''
     cellid, cached_so_ids, cached_so_volume, cell_dict, proj_axon, organelle_key = input
     cell = SuperSegmentationObject(cellid)
-    segmentation_object_ids = cell.lookup_in_attribute_dict(organelle_key)
-    sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
-    organell_volumes = np.sum(cached_so_volume[sso_organell_inds] * 10 ** (-9) * np.prod(cell.scaling))  # convert to cubic µm
+    if organelle_key == 'er':
+        organell_volume_vx = cached_so_volume[np.where(cached_so_ids == cellid)[0]]
+        organell_volumes = organell_volume_vx * 10 ** (-9) * np.prod(cell.scaling)
+    else:
+        segmentation_object_ids = cell.lookup_in_attribute_dict(organelle_key)
+        sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
+        organell_volumes = np.sum(cached_so_volume[sso_organell_inds]) * 10 ** (-9) * np.prod(cell.scaling)  # convert to cubic µm
     if cell_dict is None:
         cell_length = get_cell_length(cellid)
     else:
@@ -306,9 +312,12 @@ def get_percell_organell_area_density(input):
     '''
     cellid, cached_so_ids, cached_so_areas, cell_dict, proj_axon, organelle_key = input
     cell = SuperSegmentationObject(cellid)
-    segmentation_object_ids = cell.lookup_in_attribute_dict(organelle_key)
-    sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
-    organell_areas = np.sum(cached_so_areas[sso_organell_inds])  #in µm²
+    if organelle_key == 'er':
+        organell_areas = cached_so_areas[np.where(cached_so_ids == cellid)[0]]
+    else:
+        segmentation_object_ids = cell.lookup_in_attribute_dict(organelle_key)
+        sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
+        organell_areas = np.sum(cached_so_areas[sso_organell_inds])  #in µm²
     if proj_axon:
         cell_surface_area = cell_dict['axon mesh surface area']
     else:
@@ -1066,6 +1075,72 @@ def get_organelle_comp_area_density_presaved(params):
     comp_org_mesh_areas = cell_org_mesh_areas[cell_org_axoness == compartment]
     comp_area_density = np.sum(comp_org_mesh_areas) /  full_cell_dict[f'{comp_dict[compartment]} mesh surface area']
     return comp_area_density
+
+def get_er_comp_area_density(params):
+    '''
+    Get er volume density split into compartments. ER is not split by connected components so needs to be treated different than other
+    organelles in this case. Splits ER mesh into components similar to how cell mesh is split via compartmentalize_mesh_fromskel.
+    ER id = cellid.
+    :param params: er_id (also cellid), desired compartment
+    :return: compartment volume density, full organelle volume density
+    '''
+    cellid, full_cell_dict, compartment = params
+    comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
+    #get cell and skeleton from cellid
+    cell = SuperSegmentationObject(cellid)
+    cell_surface_area = full_cell_dict[f'{comp_dict[compartment]} mesh surface area']
+    cell.load_skeleton()
+    #code from compartmentalize_mesh_from_skel
+    preds = cell.skeleton["axoness_avg10000"]
+    preds[preds == 3] = 1
+    preds[preds == 4] = 1
+    pred_coords = cell.skeleton["nodes"] * cell.scaling
+    #now get meshes from er object
+    er_obj = SegmentationObject(cellid, 'er')
+    er_mesh = er_obj.mesh
+    #code from ssv._pred2mesh
+    axoness = colorcode_vertices(er_mesh[1].reshape((-1, 3)), pred_coords,
+                             preds, colors=[0, 1, 2], k=1)
+    ind, vert, norm = er_mesh
+    # get axoness of each vertex where indices are pointing to
+    ind_comp = axoness[ind]
+    ind = ind.reshape(-1, 3)
+    vert = vert.reshape(-1, 3)
+    norm = norm.reshape(-1, 3)
+    ind_comp = ind_comp.reshape(-1, 3)
+    ind_comp_maj = np.zeros((len(ind)), dtype=np.uint8)
+    for ii in range(len(ind)):
+        triangle = ind_comp[ii]
+        cnt = Counter(triangle)
+        ax, n = cnt.most_common(1)[0]
+        if n == 1:
+            ax = -1
+        ind_comp_maj[ii] = ax
+    comp_ind = ind[ind_comp_maj == compartment].flatten()
+    unique_comp_ind = np.unique(comp_ind)
+    comp_vert = vert[unique_comp_ind].flatten()
+    if len(er_mesh[2]) != 0:
+        comp_norm = norm[unique_comp_ind].flatten()
+    else:
+        comp_norm = er_mesh[2]
+    remap_dict = {}
+    for i in range(len(unique_comp_ind)):
+        remap_dict[unique_comp_ind[i]] = i
+    comp_ind = np.array([remap_dict[i] for i in comp_ind], dtype=np.uint)
+    #now get surface area for compartment mesh
+    #use code from mesh_area_calc and skimage.measure.mesh_surface_area
+    #need to change the original a bit because had an error and using np.linalg.norm directly instead
+    #of the longer expression from mesh_surface_area is more stable in this case
+    actual_verts = comp_vert.reshape(-1, 3)[comp_ind.reshape(-1, 3)]
+    comp_a = actual_verts[:, 0, :] - actual_verts[:, 1, :]
+    comp_b = actual_verts[:, 0, :] - actual_verts[:, 2, :]
+    comp_surface_area = (np.linalg.norm(np.cross(comp_a, comp_b), axis=1)).sum() / 2.
+    comp_surface_area_µm2 = comp_surface_area / 1e6
+    comp_area_density = comp_surface_area_µm2 / cell_surface_area
+
+    return comp_area_density
+
+
 
 def check_cutoff_dendrites(cell_input):
     '''

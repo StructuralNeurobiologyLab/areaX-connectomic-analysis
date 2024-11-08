@@ -28,14 +28,14 @@ if __name__ == '__main__':
     msn_ct = 3
     gpe_ct = 6
     gpi_ct = 7
-    n_it = 1000
+    n_it = 100
     n_plot_it = 3
     fontsize = 20
-    binary_syns = False
+    binary_syns = True
     if binary_syns:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241028_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241107_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241028_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241107_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     #load information about GP cells
     fontsize_jointplot = 20
     use_median = True
-    f_name_saving2 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241024_j0251v6_GPe_i_myelin_mito_radius_newmerger_mcl200_fs20_med1"
+    f_name_saving2 = "cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241107_j0251v6_GPe_i_myelin_mito_radius_newmerger_mcl200_fs20_med1"
     log.info(f'Use morph parameters from {f_name_saving2}')
     gp_morph_df = pd.read_csv(f'{f_name_saving2}/GPe_GPi_params.csv', index_col=0)
 

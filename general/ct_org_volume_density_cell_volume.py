@@ -24,16 +24,17 @@ if __name__ == '__main__':
     version = 'v6'
     analysis_params = Analysis_Params(version=version)
     global_params.wd = analysis_params.working_dir()
-    ct_dict = analysis_params.ct_dict(with_glia=True)
+    ct_dict = analysis_params.ct_dict(with_glia=False)
     min_comp_len_cell = 200
-    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'GliaOPC'
+    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'GliaOPC'}
+    color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
     organelle_key = 'mi'
-    cts = [12, 13, 14, 17, 15, 3, 7]
-    handpicked_glia = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241106_j0251{version}_ct_{organelle_key}_vol_density_full_mcl_%i_%s_fs%i_nm" % (
+    #cts = [12, 13, 14, 17, 15, 3, 7]
+    cts = [3, 4, 5, 6, 7, 8, 9, 10, 11]
+    handpicked_glia = False
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241107_j0251{version}_ct_{organelle_key}_neuron_vol_density_full_mcl_%i_%s_fs%i_nm" % (
         min_comp_len_cell, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         sd_er = SegmentationDataset('er')
         org_ids = sd_er.ids
         org_sizes = sd_er.load_numpy_data('size')
-    for i, ct in enumerate(cts[::-1]):
+    for i, ct in enumerate(cts):
         ct_str = ct_dict[ct]
         log.info(f'process {ct_str}')
         if organelle_key == 'er':

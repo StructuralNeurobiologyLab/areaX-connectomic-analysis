@@ -4,7 +4,7 @@
 if __name__ == '__main__':
     from analysis_morph_helper import check_comp_lengths_ct
     from analysis_colors import CelltypeColors
-    from analysis_morph_helper import get_percell_organell_area_density, get_organelle_comp_area_density_presaved
+    from analysis_morph_helper import get_percell_organell_area_density, get_organelle_comp_area_density_presaved, get_er_comp_area_density
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -35,15 +35,17 @@ if __name__ == '__main__':
     color_key = 'TePkBrNGF'
     fontsize = 20
     #organelles = 'mi', 'vc', 'er', 'golgi
-    organelle_key = 'golgi'
+    organelle_key = 'er'
     #0 = dendrite, 1 = axon, 2 = soma
-    compartment = [2]
+    comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
+    compartment = [1]
+    comp_str = comp_dict[compartment[0]]
     with_FS = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_ct_{organelle_key}_{compartment}_area_density_mcl_%i_ax%i_%s_fs%i_new_merger" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241108_j0251{version}_ct_{organelle_key}_{comp_str}_area_density_mcl_%i_ax%i_%s_fs%i_new_merger" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging(f'{organelle_key}_{compartment}_area_density_ct_log', log_dir=f_name + '/logs/')
+    log = initialize_logging(f'{organelle_key}_{comp_str}_area_density_ct_log', log_dir=f_name + '/logs/')
     log.info(f'get surface area density {organelle_key} per celltype')
     log.info(
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
@@ -60,15 +62,16 @@ if __name__ == '__main__':
     np_presaved_loc = analysis_params.file_locations
     if full_cells_only:
         ct_types = analysis_params.load_celltypes_full_cells()
-        #ct_types = ct_types[1:]
+        ct_types = ct_types[1:]
+
     else:
         ct_types = np.arange(0, num_cts)
         sd_orgssv = SegmentationDataset(organelle_key, working_dir=global_params.config.working_dir)
         cached_org_ids = sd_orgssv.ids
         cached_org_areas = sd_orgssv.load_numpy_data("mesh_area")
-    ct_str_list = analysis_params.ct_str(with_glia=with_glia)
+    ct_str_list = np.array(analysis_params.ct_str(with_glia=with_glia))
     cls = CelltypeColors(ct_dict= ct_dict)
-    #ct_palette = cls.ct_palette(key = color_key)
+    ct_palette = cls.ct_palette(key = color_key)
     if with_glia:
         glia_cts = analysis_params._glia_cts
     firing_rate_dict = {'DA': 15, 'MSN': 1.58, 'LMAN': 34.9, 'HVC': 1, 'TAN': 65.1, 'GPe': 135, 'GPi': 258, 'FS': 19.1, 'LTS': 35.8}
@@ -110,7 +113,8 @@ if __name__ == '__main__':
     percell_org_df = pd.DataFrame(columns=pc_columns, index=range(len(all_suitable_ids)))
     percell_org_df['cellid'] = all_suitable_ids
     for comp in compartment:
-        log.info(f'Get information for compartment {comp}')
+        comp_str = comp_dict[comp]
+        log.info(f'Get information for compartment {comp_str}')
         for i, ct in enumerate(ct_types):
             ct_str = ct_dict[ct]
             log.info(f'process {ct_str}')
@@ -120,26 +124,39 @@ if __name__ == '__main__':
                 firing_value = np.nan
             if ct in axon_cts:
                 if comp == 1:
-                    org_input = [[cellid, cached_org_ids, cached_org_areas, all_cell_dict[ct][cellid], True, organelle_key] for cellid in suitable_ids_dict[ct]]
+                    if organelle_key == 'er':
+                        ct_inds = np.in1d(cached_org_ids, suitable_ids_dict[ct])
+                        ct_org_ids = cached_org_ids[ct_inds]
+                        ct_org_areas = cached_org_areas[ct_inds]
+                        org_input = [
+                            [cellid, ct_org_ids, ct_org_areas, all_cell_dict[ct][cellid], True, organelle_key]
+                            for cellid in suitable_ids_dict[ct]]
+                    else:
+                        org_input = [[cellid, cached_org_ids, cached_org_areas, all_cell_dict[ct][cellid], True, organelle_key] for cellid in suitable_ids_dict[ct]]
                     org_output = start_multiprocess_imap(get_percell_organell_area_density, org_input)
                     comp_area_density = np.array(org_output)
                 else:
                     continue
             else:
-                #To DO: write function to cache all organelles for full cells with organelle_key
-                ct_org_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_ids_fullcells.npy')
-                ct_org_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_mapping_ssv_ids_fullcells.npy')
-                ct_org_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_axoness_coarse_fullcells.npy')
-                ct_org_mesh_areas = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_mesh_areas_fullcells.npy')
-                #filter for suitable cellids
-                ct_ind = np.in1d(ct_org_map2ssvids, suitable_ids_dict[ct])
-                ct_org_ids = ct_org_ids[ct_ind]
-                ct_org_map2ssvids = ct_org_map2ssvids[ct_ind]
-                ct_org_mesh_areas = ct_org_mesh_areas[ct_ind]
-                ct_org_axoness = ct_org_axoness[ct_ind]
-                org_input = [[cellid, ct_org_map2ssvids, ct_org_mesh_areas, ct_org_axoness, all_cell_dict[ct][cellid], comp] for cellid in suitable_ids_dict[ct]]
-                org_output = start_multiprocess_imap(get_organelle_comp_area_density_presaved, org_input)
+                if organelle_key == 'er':
+                    org_input = [[cellid, all_cell_dict[ct][cellid], comp] for cellid in suitable_ids_dict[ct]]
+                    raise ValueError
+                    org_output = start_multiprocess_imap(get_er_comp_area_density, org_input)
+                else:
+                    ct_org_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_ids_fullcells.npy')
+                    ct_org_map2ssvids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_mapping_ssv_ids_fullcells.npy')
+                    ct_org_axoness = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_axoness_coarse_fullcells.npy')
+                    ct_org_mesh_areas = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_mesh_areas_fullcells.npy')
+                    #filter for suitable cellids
+                    ct_ind = np.in1d(ct_org_map2ssvids, suitable_ids_dict[ct])
+                    ct_org_ids = ct_org_ids[ct_ind]
+                    ct_org_map2ssvids = ct_org_map2ssvids[ct_ind]
+                    ct_org_mesh_areas = ct_org_mesh_areas[ct_ind]
+                    ct_org_axoness = ct_org_axoness[ct_ind]
+                    org_input = [[cellid, ct_org_map2ssvids, ct_org_mesh_areas, ct_org_axoness, all_cell_dict[ct][cellid], comp] for cellid in suitable_ids_dict[ct]]
+                    org_output = start_multiprocess_imap(get_organelle_comp_area_density_presaved, org_input)
                 comp_area_density = np.array(org_output, dtype = float)
+                raise ValueError
             #for percell df
             ct_inds = np.in1d(percell_org_df['cellid'], suitable_ids_dict[ct])
             percell_org_df.loc[ct_inds, 'celltype'] = ct_str
@@ -176,15 +193,19 @@ if __name__ == '__main__':
     ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
     ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
     known_values_only_percell = percell_org_df.dropna()
-
+    if full_cells_only:
+        axon_str = [ct_dict[ct] for ct in axon_cts]
+        ct_str_list_plotting = ct_str_list[np.in1d(ct_str_list, axon_str) == False]
+    else:
+        ct_str_list_plotting = ct_str_list
     for key in percell_org_df.keys():
         if organelle_key in key:
             key_groups = [group[key].values for name, group in
                                 percell_org_df.groupby('celltype')]
-            medians = [np.median(kg) for kg in key_groups]
-            median_order = np.unique(percell_org_df['celltype'])[np.argsort(medians)]
-            ct_colors = cls.colors[color_key]
-            ct_palette = {median_order[i]: ct_colors[i] for i in range(len(median_order))}
+            #medians = [np.median(kg) for kg in key_groups]
+            #median_order = np.unique(percell_org_df['celltype'])[np.argsort(medians)]
+            #ct_colors = cls.colors[color_key]
+            #ct_palette = {median_order[i]: ct_colors[i] for i in range(len(median_order))}
             kruskal_res = kruskal(*key_groups, nan_policy='omit')
             log.info(f'Kruskal Wallis test result for {key}: {kruskal_res}')
             #ranksum results
@@ -192,8 +213,8 @@ if __name__ == '__main__':
                 ranksum_res = ranksums(ct_groups.get_group(group[0])[key], ct_groups.get_group(group[1])[key])
                 ranksum_group_df.loc[f'{key} stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
                 ranksum_group_df.loc[f'{key} p-value',f'{group[0]} vs {group[1]}'] = ranksum_res[1]
-            #plot with increasing median as boxplot and violinplot
-            sns.boxplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, order=median_order)
+            #plot with increasing median as boxplot and violinplot set order = median_order
+            sns.boxplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, order=ct_str_list_plotting)
             plt.title(key)
             plt.ylabel(f'{key} [µm³/µm]', fontsize = fontsize)
             plt.xlabel('celltype', fontsize = fontsize)
@@ -204,8 +225,8 @@ if __name__ == '__main__':
             plt.close()
             if full_cells_only:
                 sns.stripplot(data=percell_org_df, x='celltype', y=key, color='black', alpha=0.2,
-                              dodge=True, size=2, order=median_order)
-            sns.violinplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, inner="box", order=median_order)
+                              dodge=True, size=2, order=ct_str_list)
+            sns.violinplot(data=percell_org_df, x='celltype', y=key, palette=ct_palette, inner="box", order=ct_str_list_plotting)
             plt.title(key)
             plt.ylabel(f'{key} [µm²/µm²]', fontsize=fontsize)
             plt.xlabel('celltype', fontsize=fontsize)

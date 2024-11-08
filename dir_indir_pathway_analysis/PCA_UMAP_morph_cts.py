@@ -28,7 +28,7 @@ if __name__ == '__main__':
     #color_key = 'STNGP'
     color_key = 'STNGPINTv6'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_%s_%s_morph_PCA_{fontsize}" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241107_j0251{version}_%s_%s_morph_PCA_{fontsize}_cell_volume" % (
             ct_dict[ct1], ct_dict[ct2])
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -40,12 +40,12 @@ if __name__ == '__main__':
     #ct_palette = {'NGF type 1': '#232121', 'NGF type 2': '#38C2BA', 'NGF no type': '#707070', 'FS': '#912043'}
 
     #morph_data_path = 'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240220_j0251v5_INT_mito_radius_spiness_examplecells_mcl200_fs10_med1'
-    morph_data_path = 'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241024_j0251v6_GPe_i_myelin_mito_radius_newmerger_mcl200_fs20_med1'
+    morph_data_path = 'cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241107_j0251v6_GPe_i_myelin_mito_radius_newmerger_mcl200_fs20_med1'
     log.info(f'Step 1/3: load dataframe with morphological parameters from {morph_data_path}')
     morph_data = pd.read_csv(f'{morph_data_path}/GPe_GPi_params.csv')
     #morph_data = pd.read_csv(f'{morph_data_path}/FS_ngf_params.csv')
 
-    pca_params = ['axon median radius', 'axon mitochondria volume density', 'axon myelin fraction', 'soma diameter']
+    pca_params = ['axon median radius', 'axon mitochondria volume density', 'axon myelin fraction', 'cell volume']
     #pca_params = ['axon median radius', 'axon mitochondria volume density', 'spine density', 'soma diameter']
     unique_groups = np.unique(morph_data['celltype'])
     log.info(f'Step 2/3: apply PCA to the following features {pca_params} and these groups {unique_groups}')

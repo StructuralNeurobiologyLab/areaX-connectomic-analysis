@@ -33,7 +33,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     global_params.wd = analysis_params.working_dir()
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/241025_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i_newmerger" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/241108_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i_newmerger" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     num_cts = analysis_params.num_cts(with_glia=with_glia)
     ct_str_list = analysis_params.ct_str(with_glia=with_glia)
     cls = CelltypeColors(ct_dict= ct_dict)
-    #ct_palette = cls.ct_palette(key = color_key)
+    ct_palette = cls.ct_palette(key = color_key)
     np_presaved_loc = analysis_params.file_locations
     if with_glia:
         glia_cts = analysis_params._glia_cts
@@ -158,14 +158,18 @@ if __name__ == '__main__':
     ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
     ranksum_group_df = pd.DataFrame(columns=ranksum_columns)
     known_values_only_percell = percell_ves_df.dropna()
-
+    if full_cells_only:
+        axon_str = [ct_dict[ct] for ct in axon_cts]
+        ct_str_list_plotting = ct_str_list[np.in1d(ct_str_list, axon_str) == False]
+    else:
+        ct_str_list_plotting = ct_str_list
 
     key_groups = [group['vesicle density'].values for name, group in
                         percell_ves_df.groupby('celltype')]
-    medians = [np.median(kg) for kg in key_groups]
-    median_order = np.unique(percell_ves_df['celltype'])[np.argsort(medians)]
-    ct_colors = cls.colors[color_key]
-    ct_palette = {median_order[i]: ct_colors[i] for i in range(len(median_order))}
+    #medians = [np.median(kg) for kg in key_groups]
+    #median_order = np.unique(percell_ves_df['celltype'])[np.argsort(medians)]
+    #ct_colors = cls.colors[color_key]
+    #ct_palette = {median_order[i]: ct_colors[i] for i in range(len(median_order))}
     kruskal_res = kruskal(*key_groups, nan_policy='omit')
     log.info(f'Kruskal Wallis test result for vesicle density: {kruskal_res}')
     #ranksum results
@@ -174,7 +178,7 @@ if __name__ == '__main__':
         ranksum_group_df.loc[f'vesicle density stats', f'{group[0]} vs {group[1]}'] = ranksum_res[0]
         ranksum_group_df.loc[f'vesicle density p-value', f'{group[0]} vs {group[1]}'] = ranksum_res[1]
     #plot with increasing median as boxplot and violinplot
-    sns.boxplot(data=percell_ves_df, x='celltype', y='vesicle density', palette=ct_palette, order=median_order)
+    sns.boxplot(data=percell_ves_df, x='celltype', y='vesicle density', palette=ct_palette, order=ct_str_list)
     plt.title('vesicle density')
     plt.ylabel(f'vesicle density [1/µm]', fontsize = fontsize)
     plt.xlabel('celltype', fontsize = fontsize)
@@ -185,8 +189,8 @@ if __name__ == '__main__':
     plt.close()
     if full_cells_only:
         sns.stripplot(data=percell_ves_df, x='celltype', y='vesicle density', color='black', alpha=0.2,
-                  dodge=True, size=2, order=median_order)
-    sns.violinplot(data=percell_ves_df, x='celltype', y='vesicle density', palette=ct_palette, inner="box", order=median_order)
+                  dodge=True, size=2, order=ct_str_list)
+    sns.violinplot(data=percell_ves_df, x='celltype', y='vesicle density', palette=ct_palette, inner="box", order=ct_str_list)
     plt.title('vesicle density')
     plt.ylabel(f'vesicle density [1/µm]', fontsize=fontsize)
     plt.xlabel('celltype', fontsize=fontsize)

@@ -38,7 +38,7 @@ if __name__ == '__main__':
     organelle_key = 'er'
     #0 = dendrite, 1 = axon, 2 = soma
     comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
-    compartment = [1]
+    compartment = [2]
     comp_str = comp_dict[compartment[0]]
     with_FS = False
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241108_j0251{version}_ct_{organelle_key}_{comp_str}_area_density_mcl_%i_ax%i_%s_fs%i_new_merger" % (
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     np_presaved_loc = analysis_params.file_locations
     if full_cells_only:
         ct_types = analysis_params.load_celltypes_full_cells()
-        ct_types = ct_types[1:]
+        #ct_types = ct_types[1:]
 
     else:
         ct_types = np.arange(0, num_cts)
@@ -106,7 +106,6 @@ if __name__ == '__main__':
     log.info(f'Step 2/4: Get {organelle_key} volume density per cell')
     #ellid, cached_so_ids, cached_so_rep_coord, cached_so_volume, full_cell_dict, k, min_comp_len = input
     # generate df for each cell
-    comp_dict = {0: 'dendrite', 1:'axon', 2: 'soma'}
     pc_columns = ['cellid', 'mean firing rate singing']
     organelle_columns = [f'{comp_dict[comp]} {organelle_key} area density' for comp in compartment]
     pc_columns = np.hstack([pc_columns, organelle_columns])
@@ -140,7 +139,6 @@ if __name__ == '__main__':
             else:
                 if organelle_key == 'er':
                     org_input = [[cellid, all_cell_dict[ct][cellid], comp] for cellid in suitable_ids_dict[ct]]
-                    raise ValueError
                     org_output = start_multiprocess_imap(get_er_comp_area_density, org_input)
                 else:
                     ct_org_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_ids_fullcells.npy')
@@ -156,7 +154,6 @@ if __name__ == '__main__':
                     org_input = [[cellid, ct_org_map2ssvids, ct_org_mesh_areas, ct_org_axoness, all_cell_dict[ct][cellid], comp] for cellid in suitable_ids_dict[ct]]
                     org_output = start_multiprocess_imap(get_organelle_comp_area_density_presaved, org_input)
                 comp_area_density = np.array(org_output, dtype = float)
-                raise ValueError
             #for percell df
             ct_inds = np.in1d(percell_org_df['cellid'], suitable_ids_dict[ct])
             percell_org_df.loc[ct_inds, 'celltype'] = ct_str

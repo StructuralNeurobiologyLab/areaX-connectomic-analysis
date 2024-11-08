@@ -43,6 +43,8 @@ if __name__ == '__main__':
     use_vc_density = True
     use_ves_density = False
     use_syn_params = True
+    use_golgi_density = False
+    use_er_density = False
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241107_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
              f"npca{n_comps_PCA}_umap{n_umap_runs}_fc_MSN_only_synfullmivc" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
@@ -321,6 +323,61 @@ if __name__ == '__main__':
             log.info('nan values for each compartment are replaced with 0 to allow for PCA')
             morph_df = morph_df.fillna(0)
 
+    if use_golgi_density:
+        # calculate these values with function ct_organell_volume_density
+        golgi_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                     '241107_j0251v6_ct_golgi_soma_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger/percell_df_golgi_den.csv'
+        log.info(f'Soma golgi area density loaded from {golgi_density_path}')
+        golgi_den_df = pd.read_csv(golgi_density_path, index_col=0)
+        if len(all_suitable_ids) > len(golgi_den_df):
+            raise ValueError('Not all selected cellids are part of this table with soma golgi area densities, please load other one')
+        else:
+            golgi_den_df_sorted = golgi_den_df.sort_values('cellid')
+            suit_inds = np.in1d(golgi_den_df_sorted['cellid'], sorted_suitable_ids)
+            golgi_den_df_sorted = golgi_den_df_sorted.loc[suit_inds]
+            morph_df = morph_df.merge(golgi_den_df_sorted[['cellid', 'soma golgi area density']], on='cellid')
+            param_list = np.hstack([param_list, 'soma golgi area density'])
+
+    if use_er_density:
+        #calculate these values with function ct_organell_volume_density
+        er_axon_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                     '241108_j0251v6_ct_er_axon_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger/percell_df_er_den.csv'
+        log.info(f'Axon er area density loaded from {er_axon_density_path}')
+        er_axon_den_df = pd.read_csv(er_axon_density_path, index_col=0)
+        if len(all_suitable_ids) > len(er_axon_den_df):
+            raise ValueError('Not all selected cellids are part of this table with axon er area densities, please load other one')
+        else:
+            er_axon_den_df_sorted = er_axon_den_df.sort_values('cellid')
+            suit_inds = np.in1d(er_axon_den_df_sorted['cellid'], sorted_suitable_ids)
+            er_axon_den_df_sorted = er_axon_den_df_sorted.loc[suit_inds]
+            morph_df = morph_df.join(er_axon_den_df_sorted['axon er area density'])
+            param_list = np.hstack([param_list, 'axon er area density'])
+        er_den_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                     '241108_j0251v6_ct_er_dendrite_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger/percell_df_er_den.csv'
+        log.info(f'Dendrite er area density loaded from {er_den_density_path}')
+        er_den_den_df = pd.read_csv(er_den_density_path, index_col=0)
+        if len(all_suitable_ids) > len(er_den_den_df):
+            raise ValueError('Not all selected cellids are part of this table with dendrite er area densities, please load other one')
+        else:
+            er_den_den_df_sorted = er_den_den_df.sort_values('cellid')
+            suit_inds = np.in1d(er_den_den_df_sorted['cellid'], sorted_suitable_ids)
+            er_den_den_df_sorted = er_den_den_df_sorted.loc[suit_inds]
+            #need to join them based on matching cellid as index will not match since computed only for full cells
+            morph_df = morph_df.merge(er_den_den_df_sorted[['cellid', 'dendrite er area density']], on = 'cellid')
+            param_list = np.hstack([param_list, 'dendrite er area density'])
+        er_soma_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                                '241108_j0251v6_ct_er_soma_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger/percell_df_er_den.csv'
+        log.info(f'Soma er area density loaded from {er_soma_density_path}')
+        er_soma_den_df = pd.read_csv(er_soma_density_path, index_col=0)
+        if len(all_suitable_ids) > len(er_soma_den_df):
+            raise ValueError(
+                'Not all selected cellids are part of this table with soma er area densities, please load other one')
+        else:
+            er_soma_den_df_sorted = er_soma_den_df.sort_values('cellid')
+            suit_inds = np.in1d(er_soma_den_df_sorted['cellid'], sorted_suitable_ids)
+            er_soma_den_df_sorted = er_soma_den_df_sorted.loc[suit_inds]
+            morph_df = morph_df.merge(er_soma_den_df_sorted[['cellid', 'soma er area density']], on= 'cellid')
+            param_list = np.hstack([param_list, 'soma er area density'])
 
     morph_df.to_csv(f'{f_name}/ct_morph_df.csv')
 
@@ -395,7 +452,7 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_violin.svg')
         plt.close()
 
-    morph_df = morph_df[morph_df['celltype'] == 'MSN']
+    #morph_df = morph_df[morph_df['celltype'] == 'MSN']
 
     log.info('Step 8/9: Get PCA of results')
     log.info(f'Number of components for PCA = {n_comps_PCA}')

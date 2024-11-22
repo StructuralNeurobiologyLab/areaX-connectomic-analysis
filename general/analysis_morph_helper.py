@@ -78,6 +78,29 @@ def get_compartment_length_mp(comp_input):
     comp_length = comp_graph.size(weight="weight") / 1000  # in µm
     return comp_length
 
+def get_compartment_length_chunks(comp_input):
+    """
+            calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.
+            :param compartment: 0 = dendrite, 1 = axon, 2 = soma
+            :param cell_graph: sso.weighted graph
+            :return: comp_len in µm
+            """
+    cellids, compartment = comp_input
+    comp_lengths = []
+    for cellid in cellids:
+        sso = SuperSegmentationObject(cellid)
+        sso.load_skeleton()
+        axoness = sso.skeleton["axoness_avg10000"]
+        axoness[axoness == 3] = 1
+        axoness[axoness == 4] = 1
+        non_comp_inds = np.nonzero(axoness != compartment)[0]
+        cell_graph = sso.weighted_graph()
+        comp_graph = cell_graph.copy()
+        comp_graph.remove_nodes_from(non_comp_inds)
+        comp_length = comp_graph.size(weight="weight") / 1000  # in µm
+        comp_lengths.append(comp_length)
+    return comp_lengths
+
 
 def get_spine_density(input):
     """

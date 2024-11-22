@@ -28,7 +28,7 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    full_cells_only = True
+    full_cells_only = False
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     organelle_key = 'er'
     #0 = dendrite, 1 = axon, 2 = soma
     comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
-    compartment = [2]
+    compartment = [1]
     comp_str = comp_dict[compartment[0]]
     with_FS = False
     #use 'length' to normalise per pathlength, 'mesh surface area' if normalise per surface area
@@ -131,7 +131,7 @@ if __name__ == '__main__':
                         ct_org_ids = cached_org_ids[ct_inds]
                         ct_org_areas = cached_org_areas[ct_inds]
                         org_input = [
-                            [cellid, ct_org_ids, ct_org_areas, all_cell_dict[ct][cellid], True, organelle_key]
+                            [cellid, ct_org_ids, ct_org_areas, all_cell_dict[ct][cellid], True, organelle_key, norm_key]
                             for cellid in suitable_ids_dict[ct]]
                     else:
                         org_input = [[cellid, cached_org_ids, cached_org_areas, all_cell_dict[ct][cellid], True, organelle_key, norm_key] for cellid in suitable_ids_dict[ct]]

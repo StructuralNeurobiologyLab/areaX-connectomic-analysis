@@ -1,7 +1,7 @@
 #get fraction of compartment per celltype full cells vs all cells
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_compartment_length_mp
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_compartment_length_chunks
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     color_key = 'TePkBrNGF'
     fontsize = 20
     comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
-    comp = 0
+    comp = 1
     comp_str = comp_dict[comp]
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/241122_j0251{version}_fraction_{comp_str}_fullvsfragment_mcl_%i_%s_fs%i" % (
         min_comp_len_cell, color_key, fontsize)
@@ -116,8 +116,11 @@ if __name__ == '__main__':
         #per_cell_res_df.loc[ct_inds, f'{comp_str} surface area'] = comp_surface_area
     log.info('Now get pathlength from all other cells')
     non_key_cellids = all_cell_ids[np.in1d(all_cell_ids, all_key_cellids) == False]
-    pathlength_input = [[cellid, comp, None, None] for cellid in non_key_cellids]
-    pathlength_output = start_multiprocess_imap(get_compartment_length_mp, pathlength_input)
+    #as calculating comp length for fragments is fast, do not put all of them in one job
+    cellid_chunks = np.array_split(non_key_cellids, np.ceil(len(non_key_cellids) / 1000))
+    pathlength_input = [[cellid_chunk, comp] for cellid_chunk in cellid_chunks]
+    pathlength_output = start_multiprocess_imap(get_compartment_length_chunks, pathlength_input)
+    pathlength_output = np.concatenate(pathlength_output)
     non_key_inds = np.in1d(per_cell_res_df['cellid'], non_key_cellids)
     per_cell_res_df.loc[non_key_inds, f'{comp_str} pathlength'] = np.array(pathlength_output)
     #remove ids with 0 pathlength

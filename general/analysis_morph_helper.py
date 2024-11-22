@@ -306,11 +306,13 @@ def get_percell_organell_volume_density(input):
 
 def get_percell_organell_area_density(input):
     '''
-    calculates surface area density per cell given numpy arrays per cell.
+    calculates surface area density per cell given numpy arrays per cell. Density can either be calculates as
+    organelle area in relation to compartment area or in relation to compartment skeleton pathlength.
+    The 'norm_key' parameter indicates which one it is.
     :param input: cellid, numpy array with all organell ids, numpy array with all volumes of organell,
     cell_dict is per cell dictionary with presaved values like axon_length, proj_axon (True if DA, HVC, LMAN)
     '''
-    cellid, cached_so_ids, cached_so_areas, cell_dict, proj_axon, organelle_key = input
+    cellid, cached_so_ids, cached_so_areas, cell_dict, proj_axon, organelle_key, norm_key = input
     cell = SuperSegmentationObject(cellid)
     if organelle_key == 'er':
         organell_areas = cached_so_areas[np.where(cached_so_ids == cellid)[0]]
@@ -319,10 +321,13 @@ def get_percell_organell_area_density(input):
         sso_organell_inds = np.in1d(cached_so_ids, segmentation_object_ids)
         organell_areas = np.sum(cached_so_areas[sso_organell_inds])  #in µm²
     if proj_axon:
-        cell_surface_area = cell_dict['axon mesh surface area']
+        cell_norm = cell_dict[f'axon {norm_key}']
     else:
-        cell_surface_area = mesh_area_calc(cell.mesh)
-    mesh_area_density = organell_areas/ cell_surface_area
+        if 'length' in norm_key:
+            cell_norm = cell_dict["complete pathlength"]
+        else:
+            cell_norm = mesh_area_calc(cell.mesh)
+    mesh_area_density = organell_areas/ cell_norm
     return mesh_area_density
 
 def get_organell_ids_comps(input):
@@ -1005,7 +1010,7 @@ def get_org_density_volume_presaved(params):
         cell.calculate_size()
         cell_size = cell.size
         assert(cell_size > 0)
-    cell_volume = np.abs(cell.size)*10 ** (-9) * np.prod(cell.scaling)
+    cell_volume = cell.size*10 ** (-9) * np.prod(cell.scaling)
     #convert to µm³
     cell_org_volume = np.sum(cell_org_sizes) *10 ** (-9) * np.prod(cell.scaling)
     cell_org_volume_density = cell_org_volume / cell_volume
@@ -1063,32 +1068,33 @@ def get_organelle_comp_density_presaved(params):
 
 def get_organelle_comp_area_density_presaved(params):
     '''
-        Get organelle density from presaved mito arrays with cellid for each compartment and the complete cell.
+        Get organelle density from presaved organelle arrays with cellid for each compartment and the complete cell.
+        The norm key specifies if it should be normalised according to the pathlength or the mesh surface area.
         :param params: cellid, org_ids, org_ssv_ids, org_sizes, org_axoness, full_cell_dict (per cell)
         :return: org_volume_density for axon, dendrite and full cell
         '''
     comp_dict = {0:'dendrite', 1:'axon', 2:'soma'}
-    cellid, org_ssv_ids, org_mesh_areas, org_axoness, full_cell_dict, compartment = params
+    cellid, org_ssv_ids, org_mesh_areas, org_axoness, full_cell_dict, compartment, norm_key = params
     cell_org_inds = np.in1d(org_ssv_ids, cellid)
     cell_org_mesh_areas = org_mesh_areas[cell_org_inds]
     cell_org_axoness = org_axoness[cell_org_inds]
     comp_org_mesh_areas = cell_org_mesh_areas[cell_org_axoness == compartment]
-    comp_area_density = np.sum(comp_org_mesh_areas) /  full_cell_dict[f'{comp_dict[compartment]} mesh surface area']
+    comp_area_density = np.sum(comp_org_mesh_areas) /  full_cell_dict[f'{comp_dict[compartment]} {norm_key}']
     return comp_area_density
 
 def get_er_comp_area_density(params):
     '''
     Get er volume density split into compartments. ER is not split by connected components so needs to be treated different than other
     organelles in this case. Splits ER mesh into components similar to how cell mesh is split via compartmentalize_mesh_fromskel.
-    ER id = cellid.
+    ER id = cellid. Can be calculated in relation to surface area or pathlength. The norm_key parameter selects with one
     :param params: er_id (also cellid), desired compartment
     :return: compartment volume density, full organelle volume density
     '''
-    cellid, full_cell_dict, compartment = params
+    cellid, full_cell_dict, compartment, norm_key = params
     comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
     #get cell and skeleton from cellid
     cell = SuperSegmentationObject(cellid)
-    cell_surface_area = full_cell_dict[f'{comp_dict[compartment]} mesh surface area']
+    cell_norm = full_cell_dict[f'{comp_dict[compartment]} {norm_key}']
     cell.load_skeleton()
     #code from compartmentalize_mesh_from_skel
     preds = cell.skeleton["axoness_avg10000"]
@@ -1136,7 +1142,7 @@ def get_er_comp_area_density(params):
     comp_b = actual_verts[:, 0, :] - actual_verts[:, 2, :]
     comp_surface_area = (np.linalg.norm(np.cross(comp_a, comp_b), axis=1)).sum() / 2.
     comp_surface_area_µm2 = comp_surface_area / 1e6
-    comp_area_density = comp_surface_area_µm2 / cell_surface_area
+    comp_area_density = comp_surface_area_µm2 / cell_norm
 
     return comp_area_density
 

@@ -41,7 +41,9 @@ if __name__ == '__main__':
     compartment = [2]
     comp_str = comp_dict[compartment[0]]
     with_FS = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241108_j0251{version}_ct_{organelle_key}_{comp_str}_area_density_mcl_%i_ax%i_%s_fs%i_new_merger" % (
+    #use 'length' to normalise per pathlength, 'mesh surface area' if normalise per surface area
+    norm_key = 'length'
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241122_j0251{version}_ct_{organelle_key}_{comp_str}_area_density_mcl_%i_ax%i_%s_fs%i_new_merger_{norm_key}" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -51,6 +53,7 @@ if __name__ == '__main__':
         "min_comp_len = %i for full cells, min_comp_len = %i for axons, colors = %s" % (
             min_comp_len_cell, min_comp_len_ax, color_key))
     log.info(f'use mean of {organelle_key} volume density for regression fit')
+    log.info(f'For normalization of surface area, {norm_key} is used.')
     if full_cells_only:
         log.info('Plot for full cells only')
     if with_FS:
@@ -131,14 +134,14 @@ if __name__ == '__main__':
                             [cellid, ct_org_ids, ct_org_areas, all_cell_dict[ct][cellid], True, organelle_key]
                             for cellid in suitable_ids_dict[ct]]
                     else:
-                        org_input = [[cellid, cached_org_ids, cached_org_areas, all_cell_dict[ct][cellid], True, organelle_key] for cellid in suitable_ids_dict[ct]]
+                        org_input = [[cellid, cached_org_ids, cached_org_areas, all_cell_dict[ct][cellid], True, organelle_key, norm_key] for cellid in suitable_ids_dict[ct]]
                     org_output = start_multiprocess_imap(get_percell_organell_area_density, org_input)
                     comp_area_density = np.array(org_output)
                 else:
                     continue
             else:
                 if organelle_key == 'er':
-                    org_input = [[cellid, all_cell_dict[ct][cellid], comp] for cellid in suitable_ids_dict[ct]]
+                    org_input = [[cellid, all_cell_dict[ct][cellid], comp, norm_key] for cellid in suitable_ids_dict[ct]]
                     org_output = start_multiprocess_imap(get_er_comp_area_density, org_input)
                 else:
                     ct_org_ids = np.load(f'{np_presaved_loc}/{ct_dict[ct]}_{organelle_key}_ids_fullcells.npy')
@@ -151,7 +154,7 @@ if __name__ == '__main__':
                     ct_org_map2ssvids = ct_org_map2ssvids[ct_ind]
                     ct_org_mesh_areas = ct_org_mesh_areas[ct_ind]
                     ct_org_axoness = ct_org_axoness[ct_ind]
-                    org_input = [[cellid, ct_org_map2ssvids, ct_org_mesh_areas, ct_org_axoness, all_cell_dict[ct][cellid], comp] for cellid in suitable_ids_dict[ct]]
+                    org_input = [[cellid, ct_org_map2ssvids, ct_org_mesh_areas, ct_org_axoness, all_cell_dict[ct][cellid], comp, norm_key] for cellid in suitable_ids_dict[ct]]
                     org_output = start_multiprocess_imap(get_organelle_comp_area_density_presaved, org_input)
                 comp_area_density = np.array(org_output, dtype = float)
             #for percell df

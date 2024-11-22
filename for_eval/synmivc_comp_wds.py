@@ -31,7 +31,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     fontsize = 20
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/2401014_j0251{version1}vs_{version2}_wd_comp_%i_ax%i_ms_%f" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/2401108_j0251{version1}vs_{version2}_wd_comp_%i_ax%i_ms_%f" % (
                  min_comp_len_cell, min_comp_len_ax, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -255,6 +255,7 @@ if __name__ == '__main__':
         density_df.loc[start_density_df + i, 'volume density'] = ver_summed_size / dataset_size
 
     density_df.to_csv(f'{f_name}/synmivc_density_comp.csv')
+    density_df = density_df.astype({'summed size': float, 'volume density':float})
     for col in density_df.columns:
         if 'organelle' in col or 'version' in col:
             continue

@@ -27,9 +27,9 @@ if __name__ == '__main__':
     color_key = 'TePkBrNGF'
     fontsize = 20
     comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
-    comp = 1
+    comp = 0
     comp_str = comp_dict[comp]
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240613_j0251{version}_fraction_{comp_str}_fullvsfragment_mcl_%i_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/241122_j0251{version}_fraction_{comp_str}_fullvsfragment_mcl_%i_%s_fs%i" % (
         min_comp_len_cell, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

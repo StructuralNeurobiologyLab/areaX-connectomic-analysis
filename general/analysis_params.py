@@ -74,6 +74,9 @@ class Analysis_Params(object):
     def axon_cts(self):
         return self._axon_cts
 
+    def glia_cts(self):
+        return self._glia_cts
+
     def syn_prob_thresh(self):
         return self._syn_prob_tresh
 

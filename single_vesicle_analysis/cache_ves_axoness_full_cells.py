@@ -12,7 +12,7 @@ if __name__ == '__main__':
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     version = 'v6'
-    with_glia = False
+    with_glia = True
     analysis_params = Analysis_Params(working_dir=global_params.wd, version='v6')
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     f_name = analysis_params.file_locations

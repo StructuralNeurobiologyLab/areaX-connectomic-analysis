@@ -31,11 +31,11 @@ if __name__ == '__main__':
     n_it = 100
     n_plot_it = 3
     fontsize = 20
-    binary_syns = True
+    binary_syns = False
     if binary_syns:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241107_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241210_j0251v5_MSN_GP_ratio_shuffle_binary_it{n_it}_fs{fontsize}"
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241107_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241210_j0251v5_MSN_GP_ratio_shuffle_it{n_it}_fs{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('MSN conn GP ratio shuffle', log_dir=f_name + '/logs/')
@@ -130,8 +130,8 @@ if __name__ == '__main__':
     log.info('Iterate and get GP ratio randomly with different probs')
     for ni in tqdm(range(n_it)):
         for i, sc in enumerate(shuffle_cats):
-            #only get observed once
-            if 'observed' in sc and ni > 0:
+            #only get observed for shuffle df
+            if 'observed' in sc and ni >= n_plot_it:
                 continue
             #get probability for each category
             if not 'observed' in sc:
@@ -166,19 +166,21 @@ if __name__ == '__main__':
             gpi_syn_area[gpi_msn_inds] = sorted_gpi_syn_sizes
             GP_syn_area_ratio = gpi_syn_area / (gpe_syn_area + gpi_syn_area)
             if ni < n_plot_it:
-                shuffle_df.loc[(ni * n_plot_it + i) * num_msn: (ni * n_plot_it + i+ 1) * num_msn - 1, 'cellid'] = msn_ids
-                shuffle_df.loc[(ni * n_plot_it + i) * num_msn: (ni * n_plot_it + i + 1) * num_msn - 1,
+                shuffle_df.loc[(ni * num_cats + i) * num_msn: (ni * num_cats + i+ 1) * num_msn - 1, 'cellid'] = msn_ids
+                shuffle_df.loc[(ni * num_cats + i) * num_msn: (ni * num_cats+ i + 1) * num_msn - 1,
                 'GP ratio sum syn area'] = GP_syn_area_ratio
-                shuffle_df.loc[(ni * n_plot_it + i) * num_msn: (ni * n_plot_it + i + 1) * num_msn - 1,
+                shuffle_df.loc[(ni * num_cats + i) * num_msn: (ni * num_cats + i + 1) * num_msn - 1,
                 'shuffle category'] = sc
-                shuffle_df.loc[(ni * n_plot_it + i) * num_msn: (ni * n_plot_it + i + 1) * num_msn - 1,
+                shuffle_df.loc[(ni * num_cats + i) * num_msn: (ni * num_cats + i + 1) * num_msn - 1,
                 'iteration'] = ni
+            #only get observed once for mean_df
+            if 'observed' in sc and ni > 0:
+                continue
             mean_df.loc[(ni * num_cats)+ i, 'shuffle category'] = sc
             mean_df.loc[(ni * num_cats) + i, 'mean'] = np.mean(GP_syn_area_ratio)
             mean_df.loc[(ni * num_cats) + i, 'mean(abs(GP ratio - 0.5))'] = np.mean(np.abs(GP_syn_area_ratio - 0.5))
 
     log.info('Iterations done')
-
     #remove nan values from emtpy observed rows which were calculated only once
     shuffle_df = shuffle_df.dropna()
     shuffle_df.to_csv(f'{f_name}/shuffle_results.csv')

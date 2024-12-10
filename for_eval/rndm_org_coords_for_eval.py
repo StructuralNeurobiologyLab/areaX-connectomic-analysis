@@ -22,13 +22,14 @@ if __name__ == '__main__':
     version = 'v6'
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
-    organelle = 'er'
-    sd_org = SegmentationDataset(organelle, working_dir=global_params.config.working_dir)
+    organelle = 'golgi'
+    if organelle != 'single vesicle':
+        sd_org = SegmentationDataset(organelle, working_dir=global_params.config.working_dir)
     ct_dict = bio_params.ct_dict(with_glia = True)
     n_samples = 15
     gt_version = 'v7'
     color_key = 'TePkBr'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/241014_j0251{version}_ct_random_{organelle}_eval_n{n_samples}_{gt_version}gt"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/241210_j0251{version}_ct_random_{organelle}_eval_n{n_samples}_{gt_version}gt"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'rndm_{organelle}_coords_eval',
@@ -43,9 +44,11 @@ if __name__ == '__main__':
     cts_str = np.array(bio_params.ct_str(with_glia=True))
     #remove class fragments
     cts_str = cts_str[np.in1d(cts_str, 'FRAG') == False]
+    axon_cts = bio_params.axon_cts()
+    axon_str = [ct_dict[ct] for ct in axon_cts]
+    glia_cts = bio_params.glia_cts()
+    glia_str = [ct_dict[ct] for ct in glia_cts]
     if organelle == 'golgi':
-        axon_cts = bio_params.axon_cts()
-        axon_str = [ct_dict[ct] for ct in axon_cts]
         cts_str = cts_str[np.in1d(cts_str, axon_str) == False]
     num_cts = len(cts_str)
     celltype_gt = pd.read_csv(
@@ -57,7 +60,8 @@ if __name__ == '__main__':
     assert(len(np.unique(ct_gt)) == num_cts)
 
     log.info(f'Step 2/2: Load {organelle} meshes and select random samples per celltype')
-    rndm_org_coords = pd.DataFrame(columns = ['cellid', 'celltype', 'coord x', 'coord y', 'coord z'], index = range(num_cts * n_samples))
+    rndm_org_coords = pd.DataFrame(columns = ['cellid', 'celltype', 'coord x', 'coord y', 'coord z', 'organelle'], index = range(num_cts * n_samples))
+    rndm_org_coords['organelle'] = organelle
     for i, ct_str in enumerate(cts_str):
         #get organelle meshes from the cells of this cell type
         ct_df = celltype_gt[celltype_gt['celltype'] == ct_str]
@@ -65,27 +69,40 @@ if __name__ == '__main__':
         log.info(f'{len(ct_ids)} were found for cell type {ct_str}')
         ct_org_vert_coords = []
         ct_org_cellids = []
-        for ct_id in ct_ids:
-            if organelle == 'er':
-                #er is only one object per cell
-                org_obj = sd_org.get_segmentation_object(ct_id)
-                org_inds, org_verts, org_norm = org_obj.mesh
-                #get coordinates in voxel space to investigate in neuroglancer
-                org_verts = np.round(org_verts.reshape((-1, 3))/ [10, 10, 25])
-                org_cellid = np.zeros(len(org_verts)) + ct_id
-                ct_org_vert_coords.append(org_verts)
-                ct_org_cellids.append(org_cellid)
+        if organelle == 'single vesicle':
+            # use single vesicle coordinates and load for all cells from celltype
+            #use only for neuronal cell types
+            if ct_str in axon_str or ct_str in glia_str:
+                ct_ves_coords = np.load(f'{bio_params.file_locations}/{ct_str}_rep_coords.npy')
+                ct_ves_map2ssvids = np.load(f'{bio_params.file_locations}/{ct_str}_mapping_ssv_ids.npy')
             else:
-                cell = SuperSegmentationObject(ct_id)
-                obj_organelles = cell.get_seg_objects(organelle)
-                for org_obj in obj_organelles:
+                ct_ves_coords = np.load(f'{bio_params.file_locations}/{ct_str}_rep_coords_fullcells.npy')
+                ct_ves_map2ssvids = np.load(f'{bio_params.file_locations}/{ct_str}_mapping_ssv_ids_fullcells.npy')
+            ct_ind = np.in1d(ct_ves_map2ssvids, ct_ids)
+            ct_org_cellids = ct_ves_map2ssvids[ct_ind]
+            ct_org_vert_coords = ct_ves_coords[ct_ind]
+        else:
+            for ct_id in ct_ids:
+                if organelle == 'er':
+                    #er is only one object per cell
+                    org_obj = sd_org.get_segmentation_object(ct_id)
                     org_inds, org_verts, org_norm = org_obj.mesh
-                    org_verts = np.round(org_verts.reshape((-1, 3)) / [10, 10, 25])
+                    #get coordinates in voxel space to investigate in neuroglancer
+                    org_verts = np.round(org_verts.reshape((-1, 3))/ [10, 10, 25])
                     org_cellid = np.zeros(len(org_verts)) + ct_id
                     ct_org_vert_coords.append(org_verts)
                     ct_org_cellids.append(org_cellid)
-        ct_org_vert_coords = np.concatenate(ct_org_vert_coords)
-        ct_org_cellids = np.concatenate(ct_org_cellids)
+                else:
+                    cell = SuperSegmentationObject(ct_id)
+                    obj_organelles = cell.get_seg_objects(organelle)
+                    for org_obj in obj_organelles:
+                        org_inds, org_verts, org_norm = org_obj.mesh
+                        org_verts = np.round(org_verts.reshape((-1, 3)) / [10, 10, 25])
+                        org_cellid = np.zeros(len(org_verts)) + ct_id
+                        ct_org_vert_coords.append(org_verts)
+                        ct_org_cellids.append(org_cellid)
+            ct_org_vert_coords = np.concatenate(ct_org_vert_coords)
+            ct_org_cellids = np.concatenate(ct_org_cellids)
         rndm_inds = np.random.choice(range(len(ct_org_vert_coords)), n_samples, replace=False)
         rndm_coords_ct = ct_org_vert_coords[rndm_inds].astype(int)
         rndm_coords_cellids = ct_org_cellids[rndm_inds].astype(int)

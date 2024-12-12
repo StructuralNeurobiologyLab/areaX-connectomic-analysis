@@ -41,14 +41,14 @@ if __name__ == '__main__':
     min_comp_len_cells = 200
     syn_prob = 0.6
     min_syn_size = 0.1
-    exclude_known_mergers = True
+    exclude_known_mergers = False
     cls = CelltypeColors(ct_dict=ct_dict)
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP', 'STNGPINTv6', 'RdTeINTv6', 'TePkBrNGF'}
     color_key = 'TePkBrNGF'
-    plot_connmatrix_only = False
+    plot_connmatrix_only = True
     fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i_GPi_autapse_only" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241212_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i_mergers_in" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -105,16 +105,16 @@ if __name__ == '__main__':
                  #   cellids = np.array(stn_no_gp_df['cellid'])
 
                     #cellids = np.array(gt_df['cellids'][gt_df['celltype'] == ct_dict[ct]])
-                if ct == 7:
-                    ct_autapse_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                      '240723_j0251v6_all_cellids_for_exclusion/' \
-                       '241024_all_full_cell_ids_no_msn_manuall_checks_final.csv'
-                    log.info(f'Load information about manually checked autapses for GPi from {ct_autapse_path}')
-                    ct_autapse_df = pd.read_csv(ct_autapse_path)
+                #if ct == 7:
+                   # ct_autapse_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                    #  '240723_j0251v6_all_cellids_for_exclusion/' \
+                    #   '241024_all_full_cell_ids_no_msn_manuall_checks_final.csv'
+                    #log.info(f'Load information about manually checked autapses for GPi from {ct_autapse_path}')
+                    #ct_autapse_df = pd.read_csv(ct_autapse_path)
                     #get only GPi and remove mergers
-                    ct_autapse_df = ct_autapse_df[ct_autapse_df['celltype'] == ct_str]
-                    ct_autapse_df = ct_autapse_df[ct_autapse_df['include?'] == 'y']
-                    cellids = np.array(ct_autapse_df['cellid'][ct_autapse_df['autapse?'] == 'y']).astype(int)
+                    #ct_autapse_df = ct_autapse_df[ct_autapse_df['celltype'] == ct_str]
+                    #ct_autapse_df = ct_autapse_df[ct_autapse_df['include?'] == 'y']
+                    #cellids = np.array(ct_autapse_df['cellid'][ct_autapse_df['autapse?'] == 'y']).astype(int)
                     #cellids = np.array(ct_autapse_df['cellid'][ct_autapse_df['autapse?'] == 'n']).astype(int)
 
                 cellids_checked = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len_cells,

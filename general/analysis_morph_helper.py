@@ -25,6 +25,29 @@ def get_cell_length(cellid):
     total_length = cell_graph.size(weight="weight") / 1000  # in µm
     return total_length
 
+def get_cell_volume_certainty_mp(cell_inputs):
+    '''
+    Gets volume and certainty of a several cell ids to use for multi_processing
+    :param cell_inputs: cellids, key used to get certainty
+    :return: cell volume, cell certainty
+    '''
+    cellids, ct_certainty_key = cell_inputs
+    cell_volumes = np.zeros(len(cellids))
+    cell_certainties = np.zeros(len(cellids))
+    for i, cellid in enumerate(cellids):
+        cell = SuperSegmentationObject(cellid)
+        cell_size = cell.size
+        if cell_size < 0:
+            cell.calculate_size()
+            cell_size = cell.size
+            assert (cell_size > 0)
+        cell_volume = cell_size * np.prod(cell.scaling) * 10 ** (-9)  # in µm³
+        cell.load_attr_dict()
+        cell_certainty = cell.attr_dict[ct_certainty_key]
+        cell_volumes[i] = cell_volume
+        cell_certainties[i] = cell_certainty
+    return [cell_volumes, cell_certainties]
+
 def get_compartment_length(cellid, compartment, cell_graph=None, full_dict = None):
     """
             calculates length of compartment in µm per cell using the skeleton if given the networkx graph of the cell.

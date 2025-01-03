@@ -21,6 +21,7 @@ if __name__ == '__main__':
     import seaborn as sns
     from scipy.stats import ranksums
     from scipy.spatial import KDTree
+    from tqdm import tqdm
 
     version = 'v6'
     analysis_params = Analysis_Params(version = version)
@@ -31,33 +32,39 @@ if __name__ == '__main__':
     full_cell = True
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
-    nonsyn_dist_threshold = None  # nm
+    nonsyn_dist_threshold = 3  # nm
     release_thresh = 5 #µm
-    celltype = 5
+    celltype = 0
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = True
     #spiness is list of spiness values that should be selected
     #spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
-    spiness = [2]
+    spiness = None
     #pre and post_cts is list of cell type numbers to be filtered for in synapses
     #if selected glia synapses will be filtered out automatically
-    pre_cts = [1, 2, 7]
-    post_cts = [4]
+    pre_cts = [2]
+    post_cts = [3]
+    #number of samples for each bootstrapping iteration to determine statistics
+    bootstrap_n = 1000
+    #number of iterations for bootstrapping
+    n_it = 1000
+
     if pre_cts is None and post_cts is not None:
         raise ValueError('to select a postsynaptic cell type you need to select a presynaptic cell type also')
     if nonsyn_dist_threshold is None:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240816_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_3inSTN_shaft_only" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250103_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_HVC_MSN_it{n_it}_bn{bootstrap_n}" % (
             min_comp_len, release_thresh)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240816_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250103_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_HVC_MSN_it{n_it}_bn{bootstrap_n}" % (
             min_comp_len, nonsyn_dist_threshold, release_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging(f'close_mem_2_cell_surface_analysis_{ct_str}', log_dir=f_name + '/logs/')
+    log = initialize_logging(f'ves_num_syn_size_mod_{ct_str}', log_dir=f_name)
     log.info("min_comp_len = %i" % (min_comp_len))
     log.info(f'min syn size = {min_syn_size} µm², syn prob thresh = {syn_prob_thresh}, '
              f'threshold to putative release site = {release_thresh} µm, non syn dist threshold = {nonsyn_dist_threshold} nm')
+    log.info(f'{bootstrap_n} values used for bootstrapping statistics, with {n_it} iterations')
     if full_cell:
         log.info('Only full cells will be processed')
     if with_glia:
@@ -87,7 +94,7 @@ if __name__ == '__main__':
     suitable_cts = suitable_cts[suitable_cts != ct_str]
 
     known_mergers = analysis_params.load_known_mergers()
-    misclassified_asto_ids = analysis_params.load_potential_astros()
+    #misclassified_asto_ids = analysis_params.load_potential_astros()
     cache_name = analysis_params.file_locations
 
     log.info('Step 1/5: Filter suitable cellids')
@@ -96,8 +103,8 @@ if __name__ == '__main__':
     cellids = np.array(list(cell_dict.keys()))
     merger_inds = np.in1d(cellids, known_mergers) == False
     cellids = cellids[merger_inds]
-    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-    cellids = cellids[astro_inds]
+    #astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+    #cellids = cellids[astro_inds]
     axon_cts = analysis_params.axon_cts()
     if full_cell and celltype not in axon_cts:
         cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,
@@ -262,12 +269,12 @@ if __name__ == '__main__':
     #make dataframe with all vesicles
     num_all_ves = num_small_close_ves + len(ves_dists_large)
     ves_dist_df = pd.DataFrame(columns = ['dist 2 syn', 'distance bin', 'synapse type'], index = range(num_all_ves))
-    ves_dist_df.loc[0: num_small_close_ves - 1, 'dist 2 syn'] = ves_dists_small
+    ves_dist_df.loc[0: num_small_close_ves - 1, 'dist 2 syn'] = ves_dists_small/ 1000 #in µm
     ves_dist_df.loc[0: num_small_close_ves - 1, 'synapse type'] = 'small'
-    ves_dist_df.loc[num_small_close_ves: num_all_ves -1, 'dist 2 syn'] = ves_dists_large
+    ves_dist_df.loc[num_small_close_ves: num_all_ves -1, 'dist 2 syn'] = ves_dists_large / 1000 #in µm
     ves_dist_df.loc[num_small_close_ves: num_all_ves -1, 'synapse type'] = 'large'
     #sort into distance bins with 200 µm
-    dist_cat_bins = np.arange(0, release_thresh * 1000 + 200, 200)
+    dist_cat_bins = np.arange(0, release_thresh + 0.2, 0.2)
     dist_cat_labels = dist_cat_bins[1:]
     ves_dist_cats = np.array(pd.cut(ves_dist_df['dist 2 syn'], dist_cat_bins, right=False, labels=dist_cat_labels))
     ves_dist_df['distance bin'] = ves_dist_cats
@@ -299,7 +306,7 @@ if __name__ == '__main__':
     sns.histplot(x='dist 2 syn', data=ves_dist_df, hue='synapse type', palette=size_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, bins=dist_cat_bins)
     plt.ylabel('number of vesicles', fontsize=fontsize)
-    plt.xlabel('distance to synapse [nm]', fontsize=fontsize)
+    plt.xlabel('distance to synapse [µm]', fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
     plt.title('vesicle distance to closest synapse')
@@ -319,7 +326,7 @@ if __name__ == '__main__':
     sns.histplot(x='dist 2 syn', data=ves_dist_df, hue='synapse type', palette=size_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True)
     plt.ylabel('number of vesicles', fontsize=fontsize)
-    plt.xlabel('distance to synapse [nm]', fontsize=fontsize)
+    plt.xlabel('distance to synapse [µm]', fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
     plt.title('vesicle distance to closest synapse')
@@ -329,12 +336,85 @@ if __name__ == '__main__':
     sns.histplot(x='dist 2 syn', data=ves_dist_df, hue='synapse type', palette=size_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, stat='percent')
     plt.ylabel('% of vesicles', fontsize=fontsize)
-    plt.xlabel('distance to synapse [nm]', fontsize=fontsize)
+    plt.xlabel('distance to synapse [µm]', fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
     plt.title('vesicle distance to closest synapse')
     plt.savefig(f'{f_name}/num_ves_dist2syn_hist_perc.png')
     plt.savefig(f'{f_name}/num_ves_dist2syn_hist_perc.svg')
     plt.close()
+
+    #high sample size tends to skew p-values towards smaller numbers
+    #bootstrap statistics with several iterations of calculating the p-value of a random sample
+    #then use mean of p-value
+    log.info(f'Get p-value with bootstrapping {bootstrap_n} samples over {n_it} iterations')
+    p_values_boot = np.empty(n_it)
+    stats_boot = np.empty(n_it)
+    small_syn_dists = np.array(ves_dist_df['dist 2 syn'][ves_dist_df['synapse type'] == 'small'])
+    large_syn_dists = np.array(ves_dist_df['dist 2 syn'][ves_dist_df['synapse type'] == 'large'])
+    for i in tqdm(range(n_it)):
+        #draw random sample of small and large syn distances
+        rndm_small = np.random.choice(small_syn_dists, bootstrap_n, replace=False)
+        rndm_large = np.random.choice(large_syn_dists, bootstrap_n, replace=False)
+        #get p-value from subset
+        stats, p_value = ranksums(rndm_small, rndm_large)
+        stats_boot[i] = stats
+        p_values_boot[i] = p_value
+        #plot random samples for first three iterations as example
+        if i < 3:
+            rndm_df = pd.DataFrame(columns = ['synapse type', 'dist 2 syn'], index = range(bootstrap_n * 2))
+            rndm_df.loc[0: bootstrap_n - 1, 'synapse type'] = 'small'
+            rndm_df.loc[0: bootstrap_n - 1, 'dist 2 syn'] = rndm_small
+            rndm_df.loc[bootstrap_n: 2*bootstrap_n - 1, 'synapse type'] = 'large'
+            rndm_df.loc[bootstrap_n: 2*bootstrap_n - 1, 'dist 2 syn'] = rndm_large
+            rndm_df.to_csv(f'{f_name}/rndm_samples_{bootstrap_n}_{i}.csv')
+            sns.histplot(x='dist 2 syn', data=rndm_df, hue='synapse type', palette=size_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True)
+            plt.ylabel('number of vesicles', fontsize=fontsize)
+            plt.xlabel('distance to synapse [µm]', fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.title('vesicle distance to closest synapse')
+            plt.savefig(f'{f_name}/num_ves_dist2syn_hist_{bootstrap_n}_{i}.png')
+            plt.savefig(f'{f_name}/num_ves_dist2syn_hist_{bootstrap_n}_{i}.svg')
+            plt.close()
+            sns.histplot(x='dist 2 syn', data=rndm_df, hue='synapse type', palette=size_palette, common_norm=False,
+                         fill=False, element="step", linewidth=3, legend=True, stat='percent')
+            plt.ylabel('% of vesicles', fontsize=fontsize)
+            plt.xlabel('distance to synapse [µm]', fontsize=fontsize)
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            plt.title('vesicle distance to closest synapse')
+            plt.savefig(f'{f_name}/num_ves_dist2syn_hist_perc_{bootstrap_n}_{i}.png')
+            plt.savefig(f'{f_name}/num_ves_dist2syn_hist_perc_{bootstrap_n}_{i}.svg')
+            plt.close()
+
+    bootstrapped_stats = pd.DataFrame(columns = ['stats', 'p value'], index = range(n_it))
+    bootstrapped_stats['stats'] = stats_boot
+    bootstrapped_stats['p value'] = p_values_boot
+    bootstrapped_stats.to_csv(f'{f_name}/bootstrapped_{bootstrap_n}_ranksum_values.csv')
+    #plot p values
+    sns.histplot(x='p value', data=bootstrapped_stats, color='black', common_norm=False,
+                 fill=False, element="step", linewidth=3)
+    plt.ylabel('number of iterations', fontsize=fontsize)
+    plt.xlabel('p value', fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.title(f'bootstrapped p-values with {bootstrap_n} rndm samples')
+    plt.savefig(f'{f_name}/p_values_bootstrapped_n{bootstrap_n}_it{n_it}.png')
+    plt.savefig(f'{f_name}/p_values_bootstrapped_n{bootstrap_n}_it{n_it}.svg')
+    plt.close()
+    sns.histplot(x='p value', data=bootstrapped_stats, color='black', common_norm=False,
+                 fill=False, element="step", linewidth=3, stat='percent')
+    plt.ylabel('% of iterations', fontsize=fontsize)
+    plt.xlabel('p-value', fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.title(f'bootstrapped p-values with {bootstrap_n} rndm samples')
+    plt.savefig(f'{f_name}/p_values_bootstrapped_n{bootstrap_n}_it{n_it}_perc.png')
+    plt.savefig(f'{f_name}/p_values_bootstrapped_n{bootstrap_n}_it{n_it}_perc.svg')
+    plt.close()
+
+    log.info(f' The mean p-value over {n_it} iterations with {bootstrap_n} samples each is: {np.mean(p_values_boot)}')
 
     log.info('Analysis finished.')

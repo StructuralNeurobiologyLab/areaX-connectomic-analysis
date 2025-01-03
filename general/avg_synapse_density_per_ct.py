@@ -28,11 +28,11 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     syn_prob = 0.6
     cls = CelltypeColors(ct_dict = ct_dict)
-    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
-    color_key = 'STNGPINTv6'
+    # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6'}
+    color_key = 'TePkBrNGF'
     fontsize = 20
     zero_soma_fill = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241025_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s_newmerger" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250102_j0251{version}_avg_syn_den_sb_%.2f_mcl_%i_%s_newmerger" % (
         syn_prob, min_comp_len, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

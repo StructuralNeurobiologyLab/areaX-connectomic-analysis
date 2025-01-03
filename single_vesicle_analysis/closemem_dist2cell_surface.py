@@ -33,7 +33,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
     nonsyn_dist_threshold = 3000  # nm
-    release_thresh = 5 #µm
+    release_thresh = 1 #µm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
@@ -41,8 +41,7 @@ if __name__ == '__main__':
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = True
-    annot_matrix = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/240723_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250103_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -75,7 +74,7 @@ if __name__ == '__main__':
     suitable_cts = suitable_cts[suitable_cts != ct_str]
 
     known_mergers = analysis_params.load_known_mergers()
-    misclassified_asto_ids = analysis_params.load_potential_astros()
+    #misclassified_asto_ids = analysis_params.load_potential_astros()
     cache_name = analysis_params.file_locations
 
     log.info('Step 1/4: Filter suitable cellids')
@@ -84,8 +83,8 @@ if __name__ == '__main__':
     cellids = np.array(list(cell_dict.keys()))
     merger_inds = np.in1d(cellids, known_mergers) == False
     cellids = cellids[merger_inds]
-    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
-    cellids = cellids[astro_inds]
+    #astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
+    #cellids = cellids[astro_inds]
     axon_cts = analysis_params.axon_cts()
     if full_cell and celltype not in axon_cts:
         cellids = check_comp_lengths_ct(cellids=cellids, fullcelldict=cell_dict, min_comp_len=min_comp_len,

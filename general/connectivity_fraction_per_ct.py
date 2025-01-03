@@ -37,18 +37,18 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     celltype_key = analysis_params.celltype_key()
-    min_comp_len_ax = 50
+    min_comp_len_ax = 0
     min_comp_len_cells = 200
     syn_prob = 0.6
     min_syn_size = 0.1
-    exclude_known_mergers = False
+    exclude_known_mergers = True
     cls = CelltypeColors(ct_dict=ct_dict)
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP', 'STNGPINTv6', 'RdTeINTv6', 'TePkBrNGF'}
     color_key = 'TePkBrNGF'
     plot_connmatrix_only = True
     fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241212_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i_mergers_in" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241213_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

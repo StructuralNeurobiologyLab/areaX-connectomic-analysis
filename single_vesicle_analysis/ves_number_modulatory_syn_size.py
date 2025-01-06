@@ -19,7 +19,7 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from scipy.stats import ranksums
+    from scipy.stats import ranksums, skew, skewtest, kstest
     from scipy.spatial import KDTree
     from tqdm import tqdm
 
@@ -53,10 +53,10 @@ if __name__ == '__main__':
     if pre_cts is None and post_cts is not None:
         raise ValueError('to select a postsynaptic cell type you need to select a presynaptic cell type also')
     if nonsyn_dist_threshold is None:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250103_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_HVC_MSN_it{n_it}_bn{bootstrap_n}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250106_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
             min_comp_len, release_thresh)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250103_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_HVC_MSN_it{n_it}_bn{bootstrap_n}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250106_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
             min_comp_len, nonsyn_dist_threshold, release_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -416,5 +416,29 @@ if __name__ == '__main__':
     plt.close()
 
     log.info(f' The mean p-value over {n_it} iterations with {bootstrap_n} samples each is: {np.mean(p_values_boot)}')
+    log.info(f' The median p-value over {n_it} iterations with {bootstrap_n} samples each is: {np.median(p_values_boot)}')
+
+    #more statistical test to see if p-values approach 0, if a lot of significant p-values
+    #distribution is storgly skewed towards 0 and does not follow a normal distribution,
+    #if not, rather uniform or concentrated around 0.5
+
+    # 1. Compute Skewness
+    skewness = skew(p_values_boot)
+    log.info(f"Skewness of p-values: {skewness}")
+
+    #use skewtest to check against normal distribution
+    skew_stats, skew_p_value = skewtest(p_values_boot)
+    log.info(f'Skewtest to check if skewness of p-values is singificantly different from normal distribution: stats = {skew_stats}, p-value = {skew_p_value}')
+
+    # 2. Perform KS-Test Against Uniform Distribution
+    # Uniform distribution on [0, 1]
+    ks_stat, ks_p_value = kstest(p_values_boot, 'uniform')
+    log.info(f"KS Statistic to check if p-values are different from uniform distribution: stats = {ks_stat}, p-value = {ks_p_value}")
+
+    # 3. Percentile Check (Proportion of p-values below 0.05)
+    threshold = 0.05
+    percent_below_threshold = np.sum(p_values_boot < threshold)/ len(p_values_boot) * 100  # Percentage
+    log.info(f"Percentage of p-values below {threshold}: {percent_below_threshold:.2f}%")
+
 
     log.info('Analysis finished.')

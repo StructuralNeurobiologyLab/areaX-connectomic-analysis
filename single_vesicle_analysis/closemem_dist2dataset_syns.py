@@ -46,7 +46,7 @@ if __name__ == '__main__':
     fontsize = 20
     suitable_ids_only = False
     annot_matrix = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250102_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250107_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

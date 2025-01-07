@@ -32,9 +32,9 @@ if __name__ == '__main__':
     full_cell = True
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
-    nonsyn_dist_threshold = 3  # nm
+    nonsyn_dist_threshold = 3000  # nm
     release_thresh = 5 #µm
-    celltype = 0
+    celltype = 5
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = True
@@ -43,20 +43,21 @@ if __name__ == '__main__':
     spiness = None
     #pre and post_cts is list of cell type numbers to be filtered for in synapses
     #if selected glia synapses will be filtered out automatically
-    pre_cts = [2]
+    pre_cts = [10]
     post_cts = [3]
     #number of samples for each bootstrapping iteration to determine statistics
     bootstrap_n = 1000
     #number of iterations for bootstrapping
     n_it = 1000
+    use_non_syn_presaved = False
 
     if pre_cts is None and post_cts is not None:
         raise ValueError('to select a postsynaptic cell type you need to select a presynaptic cell type also')
     if nonsyn_dist_threshold is None:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250106_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250107_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
             min_comp_len, release_thresh)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250106_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/2501067_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
             min_comp_len, nonsyn_dist_threshold, release_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -146,35 +147,44 @@ if __name__ == '__main__':
     sd_synssv = SegmentationDataset('syn_ssv', working_dir=global_params.config.working_dir)
     if nonsyn_dist_threshold is not None:
         log.info(f'Use only non-synaptic synapses with threshold {nonsyn_dist_threshold} nm')
-        # get synapses outgoing from this celltype
-        ct_syn_cts, ct_syn_ids, ct_syn_axs, ct_syn_ssv_partners, ct_syn_sizes, ct_syn_spiness, ct_syn_rep_coord = filter_synapse_caches_for_ct(
-            pre_cts=[celltype],
-            post_cts=None,
-            syn_prob_thresh=syn_prob_thresh,
-            min_syn_size=min_syn_size,
-            axo_den_so=True,
-            synapses_caches=None, sd_synssv=sd_synssv)
-        # filter so that only filtered cellids are included and are all presynaptic
-        ct_inds = np.in1d(ct_syn_ssv_partners, cellids).reshape(len(ct_syn_ssv_partners), 2)
-        comp_inds = np.in1d(ct_syn_axs, 1).reshape(len(ct_syn_ssv_partners), 2)
-        filtered_inds = np.all(ct_inds == comp_inds, axis=1)
-        ct_syn_coords = ct_syn_rep_coord[filtered_inds]
-        ct_syn_axs = ct_syn_axs[filtered_inds]
-        ct_syn_ssv_partners = ct_syn_ssv_partners[filtered_inds]
-        # get non-synaptic vesicles
-        cell_input = [[cellid, ct_ves_ids, ct_ves_coords, ct_ves_map2ssvids, ct_syn_coords, nonsyn_dist_threshold] for
-                      cellid in cellids]
-        cell_output = start_multiprocess_imap(get_non_synaptic_vesicle_coords, cell_input)
-        cell_output = np.array(cell_output, dtype='object')
-        # output still list of arrays
-        non_syn_ves_ids = cell_output[:, 0]
-        non_syn_ves_coords = cell_output[:, 1]
-        # get all ves ids
-        non_syn_ves_ids_con = np.concatenate(non_syn_ves_ids)
-        non_syn_ves_coords_con = np.concatenate(non_syn_ves_coords)
-        log.info(
-            f'{len(non_syn_ves_ids_con)} vesicles are non-synaptic ({100 * len(non_syn_ves_ids_con) / len(ct_ves_ids):.2f} %)')
-        ct_ves_coords = non_syn_ves_coords_con
+        if use_non_syn_presaved:
+            location = f'{analysis_params.file_locations}/{ct_str}_r{nonsyn_dist_threshold}_mcl{min_comp_len}.npy'
+            log.info(f'Presaved non-synaptic vesicles are used from {location}')
+            non_syn_ves_coords_con = np.load(location)
+            ct_ves_coords = non_syn_ves_coords_con
+            raise ValueError
+        else:
+            # get synapses outgoing from this celltype
+            ct_syn_cts, ct_syn_ids, ct_syn_axs, ct_syn_ssv_partners, ct_syn_sizes, ct_syn_spiness, ct_syn_rep_coord = filter_synapse_caches_for_ct(
+                pre_cts=[celltype],
+                post_cts=None,
+                syn_prob_thresh=syn_prob_thresh,
+                min_syn_size=min_syn_size,
+                axo_den_so=True,
+                synapses_caches=None, sd_synssv=sd_synssv)
+            # filter so that only filtered cellids are included and are all presynaptic
+            ct_inds = np.in1d(ct_syn_ssv_partners, cellids).reshape(len(ct_syn_ssv_partners), 2)
+            comp_inds = np.in1d(ct_syn_axs, 1).reshape(len(ct_syn_ssv_partners), 2)
+            filtered_inds = np.all(ct_inds == comp_inds, axis=1)
+            ct_syn_coords = ct_syn_rep_coord[filtered_inds]
+            ct_syn_axs = ct_syn_axs[filtered_inds]
+            ct_syn_ssv_partners = ct_syn_ssv_partners[filtered_inds]
+            # get non-synaptic vesicles
+            cell_input = [[cellid, ct_ves_ids, ct_ves_coords, ct_ves_map2ssvids, ct_syn_coords, nonsyn_dist_threshold] for
+                          cellid in cellids]
+            cell_output = start_multiprocess_imap(get_non_synaptic_vesicle_coords, cell_input)
+            cell_output = np.array(cell_output, dtype='object')
+            # output still list of arrays
+            non_syn_ves_ids = cell_output[:, 0]
+            non_syn_ves_coords = cell_output[:, 1]
+            # get all ves ids
+            non_syn_ves_ids_con = np.concatenate(non_syn_ves_ids)
+            non_syn_ves_coords_con = np.concatenate(non_syn_ves_coords)
+            log.info(
+                f'{len(non_syn_ves_ids_con)} vesicles are non-synaptic ({100 * len(non_syn_ves_ids_con) / len(ct_ves_ids):.2f} %)')
+            ct_ves_coords = non_syn_ves_coords_con
+            if celltype == 0:
+                np.save(f'{analysis_params.file_locations}/{ct_str}_r{nonsyn_dist_threshold}_mcl{min_comp_len}.npy')
 
 
     log.info('Step 3/5: Get suitable synapses')

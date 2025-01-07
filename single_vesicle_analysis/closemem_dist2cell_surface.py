@@ -41,7 +41,7 @@ if __name__ == '__main__':
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250106_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250107_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

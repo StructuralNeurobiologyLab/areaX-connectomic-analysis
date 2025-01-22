@@ -34,30 +34,34 @@ if __name__ == '__main__':
     syn_prob_thresh = 0.6
     nonsyn_dist_threshold = 3000  # nm
     release_thresh = 5 #µm
-    celltype = 0
+    celltype = 5
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = True
     #spiness is list of spiness values that should be selected
     #spiness values: 0 = spine neck, 1 = spine head, 2 = dendritic shaft, 3 = other
-    spiness = [1]
+    spiness = None
     #pre and post_cts is list of cell type numbers to be filtered for in synapses
     #if selected glia synapses will be filtered out automatically
-    pre_cts = [7]
-    post_cts = [4]
+    pre_cts = [2]
+    post_cts = [3]
     #number of samples for each bootstrapping iteration to determine statistics
     bootstrap_n = 1000
     #number of iterations for bootstrapping
     n_it = 1000
-    use_non_syn_presaved = True
+    sub_sampled_syn = 200000
+    use_non_syn_presaved = False
 
     if pre_cts is None and post_cts is not None:
         raise ValueError('to select a postsynaptic cell type you need to select a presynaptic cell type also')
     if nonsyn_dist_threshold is None:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250109_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250122_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
             min_comp_len, release_thresh)
+    elif sub_sampled_syn is None:
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250122_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}" % (
+            min_comp_len, nonsyn_dist_threshold, release_thresh)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250109_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_spine_it{n_it}_bn{bootstrap_n}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250122_j0251{version}_{ct_str}_ves_num_syn_size_modulatory_%i_syn%i_r%i_{ct_dict[pre_cts[0]]}_{ct_dict[post_cts[0]]}_it{n_it}_bn{bootstrap_n}_subsyn_{sub_sampled_syn}" % (
             min_comp_len, nonsyn_dist_threshold, release_thresh)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -245,6 +249,12 @@ if __name__ == '__main__':
         m_sizes = m_sizes[spine_inds]
         m_rep_coord = m_rep_coord[spine_inds]
     log.info(f'{len(m_sizes)} synapses are selected for analysis.')
+    if sub_sampled_syn is not None:
+        log.info(f'Randomly select {sub_sampled_syn} synapses out of the suitable synapses for analysis.')
+        rndm_syn_inds = np.random.choice(range(len(m_sizes)), sub_sampled_syn, replace=False)
+        m_sizes = m_sizes[rndm_syn_inds]
+        m_rep_coord = m_rep_coord[rndm_syn_inds]
+        assert(len(m_sizes) == sub_sampled_syn)
     #split synapses into quantiles, use lowest quantile for small synapses
     #highest quantile for large synapses
     lowest_quantile = np.quantile(m_sizes, 0.25)

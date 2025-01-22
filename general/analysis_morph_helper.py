@@ -25,6 +25,20 @@ def get_cell_length(cellid):
     total_length = cell_graph.size(weight="weight") / 1000  # in µm
     return total_length
 
+def get_cell_length_chunks(cellids):
+    '''
+    Calculate total length of cell or fragment from cell graph
+    :param cellids: id of the cell
+    :return: total length in µm
+    '''
+    total_lengths = np.zeros(len(cellids))
+    for i, cellid in enumerate(cellids):
+        cell = SuperSegmentationObject(cellid)
+        cell_graph = cell.weighted_graph()
+        total_length = cell_graph.size(weight="weight") / 1000  # in µm
+        total_lengths[i] = total_length
+    return total_lengths
+
 def get_cell_volume_certainty_mp(cell_inputs):
     '''
     Gets volume and certainty of a several cell ids to use for multi_processing

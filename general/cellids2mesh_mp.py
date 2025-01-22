@@ -15,27 +15,29 @@ if __name__ == '__main__':
     ct_dict = bio_params.ct_dict(with_glia = True)
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
-
-    #f_name = 'cajal/scratch/users/arother/exported_meshes'
-    f_name = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/241029_migr/'
-
-    ct = 12
+    ct = 0
     ct_str = ct_dict[ct]
-    min_comp_len = 0
-    load_handpicked = 15
+    min_comp_len = 200
+    load_handpicked = None
+    ply_only = True
+
+    f_name = 'cajal/scratch/users/arother/exported_meshes'
+    #f_name = f'cajal/scratch/users/arother/bio_analysis_results/for_eval/2450122_{ct_str}_mcl{min_comp_len}/'
+
     #if None is selected the full cells will be exported; otherwise expects list of compartments
     #possible compartments: 'axon', 'dendrite', 'soma'
     #if all three are given, the full cell mesh will be exported but seperated into compartments
     compartments = None
-    with_skel = True
-    if load_handpicked is None:
+    with_skel = False
+    cellid_path = None
+    if load_handpicked is None and ct == 12:
         cellid_path = f'{bio_params.file_locations}/random_astro_ids_50.csv'
     if compartments is None:
-        foldername = f'{f_name}/241029_j0251{version}_{ct_str}_full_cells_mcl_{min_comp_len}/'
+        foldername = f'{f_name}/250122_j0251{version}_{ct_str}_full_cells_mcl_{min_comp_len}/'
     elif len(compartments) == 3:
-        foldername = f'{f_name}/241029_j0251{version}_{ct_str}_all_comps_sep_mcl_{min_comp_len}/'
+        foldername = f'{f_name}/250122_j0251{version}_{ct_str}_all_comps_sep_mcl_{min_comp_len}/'
     else:
-        foldername = f'{f_name}/241029_j0251{version}_{ct_str}_{compartments[0]}_mcl_{min_comp_len}/'
+        foldername = f'{f_name}/250122_j0251{version}_{ct_str}_{compartments[0]}_mcl_{min_comp_len}/'
         if not os.path.exists(foldername):
             os.mkdir(foldername)
     log = initialize_logging(f'log_cellid2mesh_{ct_str}', log_dir=foldername)
@@ -76,10 +78,10 @@ if __name__ == '__main__':
 
     log.info('Step 2/2: export meshes')
     if compartments is None:
-        mesh_input = [[cellid, foldername, version, with_skel] for cellid in cellids]
+        mesh_input = [[cellid, foldername, version, with_skel, ply_only] for cellid in cellids]
         _ = start_multiprocess_imap(whole_cellid2mesh, mesh_input)
     else:
-        mesh_input = [[cellid, foldername, version, compartments, with_skel] for cellid in cellids]
+        mesh_input = [[cellid, foldername, version, compartments, with_skel, ply_only] for cellid in cellids]
         _ = start_multiprocess_imap(comp2mesh, mesh_input)
 
     log.info('meshes are exported.')

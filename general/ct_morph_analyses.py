@@ -29,25 +29,25 @@ if __name__ == '__main__':
     global_params.wd = analysis_params.working_dir()
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
-    full_cells_only = False
-    axon_only = True
+    full_cells_only = True
+    axon_only = False
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    color_key = 'AxTePkBrv6'
+    color_key = 'STNGPINTv6'
     fontsize = 20
     n_comps_PCA = 1
     n_umap_runs = 5
     process_morph_parameters = False
-    use_mito_density = True
+    use_mito_density = False
     use_vc_density = False
-    use_ves_density = True
-    use_syn_params = True
+    use_ves_density = False
+    use_syn_params = False
     use_golgi_density = False
-    use_er_density = True
+    use_er_density = False
     alpha = 0.5
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241108_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_a{alpha}_ax_only_synmiveser" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250122_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_a{alpha}" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -442,7 +442,7 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_box.png')
         plt.savefig(f'{f_name}/{key}_box.svg')
         plt.close()
-        if full_cells_only:
+        if full_cells_only and len(morph_df) < 1000:
             sns.stripplot(data=morph_df, x='celltype', y=key, color='black', alpha=0.2,
                           dodge=True, size=2, order=ct_str_list)
         sns.violinplot(data=morph_df, x='celltype', y=key, palette=ct_palette, inner="box", order=ct_str_list)

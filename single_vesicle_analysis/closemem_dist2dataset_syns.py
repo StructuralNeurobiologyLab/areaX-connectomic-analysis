@@ -37,7 +37,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
     nonsyn_dist_threshold = 3000  # nm
-    release_thresh = 5 #µm
+    release_thresh = 5#µm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     fontsize = 20
     suitable_ids_only = False
     annot_matrix = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250107_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250122_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -179,6 +179,29 @@ if __name__ == '__main__':
         m_spiness = m_spiness[suit_inds]
         m_rep_coord = m_rep_coord[suit_inds]
         syn_prob = syn_prob[suit_inds]
+    #make sure synapses are not only between axon cts
+    full_cts = all_cts[np.in1d(all_cts, axon_cts) == False]
+    full_inds = np.any(np.in1d(m_cts, full_cts).reshape(len(m_cts), 2), axis = 1)
+    m_cts = m_cts[full_inds]
+    m_ids = m_ids[full_inds]
+    m_axs = m_axs[full_inds]
+    m_ssv_partners = m_ssv_partners[full_inds]
+    m_sizes = m_sizes[full_inds ]
+    m_spiness = m_spiness[full_inds]
+    m_rep_coord = m_rep_coord[full_inds]
+    syn_prob = syn_prob[full_inds]
+    #now make sure, axon cell types are not post-synaptic
+    testct = np.in1d(m_cts, full_cts).reshape(len(m_cts), 2)
+    testax = np.in1d(m_axs, den_so).reshape(len(m_cts), 2)
+    post_ct_inds = np.any(testct == testax, axis=1)
+    m_cts = m_cts[post_ct_inds]
+    m_ids = m_ids[post_ct_inds]
+    m_axs = m_axs[post_ct_inds]
+    m_ssv_partners = m_ssv_partners[post_ct_inds]
+    m_sizes = m_sizes[post_ct_inds]
+    m_spiness = m_spiness[post_ct_inds]
+    m_rep_coord = m_rep_coord[post_ct_inds]
+    syn_prob = syn_prob[post_ct_inds]
     synapse_cache = [m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob]
     #save information in dataframe for nomralisation later
     # get presynaptic cellids, celltypes
@@ -315,12 +338,13 @@ if __name__ == '__main__':
     #get information per pre-and postcelltype (get matrix)
     #pre celltype is index; post is column
     ct_str_list = analysis_params.ct_str(with_glia=with_glia)
-    all_syns_numbers = pd.DataFrame(columns=ct_str_list, index=ct_str_list)
-    all_syns_sum_sizes = pd.DataFrame(columns = ct_str_list, index=ct_str_list)
-    close_syn_numbers_rel = pd.DataFrame(columns = ct_str_list, index=ct_str_list)
-    close_syn_sum_sizes_rel = pd.DataFrame(columns = ct_str_list, index=ct_str_list)
-    close_syn_numbers_abs = pd.DataFrame(columns = ct_str_list, index=ct_str_list)
-    close_syn_sum_sizes_abs = pd.DataFrame(columns = ct_str_list, index=ct_str_list)
+    full_ct_list = [ct_dict[ct] for ct in full_cts]
+    all_syns_numbers = pd.DataFrame(columns=full_ct_list, index=ct_str_list)
+    all_syns_sum_sizes = pd.DataFrame(columns = full_ct_list, index=ct_str_list)
+    close_syn_numbers_rel = pd.DataFrame(columns = full_ct_list, index=ct_str_list)
+    close_syn_sum_sizes_rel = pd.DataFrame(columns = full_ct_list, index=ct_str_list)
+    close_syn_numbers_abs = pd.DataFrame(columns = full_ct_list, index=ct_str_list)
+    close_syn_sum_sizes_abs = pd.DataFrame(columns = full_ct_list, index=ct_str_list)
     for pre_ct_str in tqdm(ct_str_list):
         all_syns_pre_df = all_syn_df[all_syn_df['celltype pre'] == pre_ct_str]
         close_syns_pre_df = syn_close_df[syn_close_df['celltype pre'] == pre_ct_str]

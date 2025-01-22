@@ -11,7 +11,7 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_cell_length
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_cell_length_chunks
     from syconn.mp.mp_utils import start_multiprocess_imap
     from scipy.stats import kruskal, ranksums
     from itertools import combinations
@@ -24,13 +24,13 @@ if __name__ == '__main__':
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
     ct_dict = bio_params.ct_dict()
-    use_gt = True
-    filter_syns = False
+    use_gt = False
+    filter_syns = True
     color_key = 'AxRdYwBev6'
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240301_j0251{version}_ax_fraglengths_gt_f{fontsize}"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250122_j0251{version}_ax_fraglengths_f{fontsize}_filter_syns"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
@@ -109,7 +109,9 @@ if __name__ == '__main__':
         log.info(f'After synapse filtering: total of {len(axon_df)} axons with the following sizes {ct_group_sizes}')
 
     log.info('Step 2/4: Get total length from all cellids')
-    all_lengths = start_multiprocess_imap(get_cell_length, all_ax_ids)
+    cellid_chunks = np.array_split(all_ax_ids, np.ceil(len(all_ax_ids) / 1000))
+    all_lengths = start_multiprocess_imap(get_cell_length_chunks, cellid_chunks)
+    all_lengths = np.concatenate(all_lengths)
     axon_df['skeleton length'] = np.array(all_lengths)
     #remove fragments with length = 0
     zero_lengths_ind = np.where(np.array(all_lengths) == 0)[0]
@@ -155,7 +157,7 @@ if __name__ == '__main__':
 
     log.info('Step 4/4: Plot results')
     sns.histplot(data = axon_df, x = 'skeleton length', hue = 'celltype', fill=False,
-                 kde=False, element='step', palette=ct_palette, linewidth=3)
+                 kde=False, element='step', palette=ct_palette, linewidth=3, bins = 100)
     plt.ylabel('number of axons', fontsize = fontsize)
     plt.xlabel('skeleton length [µm]', fontsize = fontsize)
     plt.yticks(fontsize = fontsize)
@@ -165,7 +167,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/proj_axons_lengths.svg')
     plt.close()
     sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
-                 kde=False, element='step', stat='percent', palette=ct_palette, linewidth=3)
+                 kde=False, element='step', stat='percent', palette=ct_palette, linewidth=3, common_norm=False)
     plt.xlabel('skeleton length [µm]', fontsize = fontsize)
     plt.title('Lengths of axon fragments', fontsize = fontsize)
     plt.yticks(fontsize=fontsize)
@@ -184,7 +186,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/proj_axons_lengths_log.svg')
     plt.close()
     sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
-                 kde=False, element='step', log_scale=True, stat='percent', palette=ct_palette, linewidth=3)
+                 kde=False, element='step', log_scale=True, stat='percent', palette=ct_palette, linewidth=3, common_norm=False)
     plt.xlabel('skeleton length [µm]', fontsize = fontsize)
     plt.ylabel('percent of axons', fontsize = fontsize)
     plt.title('Lengths of axon fragments', fontsize = fontsize)
@@ -192,6 +194,17 @@ if __name__ == '__main__':
     plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.png')
     plt.savefig(f'{f_name}/proj_axons_lengths_log_perc.svg')
+    plt.close()
+    sns.histplot(data=axon_df, x='skeleton length', hue='celltype', fill=False,
+                 kde=False, element='step', log_scale=True, stat='percent', palette=ct_palette, linewidth=3,
+                 common_norm=False, bins = 50)
+    plt.xlabel('skeleton length [µm]', fontsize=fontsize)
+    plt.ylabel('percent of axons', fontsize=fontsize)
+    plt.title('Lengths of axon fragments', fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/proj_axons_lengths_log_perc_b50.png')
+    plt.savefig(f'{f_name}/proj_axons_lengths_log_perc_b50.svg')
     plt.close()
 
     if filter_syns:
@@ -222,6 +235,14 @@ if __name__ == '__main__':
         plt.xticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/syn_density_length_bins.png')
         plt.savefig(f'{f_name}/syn_density_length_bins.svg')
+        plt.close()
+        sns.boxplot(data=axon_df, x='length bins', y='syn number', hue='celltype', palette=ct_palette)
+        plt.ylabel('synapse number', fontsize=fontsize)
+        plt.xlabel('length bins [µm]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.savefig(f'{f_name}/syn_num_length_bins.png')
+        plt.savefig(f'{f_name}/syn_num_length_bins.svg')
         plt.close()
         #make boxplot again with only skeleton lengths larger than one
         axon_df_one = axon_df[axon_df['skeleton length'] > 1]
@@ -262,6 +283,23 @@ if __name__ == '__main__':
         plt.xticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/length_bins_hist_perc.png')
         plt.savefig(f'{f_name}/length_bins_hist_perc.svg')
+        plt.close()
+        #plot synapse number vs axon length
+        sns.scatterplot(data = axon_df, x = 'skeleton length', y = 'syn number', hue = 'celltype', palette = ct_palette, alpha = 0.2)
+        plt.ylabel('synapse number', fontsize=fontsize)
+        plt.xlabel('skeleton length[µm]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.savefig(f'{f_name}/syn_num_len_scatter.png')
+        plt.savefig(f'{f_name}/syn_num_len_scatter.svg')
+        plt.close()
+        sns.kdeplot(data=axon_df, x='skeleton length', y='syn number', hue='celltype', palette=ct_palette, alpha=0.2)
+        plt.ylabel('synapse number', fontsize=fontsize)
+        plt.xlabel('skeleton length[µm]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.savefig(f'{f_name}/syn_num_len_kde.png')
+        plt.savefig(f'{f_name}/syn_num_len_kde.svg')
         plt.close()
 
     if use_gt:

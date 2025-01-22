@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     version = 'v6'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240827_j0251{version}_manual_syn_rfc_eval"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250122_j0251{version}_manual_syn_rfc_eval"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'rfc_syn_eval_res_log', log_dir=f_name)
@@ -63,9 +63,9 @@ if __name__ == '__main__':
     overview_df['fraction true filtered syns'] = np.array(filtered_syns_true_prob_groups.size()) / overview_df['number filtered syns']
     overview_df.to_csv(f'{f_name}/overview_probs_df.csv')
 
-    log.info('Plot results as barplot')
+    log.info('Plot results as pointplot')
     #plot result as barplot
-    sns.barplot(data = overview_df, x = 'syn prob bin', y = 'fraction true combined')
+    sns.pointplot(data = overview_df, x = 'syn prob bin', y = 'fraction true combined')
     plt.ylabel('fraction of true synapses', fontsize = fontsize)
     plt.xlabel('synapse probability', fontsize = fontsize)
     plt.title('All eval synapses')
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/fraction_true_combined.png')
     plt.savefig(f'{f_name}/fraction_true_combined.svg')
     plt.close()
-    sns.barplot(data=overview_df, x='syn prob bin', y='fraction true all syns')
+    sns.pointplot(data=overview_df, x='syn prob bin', y='fraction true all syns')
     plt.ylabel('fraction of true synapses', fontsize=fontsize)
     plt.xlabel('synapse probability', fontsize=fontsize)
     plt.title('All syns eval synapses')
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/fraction_true_all_syns.png')
     plt.savefig(f'{f_name}/fraction_true_all_syns.svg')
     plt.close()
-    sns.barplot(data=overview_df, x='syn prob bin', y='fraction true filtered syns')
+    sns.pointplot(data=overview_df, x='syn prob bin', y='fraction true filtered syns')
     plt.ylabel('fraction of true synapses', fontsize=fontsize)
     plt.xlabel('synapse probability', fontsize=fontsize)
     plt.title('Filtered eval synapses')

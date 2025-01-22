@@ -30,8 +30,9 @@ if __name__ == '__main__':
     min_comp_len_ax = 50
     min_syn_size = 0.1
     fontsize = 20
+    bins = 30
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/2401108_j0251{version1}vs_{version2}_wd_comp_%i_ax%i_ms_%f" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250122_j0251{version1}vs_{version2}_wd_comp_%i_ax%i_ms_%.2f_b{bins}" % (
                  min_comp_len_cell, min_comp_len_ax, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -104,7 +105,7 @@ if __name__ == '__main__':
 
     #syn_prob_df.to_csv(f'{f_name}/syn_prob_df_comp_{version1}_{version2}.csv')
     sns.histplot(data = syn_prob_df, x = 'syn prob', hue = 'version', palette= ver_palette, fill=False,
-                 kde=False, element='step', linewidth=3)
+                 kde=False, element='step', linewidth=3, bins=bins)
     plt.xlabel('synapse probability', fontsize=fontsize)
     plt.ylabel('number of synapses', fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
@@ -113,7 +114,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/{version1}_{version2}_synprob_hist.svg')
     plt.close()
     sns.histplot(data=syn_prob_df, x='syn prob', hue='version', palette=ver_palette, stat='percent', fill=False,
-                 kde=False, element='step', linewidth=3)
+                 kde=False, element='step', linewidth=3, bins = bins)
     plt.xlabel('synapse probability', fontsize=fontsize)
     plt.ylabel('% of synapses', fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
@@ -207,7 +208,7 @@ if __name__ == '__main__':
 
     log.info('Step 4/5: Get syn prob distribution of filtered synapses')
     sns.histplot(data=syn_prob_df_filtered, x='syn prob', hue='version', palette=ver_palette, fill=False,
-                 kde=False, element='step', linewidth=3)
+                 kde=False, element='step', linewidth=3, bins = bins)
     plt.xlabel('synapse probability', fontsize=fontsize)
     plt.ylabel('number of synapses', fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
@@ -216,7 +217,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/{version1}_{version2}_synprob_hist_filtered.svg')
     plt.close()
     sns.histplot(data=syn_prob_df_filtered, x='syn prob', hue='version', palette=ver_palette, stat='percent', fill=False,
-                 kde=False, element='step', linewidth=3)
+                 kde=False, element='step', linewidth=3, bins = bins)
     plt.xlabel('synapse probability', fontsize=fontsize)
     plt.ylabel('% of synapses', fontsize=fontsize)
     plt.yticks(fontsize=fontsize)

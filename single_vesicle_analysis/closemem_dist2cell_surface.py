@@ -33,7 +33,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
     nonsyn_dist_threshold = 5  # nm
-    release_thresh = 5 #µm
+    release_thresh = 1 #µm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250107_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250127_j0251{version}_{ct_str}_dist2cell_surface_mcl_%i_dt_%i_syn%i_r%i_%s" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -229,8 +229,21 @@ if __name__ == '__main__':
     ranksum_columns = [f'{gc[0]} vs {gc[1]}' for gc in group_comps]
     ranksum_df = pd.DataFrame(columns=ranksum_columns)
     for param in params:
+        #calculate summed fraction, freq and ratios new with summed areas per celltype
+        if 'ratio' in param or 'freq' in param:
+            if param == 'freq number vesicles':
+                overview_df[f'{param} sum'] = (np.array(ct_groups['number vesicles close'].sum()) / total_number_vesicles) / np.array(ct_groups['fraction surface mesh area'].sum())
+            elif param == 'freq surface area close':
+                overview_df[f'{param} sum'] = (np.array(ct_groups['summed surface area close'].sum()) / total_surface_area_close) / np.array(ct_groups['fraction surface mesh area'].sum())
+            elif param == 'ratio number vesicles':
+                overview_df[f'{param} sum'] = np.array(ct_groups['number vesicles close'].sum()) / np.array(ct_groups['surface mesh area'].sum())
+            elif param == 'ratio summed surface area close':
+                overview_df[f'{param} sum'] = np.array(ct_groups['summed surface area close'].sum()) / np.array(ct_groups['surface mesh area'].sum())
+            else:
+                raise ValueError(f'unknown parameter value {param}')
         #get overview params
-        overview_df[f'{param} sum'] = np.array(ct_groups[param].sum())
+        else:
+            overview_df[f'{param} sum'] = np.array(ct_groups[param].sum())
         overview_df[f'{param} mean'] = np.array(ct_groups[param].mean())
         overview_df[f'{param} std'] = np.array(ct_groups[param].std())
         overview_df[f'{param} median'] = np.array(ct_groups[param].median())

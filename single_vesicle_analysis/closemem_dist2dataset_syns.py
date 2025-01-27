@@ -37,7 +37,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
     nonsyn_dist_threshold = 3000  # nm
-    release_thresh = 2#µm
+    release_thresh = 1#µm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
@@ -45,8 +45,8 @@ if __name__ == '__main__':
     ct_str = ct_dict[celltype]
     fontsize = 20
     suitable_ids_only = False
-    annot_matrix = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250127_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s" % (
+    annot_matrix = False
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250127_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s_noannot" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

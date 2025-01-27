@@ -31,7 +31,7 @@ if __name__ == '__main__':
     get_single_ves_coords = False
     get_membrane_close_vesicles_separate = False
     get_syns = True
-    get_syns_comp = 2
+    get_syns_comp = 0
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
 
 
@@ -174,6 +174,13 @@ if __name__ == '__main__':
             cellid_axs = m_axs[cellid_inds]
             cellid_ids = m_ids[cellid_inds]
             if get_syns_comp is not None:
+                if get_syns_comp != 1:
+                    #remove all synapses where postsynaptic compartment is not present
+                    #that all syns have to be axo-dendritic is checked before
+                    comp_inds = np.any(np.in1d(cellid_axs, get_syns_comp).reshape(len(cellid_ssv_partners), 2), axis = 1)
+                    cellid_ssv_partners = cellid_ssv_partners[comp_inds]
+                    cellid_axs = cellid_axs[comp_inds]
+                    cellid_ids = cellid_ids[comp_inds]
                 #get only synapses where cell is compartment
                 cellid_ind = np.in1d(cellid_ssv_partners, cellid).reshape(len(cellid_ssv_partners), 2)
                 comp_inds = np.in1d(cellid_axs, get_syns_comp).reshape(len(cellid_ssv_partners), 2)

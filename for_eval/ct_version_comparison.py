@@ -30,11 +30,11 @@ if __name__ == '__main__':
 
 
     color_key = 'AxRdYwBev5'
-    ct_str = 'HVC'
-    ct_num_1 = 2
-    ct_num_2 = 4
+    ct_str = 'LMAN'
+    ct_num_1 = 1
+    ct_num_2 = 3
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240227_j0251{version1}_vs_{version2}_{ct_str}_cellids_{color_key}_f{fontsize}"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250213_j0251{version1}_vs_{version2}_{ct_str}_cellids_{color_key}_f{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
 

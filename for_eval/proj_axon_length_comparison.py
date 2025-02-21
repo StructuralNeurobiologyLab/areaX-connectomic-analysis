@@ -20,7 +20,7 @@ if __name__ == '__main__':
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
-    version = 'v6'
+    version = 'v5'
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
     ct_dict = bio_params.ct_dict()
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250122_j0251{version}_ax_fraglengths_f{fontsize}_filter_syns"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250213_j0251{version}_ax_fraglengths_f{fontsize}_filter_syns"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')

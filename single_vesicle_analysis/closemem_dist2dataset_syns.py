@@ -37,7 +37,7 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
     nonsyn_dist_threshold = 3000  # nm
-    release_thresh = 1#µm
+    release_thresh = 2#µm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     fontsize = 20
     suitable_ids_only = False
     annot_matrix = False
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250127_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s_noannot" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250213_j0251{version}_{ct_str}_dist2matrix_mcl_%i_dt_%i_syn_%i_r%i_%s_noannot" % (
         min_comp_len, dist_threshold, nonsyn_dist_threshold, release_thresh, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -221,10 +221,10 @@ if __name__ == '__main__':
     ct_syn_cts, ct_syn_ids, ct_syn_axs, ct_syn_ssv_partners, ct_syn_sizes, ct_syn_spiness, ct_syn_rep_coord = filter_synapse_caches_for_ct(
         pre_cts=[celltype],
         post_cts=None,
-        syn_prob_thresh=None,
-        min_syn_size=None,
+        syn_prob_thresh=syn_prob_thresh,
+        min_syn_size=min_syn_size,
         axo_den_so=True,
-        synapses_caches=synapse_cache)
+        synapses_caches=None, sd_synssv = sd_synssv)
     # filter so that only filtered cellids are included and are all presynaptic
     ct_inds = np.in1d(ct_syn_ssv_partners, cellids_close_mem).reshape(len(ct_syn_ssv_partners), 2)
     comp_inds = np.in1d(ct_syn_axs, 1).reshape(len(ct_syn_ssv_partners), 2)

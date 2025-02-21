@@ -36,7 +36,7 @@ if __name__ == '__main__':
     fontsize_jointplot = 20
     use_skel = False  # if true would use skeleton labels for getting soma; vertex labels more exact, also probably faster
     use_median = True  # if true use median of vertex coordinates to find centre
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_INT_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/250213_j0251{version}_INT_mito_radius_spiness_examplecells_mcl%i_fs%i_med%i" % \
              (min_comp_len, fontsize_jointplot, use_median)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     log.info("Step 1/4: Get information from NGF")
     log.info('Get information about mitos, myelin and axon radius')
-    ngf_input = [[ngf_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, ngf_cell_dict] for ngf_id in ngf_ids]
+    ngf_input = [[ngf_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, ngf_cell_dict[ngf_id]] for ngf_id in ngf_ids]
     ngf_output = start_multiprocess_imap(get_per_cell_mito_myelin_info, ngf_input)
     ngf_output = np.array(ngf_output)
     #[ax_median_radius_cell, axo_mito_volume_density_cell, rel_myelin_cell]
@@ -271,7 +271,7 @@ if __name__ == '__main__':
 
     log.info('Step 3/4: Get information about FS and plot again')
     log.info('Get information about mitos, myelin and axon radius')
-    fs_input = [[fs_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, fs_cell_dict] for
+    fs_input = [[fs_id, min_comp_len, cached_mito_ids, cached_mito_rep_coords, cached_mito_volumes, fs_cell_dict[fs_id]] for
                  fs_id in fs_ids]
     fs_output = start_multiprocess_imap(get_per_cell_mito_myelin_info, fs_input)
     fs_output = np.array(fs_output)

@@ -244,6 +244,7 @@ if __name__ == '__main__':
     #select only synapses on spine head and spine shaft
     if spiness is not None:
         spiness_dict = {0: 'spine neck', 1: ' spine head', 2: 'dendritic shaft', 3: 'other'}
+        #To Do: add control here that spiness value on dendritic site; should work right now but can be ensured clearer
         log.info(f'Synapses will only be selected with the following spiness values {[spiness_dict[sp] for sp in spiness]}')
         spine_inds = np.any(np.in1d(m_spiness, spiness).reshape(len(m_spiness), 2), axis = 1)
         m_sizes = m_sizes[spine_inds]

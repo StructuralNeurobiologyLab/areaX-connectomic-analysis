@@ -27,9 +27,10 @@ if __name__ == '__main__':
     ct_str = ct_dict[ct]
     #color_key = 'STNGP'
     color_key = 'STNGPINTv6'
-    fontsize = 12
-    togp_only = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/250221_j0251{version}_{ct_str}_morph_conn_subpop_{fontsize}_conn_only_2gp_only"
+    fontsize = 20
+    togp_only = False
+    conn_only = False
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/250225_j0251{version}_{ct_str}_morph_conn_subpop_{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('stn_morph_conn', log_dir=f_name)
@@ -85,6 +86,7 @@ if __name__ == '__main__':
         log.info(f'{len(stn_result_df)} cells of STN project to either GPe/i or both.')
         log.info('STNs without input from GPe or GPi get the input ratio set to 0')
         stn_result_df = stn_result_df.fillna(0)
+        stn_result_df = stn_result_df.reset_index()
     else:
         log.info('STNs without input or output from GPe or GPi get input and output ratio set to 0')
         stn_result_df = stn_result_df.fillna(0)
@@ -119,8 +121,11 @@ if __name__ == '__main__':
 
     log.info('Step 6/6: PCA')
 
-    #pca_params = ['LMAN/(LMAN + HVC) syn area', 'GPi/(GPe + GPi) input syn area','GPi/(GPe + GPi) output syn area','axon mi volume density', 'dendrite mi volume density']
-    pca_params = ['LMAN/(LMAN + HVC) syn area', 'GPi/(GPe + GPi) input syn area', 'GPi/(GPe + GPi) output syn area']
+    if conn_only:
+        pca_params = ['LMAN/(LMAN + HVC) syn area', 'GPi/(GPe + GPi) input syn area', 'GPi/(GPe + GPi) output syn area']
+    else:
+        pca_params = ['LMAN/(LMAN + HVC) syn area', 'GPi/(GPe + GPi) input syn area','GPi/(GPe + GPi) output syn area','axon mi volume density', 'dendrite mi volume density']
+
     log.info(f'apply PCA to the following features {pca_params}')
     #code based on chatgpt
     features = stn_result_df[pca_params]
@@ -129,36 +134,69 @@ if __name__ == '__main__':
     features_standardized = scaler.fit_transform(features)
     pca = PCA(n_components=n_comps)
     principal_components = pca.fit_transform(features_standardized)
-    #new dataframe with principal components and labels
-    if n_comps == 1:
-        pca_df = pd.DataFrame(data=principal_components, columns=['PC1'])
-        pca_df.to_csv(f'{f_name}/pca_principal_component.csv')
-        log.info('Step 3/3: Plot results')
-        #errors with histogram and hue in seaborn 0.13.2 with this code, switch to displot
-        #plot_histogram_selection(dataframe=pca_df, x_data='PC1',
-        #                         color_palette=ct_palette, label='pca_one_comp', count='cells', foldername=f_name,
-        #                         hue_data='celltype', title=f'Separation by first principal component', fontsize = fontsize)
-        sns.displot(data=pca_df, x='PC1', kind='hist', element="step",
-                    fill=False, common_norm=False, multiple="dodge",
-                    color = stn_color, linewidth=3)
-        plt.ylabel(f'number of cells', fontsize=fontsize)
-        plt.xlabel('PC1', fontsize=fontsize)
-        plt.xticks(fontsize=fontsize)
-        plt.yticks(fontsize=fontsize)
-        plt.title(f'Separation by first principal component')
-        plt.savefig(f'{f_name}/pca_one_comp_hist.png')
-        plt.savefig(f'{f_name}/pca_obe_comp_hist.svg')
+    #new dataframe with principal components
+    pca_df = pd.DataFrame(data=principal_components, columns=['PC1'])
+    pca_df.to_csv(f'{f_name}/pca_principal_component.csv')
+    log.info('Step 3/3: Plot results')
+    #errors with histogram and hue in seaborn 0.13.2 with this code, switch to displot
+    #plot_histogram_selection(dataframe=pca_df, x_data='PC1',
+    #                         color_palette=ct_palette, label='pca_one_comp', count='cells', foldername=f_name,
+    #                         hue_data='celltype', title=f'Separation by first principal component', fontsize = fontsize)
+    sns.displot(data=pca_df, x='PC1', kind='hist', element="step",
+                fill=False, common_norm=False, multiple="dodge",
+                color = stn_color, linewidth=3)
+    plt.ylabel(f'number of cells', fontsize=fontsize)
+    plt.xlabel('PC1', fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.title(f'Separation by first principal component')
+    plt.savefig(f'{f_name}/pca_one_comp_hist.png')
+    plt.savefig(f'{f_name}/pca_obe_comp_hist.svg')
+    plt.close()
+    sns.displot(data=pca_df, x='PC1', kind='hist', element="step",
+                fill=False, common_norm=False, multiple="dodge",
+                color=stn_color, linewidth=3, stat='percent')
+    plt.ylabel(f'% of cells', fontsize=fontsize)
+    plt.xlabel('PC1', fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.title(f'Separation by first principal component')
+    plt.savefig(f'{f_name}/pca_one_comp_hist_perc.png')
+    plt.savefig(f'{f_name}/pca_one_comp_hist_perc.svg')
+    plt.close()
+
+    #now plot scatterplots again with separation into PC1 < 0 and PC1 > 0
+    stn_result_df['PC1'] = pca_df['PC1']
+    stn_result_df.to_csv(f'{f_name}/stn_params_pc1.csv')
+    stn_result_df['PC label'] = str()
+    pos_inds = stn_result_df['PC1'] > 0
+    neg_inds = stn_result_df['PC1'] < 0
+    stn_result_df.loc[pos_inds, 'PC label'] = '> 0'
+    stn_result_df.loc[neg_inds, 'PC label'] = '< 0'
+    ct_palette = {'> 0': stn_color, '< 0': '#707070'}
+    for i, comb in enumerate(combs):
+        x = key_list[comb[0]]
+        y = key_list[comb[1]]
+        g = sns.JointGrid(data= stn_result_df, x = x, y = y, hue = 'PC label', palette=ct_palette)
+        g.plot_joint(sns.scatterplot, color = stn_color)
+        g.plot_marginals(sns.histplot,  fill = False,
+                         kde=False, bins='auto', palette = ct_palette)
+        g.ax_joint.set_xticks(g.ax_joint.get_xticks())
+        g.ax_joint.set_yticks(g.ax_joint.get_yticks())
+        if g.ax_joint.get_xticks()[0] < 0:
+            g.ax_marg_x.set_xlim(0)
+        if g.ax_joint.get_yticks()[0] < 0:
+            g.ax_marg_y.set_ylim(0)
+        g.ax_joint.set_xticklabels(["%.2f" % i for i in g.ax_joint.get_xticks()], fontsize = fontsize)
+        g.ax_joint.set_yticklabels(["%.2f" % i for i in g.ax_joint.get_yticks()], fontsize= fontsize)
+        if "volume density" in x:
+            g.ax_joint.set_xlabel("%s [µm³/µm]" % x)
+        if "volume density" in y:
+            g.ax_joint.set_ylabel("%s [µm³/µm]" % y)
+        plt.savefig(f'{f_name}/stn_params_{i}_comb_pclabels.png')
+        plt.savefig(f'{f_name}/stn_params_{i}_comb_pclabels.svg')
         plt.close()
-        sns.displot(data=pca_df, x='PC1', kind='hist', element="step",
-                    fill=False, common_norm=False, multiple="dodge",
-                    color=stn_color, linewidth=3, stat='percent')
-        plt.ylabel(f'% of cells', fontsize=fontsize)
-        plt.xlabel('PC1', fontsize=fontsize)
-        plt.xticks(fontsize=fontsize)
-        plt.yticks(fontsize=fontsize)
-        plt.title(f'Separation by first principal component')
-        plt.savefig(f'{f_name}/pca_one_comp_hist_perc.png')
-        plt.savefig(f'{f_name}/pca_one_comp_hist_perc.svg')
-        plt.close()
+
+    #get overview parameter for STn and
 
     log.info('Analysis done')

@@ -35,9 +35,10 @@ if __name__ == '__main__':
         os.mkdir(f_name)
     log = initialize_logging('Projecting axon lengths', log_dir=f_name + '/logs/')
     if use_gt:
-        #for gt: agglo2 uses v4 (11 neuron classes, no glia, no fragments), gt v5 (manually checked gt for mergers, add fragment class + some astros)
-        #v5 wd uses v6: fragment class, astros, oligo + microglia, v6 wd: v7: INT1⁻3 instead of FS, NGF, + migrating neurons; add short axon fragments
-        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv"
+        #for gt: agglo2 uses v4 (11 neuron classes, no glia, no fragments), gt v4b (manually checked gt for mergers, add fragment class + some astros)
+        #v5 wd uses v5: fragment class, astros, oligo + microglia, v6 wd: 6: INT1⁻3 instead of FS, NGF, + migrating neurons; add short axon fragments
+        #new wd v7 will use v7
+        gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv"
         #gt_path = 'cajal/nvmescratch/users/arother/202301_syconnv5_wd_tests/20231013_new_celltype_gt/231115_ar_j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv'
         gt = pd.read_csv(gt_path,names=["cellids", "celltype"])
         log.info(f'Ground truth cells from {gt_path} used for analysis')

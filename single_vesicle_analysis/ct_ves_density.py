@@ -33,7 +33,7 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     global_params.wd = analysis_params.working_dir()
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/241108_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i_newmerger" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/2502_j0251{version}_ct_vesicle_density_mcl_%i_ax%i_%s_fs%i_newmerger" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

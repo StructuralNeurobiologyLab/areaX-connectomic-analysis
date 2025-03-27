@@ -30,7 +30,7 @@ if __name__ == '__main__':
     dist_threshold = 10 #nm
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
-    syn_dist_threshold = 1000 #nm
+    syn_dist_threshold = 2000 #nm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
@@ -160,6 +160,10 @@ if __name__ == '__main__':
         sns.kdeplot(x='synapse size [µm²]', y='number of vesicles', data=ct_result_df,
                     color=ct_palette[ct_str])
         plt.title(f'Vesicle number and synapse size in {ct_str}')
+        plt.ylabel('number of vesicles', fontsize=fontsize)
+        plt.xlabel('synapse size [µm²]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/{ct_str}_allves_syns_kde_scatter.png', dpi = 1200)
         plt.close()
         sns.scatterplot(x='synapse size [µm²]', y='number of membrane-close vesicles', data=ct_result_df, alpha=0.1,
@@ -167,6 +171,10 @@ if __name__ == '__main__':
         sns.kdeplot(x='synapse size [µm²]', y='number of membrane-close vesicles', data=ct_result_df,
                     color=ct_palette[ct_str])
         plt.title(f'Vesicle number and synapse size in {ct_str}')
+        plt.ylabel('number of membrane-close vesicles', fontsize=fontsize)
+        plt.xlabel('synapse size [µm²]', fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
         plt.savefig(f'{f_name}/{ct_str}_closememves_syns_kde_scatter.png', dpi=1200)
         plt.close()
         sns.kdeplot(x='synapse size [µm²]', y='number of membrane-close vesicles', data=ct_result_df,
@@ -256,12 +264,20 @@ if __name__ == '__main__':
     sns.kdeplot(x='synapse size [µm²]', y='number of vesicles', data=combined_results,
                 color = 'black')
     plt.title(f'Vesicle number and synapse size')
+    plt.ylabel('number of vesicles', fontsize=fontsize)
+    plt.xlabel('synapse size [µm²]', fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
     plt.savefig(f'{f_name}/all_cts_num_ves_{dist_threshold}nm_syns_kde_scatter.png', dpi = 1200)
     plt.close()
     sns.scatterplot(x='synapse size [µm²]', y='number of membrane-close vesicles', data=combined_results,
                 color='gray', alpha = 0.1)
     sns.kdeplot(x='synapse size [µm²]', y='number of membrane-close vesicles', data=combined_results,
                 color = 'black')
+    plt.ylabel('number of membrane-close vesicles', fontsize=fontsize)
+    plt.xlabel('synapse size [µm²]', fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
     plt.title(f'Membrane-close vesicle number and synapse size')
     plt.savefig(f'{f_name}/all_cts_closemem_ves_{dist_threshold}nm_syns_kde_scatter.png', dpi = 1200)
     plt.close()

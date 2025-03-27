@@ -17,33 +17,84 @@ if __name__ == '__main__':
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     fontsize = 20
-    organelle1 = 'er'
-    organelle2 = 'golgi'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/241107_j0251{version}_manual_{organelle1}_{organelle2}_eval"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250327_j0251{version}_manual_org_eval"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
-    log = initialize_logging(f'{organelle1}_{organelle2}_eval_log', log_dir=f_name)
+    log = initialize_logging(f'org_eval_log', log_dir=f_name)
 
-    eval_path = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/241014_j0251v6_ct_random_er_eval_n15_v7gt/' \
-                'random_er_evaluation_RM_annot.csv'
-    eval_path2 = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/241014_j0251v6_ct_random_golgi_eval_n15_v7gt/' \
-                '241107_Random_golgi_evaluation.csv'
+    eval_path = 'cajal/scratch/users/arother/bio_analysis_results/for_eval/241210_ves_er_golgi_gt7_rndm_coords_merged/' \
+                '250305_random_organelles_RM_for_analysis.csv'
     log.info(f'Load manual evaluation results from {eval_path}')
     eval_df = pd.read_csv(eval_path)
-    eval_df['organelle'] = organelle1
-    eval_df['true structure'] = eval_df[f'{organelle1}?']
-    eval_df2 = pd.read_csv(eval_path2)
-    eval_df2['organelle'] = organelle2
-    eval_df2['true structure'] = eval_df2[f'{organelle2}?']
-    eval_df = pd.concat([eval_df, eval_df2])
+    org_palette = {'er': '#54A9DA', 'golgi': '#DE9B1E', 'mi': '#EE1BE0', 'syn': '#29FC15', 'single vesicle': 'black'}
 
-    ct_palette = {'er': '#54A9DA', 'golgi':'#DE9B1E', 'mi': '#EE1BE0', 'syn':'#29FC15'}
-    # put unsure/yes and unsure/no into yes/no groups, only single class had unsure label
-    eval_df.loc[eval_df['true structure'] == 'y', 'true structure'] = 'True'
-    eval_df.loc[eval_df['true structure'] == 'n', 'true structure'] = 'False'
-    eval_df.to_csv(f'{f_name}/eval_df.csv')
-    #get overview df with numbers of different classes
+    #adjust labels to predicted labels
+    eval_df['manual organelle'] = eval_df['manual organelle'].str.strip().str.lower()
+    eval_df.loc[eval_df['manual organelle'] == 'sv', 'manual organelle'] = 'single vesicle'
+    eval_df.loc[eval_df['manual organelle'] == 'unknown', 'manual organelle'] = 'other'
+    eval_df.loc[eval_df['manual organelle'] == 'unkown', 'manual organelle'] = 'other'
+    eval_df.loc[eval_df['manual organelle'] == 'ncl.', 'manual organelle'] = 'nucleus'
+
+    #for each organelle, get fraction that was predicted true
     log.info('Get overview over true and false organelles')
+    pred_org_labelles = np.unique(eval_df['organelle'])
+    org_groups = eval_df.groupby('organelle')
+    ov_columns = ['number total', 'number true', 'fraction true']
+    overview_df = pd.DataFrame(columns=ov_columns, index=pred_org_labelles)
+    overview_df['number total'] = np.array(org_groups.size())
+    for po in pred_org_labelles:
+        org_group = org_groups.get_group(po)
+        true_org_number = len(org_group[org_group['manual organelle'] == po])
+        overview_df.loc[po, 'number true'] = true_org_number
+        overview_df.loc[po, 'fraction true'] = 100 * true_org_number / overview_df.loc[po, 'number total']
+
+    sns.barplot(data = overview_df, y = 'fraction true', x = overview_df.index, palette= org_palette)
+    plt.xlabel('organelle', fontsize=fontsize)
+    plt.ylabel('% true', fontsize=fontsize)
+    plt.title(f'overview of organelles')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/pred_overview_perc.png')
+    plt.savefig(f'{f_name}/pred_overview_perc.svg')
+    plt.close()
+
+    # get dataframe only with correct predictions
+    eval_df_true = eval_df[eval_df['organelle'] == eval_df['manual organelle']]
+    log.info(f'{100 * len(eval_df_true)/ len(eval_df):.2f} % of all coordinates are predicted correct.')
+    eval_df_false = eval_df[eval_df['organelle'] != eval_df['manual organelle']]
+    log.info(f'{100 * len(eval_df_false) / len(eval_df):.2f} % of all coordinates are predicted wrong.')
+
+
+    log.info('Plot categories of false labels')
+    false_groups = eval_df_false.groupby('organelle')
+    false_groups_size = false_groups.size()
+    for false_cat in np.unique(eval_df_false['manual organelle']):
+        false_cat_df = eval_df_false[eval_df_false['manual organelle'] == false_cat]
+        unique_orgs_cat = np.unique(false_cat_df['organelle'])
+        false_cat_groups = false_cat_df.groupby('organelle')
+        false_cat_groups_size = false_cat_groups.size()
+        overview_df.loc[false_cat_groups_size.index, f'false {false_cat} number'] = false_cat_groups_size.values
+        overview_df.loc[false_cat_groups_size.index, f'false {false_cat} fraction'] = false_cat_groups_size.values / np.array(false_groups_size[false_cat_groups_size.index])
+
+    overview_df.to_csv(f'{f_name}/org_overview.csv')
+
+    sns.histplot(data=eval_df_false, x='manual organelle', stat='percent', hue='organelle',
+                 palette=org_palette, common_norm=False, multiple='dodge', shrink=0.8,
+                 ec=None, alpha=1, hue_order=pred_org_labelles)
+    plt.xlabel('reason false label', fontsize=fontsize)
+    plt.ylabel('percent of coords', fontsize=fontsize)
+    plt.title('overview false labels')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/false_categories_perc.png')
+    plt.savefig(f'{f_name}/false_categories_perc.svg')
+    plt.close()
+    eval_df_false.to_csv(f'{f_name}/eval_false_df.csv')
+
+    raise ValueError
+    #get compartments with fraction of true
+    #get golgi false label and true fraction depending on golgi stack oder vesicle
+
     ov_columns = ['number total', 'fraction true', 'fraction false']
     unique_organelles = np.unique(eval_df['organelle'])
     org_groups = eval_df.groupby('organelle')

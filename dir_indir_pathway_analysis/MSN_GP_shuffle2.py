@@ -30,8 +30,8 @@ if __name__ == '__main__':
     msn_ct = 3
     gpe_ct = 6
     gpi_ct = 7
-    n_it = 10
-    hist_bins = 30
+    n_it = 100
+    hist_bins = 50
     fontsize = 20
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/250311_j0251{version}_MSN_GP_ratio_shuffle2_it{n_it}_fs{fontsize}_hb{hist_bins}"
     if not os.path.exists(f_name):

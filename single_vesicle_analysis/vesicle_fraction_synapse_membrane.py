@@ -35,12 +35,12 @@ if __name__ == '__main__':
     min_syn_size = 0.1
     syn_prob_thresh = 0.6
     syn_dist_threshold = 500 #nm
-    nonsyn_dist_threshold = 1000 #nm
+    nonsyn_dist_threshold = 4000 #nm
     cls = CelltypeColors(ct_dict = ct_dict)
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
     color_key = 'TePkBrNGF'
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/241029_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/single_vesicle_analysis/250313_j0251{version}_ct_syn_fraction_closemembrane_mcl_%i_ax%i_dt_%i_st_%i_%i_%s" % (
         min_comp_len_cell, min_comp_len_ax, dist_threshold, syn_dist_threshold, nonsyn_dist_threshold, color_key)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

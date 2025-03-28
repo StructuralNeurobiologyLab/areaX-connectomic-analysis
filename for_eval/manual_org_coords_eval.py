@@ -167,9 +167,13 @@ if __name__ == '__main__':
     gg_comp_groups_true = golgi_true_group.groupby('specification')
     gg_comp_groups_size = gg_comp_groups.size()
     gg_comp_groups_true_size = gg_comp_groups_true.size()
-    raise ValueError
+
     #currently getting number of predicted one which are stack and sv
     #maybe also get number of ones that were manually found at which fraction of them predicted were stack and sv?
+    manual_org_groups = eval_df.groupby('manual organelle')
+    man_golgi_group = manual_org_groups.get_group('golgi')
+    man_golgi_group_comps = man_golgi_group.groupby('specification')
+    gg_man_comps_size = man_golgi_group_comps.size()
 
     #also get false labels with golgi divided into stacks and sv
 

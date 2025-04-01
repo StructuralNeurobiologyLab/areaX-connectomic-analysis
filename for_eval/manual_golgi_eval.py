@@ -18,7 +18,8 @@ if __name__ == '__main__':
     with_glia = True
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/241014_j0251{version}_manual_golgi_eval"
+    plotwidth = 0.5
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250401_j0251{version}_manual_golgi_eval"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'golgi_eval_log', log_dir=f_name)
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     full_cats = ['mapped true', 'mapped false', 'true forgotten']
     total_ov_df = overview_df[overview_df['celltype'] == 'total']
     total_ov_df_all = total_ov_df[np.in1d(total_ov_df['category'], full_cats)]
-    sns.barplot(data = total_ov_df_all, x='category', y = 'percentage total', color=ct_palette['golgi'])
+    sns.barplot(data = total_ov_df_all, x='category', y = 'percentage total', color=ct_palette['golgi'], width=plotwidth)
     plt.xlabel(f'category', fontsize=fontsize)
     plt.ylabel('percent of golgi stacks', fontsize=fontsize)
     plt.title(f'overview of separated golgi stacks')
@@ -83,7 +84,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/overview_golgi_perc.png')
     plt.savefig(f'{f_name}/overview_golgi_perc.svg')
     plt.close()
-    sns.barplot(data=total_ov_df_all, x='category', y='number', color=ct_palette['golgi'])
+    sns.barplot(data=total_ov_df_all, x='category', y='number', color=ct_palette['golgi'], width=plotwidth)
     plt.xlabel(f'category', fontsize=fontsize)
     plt.ylabel('number of golgi stacks', fontsize=fontsize)
     plt.title(f'overview of separated golgi stacks')
@@ -101,7 +102,7 @@ if __name__ == '__main__':
     total_ov_df_false.loc[soma_ind, 'compartment'] = 'soma'
     non_soma_ind = np.where(total_ov_df_false['category'] == 'mapped false outside soma')[0][0]
     total_ov_df_false.loc[non_soma_ind, 'compartment'] = 'not soma'
-    sns.barplot(data=total_ov_df_false, x='compartment', y='percentage false', color=ct_palette['golgi'])
+    sns.barplot(data=total_ov_df_false, x='compartment', y='percentage false', color=ct_palette['golgi'], width=plotwidth)
     plt.xlabel(f'category', fontsize=fontsize)
     plt.ylabel('percent of golgi stacks', fontsize=fontsize)
     plt.title(f'overview of falsely mapped golgi stacks')
@@ -110,7 +111,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/overview_golgi_false_comps_perc.png')
     plt.savefig(f'{f_name}/overview_golgi_false_comps_perc.svg')
     plt.close()
-    sns.barplot(data=total_ov_df_false, x='compartment', y='number', color=ct_palette['golgi'])
+    sns.barplot(data=total_ov_df_false, x='compartment', y='number', color=ct_palette['golgi'], width=plotwidth)
     plt.xlabel(f'category', fontsize=fontsize)
     plt.ylabel('number of golgi stacks', fontsize=fontsize)
     plt.title(f'overview of falesly mapped golgi stacks')
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     cat_palette = {'mapped true': '#15AEAB', 'mapped false': '#232121', 'true forgotten': '#707070'}
     ct_ov_df = overview_df[overview_df['celltype'] != 'total']
     ct_ov_df_all = ct_ov_df[np.in1d(ct_ov_df['category'], full_cats)]
-    sns.barplot(data=ct_ov_df_all, x='celltype', y='percentage total', hue = 'category', palette=cat_palette)
+    sns.barplot(data=ct_ov_df_all, x='celltype', y='percentage total', hue = 'category', palette=cat_palette, width=plotwidth)
     plt.xlabel(f'category', fontsize=fontsize)
     plt.ylabel('percent of golgi stacks', fontsize=fontsize)
     plt.title(f'overview of separated golgi stacks in different celltypes')
@@ -133,7 +134,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/cts_golgi_perc.png')
     plt.savefig(f'{f_name}/cts_golgi_perc.svg')
     plt.close()
-    sns.barplot(data=ct_ov_df_all, x='celltype', y='number', hue = 'category', palette=cat_palette)
+    sns.barplot(data=ct_ov_df_all, x='celltype', y='number', hue = 'category', palette=cat_palette, width=plotwidth)
     plt.xlabel(f'category', fontsize=fontsize)
     plt.ylabel('number of golgi stacks', fontsize=fontsize)
     plt.title(f'overview of separated golgi stacks in different celltypes')
@@ -155,7 +156,7 @@ if __name__ == '__main__':
         eval_other_struc_ov_df.loc[i, 'percentage'] = 100 * struc_df_number / sum_total
 
     eval_other_struc_ov_df.to_csv(f'{f_name}/ov_other_structures.csv')
-    sns.barplot(data=eval_other_struc_ov_df, x='other structure', y='percentage', color=ct_palette['golgi'])
+    sns.barplot(data=eval_other_struc_ov_df, x='other structure', y='percentage', color=ct_palette['golgi'], width=plotwidth)
     plt.xlabel(f'other structure', fontsize=fontsize)
     plt.ylabel('percent of golgi stacks', fontsize=fontsize)
     plt.title(f'overview of falsely mapped golgi stacks')
@@ -164,7 +165,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/overview_golgi_false_other_perc.png')
     plt.savefig(f'{f_name}/overview_golgi_false_other_perc.svg')
     plt.close()
-    sns.barplot(data=eval_other_struc_ov_df, x='other structure', y='number', color=ct_palette['golgi'])
+    sns.barplot(data=eval_other_struc_ov_df, x='other structure', y='number', color=ct_palette['golgi'], width=plotwidth)
     plt.xlabel(f'other structure', fontsize=fontsize)
     plt.ylabel('number of golgi stacks', fontsize=fontsize)
     plt.title(f'overview of falesly mapped golgi stacks')

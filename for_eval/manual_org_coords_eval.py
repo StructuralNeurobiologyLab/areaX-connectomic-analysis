@@ -159,136 +159,116 @@ if __name__ == '__main__':
 
     # get golgi false label and true fraction depending on golgi stack oder vesicle
     log.info('Get fraction true for golgi stacks vs golgi vesicles')
-    golgi_group = org_groups.get_group('golgi')
     golgi_true_group = true_org_groups.get_group('golgi')
-    golgi_overview_df = pd.DataFrame(columns = ['golgi compartment', 'number total', 'fraction total', 'number true', 'fraction true'], index = range(2))
+    golgi_overview_df = pd.DataFrame(columns = ['golgi compartment', 'number total manual', 'fraction total manual', 'number true', 'fraction true'], index = range(2))
     golgi_overview_df['golgi compartment'] = ['stack', 'vesicle']
-    gg_comp_groups = golgi_group.groupby('specification')
     gg_comp_groups_true = golgi_true_group.groupby('specification')
-    gg_comp_groups_size = gg_comp_groups.size()
     gg_comp_groups_true_size = gg_comp_groups_true.size()
-
-    #currently getting number of predicted one which are stack and sv
-    #maybe also get number of ones that were manually found at which fraction of them predicted were stack and sv?
+    #get number of ones that were manually found at which fraction of them predicted were stack and sv?
     manual_org_groups = eval_df.groupby('manual organelle')
     man_golgi_group = manual_org_groups.get_group('golgi')
     man_golgi_group_comps = man_golgi_group.groupby('specification')
     gg_man_comps_size = man_golgi_group_comps.size()
-
+    golgi_overview_df['number total manual'] = gg_man_comps_size.values
+    golgi_overview_df['fraction total manual'] = 100 * gg_man_comps_size.values / gg_man_comps_size.sum()
+    golgi_overview_df['number true'] = gg_comp_groups_true_size.values
+    golgi_overview_df['fraction true'] = 100 * gg_comp_groups_true_size.values / gg_man_comps_size.values
+    golgi_overview_df.to_csv(f'{f_name}/golgi_comps_ov.csv')
+    #plot
+    sns.barplot(data=golgi_overview_df, y='fraction total manual', x='golgi compartment', color = org_palette['golgi'],
+                width=plotwidth)
+    plt.xlabel('golgi compartment', fontsize=fontsize)
+    plt.ylabel('% of coordinates', fontsize=fontsize)
+    plt.title(f'manually identified golgi compartments')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/golgi_comps_manual.png')
+    plt.savefig(f'{f_name}/golgi_comps_manual.svg')
+    plt.close()
+    sns.barplot(data=golgi_overview_df, y='fraction true', x='golgi compartment', color=org_palette['golgi'],
+                width=plotwidth)
+    plt.xlabel('golgi compartment', fontsize=fontsize)
+    plt.ylabel('% of coordinates', fontsize=fontsize)
+    plt.title(f'manually identified golgi compartments that were predicted as golgi')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/golgi_comps_manual_true.png')
+    plt.savefig(f'{f_name}/golgi_comps_manual_true.svg')
+    plt.close()
     #also get false labels with golgi divided into stacks and sv
+    false_manual = eval_df[eval_df['manual organelle'] != eval_df['organelle']]
+    false_group_manual = false_manual.groupby('manual organelle')
+    golgi_false_manual = false_group_manual.get_group('golgi')
+    golgi_comp_palette = {'stack': org_palette['golgi'], 'sv': 'gray'}
+    golgi_false_manual.to_csv(f'{f_name}/golgi_manual_comps_false_cats.csv')
 
+    sns.histplot(data=golgi_false_manual, x='organelle', stat='percent', hue='specification',
+                 palette=golgi_comp_palette, common_norm=False, multiple='dodge', shrink=0.8,
+                 ec=None, alpha=1, binwidth=plotwidth)
+    plt.xlabel('prediction', fontsize=fontsize)
+    plt.ylabel('% of coords', fontsize=fontsize)
+    plt.title('prediction of manually identified golgi comps')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/false_cgolgi_comps_manual_perc.png')
+    plt.savefig(f'{f_name}/false_cgolgi_comps_manual_perc.svg')
+    plt.close()
+    sns.histplot(data=golgi_false_manual, x='organelle', hue='specification',
+                 palette=golgi_comp_palette, common_norm=False, multiple='dodge', shrink=0.8,
+                 ec=None, alpha=1, binwidth=plotwidth)
+    plt.xlabel('prediction', fontsize=fontsize)
+    plt.ylabel('% of coords', fontsize=fontsize)
+    plt.title('prediction of manually identified golgi comps')
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.savefig(f'{f_name}/false_cgolgi_comps_manual.png')
+    plt.savefig(f'{f_name}/false_cgolgi_comps_manual.svg')
+    plt.close()
 
     log.info('Get fraction true for each cell type in each organelle')
+    unique_cts = np.unique(eval_df['celltype'])
+    total_num_cts = len(unique_cts)
+    ct_overview_df = pd.DataFrame(
+        columns=['celltype', 'number total', 'number true', 'fraction true', 'organelle'],
+        index=range(total_num_cts* len(pred_org_labelles)))
+    for ip, po in enumerate(pred_org_labelles):
+        org_group = org_groups.get_group(po)
+        org_group_true = true_org_groups.get_group(po)
+        ct_overview_df.loc[ip*total_num_cts: (ip + 1)*total_num_cts - 1, 'organelle'] = po
+        org_group_ctg = org_group.groupby('celltype')
+        ct_sizes = org_group_ctg.size()
+        org_group_true_ctg = org_group_true.groupby('celltype')
+        true_ct_sizes = org_group_true_ctg.size()
+        org_cts = np.unique(org_group['celltype'])
+        org_true_cts = np.unique(org_group_true['celltype'])
+        len_org_cts = len(org_cts)
+        assert(len_org_cts == len(org_true_cts))
+        #change code if one celltype doesn't have nay true organelles of one group
+        ct_overview_df.loc[ip * total_num_cts: ip * total_num_cts + len_org_cts - 1, 'celltype'] = org_cts
+        ct_overview_df.loc[ip * total_num_cts: ip * total_num_cts + len_org_cts - 1, 'number total'] = ct_sizes.values
+        ct_overview_df.loc[ip * total_num_cts: ip * total_num_cts + len_org_cts - 1, 'number true'] = true_ct_sizes.values
+        ct_overview_df.loc[ip * total_num_cts: ip * total_num_cts + len_org_cts - 1, 'fraction true'] = 100 * true_ct_sizes.values / ct_sizes.values
 
-
-    ov_columns = ['number total', 'fraction true', 'fraction false']
-    unique_organelles = np.unique(eval_df['organelle'])
-    org_groups = eval_df.groupby('organelle')
-    overview_df = pd.DataFrame(columns=ov_columns, index = unique_organelles)
-    overview_df['number total'] = np.array(org_groups.size())
-    eval_true_df = eval_df[eval_df['true structure'] == 'True']
-    eval_true_df = eval_true_df.reset_index(drop=True)
-    true_groups = eval_true_df.groupby('organelle')
-    eval_false_df = eval_df[eval_df['true structure'] == 'False']
-    eval_false_df = eval_false_df.reset_index(drop = True)
-    false_groups = eval_false_df.groupby('organelle')
-    overview_df['fraction true'] = np.array(true_groups.size()) / overview_df['number total']
-    overview_df['fraction false'] = np.array(false_groups.size()) / overview_df['number total']
-    #one plot with true and false vesicles as overview
-    sns.histplot(data=eval_df, x=f'true structure', stat='percent', hue='organelle',
-                 palette=ct_palette, common_norm=False, multiple='dodge', shrink=0.8,
-                 ec=None, alpha=1)
-    plt.xlabel('true structure', fontsize = fontsize)
-    plt.ylabel('percent of coordinates', fontsize = fontsize)
-    plt.title(f'overview {organelle1}, {organelle2}')
+    ct_overview_df.to_csv(f'{f_name}/ct_overview_df')
+    sns.barplot(data=ct_overview_df, y='number true', hue='organelle', x = 'celltype', palette=org_palette,
+                width=plotwidth)
+    plt.xlabel('cell type', fontsize=fontsize)
+    plt.ylabel('number of coordinates', fontsize=fontsize)
+    plt.title(f'true organelles per cell type')
     plt.yticks(fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
-    plt.savefig(f'{f_name}/pred_overview_{organelle1}_{organelle2}_perc.png')
-    plt.savefig(f'{f_name}/pred_overview_{organelle1}_{organelle2}_perc.svg')
+    plt.savefig(f'{f_name}/ct_true_org_num.png')
+    plt.savefig(f'{f_name}/ct_true_org_num.svg')
     plt.close()
-    log.info('Plot categories of false labels')
-    eval_false_df = eval_false_df.astype({'other structure': str})
-    for false_cat in np.unique(eval_false_df['other structure']):
-        false_cat_df = eval_false_df[eval_false_df['other structure'] == false_cat]
-        unique_orgs_cat = np.unique(false_cat_df['organelle'])
-        if len(unique_orgs_cat) > 1:
-            false_cat_groups = false_cat_df.groupby('organelle')
-            overview_df[f'false {false_cat} number'] = np.array(false_cat_groups.size())
-            overview_df[f'false {false_cat} fraction'] = np.array(false_cat_groups.size()) / np.array(false_groups.size())
-        else:
-            overview_df.loc[unique_orgs_cat[0], f'false {false_cat} number'] = len(false_cat_df)
-            overview_df.loc[unique_orgs_cat[0], f'false {false_cat} fraction'] = len(false_cat_df) / len(false_groups.get_group(unique_orgs_cat[0]))
-
-    overview_df.to_csv(f'{f_name}/overview_df.csv')
-    #plot categories of false labels
-    sns.histplot(data=eval_false_df, x='other structure', stat='percent', hue = 'organelle',
-                 palette=ct_palette, common_norm=False, multiple='dodge', shrink=0.8,
-                 ec=None, alpha=1)
-    plt.xlabel('reason false label', fontsize=fontsize)
-    plt.ylabel('percent of coords', fontsize=fontsize)
-    plt.title('overview false labels')
+    sns.barplot(data=ct_overview_df, y='fraction true', x ='celltype', hue = 'organelle', palette=org_palette,
+                width=plotwidth)
+    plt.xlabel('cell type', fontsize=fontsize)
+    plt.ylabel('% of coordinates', fontsize=fontsize)
+    plt.title(f'true organelles per cell type')
     plt.yticks(fontsize=fontsize)
     plt.xticks(fontsize=fontsize)
-    plt.savefig(f'{f_name}/false_categories_{organelle1}_{organelle2}_perc.png')
-    plt.savefig(f'{f_name}/false_categories_{organelle1}_{organelle2}_perc.svg')
-    plt.close()
-    eval_false_df.to_csv(f'{f_name}/eval_false_df.csv')
-    log.info('get more information about true synapses')
-    #plot true percentage depending on cell type
-    org1_eval_df = eval_df[eval_df['organelle'] == organelle1]
-    org2_eval_df = eval_df[eval_df['organelle'] == organelle2]
-    unique_cts1 = np.unique(org1_eval_df['celltype'])
-    num_cts1 = len(unique_cts1)
-    unique_cts2 = np.unique(org2_eval_df['celltype'])
-    num_cts2 = len(unique_cts2)
-    total_num_cts = num_cts1 + num_cts2
-
-    ct_overview_df = pd.DataFrame(columns = ['celltype', f'number of organelle total', f'fraction true organelle', 'organelle'], index = range(total_num_cts))
-    ct_overview_df.loc[0 : num_cts1 - 1, 'celltype'] = unique_cts1
-    ct_overview_df.loc[0: num_cts1 -1, 'organelle'] = organelle1
-    org1_all_ct_groups = org1_eval_df.groupby('celltype')
-
-    ct_overview_df.loc[0 : num_cts1 - 1, f'number of organelle total'] = np.array(org1_all_ct_groups.size())
-    true_org1_df = org1_eval_df[org1_eval_df['true structure'] == 'True']
-    org1_true_groups = true_org1_df.groupby('celltype')
-    ct_overview_df.loc[0: num_cts1 - 1, f'fraction true organelle'] = 100  * np.array(org1_true_groups.size()) / np.array(org1_all_ct_groups.size())
-    ct_overview_df.loc[num_cts1: total_num_cts - 1, 'celltype'] = unique_cts2
-    ct_overview_df.loc[num_cts1: total_num_cts - 1, 'organelle'] = organelle2
-    org2_all_ct_groups = org2_eval_df.groupby('celltype')
-    ct_overview_df.loc[num_cts1: total_num_cts - 1, f'number of organelle total'] = np.array(org2_all_ct_groups.size())
-    true_org2_df = org2_eval_df[org2_eval_df['true structure'] == 'True']
-    org2_true_groups = true_org2_df.groupby('celltype')
-    ct_overview_df.loc[num_cts1: total_num_cts - 1, f'fraction true organelle'] = 100 * np.array(org2_true_groups.size()) / np.array(
-        org2_all_ct_groups.size())
-    ct_overview_df.to_csv(f'{f_name}/ct_overview_df.csv')
-    sns.barplot(data = ct_overview_df, x = 'celltype', y = f'fraction true organelle', hue = 'organelle', palette=ct_palette)
-    plt.xlabel('celltype', fontsize=fontsize)
-    plt.ylabel('percent of coords', fontsize=fontsize)
-    plt.title(f'fraction true {organelle1}, {organelle2} all ct')
-    plt.yticks(fontsize=fontsize)
-    plt.xticks(fontsize=fontsize)
-    plt.savefig(f'{f_name}/true_perc_celltype_{organelle1}_{organelle2}.png')
-    plt.savefig(f'{f_name}/true_perc_celltype_{organelle1}_{organelle2}.svg')
-    plt.close()
-
-    #also plot if true golgi in soma
-    golgi_eval_df = eval_true_df[eval_true_df['organelle'] == organelle2]
-    golgi_eval_df.loc[golgi_eval_df['in soma?'] == 'y', 'in soma?'] = 'True'
-    golgi_eval_df.loc[golgi_eval_df['in soma?'] == 'n', 'in soma?'] = 'False'
-    num_true_golgi_soma = len(golgi_eval_df[golgi_eval_df['in soma?'] == 'True'])
-    overview_df.loc['golgi', 'number true in soma'] = num_true_golgi_soma
-    overview_df.loc['golgi', 'fraction true in soma'] = num_true_golgi_soma / len(golgi_eval_df)
-    overview_df.to_csv(f'{f_name}/overview_df.csv')
-    sns.histplot(data=golgi_eval_df, x='in soma?', stat='percent',
-                 color=ct_palette[organelle2], common_norm=False, multiple='dodge', shrink=0.8,
-                 ec=None, alpha=1)
-    plt.xlabel('in soma', fontsize=fontsize)
-    plt.ylabel('percent of coords', fontsize=fontsize)
-    plt.title('true golgi in soma')
-    plt.yticks(fontsize=fontsize)
-    plt.xticks(fontsize=fontsize)
-    plt.savefig(f'{f_name}/true_soma_{organelle2}_perc.png')
-    plt.savefig(f'{f_name}/true_soma_{organelle1}_{organelle2}_perc.svg')
+    plt.savefig(f'{f_name}/ct_true_org_perc.png')
+    plt.savefig(f'{f_name}/ct_true_org_perc.svg')
     plt.close()
 
     log.info('Analysis done.')

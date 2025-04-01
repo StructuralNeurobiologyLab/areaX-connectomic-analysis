@@ -17,7 +17,8 @@ if __name__ == '__main__':
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/240926_j0251{version}_manual_ves_eval"
+    plotwidth = 0.5
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250401_j0251{version}_manual_ves_eval"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'single_ves_eval_log', log_dir=f_name)
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     #one plot with true and false vesicles as overview
     sns.histplot(data = eval_df, x = 'single vesicle?', stat='percent', hue = 'prediction',
                  palette=ct_palette, common_norm= False, multiple= 'dodge', shrink=0.8,
-                 ec = None, alpha = 1, )
+                 ec = None, alpha = 1, binwidth= plotwidth)
     plt.xlabel('single vesicle?', fontsize = fontsize)
     plt.ylabel('percent of vesicles', fontsize = fontsize)
     plt.title('overview single vesicles')
@@ -77,7 +78,7 @@ if __name__ == '__main__':
     #plot categories of false labels
     sns.histplot(data=eval_false_df, x='other structure', stat='percent', hue='prediction',
                  palette=ct_palette, common_norm=False, multiple='dodge', shrink=0.8,
-                 ec=None, alpha=1)
+                 ec=None, alpha=1, binwidth=plotwidth)
     plt.xlabel('reason false label', fontsize=fontsize)
     plt.ylabel('percent of vesicles', fontsize=fontsize)
     plt.title('overview false vesicles')
@@ -93,7 +94,7 @@ if __name__ == '__main__':
     eval_true_df.loc[eval_true_df['in axon?'] == 'n', 'in axon?'] = 'False'
     sns.histplot(data=eval_true_df, x='in axon?', stat='percent', hue='prediction',
                  palette=ct_palette, common_norm=False, multiple='dodge', shrink=0.8,
-                 ec=None, alpha=1)
+                 ec=None, alpha=1, binwidth=plotwidth)
     plt.xlabel('in axon?', fontsize=fontsize)
     plt.ylabel('percent of vesicles', fontsize=fontsize)
     plt.title('single vesicles in axon')
@@ -153,7 +154,7 @@ if __name__ == '__main__':
         distance_df.loc[di*2: di*2 + 1, 'fraction close membrane vesicles'] = fraction_close_vesicles
     distance_df.to_csv(f'{f_name}/distance_close_membrane.csv')
     sns.barplot(data=distance_df, x='distance', y= 'number vesicles', hue='prediction',
-                 palette=ct_palette)
+                 palette=ct_palette, width = plotwidth)
     plt.xlabel('distance [nm]', fontsize=fontsize)
     plt.ylabel('number vesicles', fontsize=fontsize)
     plt.title('close membrane vesicles')
@@ -163,7 +164,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/num_ves_dist_close_membrane.svg')
     plt.close()
     sns.barplot(data=distance_df, x='distance', y='fraction close membrane vesicles', hue='prediction',
-                palette=ct_palette)
+                palette=ct_palette, width = plotwidth)
     plt.xlabel('distance [nm]', fontsize=fontsize)
     plt.ylabel('fraction close membrane vesicles', fontsize=fontsize)
     plt.title('close membrane vesicles')
@@ -201,7 +202,7 @@ if __name__ == '__main__':
             syn_distance_df.loc[di * 2: di * 2 + 1, 'fraction close synapse vesicles'] = fraction_close_vesicles
     syn_distance_df.to_csv(f'{f_name}/distance_close_synapse.csv')
     sns.barplot(data=syn_distance_df, x='distance', y='number vesicles', hue='prediction',
-                palette=ct_palette)
+                palette=ct_palette, width=plotwidth)
     plt.xlabel('distance [nm]', fontsize=fontsize)
     plt.ylabel('number vesicles', fontsize=fontsize)
     plt.title('close membrane vesicles')
@@ -211,7 +212,7 @@ if __name__ == '__main__':
     plt.savefig(f'{f_name}/num_ves_dist_close_synapse.svg')
     plt.close()
     sns.barplot(data=syn_distance_df, x='distance', y='fraction close synapse vesicles', hue='prediction',
-                palette=ct_palette)
+                palette=ct_palette, width=plotwidth)
     plt.xlabel('distance [nm]', fontsize=fontsize)
     plt.ylabel('fraction close synapse vesicles', fontsize=fontsize)
     plt.title('close synapse vesicles')
@@ -223,7 +224,6 @@ if __name__ == '__main__':
 
     eval_true_df.to_csv(f'{f_name}/eval_true_df.csv')
     overview_df.to_csv(f'{f_name}/overview_df.csv')
-    raise ValueError
 
     #plot also if in axon or not
 

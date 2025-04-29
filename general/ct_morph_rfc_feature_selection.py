@@ -29,14 +29,14 @@ if __name__ == '__main__':
     fontsize = 20
     n_umap_runs = 5
     alpha = 0.5
-    remove_ct = None
+    remove_ct = 3
     if remove_ct is not None:
         remove_ct_str = ct_dict[remove_ct]
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241108_j0251{version}_ct_rfc_morph_nm_%s_fs%i" \
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250429_j0251{version}_ct_rfc_morph_nm_%s_fs%i" \
                  f"_umap{n_umap_runs}_a{alpha}_no{remove_ct_str}" % (
                      color_key, fontsize)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241108_j0251{version}_ct_rfc_morph_nm_%s_fs%i" \
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250429_j0251{version}_ct_rfc_morph_nm_%s_fs%i" \
                  f"_umap{n_umap_runs}_a{alpha}" % (
                      color_key, fontsize)
     if not os.path.exists(f_name):
@@ -92,8 +92,10 @@ if __name__ == '__main__':
     cv_results['n_features'] = range(1, len(cv_results) + 1)
     cv_results.to_csv(f'{f_name}/rfecv_cv_results.csv')
     plt.figure()
-    plt.xlabel("Number of features selected")
-    plt.ylabel("Mean test accuracy")
+    plt.xlabel("Number of features selected", fontsize = fontsize)
+    plt.ylabel("Mean test accuracy", fontsize = fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
     plt.errorbar(
         x=cv_results["n_features"],
         y=cv_results["mean_test_score"],

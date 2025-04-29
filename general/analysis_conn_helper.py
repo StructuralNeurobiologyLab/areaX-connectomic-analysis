@@ -1,3 +1,5 @@
+import logging
+
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -775,6 +777,68 @@ def get_multi_syn_info_per_cell(params):
             res_dict[cellid]['multi conn pairwise comp'].append(comb_conn_axoness)
             res_dict[cellid]['multi conn pairwise size diff frac'].append(frac_size_diff)
     return [len(targeted_cell_ids), perc_single_conn_cells, perc_single_conn_syns, perc_single_con_sizes, res_dict]
+
+def get_syn_location_per_cell(syn_input):
+    '''
+    Calculates distance of synapse in relation to soma based on rep_coord of synapse of a specific postsynaptic cellid.
+    Assumes synapses are already filtered. Spiness dict should translate spiness numbers into the name of the postsynaptic compartment e.g. 'spine head'.
+    In this case the soma compartment is not in the spiness dict but a '2' in the axoness value.
+    ct_dict should translate the celltype numbers into names of the cell types e.g. 'MSN'
+    Saves location information together with pre and post cellids, celltypes, synapse size and post compartment, voxel coordinates in dataframe.
+    :param syn_input: postsynaptic cellid, syn_ssv_partners, syn_sizes, syn_coords, syn_ctss, syn_axs, spiness_dict, ct_dict
+    :return: pd Dataframe
+    '''
+    cellid, syn_ssv_partners, syn_sizes, syn_coords, syn_cts, syn_axs, syn_spiness, spiness_dict, ct_dict = syn_input
+    #get synapses with postsynapse on cellid
+    cell_inds = np.where(syn_ssv_partners == cellid)[0]
+    cell_ssv_partners = syn_ssv_partners[cell_inds]
+    cell_syn_sizes = syn_sizes[cell_inds]
+    cell_syn_coords = syn_coords[cell_inds]
+    cell_syn_cts = syn_cts[cell_inds]
+    cell_axoness = syn_axs[cell_inds]
+    cell_spiness = syn_spiness[cell_inds]
+    #create dataframe for results
+    df_cols = ['pre cellid', 'post cellid', 'pre cell type', 'post cell type', 'syn area', 'syn dist 2 soma', 'post compartment', 'coord x', 'coord y', 'coord z']
+    cell_syn_df = pd.DataFrame(columns= df_cols, index=range(len(cell_syn_sizes)))
+    cell_syn_df['syn area'] = cell_syn_sizes
+    cell_syn_df['coord x'] = cell_syn_coords[:, 0]
+    cell_syn_df['coord y'] = cell_syn_coords[:, 1]
+    cell_syn_df['coord z'] = cell_syn_coords[:, 2]
+    #get information about pre synaptic side
+    pre_inds = np.where(cell_axoness == 1)
+    pre_ssv_partners = cell_ssv_partners[pre_inds]
+    pre_cts = cell_syn_cts[pre_inds]
+    pre_cts_str = [ct_dict[ct] for ct in pre_cts]
+    cell_syn_df['pre cellid'] = pre_ssv_partners
+    cell_syn_df['pre cell type'] = pre_cts_str
+
+    #get information about postsynaptic side
+    post_inds = np.where(cell_axoness != 1)
+    post_ssv_partners = cell_ssv_partners[post_inds]
+    post_axoness = cell_axoness[post_inds]
+    post_spiness = cell_spiness[post_inds]
+    assert(np.all(post_ssv_partners == cellid))
+    post_cts = cell_syn_cts[post_inds]
+    post_cts_str = [ct_dict[ct] for ct in post_cts]
+    cell_syn_df['post cellid'] = post_ssv_partners
+    cell_syn_df['post cell type'] = post_cts_str
+    #get postsynaptic compartment
+    soma_inds = np.where(post_axoness == 2)
+    if len(soma_inds[0]) > 0:
+        cell_syn_df.loc[soma_inds[0], 'post compartment'] = 'soma'
+    den_inds = np.where(post_axoness == 0)
+    den_spiness = post_spiness[den_inds]
+    den_spiness_str = [spiness_dict[sp] for sp in den_spiness]
+    cell_syn_df.loc[den_inds[0], 'post compartment'] = den_spiness_str
+    #get distance of synapse to soma
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    syn_dists = cell.shortestpath2soma(coordinates=cell_syn_coords)
+    syn_dists = np.array(syn_dists) / 1000 #in µm
+    cell_syn_df['syn dist 2 soma'] = syn_dists
+    return cell_syn_df
+
+
 
 
 

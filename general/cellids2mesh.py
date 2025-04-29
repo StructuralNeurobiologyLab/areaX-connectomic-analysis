@@ -31,7 +31,7 @@ if __name__ == '__main__':
     get_single_ves_coords = False
     get_membrane_close_vesicles_separate = False
     get_syns = True
-    get_syns_comp = 0
+    get_syns_comp = None
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
 
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
     #get wrongly segmented bv and associated astrocytes
     #cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
-    cellids = [832232717, 26790127]
+    cellids = [1126849047,  436157555]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])

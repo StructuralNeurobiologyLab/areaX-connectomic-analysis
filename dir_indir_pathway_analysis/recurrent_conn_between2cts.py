@@ -34,12 +34,12 @@ if __name__ == '__main__':
     exclude_known_mergers = True
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP'}
     color_key = 'STNGPINTv6'
-    ct1 = 4
+    ct1 = 7
     ct2 = 7
     ct1_str = ct_dict[ct1]
     ct2_str = ct_dict[ct2]
     fontsize = 20
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/241025_j0251{version}_{ct1_str}_{ct2_str}_recurr_conn_mcl_%i_synprob_%.2f_%s_fs%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/250520_j0251{version}_{ct1_str}_{ct2_str}_recurr_conn_mcl_%i_synprob_%.2f_%s_fs%i" % (
     min_comp_len_cell, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)

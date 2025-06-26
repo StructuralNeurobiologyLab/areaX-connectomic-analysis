@@ -43,14 +43,14 @@ Important functions
 ---
 
 General functions that are repeatetly used in the analysis are found in the different helper files: 
-\'analysis_conn_helper': provides functions for connectivity analysis
-\'analysis_morph_helper': provides functions for morphological analysis
-\'vesicle_helper': provides functions for analysis of individual vesicles
+- 'analysis_conn_helper': provides functions for connectivity analysis
+-  'analysis_morph_helper': provides functions for morphological analysis
+- 'vesicle_helper': provides functions for analysis of individual vesicles
 
 Further analysis that might useful for other connectomic datasets: 
-\'dir_indir_analysis/CT_comp_conn_analysis.py': Gives compartment specific conectivity details of several inputs to one cell type. This includes information of a synapse targets the dendritic shaft, spine head, spine neck or soma of a neuron. 
-\'dir_indir_analysis/syn_conn_details.py': Calculates number of multi-synapses (synapses with same pre-and postsynapse) or synapse sizes either between two cell types or compares in-and outputs of two cell type to a third one. 
-\'dir_indir_analysis/CT_input_syn_distance_analysis.py': Calcultes the distance of synapses to the soma from several cell types to a specific one. 
+- 'dir_indir_analysis/CT_comp_conn_analysis.py': Gives compartment specific conectivity details of several inputs to one cell type. This includes information of a synapse targets the dendritic shaft, spine head, spine neck or soma of a neuron. 
+- 'dir_indir_analysis/syn_conn_details.py': Calculates number of multi-synapses (synapses with same pre-and postsynapse) or synapse sizes either between two cell types or compares in-and outputs of two cell type to a third one. 
+- 'dir_indir_analysis/CT_input_syn_distance_analysis.py': Calcultes the distance of synapses to the soma from several cell types to a specific one. 
 
 
 

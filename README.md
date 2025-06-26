@@ -30,7 +30,6 @@ Each script needs specific filtering criteria for cells and synapses. Defualt se
 
 After this is done the script 'connectivity_fraction_per_ct.py' can be run and will result in connectivity matrices on a cell type basis but also export bar plots of fractional in-and output for each cell type. 
 The function 'ct_morph_analysis.py' compares different cell types based on morphology and includes both a PCA and UMAP to cluster them. To include organelle densities in this analysis, these need to be computed first.
-'ct_soma_radius.py' estimates the soma radii for all cell types independently of the other functions.
 To compute organelle_densities for specific cell types, the function 'ct_org_volume_density_cell_volume.py' can be used which computes the volume density of a specific organelle for the whole cell in relation to the cells volume. 
 For this, run the function 'map_org2cells.py' first to have organelle mappings prepared for filtered cell types. 
 The functions 'ct_organell_volume_density' and 'ct_organell_comp_surface_area_density' calculate the organelle density separately in different compartments either in relation to the skeleton or to the mesh surface area. 
@@ -39,13 +38,20 @@ To use this modality, organelles need to be first mapped to the different compar
 To additionally get the vesicle density and run other scripts in the 'single_vesicle_analysis' folder with individual vesicles you need to have a centre coordinate of each vesicle ready. 
 For segmentation of vesicles or other organelles the elektronn3 toolkit was used in this project prviously (https://github.com/ELEKTRONN/elektronn3). Before running any of the scripts first run 'vesicle_prep.py'.
 
-Important functions
+Important scripts and functions
 ---
+For overview on all cell types (see above which preparation functions need to be run): 
+- 'general\connectivity_fraction_per_ct.py': In- and outgoing connectivity per cell type, matrices to summarise connectivity on cell type level
+- 'general\ct_morh_analysis.py': Quantifies morhological parameters of different cell types, seperates them with PCA and UMAP
+- 'general\ct_soma_radiuspy': Estimates the soma radii for all cell types independently of the other functions.
+- 'general\ct_org_volume_density_cell_volume.py': Calculates organelle volume density of whole cell in relation to cell volume
+- 'general\ct_organell_volume_density': Calculates organelle volume density of specific compartment in relation to skeleton pathlength of that compartment
+- general\ct_organell_comp_surface_area_density': Calculates organelle surface area density of specific compartment in relation to surface area of that compartment
 
 General functions that are repeatetly used in the analysis are found in the different helper files: 
-- 'analysis_conn_helper': provides functions for connectivity analysis
--  'analysis_morph_helper': provides functions for morphological analysis
-- 'vesicle_helper': provides functions for analysis of individual vesicles
+- 'general\analysis_conn_helper': provides functions for connectivity analysis
+-  'general\analysis_morph_helper': provides functions for morphological analysis
+- 'general\vesicle_helper': provides functions for analysis of individual vesicles
 
 Further analysis that might useful for other connectomic datasets: 
 - 'dir_indir_analysis/CT_comp_conn_analysis.py': Gives compartment specific conectivity details of several inputs to one cell type. This includes information of a synapse targets the dendritic shaft, spine head, spine neck or soma of a neuron. 

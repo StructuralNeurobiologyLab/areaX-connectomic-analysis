@@ -20,6 +20,8 @@ a specific set of parameters is extracted from all cells before starting the ana
 This is done in the function analysis_prep.py. It will calculate parameters such as skeleton pathlength and mesh surface area for axon and dendrite for each cell that has at least one skeleton 
 node predicted for each of those compartments. The function is designed to use multiprocessing, so multiple cores should be available. 
 
+Each script needs specific filtering criteria for cells and synapses. Defualt settings are: 200 µm skeleton pathlength for full cells, 50 µm for projecting axons, 0.1 µm² minimum synaptic area and 0.6 synapse probability. 
+
 After this is done the script 'connectivity_fraction_per_ct.py' can be run and will result in connectivity matrices on a cell type basis but also export bar plots of fractional in-and output for each cell type. 
 The function 'ct_morph_analysis.py' compares different cell types based on morphology and includes both a PCA and UMAP to cluster them. To include organelle densities in this analysis, these need to be computed first.
 'ct_soma_radius.py' estimates the soma radii for all cell types independently of the other functions.

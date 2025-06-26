@@ -72,11 +72,11 @@ if __name__ == '__main__':
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
     n_coords = 1000
-    cube_size = 512
+    cube_size = 256
     bins = 50
 
     f_name = f'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                 f'250516_{version}_j0251_ECS_estimate_n{n_coords}_cs{cube_size}_bins{bins}'
+                 f'250606_{version}_j0251_ECS_estimate_n{n_coords}_cs{cube_size}_bins{bins}'
     if not os.path.exists(f_name):
         os.mkdir(f_name)
 

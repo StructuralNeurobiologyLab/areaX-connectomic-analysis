@@ -48,7 +48,7 @@ For overview on all cell types (see above which preparation functions need to be
 - 'general\ct_organell_volume_density': Calculates organelle volume density of specific compartment in relation to skeleton pathlength of that compartment
 - general\ct_organell_comp_surface_area_density': Calculates organelle surface area density of specific compartment in relation to surface area of that compartment
 
-General functions that are repeatetly used in the analysis are found in the different helper files: 
+General functions that are repeatedly used in the analysis are found in the different helper files: 
 - 'general\analysis_conn_helper': provides functions for connectivity analysis
 -  'general\analysis_morph_helper': provides functions for morphological analysis
 - 'general\vesicle_helper': provides functions for analysis of individual vesicles

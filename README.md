@@ -1,3 +1,6 @@
+General
+----
+
 This repository contains scripts to perform analysis on volume electron microscopy datasets that were already processes with SyConn (https://github.com/StructuralNeurobiologyLab/SyConn). 
 This assumes that all cells are classified into cell types, they have a skeleton representation and a prediction of what part is axon, dendrite or soma. 
 Additionally, synapses and other organelles are mapped to the cells. 
@@ -7,6 +10,9 @@ More specific scripts in the folders LMAN_MSN_analysis, TAN_DA_axo_analysis, dir
 
 Scripts and helper files for general use are in the 'general' folder. It includes helper functions for analysis, functions to further prepare your data and functions to get a cell type 
 based connectivity matrix or different organelle densities.
+
+How to start
+---
 
 To start using it, first adapt the file general/analysis_params.py to fit your folder structure and cell types. 
 Make sure to specify which cell types are projecting axons or glia cells as these will be treated differently in analysis.
@@ -33,15 +39,18 @@ To use this modality, organelles need to be first mapped to the different compar
 To additionally get the vesicle density and run other scripts in the 'single_vesicle_analysis' folder with individual vesicles you need to have a centre coordinate of each vesicle ready. 
 For segmentation of vesicles or other organelles the elektronn3 toolkit was used in this project prviously (https://github.com/ELEKTRONN/elektronn3). Before running any of the scripts first run 'vesicle_prep.py'.
 
+Important functions
+---
+
 General functions that are repeatetly used in the analysis are found in the different helper files: 
-'analysis_conn_helper': provides functions for connectivity analysis
-'analysis_morph_helper': provides functions for morphological analysis
-'vesicle_helper': provides functions for analysis of individual vesicles
+\'analysis_conn_helper': provides functions for connectivity analysis
+\'analysis_morph_helper': provides functions for morphological analysis
+\'vesicle_helper': provides functions for analysis of individual vesicles
 
 Further analysis that might useful for other connectomic datasets: 
-'dir_indir_analysis/CT_comp_conn_analysis.py': Gives compartment specific conectivity details of several inputs to one cell type. This includes information of a synapse targets the dendritic shaft, spine head, spine neck or soma of a neuron. 
-'dir_indir_analysis/syn_conn_details.py': Calculates number of multi-synapses (synapses with same pre-and postsynapse) or synapse sizes either between two cell types or compares in-and outputs of two cell type to a third one. 
-'dir_indir_analysis/CT_input_syn_distance_analysis.py': Calcultes the distance of synapses to the soma from several cell types to a specific one. 
+\'dir_indir_analysis/CT_comp_conn_analysis.py': Gives compartment specific conectivity details of several inputs to one cell type. This includes information of a synapse targets the dendritic shaft, spine head, spine neck or soma of a neuron. 
+\'dir_indir_analysis/syn_conn_details.py': Calculates number of multi-synapses (synapses with same pre-and postsynapse) or synapse sizes either between two cell types or compares in-and outputs of two cell type to a third one. 
+\'dir_indir_analysis/CT_input_syn_distance_analysis.py': Calcultes the distance of synapses to the soma from several cell types to a specific one. 
 
 
 

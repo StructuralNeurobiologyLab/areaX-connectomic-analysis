@@ -10,7 +10,7 @@ if __name__ == '__main__':
     from analysis_conn_helper import filter_synapse_caches_for_ct
     import numpy as np
     from tqdm import tqdm
-    from syconn.proc.meshes import write_mesh2kzip, write_meshes2kzip
+    from syconn.proc.meshes import write_mesh2kzip, write_meshes2kzip, compartmentalize_mesh_fromskel
     from scipy.spatial import cKDTree
     from collections import Counter
 
@@ -23,14 +23,15 @@ if __name__ == '__main__':
     ct_dict = bio_params.ct_dict(with_glia = True)
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
-    whole_cell = False
+    whole_cell = True
+    get_comp_sep_cell = True
     organelle_class = ['mi']
     get_orgs = False
     get_orgs_comp_sep = False
     get_only_myelin = False
     get_single_ves_coords = False
     get_membrane_close_vesicles_separate = False
-    get_syns = True
+    get_syns = False
     get_syns_comp = None
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
 
@@ -48,7 +49,7 @@ if __name__ == '__main__':
     #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
     #get wrongly segmented bv and associated astrocytes
     #cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
-    cellids = [1126849047,  436157555]
+    cellids = [471586267]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])
@@ -79,10 +80,21 @@ if __name__ == '__main__':
         celltype = ct_dict[ct_num]
         #if full cell mesh
         if whole_cell:
-            indices, vertices, normals = cell.mesh
-            kzip_out = f'{f_name}/{cellid}_{celltype}_mesh'
-            write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), normals, None,
-                            f'{cellid}.ply')
+            if get_comp_sep_cell:
+                cell.load_skeleton()
+                comp_meshes = compartmentalize_mesh_fromskel(cell, k = 1)
+                for comp in comp_meshes.keys():
+                    indices, vertices, normals = comp_meshes[comp]
+                    kzip_out = f'{f_name}/{cellid}_{celltype}_{comp}_mesh'
+                    write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), normals, None,
+                                    f'{cellid}_{comp}.ply')
+
+            else:
+                indices, vertices, normals = cell.mesh
+                kzip_out = f'{f_name}/{cellid}_{celltype}_mesh'
+                write_mesh2kzip(kzip_out, indices.astype(np.float32), vertices.astype(np.float32), normals, None,
+                                f'{cellid}.ply')
+
         if get_orgs:
             for oc in organelle_class:
                 if oc == 'er':

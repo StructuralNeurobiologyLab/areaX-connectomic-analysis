@@ -43,11 +43,11 @@ if __name__ == '__main__':
     use_vc_density = False
     use_ves_density = True
     use_syn_params = True
-    use_golgi_density = False
-    use_er_density = False
+    use_golgi_density = True
+    use_er_density = True
     alpha = 0.5
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250711_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_a{alpha}_synmives" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250805_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_a{alpha}_synmivesergolgi_MSNonly" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -343,7 +343,7 @@ if __name__ == '__main__':
     if use_er_density:
         #calculate these values with function ct_organell_volume_density
         er_axon_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                     '250711_j0251v6_ct_er_axon_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger_length/percell_df_er_den.csv'
+                     '250804_j0251v6_ct_er_axon_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger_mesh surface area/percell_df_er_den.csv'
         log.info(f'Axon er area density loaded from {er_axon_density_path}')
         er_axon_den_df = pd.read_csv(er_axon_density_path, index_col=0)
         if len(all_suitable_ids) > len(er_axon_den_df):
@@ -356,7 +356,7 @@ if __name__ == '__main__':
             param_list = np.hstack([param_list, 'axon er area density'])
         if full_cells_only:
             er_den_density_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                         '241108_j0251v6_ct_er_dendrite_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger/percell_df_er_den.csv'
+                         '250804_j0251v6_ct_er_dendrite_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger_mesh surface area/percell_df_er_den.csv'
             log.info(f'Dendrite er area density loaded from {er_den_density_path}')
             er_den_den_df = pd.read_csv(er_den_density_path, index_col=0)
             if len(all_suitable_ids) > len(er_den_den_df):
@@ -455,7 +455,7 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_violin.svg')
         plt.close()
 
-    #morph_df = morph_df[morph_df['celltype'] == 'MSN']
+    morph_df = morph_df[morph_df['celltype'] == 'MSN']
 
     log.info('Step 8/9: Get PCA of results')
     log.info(f'Number of components for PCA = {n_comps_PCA}')

@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
-    f_name = 'cajal/scratch/users/arother/exported_meshes/230804_neuron_example_meshes'
+    f_name = 'cajal/scratch/users/arother/exported_meshes/250912_astro_mi_meshes'
     #f_name = 'cajal/scratch/users/arother/240115_LMAN_example_meshes'
 
     bio_params = Analysis_Params(version = 'v6')
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
     whole_cell = True
-    get_comp_sep_cell = True
+    get_comp_sep_cell = False
     organelle_class = ['mi']
     get_orgs = False
     get_orgs_comp_sep = False
@@ -35,21 +35,7 @@ if __name__ == '__main__':
     get_syns_comp = None
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
 
-
-    # cellids = [ 126798179, 1155532413, 15724767, 24397945, 32356701, 26790127, 379072583]
-    # cellids = [15521116, 10157981]
-    # cellids = [1080627023]
-    # cellids = [3171878, 18222490, 50542644, 96194764, 436157555]
-    # cellids = [32356701, 26790127]
-    # cellids = [844683784, 373956306, 820388630, 975932938, 1355540633]
-    # gt HVC, LMAN, DA, example LTS, MSNs aroudn TAN, oligo + GPI (x2), other example glia cells
-    # cellids = [195998712, 139212645,  88265889, 832232717, 841444450, 436157555, 1126849047, 379072583, 1469886143,1503488997, 2834161,561503453, 155343800, 1644151292]
-    # example cellids INT1, MSN, INT3, INT2, STN, TAN, LTS, GPe, HVC, DA
-    # example cells TAN, GPi, GPe, INT2, INT3, MSN
-    #cellids = [10157981, 26790127, 32356701, 126798179, 24397945, 832232717]
-    #get wrongly segmented bv and associated astrocytes
-    #cellids = [2332213096, 2491837340, 2287912642, 2129941466, 2211357026, 2412109485]
-    cellids = [471586267]
+    cellids = [574358791]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])

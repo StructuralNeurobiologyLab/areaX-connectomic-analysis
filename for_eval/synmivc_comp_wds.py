@@ -30,9 +30,9 @@ if __name__ == '__main__':
     min_comp_len_ax = 50
     min_syn_size = 0.1
     fontsize = 20
-    bins = 30
+    bins = 50
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250122_j0251{version1}vs_{version2}_wd_comp_%i_ax%i_ms_%.2f_b{bins}" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/for_eval/250828_j0251{version1}vs_{version2}_wd_comp_%i_ax%i_ms_%.2f_b{bins}" % (
                  min_comp_len_cell, min_comp_len_ax, min_syn_size)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         syn_prob_df.loc[start: start + num_syns - 1, 'version'] = ver
         start += num_syns
 
-    #syn_prob_df.to_csv(f'{f_name}/syn_prob_df_comp_{version1}_{version2}.csv')
+    syn_prob_df.to_csv(f'{f_name}/syn_prob_df_comp_{version1}_{version2}.csv')
     sns.histplot(data = syn_prob_df, x = 'syn prob', hue = 'version', palette= ver_palette, fill=False,
                  kde=False, element='step', linewidth=3, bins=bins)
     plt.xlabel('synapse probability', fontsize=fontsize)
@@ -204,6 +204,7 @@ if __name__ == '__main__':
 
     density_df.to_csv(f'{f_name}/synmivc_density_comp.csv')
     syn_prob_df_filtered = syn_prob_df_filtered.dropna()
+    syn_prob_df_filtered.to_csv(f'{f_name}/syn_prob_df_filtered_comp_{version1}_{version2}.csv')
 
 
     log.info('Step 4/5: Get syn prob distribution of filtered synapses')

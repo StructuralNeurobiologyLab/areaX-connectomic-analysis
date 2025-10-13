@@ -32,12 +32,12 @@ if __name__ == '__main__':
     remove_ct = 3
     if remove_ct is not None:
         remove_ct_str = ct_dict[remove_ct]
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250429_j0251{version}_ct_rfc_morph_nm_%s_fs%i" \
-                 f"_umap{n_umap_runs}_a{alpha}_no{remove_ct_str}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250805_j0251{version}_ct_rfc_morph_nm_%s_fs%i" \
+                 f"_umap{n_umap_runs}_a{alpha}_no{remove_ct_str}_vc" % (
                      color_key, fontsize)
     else:
-        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250429_j0251{version}_ct_rfc_morph_nm_%s_fs%i" \
-                 f"_umap{n_umap_runs}_a{alpha}" % (
+        f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250805_j0251{version}_ct_rfc_morph_nm_%s_fs%i" \
+                 f"_umap{n_umap_runs}_a{alpha}_vc" % (
                      color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -46,12 +46,12 @@ if __name__ == '__main__':
     ct_palette = cls.ct_palette(key=color_key)
 
     log.info('Step 1/3: Load and standardize the data')
-    morph_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-                 '241108_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_fc_synfullmivesgolgier/' \
-                 'ct_morph_df.csv'
     #morph_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
-    #             '241108_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_fc_synfullmivcgolgier/' \
+    #             '250805_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5_synmivesergolgi/' \
     #             'ct_morph_df.csv'
+    morph_path = 'cajal/scratch/users/arother/bio_analysis_results/general/' \
+                 '250805_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5_synmivcergolgi/' \
+                 'ct_morph_df.csv'
 
     log.info(f'Use morphological parameters from {morph_path}')
     morph_df = pd.read_csv(morph_path, index_col=0)

@@ -736,7 +736,7 @@ def generate_colored_mesh_from_vert_labels(args):
     '''
     cellid, f_name, smooth, smooth_all = args
     #hexcode colors: 0 = #3287A8, 1 = #E8AA47, 2 = #BD3748,5 = #707070 (5 = unpredicted)
-    col_lookup = {0: (50, 135, 168, 255), 1: (232, 170, 71, 255), 2: (189, 55, 72, 255), 5:(112, 112, 112, 255)}
+    col_lookup = {0: (50, 135, 168, 255), 1: (232, 170, 71, 255), 2: (189, 55, 72, 255), 3:(112, 112, 112, 255)}
     cell = SuperSegmentationObject(cellid)
     cell_ld = cell.label_dict('vertex')
     vert_axoness_labels = cell_ld['axoness']

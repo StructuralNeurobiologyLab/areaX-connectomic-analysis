@@ -37,7 +37,7 @@ if __name__ == '__main__':
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)
     ct_dict = analysis_params.ct_dict(with_glia=False)
     celltype_key = analysis_params.celltype_key()
-    min_comp_len_ax = 0
+    min_comp_len_ax = 50
     min_comp_len_cells = 200
     syn_prob = 0.6
     min_syn_size = 0.1
@@ -45,10 +45,10 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict=ct_dict)
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP', 'STNGPINTv6', 'RdTeINTv6', 'TePkBrNGF'}
     color_key = 'TePkBrNGF'
-    plot_connmatrix_only = True
+    plot_connmatrix_only = False
     fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/241213_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250828_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i_STNnoGP" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -98,11 +98,11 @@ if __name__ == '__main__':
                 #    misclassified_asto_ids = analysis_params.load_potential_astros()
                 #    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 #    cellids = cellids[astro_inds]
-                #if ct == 4:
-                #    stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
-                #                               '241025_j0251v6_STN_4_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20/STN_spine_density_GPe_GPiratio.csv', index_col=0)
-                 #   stn_no_gp_df = stn_no_gp_df[stn_no_gp_df['celltype'] == 'STN none']
-                 #   cellids = np.array(stn_no_gp_df['cellid'])
+                if ct == 4:
+                    stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
+                                               '241025_j0251v6_STN_4_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20/STN_spine_density_GPe_GPiratio.csv', index_col=0)
+                    stn_no_gp_df = stn_no_gp_df[stn_no_gp_df['celltype'] == 'STN none']
+                    cellids = np.array(stn_no_gp_df['cellid'])
 
                     #cellids = np.array(gt_df['cellids'][gt_df['celltype'] == ct_dict[ct]])
                 #if ct == 7:
@@ -431,6 +431,7 @@ if __name__ == '__main__':
                         result_df.loc[0:lengths[i] - 1, p_ct] = synapse_dict_ct[key_name + p_ct]
                     #fill up with zeros so that each cell that makes at least one synapse with another suitable cell is included in analysis
                     result_df = result_df.fillna(0)
+                    result_df.to_csv(f'{f_name_ct}/{key_name_gen}_{ct_str}.csv')
                     if 'percentage' in key:
                         ylabel = '%'
                     else:

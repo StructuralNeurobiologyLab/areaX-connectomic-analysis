@@ -929,6 +929,22 @@ def get_cell_soma_radius(cellid, use_skel = False, use_median_centre = True):
     radius = np.median(dist2centre) / 1000
     return [soma_vert_avg, radius]
 
+def get_cell_sphere_from_skel(cellid):
+    '''
+    Get cell center and hypothetical radius of cell to e able to draw a sphere around it.
+    Cell center is the median of all skeleton nodes, the radius is the maximum distance of one
+    of the skeleton nodes to the center.
+    :param cellid: ID of the cell
+    :return:
+    '''
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    nodes = cell.skeleton['nodes'] * cell.scaling
+    cell_center_est = np.median(nodes, axis = 0)
+    dist2center = np.linalg.norm(nodes - cell_center_est, axis = 1)
+    max_dist = np.max(dist2center) #in nm
+    return [cell_center_est, max_dist]
+
 def get_dendrite_info_cell(input):
     '''
     Get information about the dendrtíes of a cell with a specified total minimum length.

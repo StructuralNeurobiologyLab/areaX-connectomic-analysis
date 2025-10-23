@@ -45,10 +45,10 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict=ct_dict)
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP', 'STNGPINTv6', 'RdTeINTv6', 'TePkBrNGF'}
     color_key = 'TePkBrNGF'
-    plot_connmatrix_only = False
+    plot_connmatrix_only = True
     fontsize = 20
     annot = True
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250828_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i_STNnoGP" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/251023_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i_STNnoGP" % (
     min_comp_len_cells, min_comp_len_ax, syn_prob, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -98,11 +98,11 @@ if __name__ == '__main__':
                 #    misclassified_asto_ids = analysis_params.load_potential_astros()
                 #    astro_inds = np.in1d(cellids, misclassified_asto_ids) == False
                 #    cellids = cellids[astro_inds]
-                if ct == 4:
-                    stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
-                                               '241025_j0251v6_STN_4_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20/STN_spine_density_GPe_GPiratio.csv', index_col=0)
-                    stn_no_gp_df = stn_no_gp_df[stn_no_gp_df['celltype'] == 'STN none']
-                    cellids = np.array(stn_no_gp_df['cellid'])
+                #if ct == 4:
+                #    stn_no_gp_df = pd.read_csv('cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/'
+                #                               '241025_j0251v6_STN_4_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20/STN_spine_density_GPe_GPiratio.csv', index_col=0)
+                #    stn_no_gp_df = stn_no_gp_df[stn_no_gp_df['celltype'] == 'STN none']
+                #    cellids = np.array(stn_no_gp_df['cellid'])
 
                     #cellids = np.array(gt_df['cellids'][gt_df['celltype'] == ct_dict[ct]])
                 #if ct == 7:
@@ -134,6 +134,7 @@ if __name__ == '__main__':
 
 
     all_suitable_ids = np.concatenate(all_suitable_ids)
+
     write_obj2pkl("%s/suitable_ids_allct.pkl" % f_name, suitable_ids_dict)
     cts_numbers_perct.to_csv("%s/numbers_perct.csv" % f_name)
     time_stamps = [time.time()]
@@ -148,11 +149,13 @@ if __name__ == '__main__':
     #index = postsynapse, column is post-synapse
     outgoing_synapse_matrix_synnumbers_rel = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     outgoing_synapse_matrix_synsizes_rel = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
-    outgoing_synapse_matrix_synnumbers_abs = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
+    outgoing_synapse_matrix_synnumbers_abs_med = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
+    outgoing_synapse_matrix_synnumbers_abs_sum = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     outgoing_synapse_matrix_synsizes_abs_med = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     incoming_synapse_matrix_synnumbers_rel = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     incoming_synapse_matrix_synsizes_rel = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
-    incoming_synapse_matrix_synnumbers_abs = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
+    incoming_synapse_matrix_synnumbers_abs_med = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
+    incoming_synapse_matrix_synnumbers_abs_sum = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     incoming_synapse_matrix_synsizes_abs_med = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     outgoing_synapse_matrix_synsizes_abs_sum = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
     incoming_synapse_matrix_synsizes_abs_sum = pd.DataFrame(columns=non_ax_celltypes, index=celltypes)
@@ -179,6 +182,7 @@ if __name__ == '__main__':
         m_ssv_partners = m_ssv_partners[suit_ct_inds]
         m_sizes = m_sizes[suit_ct_inds]
         m_axs = m_axs[suit_ct_inds]
+
         #seperate in incoming and outgoing synapses
         #incoming synapses
         if ct not in axon_cts:
@@ -337,7 +341,9 @@ if __name__ == '__main__':
                 synapse_dict_perct[ct][f'incoming synapse number from {other_ct_str}'] = filled_in_syn_numbers
                 synapse_dict_perct[ct][f'incoming synapse sum size from {other_ct_str}'] = filled_in_syn_sizes
                 # column is pre, index = postsynapse
-                incoming_synapse_matrix_synnumbers_abs.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(filled_in_syn_numbers)
+                incoming_synapse_matrix_synnumbers_abs_sum.loc[ct_dict[other_ct], ct_dict[ct]] = np.sum(filled_in_syn_numbers)
+                incoming_synapse_matrix_synnumbers_abs_med.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(
+                    filled_in_syn_numbers)
                 incoming_synapse_matrix_synsizes_abs_med.loc[ct_dict[other_ct], ct_dict[ct]] = np.median(filled_in_syn_sizes)
                 incoming_synapse_matrix_synsizes_abs_sum.loc[ct_dict[other_ct], ct_dict[ct]] = np.sum(
                     filled_in_syn_sizes)
@@ -385,7 +391,9 @@ if __name__ == '__main__':
             synapse_dict_perct[ct][f'outgoing synapse number to {other_ct_str}'] = filled_out_syn_numbers
             synapse_dict_perct[ct][f'outgoing synapse sum size to {other_ct_str}'] = filled_out_syn_sizes
             # column is pre, index = postsynapse
-            outgoing_synapse_matrix_synnumbers_abs.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(filled_out_syn_numbers)
+            outgoing_synapse_matrix_synnumbers_abs_med.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(filled_out_syn_numbers)
+            outgoing_synapse_matrix_synnumbers_abs_sum.loc[ct_dict[ct], ct_dict[other_ct]] = np.sum(
+                filled_out_syn_numbers)
             outgoing_synapse_matrix_synsizes_abs_med.loc[ct_dict[ct], ct_dict[other_ct]] = np.median(filled_out_syn_sizes)
             outgoing_synapse_matrix_synsizes_abs_sum.loc[ct_dict[ct], ct_dict[other_ct]] = np.sum(
                 filled_out_syn_sizes)
@@ -486,10 +494,12 @@ if __name__ == '__main__':
     #save results as pkl and .csv
     synapse_pd_perct.to_csv(f'{f_name}/overview_params_perct.csv')
     write_obj2pkl('%s/synapse_dict_per_ct.pkl' % f_name, synapse_dict_perct)
-    incoming_synapse_matrix_synnumbers_abs.to_csv('%s/incoming_syn_number_matrix_abs.csv' % f_name)
+    incoming_synapse_matrix_synnumbers_abs_med.to_csv('%s/incoming_syn_number_matrix_abs_med.csv' % f_name)
+    incoming_synapse_matrix_synnumbers_abs_sum.to_csv('%s/incoming_syn_number_matrix_abs_sum.csv' % f_name)
     incoming_synapse_matrix_synsizes_abs_med.to_csv('%s/incoming_syn_sizes_matrix_abs_med.csv' % f_name)
     incoming_synapse_matrix_synsizes_abs_sum.to_csv('%s/incoming_syn_sizes_matrix_abs_sum.csv' % f_name)
-    outgoing_synapse_matrix_synnumbers_abs.to_csv('%s/outgoing_syn_number_matrix_abs.csv' % f_name)
+    outgoing_synapse_matrix_synnumbers_abs_med.to_csv('%s/outgoing_syn_number_matrix_abs_med.csv' % f_name)
+    outgoing_synapse_matrix_synnumbers_abs_sum.to_csv('%s/outgoing_syn_number_matrix_abs_sum.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_med.to_csv('%s/outgoing_syn_sizes_matrix_abs_med.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_sum.to_csv('%s/outgoing_syn_sizes_matrix_abs_sum.csv' % f_name)
     #create one matrix for incoming and outgoing each, which is sum size of synapses globalised to the dataset
@@ -499,10 +509,10 @@ if __name__ == '__main__':
     assert(sum_outgoing == sum_incoming)
     incoming_synapse_matrix_synsizes_abs_sum_dn = 100 * incoming_synapse_matrix_synsizes_abs_sum/ sum_incoming
     incoming_synapse_matrix_synsizes_rel = incoming_synapse_matrix_synsizes_abs_sum * 100 / incoming_synapse_matrix_synsizes_abs_sum.sum()
-    incoming_synapse_matrix_synnumbers_rel = incoming_synapse_matrix_synnumbers_abs * 100 / incoming_synapse_matrix_synnumbers_abs.sum()
+    incoming_synapse_matrix_synnumbers_rel = incoming_synapse_matrix_synnumbers_abs_sum * 100 / incoming_synapse_matrix_synnumbers_abs_sum.sum()
     outgoing_synapse_matrix_synsizes_abs_sum_dn = 100 * outgoing_synapse_matrix_synsizes_abs_sum / sum_outgoing
     outgoing_synapse_matrix_synsizes_rel = np.transpose(outgoing_synapse_matrix_synsizes_abs_sum.T * 100 / outgoing_synapse_matrix_synsizes_abs_sum.sum(axis = 1))
-    outgoing_synapse_matrix_synnumbers_rel = np.transpose(outgoing_synapse_matrix_synnumbers_abs.T * 100 / outgoing_synapse_matrix_synnumbers_abs.sum(axis = 1))
+    outgoing_synapse_matrix_synnumbers_rel = np.transpose(outgoing_synapse_matrix_synnumbers_abs_sum.T * 100 / outgoing_synapse_matrix_synnumbers_abs_sum.sum(axis = 1))
     incoming_synapse_matrix_synsizes_abs_sum_dn.to_csv('%s/incoming_syn_sizes_matrix_abs_sum_dataset_norm.csv' % f_name)
     outgoing_synapse_matrix_synsizes_abs_sum_dn.to_csv('%s/outgoing_syn_sizes_matrix_abs_sum_datatset_norm.csv' % f_name)
     outgoing_synapse_matrix_synnumbers_rel.to_csv('%s/outgoing_syn_number_matrix_rel.csv' % f_name)
@@ -515,7 +525,7 @@ if __name__ == '__main__':
     # column is pre, index = postsynapse
     #cmap_heatmap = sns.color_palette('crest', as_cmap=True)
     cmap_heatmap = sns.light_palette('black', as_cmap=True)
-    inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs.astype(float), title = 'Numbers of incoming synapses', filename = f_name, cmap = cmap_heatmap)
+    inc_numbers_abs = ConnMatrix(data = incoming_synapse_matrix_synnumbers_abs_sum.astype(float), title = 'Numbers of incoming synapses', filename = f_name, cmap = cmap_heatmap)
     inc_numbers_abs.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
     inc_numbers_rel = ConnMatrix(data = incoming_synapse_matrix_synnumbers_rel.astype(float), title = 'Percentage of incoming synapse numbers', filename = f_name, cmap = cmap_heatmap)
     inc_numbers_rel.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
@@ -527,7 +537,7 @@ if __name__ == '__main__':
     inc_sizes_abs_sum.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
     inc_sizes_rel = ConnMatrix(data = incoming_synapse_matrix_synsizes_rel.astype(float), title = 'Percentage of incoming synapses summed sizes', filename = f_name, cmap = cmap_heatmap)
     inc_sizes_rel.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
-    out_numbers_abs = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_abs.astype(float), title='Numbers of outgoing synapses',
+    out_numbers_abs = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_abs_sum.astype(float), title='Numbers of outgoing synapses',
                                  filename=f_name, cmap = cmap_heatmap)
     out_numbers_abs.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
     out_numbers_rel = ConnMatrix(data=outgoing_synapse_matrix_synnumbers_rel.astype(float),
@@ -551,6 +561,8 @@ if __name__ == '__main__':
                                      title='Summed sizes of outgoing synapses globally normalised',
                                      filename=f_name, cmap=cmap_heatmap)
     out_sizes_abs_sum_dn.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
+
+    raise ValueError
 
     log.info('Connectivity analysis finished')
 

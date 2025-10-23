@@ -20,12 +20,12 @@ if __name__ == '__main__':
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
 
-    version = 'v5'
+    version = 'v6'
     bio_params = Analysis_Params(version=version)
     global_params.wd = bio_params.working_dir()
     ct_dict = bio_params.ct_dict()
     use_gt = False
-    filter_syns = True
+    filter_syns = False
     color_key = 'AxRdYwBev6'
     cls = CelltypeColors(ct_dict=ct_dict)
     ct_palette = cls.ct_palette(color_key, num=False)

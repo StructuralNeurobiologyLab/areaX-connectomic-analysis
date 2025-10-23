@@ -31,23 +31,23 @@ if __name__ == '__main__':
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     full_cells_only = True
     axon_only = False
-    min_comp_len_cell = 200
-    min_comp_len_ax = 200
+    min_comp_len_cell = 0
+    min_comp_len_ax = 0
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGPINTv6', 'AxTePkBrv6', 'TePkBrNGF', 'TeBKv6MSNyw'
     color_key = 'TeBKv6MSNyw'
     fontsize = 20
     n_comps_PCA = 1
     n_umap_runs = 5
-    process_morph_parameters = False
-    use_mito_density = True
+    process_morph_parameters = True
+    use_mito_density = False
     use_vc_density = False
-    use_ves_density = True
-    use_syn_params = True
-    use_golgi_density = True
-    use_er_density = True
+    use_ves_density = False
+    use_syn_params = False
+    use_golgi_density = False
+    use_er_density = False
     alpha = 0.5
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/250805_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
-             f"npca{n_comps_PCA}_umap{n_umap_runs}_a{alpha}_synmivesergolgi_MSNonly" % (
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/251023_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
+             f"npca{n_comps_PCA}_umap{n_umap_runs}_a{alpha}" % (
         min_comp_len_cell, min_comp_len_ax, color_key, fontsize)
     if not os.path.exists(f_name):
         os.mkdir(f_name)
@@ -159,6 +159,9 @@ if __name__ == '__main__':
                 no_spine_den_length = spine_density_res[:, 1]
                 morph_df.loc[ct_inds, 'spine density'] = spine_density
                 morph_df.loc[ct_inds, 'dendrite length'] = no_spine_den_length
+
+        raise ValueError
+
 
         log.info('Step 3/9: Get axon and dendrite median radius from cell, remove spines from dendrite for that')
         if not full_cells_only:

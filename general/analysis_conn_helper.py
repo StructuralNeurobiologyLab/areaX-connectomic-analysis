@@ -838,6 +838,16 @@ def get_syn_location_per_cell(syn_input):
     cell_syn_df['syn dist 2 soma'] = syn_dists
     return cell_syn_df
 
+def get_surr_syns_per_cell(cell_input):
+    '''
+    Get all synapses within certain distance from estimated cell center. Both radius and cell center are expected to be in nm coordinates.
+    Synapses are expected to be prefiltered. Synapses will first be estimated to be within certain radius + an offset (default = 100 nm) by the synapses rep coordinate
+    for first quick filtering via a kdTree. Then for more exact search the synapse meshes will be loaded and all synapses selected that have the
+    any of their vertex coordinates in the given radius. Stores
+    :param cell_input: cellid, cell center in nm, search radius in nm, offset for prefiltering in nm, synapse id, synapse area, synapse rep coordinate, filename
+    :return: Datafraame of all selected synapses with syn area and rep coord and cellid
+    '''
+    cellid, cell_center, radius, offset, syn_ids, syn_sizes, syn_rep_coords, f_name = cell_input
 
 
 

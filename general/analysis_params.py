@@ -41,6 +41,7 @@ class Analysis_Params(object):
         celltype_keys = {'v3':'celltype_cnn_e3', 'v4':'celltype_cnn_e3', 'v5':'celltype_pts_e3', 'v6':'celltype_pts_e3'}
         celltype_keys_certainty = {'v3': 'celltype_cnn_e3_certainty', 'v4': 'celltype_cnn_e3_certainty', 'v5': 'celltype_pts_e3_certainty',
                          'v6': 'celltype_pts_e3_certainty'}
+        self._voxel_size = np.array([10, 10, 25])
         self._celltype_key = celltype_keys[version]
         self._celltype_certainty_key = celltype_keys_certainty[version]
 

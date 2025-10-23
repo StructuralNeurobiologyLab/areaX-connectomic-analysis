@@ -1,7 +1,7 @@
 General
 ----
 
-This repository contains scripts to perform analysis on volume electron microscopy datasets that were already processes with SyConn (https://github.com/StructuralNeurobiologyLab/SyConn). 
+This repository contains scripts to perform analysis on volume electron microscopy datasets that were already processed with SyConn (https://github.com/StructuralNeurobiologyLab/SyConn). 
 This assumes that all cells are classified into cell types, they have a skeleton representation and a prediction of what part is axon, dendrite or soma. 
 Additionally, synapses and other organelles are mapped to the cells. 
 

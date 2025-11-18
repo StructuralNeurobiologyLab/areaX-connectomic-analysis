@@ -5,7 +5,12 @@ import numpy as np
 import pandas as pd
 import scipy
 from syconn.reps.super_segmentation import SuperSegmentationObject
+from syconn.reps.segmentation import SegmentationObject
 from itertools import combinations
+from scipy.spatial import cKDTree
+from syconn.proc.meshes import write_meshes2kzip
+from tqdm import tqdm
+
 
 def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     '''
@@ -841,13 +846,64 @@ def get_syn_location_per_cell(syn_input):
 def get_surr_syns_per_cell(cell_input):
     '''
     Get all synapses within certain distance from estimated cell center. Both radius and cell center are expected to be in nm coordinates.
-    Synapses are expected to be prefiltered. Synapses will first be estimated to be within certain radius + an offset (default = 100 nm) by the synapses rep coordinate
+    Synapses are expected to be prefiltered. Synapses will first be estimated to be within certain radius + an offset by the synapses rep coordinate
     for first quick filtering via a kdTree. Then for more exact search the synapse meshes will be loaded and all synapses selected that have the
-    any of their vertex coordinates in the given radius. Stores
+    any of their vertex coordinates in the given radius.
     :param cell_input: cellid, cell center in nm, search radius in nm, offset for prefiltering in nm, synapse id, synapse area, synapse rep coordinate, filename
     :return: Datafraame of all selected synapses with syn area and rep coord and cellid
     '''
     cellid, cell_center, radius, offset, syn_ids, syn_sizes, syn_rep_coords, f_name = cell_input
+    cell = SuperSegmentationObject(cellid)
+    org_color_rgba = np.array([189, 195, 199, 1])
+    #prefilter with radius + offset only by syn_rep_coords
+    syn_tree = cKDTree(syn_rep_coords * cell.scaling) #syn coords in nm
+    coarse_syn_inds = syn_tree.query_ball_point(cell_center, radius + offset)
+    coarse_syn_ids = syn_ids[coarse_syn_inds]
+    coarse_syn_sizes = syn_sizes[coarse_syn_inds]
+    coarse_syn_coords = syn_rep_coords[coarse_syn_inds]
+    #now filter with synapse mesh vertices
+    #iterate over all prefiltered synapses, load mesh
+    #check if any vertices is within radius, if yes, collect
+    #see code from general/cellids2mesh.py
+    close_syns_inds = []
+    close_syns_verts = []
+    close_syns_norms = []
+    close_syns_cols = []
+    close_syn_ids = []
+    for syn_id in tqdm(coarse_syn_ids):
+        syn = SegmentationObject(obj_id=syn_id, obj_type='syn_ssv')
+        indices, vertices, normals = syn.mesh
+        #reshape vertices to get as coordinates
+        vert_coords = vertices.reshape((-1,3))
+        #check if vert_coords in radius, vert_coords already in nm
+        vert_tree = cKDTree(vert_coords)
+        close_vert_coord_inds = vert_tree.query_ball_point(cell_center, radius)
+        if len(close_vert_coord_inds) > 0:
+            close_syn_ids.append(syn_id)
+            close_syns_inds.append(indices.astype(np.float32))
+            close_syns_verts.append(vertices.astype(np.float32))
+            close_syns_norms.append(normals.astype(np.float32))
+            close_syns_cols.append(org_color_rgba)
+    #write meshes to kzip folder
+    kzip_out = f'{f_name}/{cellid}_surr_syn_mesh'
+    ply_f_names = [f'{cellid}_surr_syn_{i}.ply' for i in
+                   range(len(close_syns_inds))]
+    write_meshes2kzip(kzip_out, close_syns_inds, close_syns_verts, close_syns_norms, close_syns_cols,
+                  ply_f_names)
+    #write syn_id, rep_coord and syn_size in dataframe
+    filtered_syn_inds = np.in1d(coarse_syn_ids, close_syn_ids)
+    close_syn_sizes = coarse_syn_sizes[filtered_syn_inds]
+    close_syn_coords = coarse_syn_coords[filtered_syn_inds]
+    close_syn_ids_reord = coarse_syn_ids[filtered_syn_inds]
+    close_syn_df = pd.DataFrame(columns = ['cellid', 'syn id', 'syn size', 'syn coord x', 'syn coord y', 'syn coord z'], index = range(len(close_syn_ids)))
+    close_syn_df['cellid'] = cellid
+    close_syn_df['syn id'] = close_syn_ids_reord
+    close_syn_df['syn size'] = close_syn_sizes
+    close_syn_df['syn coord x'] = close_syn_coords[:, 0]
+    close_syn_df['syn coord y'] = close_syn_coords[:, 1]
+    close_syn_df['syn coord z'] = close_syn_coords[:, 2]
+    return close_syn_df
+
 
 
 

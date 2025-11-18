@@ -35,7 +35,7 @@ if __name__ == '__main__':
     get_syns_comp = None
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
 
-    cellids = [574358791]
+    cellids = [1247912319, 1368397294]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])

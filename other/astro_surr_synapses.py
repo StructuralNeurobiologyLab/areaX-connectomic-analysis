@@ -4,7 +4,7 @@
 
 if __name__ == '__main__':
     from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_cell_sphere_from_skel
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_general
+    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_general, get_surr_syns_per_cell
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     cellids = [1156947761]
     offset_radius = 3000 #additional radius for first filtering
 
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/other/241015_j0251{version}_astrocyte_surr_syns"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/other/251117_j0251{version}_astrocyte_surr_syns"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging(f'astrocyte surrounding synapses',
@@ -95,14 +95,10 @@ if __name__ == '__main__':
     log.info('Step 3/3: Get synapses within certain distances to cell centre')
     cell_input = [[cellids[i], astro_sphere_df.loc[i, 'cell center nm'], astro_sphere_df.loc[i, 'max radius nm'],
                    offset_radius, m_ids, m_sizes, m_rep_coord, f_name] for i in range(len(cellids))]
-
-    #use synapse vertices instead of synapse rep coord to be more accurate;
-    #load synapse vertices only in function
-    #also export meshes for all synapses and save in folder specific for astrocyte
-    #alternatively do 2-step process: use radius + 5 µm for rep_coordinate
-    #then load vertex coordinates of all synapses and filter again for actual radius
-    #use kdtree from astrocentre with radius as max distance of sphere determined in step 1
-    #save synapse id, synapse size, rep coord, astrocyte id for each synapse that is selected and save in dataframe
-
-
+    #will save filtered meshes in separate folders per cellid, return dataframe for each cell with surrounding synapses
+    cell_output = start_multiprocess_imap(get_surr_syns_per_cell, cell_input)
+    raise ValueError
+    #merge dataframes into one
+    surrounding_syn_df = pd.concat(cell_output, ignore_index=True)
+    surrounding_syn_df.to_csv(f'{f_name}/surrounding_synapses.csv')
     log.info('Analysis finished')

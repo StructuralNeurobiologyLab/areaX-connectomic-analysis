@@ -1,13 +1,13 @@
 if __name__ == '__main__':
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
-    from wholebrain.scratch.arother.bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
+    from bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import axon_den_arborization_ct, compare_compartment_volume_ct
+    from bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
+    from bio_analysis.dir_indir_pathway_analysis.spiness_sorting import saving_spiness_percentiles
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset, SuperSegmentationObject
     from syconn.reps.segmentation import SegmentationDataset
-    from wholebrain.scratch.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from bio_analysis.general.result_helper import plot_nx_graph
     import os as os
     import pandas as pd
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj

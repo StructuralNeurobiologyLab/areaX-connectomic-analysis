@@ -7,8 +7,8 @@ from syconn.handler.config import initialize_logging
 from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_spine_density
-from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
+from bio_analysis.general.analysis_morph_helper import get_spine_density
+from bio_analysis.general.result_helper import ComparingResultsForPLotting
 from multiprocessing import pool
 from scipy.stats import ranksums
 from functools import partial

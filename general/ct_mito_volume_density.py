@@ -1,12 +1,12 @@
 #mito volume density axon per celltype
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_colors import CelltypeColors
-    from analysis_morph_helper import get_mito_density_presaved, get_percell_organell_volume_density, get_mito_comp_density_presaved
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_morph_helper import get_mito_density_presaved, get_percell_organell_volume_density, get_mito_comp_density_presaved
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd

@@ -1,4 +1,6 @@
+import re
 import logging
+import os
 
 import networkx as nx
 import numpy as np
@@ -12,6 +14,36 @@ from syconn.proc.meshes import write_meshes2kzip
 from tqdm import tqdm
 
 
+def partner_celltype_key(sd_synssv):
+    """ssd cell-type key to use for synapse partners instead of the syn_ssv 'partner_celltypes' cache (which was
+    written with the v6 classifier): BIO_ANALYSIS_CT_KEY, or 'celltype_pts_<version>_analysis' inside a versioned working dir."""
+    ct_key = os.environ.get('BIO_ANALYSIS_CT_KEY')
+    if ct_key is None:
+        m = re.search(r'celltypes_(v\d+)_', str(getattr(sd_synssv, 'working_dir', '')))
+        if m:
+            ct_key = f'celltype_pts_{m.group(1)}_analysis'
+    return ct_key
+
+
+def relabel_partner_celltypes(sd_synssv, m_ssv_partners, m_cts, ct_key=None):
+    """partner cell types of every synapse from the ssd array ct_key (see partner_celltype_key); unchanged if no key"""
+    if ct_key is None:
+        ct_key = partner_celltype_key(sd_synssv)
+    if ct_key is None:
+        return m_cts
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
+    ssd = SuperSegmentationDataset(working_dir=sd_synssv.working_dir)
+    ssv_ids = ssd.ssv_ids
+    ssv_cts = ssd.load_numpy_data(ct_key)
+    order = np.argsort(ssv_ids)
+    pos = np.clip(np.searchsorted(ssv_ids[order], m_ssv_partners), 0, len(order) - 1)
+    found = ssv_ids[order][pos] == m_ssv_partners
+    m_cts = np.where(found, ssv_cts[order][pos], -1).astype(m_cts.dtype)
+    logging.getLogger().info(f'partner cell types taken from ssd key {ct_key}; '
+                             f'{int((~found).sum())} partner entries without an ssd entry set to -1')
+    return m_cts
+
+
 def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size = 0.1):
     '''
     loads and filters synapse caches for min_syn_size and min_syn_size
@@ -20,13 +52,29 @@ def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size
     :param min_syn_size: threshold for synapse size
     :param wd: path to working directory to load caches from .npy
     :return: m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord
-    '''
 
+    Re-run additions (rerun/README.md): if BIO_ANALYSIS_PREP is set, the filtered arrays are cached as
+    <prep>/syn_cache_sp<prob>_ms<size>[_<ct key>].npz and re-used by every script (the nine dataset arrays are
+    5 GB and were re-read by each script). If BIO_ANALYSIS_CT_KEY is set, the partner cell types are derived
+    from that ssd array instead of the 'partner_celltypes' cache, which was written with the v6 classifier.
+    '''
+    cache_dir = os.environ.get('BIO_ANALYSIS_PREP')
+    ct_key = partner_celltype_key(sd_synssv)
+    cache_keys = ['m_cts', 'm_ids', 'm_axs', 'm_ssv_partners', 'm_sizes', 'm_spiness', 'm_rep_coord', 'syn_prob']
+    cache_file = None
+    if cache_dir is not None and os.environ.get('BIO_ANALYSIS_SYN_CACHE', '1') != '0':
+        tag = f'_{ct_key}' if ct_key else ''
+        cache_file = os.path.join(cache_dir, f'syn_cache_sp{syn_prob_thresh:.2f}_ms{min_syn_size:.2f}{tag}.npz')
+        if os.path.exists(cache_file):
+            logging.getLogger().info(f'synapse cache loaded from {cache_file}')
+            with np.load(cache_file) as d:
+                return tuple(d[k] for k in cache_keys)
     syn_prob = sd_synssv.load_numpy_data("syn_prob")
     m_ids = sd_synssv.ids
     m_axs = sd_synssv.load_numpy_data("partner_axoness")
     m_cts = sd_synssv.load_numpy_data("partner_celltypes")
     m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")
+    m_cts = relabel_partner_celltypes(sd_synssv, m_ssv_partners, m_cts, ct_key)
     m_sizes = sd_synssv.load_numpy_data("mesh_area") / 2
     m_spiness = sd_synssv.load_numpy_data("partner_spiness")
     m_rep_coord = sd_synssv.load_numpy_data("rep_coord")
@@ -48,6 +96,10 @@ def filter_synapse_caches_general(sd_synssv, syn_prob_thresh = 0.8, min_syn_size
     m_spiness = m_spiness[size_inds]
     m_rep_coord = m_rep_coord[size_inds]
     syn_prob = syn_prob[size_inds]
+    if cache_file is not None:
+        np.savez(cache_file, m_cts=m_cts, m_ids=m_ids, m_axs=m_axs, m_ssv_partners=m_ssv_partners, m_sizes=m_sizes,
+                 m_spiness=m_spiness, m_rep_coord=m_rep_coord, syn_prob=syn_prob)
+        logging.getLogger().info(f'synapse cache written to {cache_file} ({len(m_ids)} synapses)')
     return m_cts, m_ids, m_axs, m_ssv_partners, m_sizes, m_spiness, m_rep_coord, syn_prob
 
 
@@ -76,6 +128,7 @@ def filter_synapse_caches_for_ct(pre_cts, post_cts = None, syn_prob_thresh = 0.8
         m_axs = sd_synssv.load_numpy_data("partner_axoness")
         m_cts = sd_synssv.load_numpy_data("partner_celltypes")
         m_ssv_partners = sd_synssv.load_numpy_data("neuron_partners")
+        m_cts = relabel_partner_celltypes(sd_synssv, m_ssv_partners, m_cts)  # partner types from the ssd array
         m_sizes = sd_synssv.load_numpy_data("mesh_area") / 2
         m_spiness = sd_synssv.load_numpy_data("partner_spiness")
         m_rep_coord = sd_synssv.load_numpy_data("rep_coord")

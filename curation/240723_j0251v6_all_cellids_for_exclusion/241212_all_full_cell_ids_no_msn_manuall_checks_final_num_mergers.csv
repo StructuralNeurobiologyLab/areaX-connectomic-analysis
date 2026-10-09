@@ -1,0 +1,246 @@
+cellid,celltype,merger?,merger with,number of mergers,AR check,RM check,JK check,include?,exclude because,coords of merger,autapse?
+3374061,STN,n,,,y,,,y,,,
+3442140,STN,n,,,y (little dendrites),,,y,,,
+3948140,STN,n,,,y (no soma),,,n,not all compartments,,
+4118195,STN,n,,,y,,,y,,,
+4150357,STN,n,,,y,,,y,,,
+4352555,STN,n,,,y,,,y,,,
+7560202,STN,n,,,y,,,y,,"1836, 7619, 1059 (self merger)",
+7626258,STN,n,,,y,,,y,,,
+7962964,STN,n,,,y (other celltype?),,,y,,,
+8504301,STN,n,,,y (other celltype?),,,y,,,
+9885867,STN,n,,,y,,,y,,,
+11406245,STN,n,,,y (other celltype?),,,y,,,
+11572909,STN,n,,,y (other celltype?),,,y,,,
+12146425,STN,n,,,y(other celltype?),,,y,,,
+12585048,STN,n,,,y (other celltype?),,,y,,,
+15320718,STN,y,axon,2,y,,,n,merger,"2525, 15838, 12749",
+15420661,STN,n,,,y,,,y,,,
+16163954,STN,n,,,y,,,y,,,
+18962132,STN,n,,,y,,,y,,,
+19775310,STN,n,,,y (other celltype?),,,y,,,
+21897297,STN,n,,,y (other celltype?),,,y,,,
+23314382,STN,n,,,y,,,y,,,
+23788710,STN,n,,,y (other celltype?),,,y,,,
+24194587,STN,n,,,y,,,y,,,
+26114836,STN,n,,,y (other celltype?),,,y,,,
+26621052,STN,n,,,y (other celltype?),,,y,,,
+31278593,STN,n,,,y,,,y,,,
+38297008,STN,n,,,y,,,y,,,
+38297192,STN,n,,,y,,,y,,,
+39111453,STN,n,,,y,,,y,,"3852, 13721, 112 (self merger)",
+39782757,STN,n,,,y,,,y,,,
+39884461,STN,n,,,y,,,y,,,
+42111883,STN,n,,,y,,,y,,,
+43223315,STN,n,,,y (other celltype?),,,y,,,
+44874367,STN,n,,,y,,,y,,,
+44876588,STN,n,,,y (other celltype?),,,y,,,
+48855586,STN,n,,,y (other celltype?),,,y,,,
+49666859,STN,n,,,y,,,y,,,
+49769370,STN,n,,,y,,,y,,,
+50648088,STN,n,,,y,,,y,,,
+52229570,STN,n,,,y (other celltype?),,,y,,,
+52330826,STN,n,,,y (other celltype?),,,y,,,
+52332920,STN,n,,,y (other celltype?),,,y,,,
+52433603,STN,n,,,y,,,y,,,
+53378460,STN,n,,,y (other celltype?),,,y,,,
+55266237,STN,n,,,y,,,y,,,
+60330383,STN,n,,,y (other celltype?),,,y,,,
+61912928,STN,n,,,y,,,y,,"15687, 17411, 4958 (self merger)",
+64376014,STN,n,,,y (other celltype?),,,y,,,
+67046128,STN,n,,,y,,,y,,,
+67551068,STN,n,,,y (other celltype?),,,y,,,
+74565413,STN,n,,,y,,,y,,,
+75476834,STN,n,,,y,,,y,,,
+75682236,STN,n,,,y,,,y,,,
+82192745,STN,n,,,y (not much soma),,,y,,,
+82937782,STN,y,axon,1,y,,,n,merger,"17211, 13404, 11996",
+84555458,STN,n,,,y,,,y,,,
+86140676,STN,n,,,y,,,y,,,
+93431486,STN,n,,,y (other celltype?),,,y,,,
+126289248,STN,n,,,y (other celltype?),,,y,,,
+129934924,STN,n,,,"y (other celltype?, MSN)",,,y,,,
+163842826,STN,n,,,y (other celltype?),,,y,,,
+167456363,STN,n,,,y,,,y,,"13177, 10595, 6899 (self merger)",
+196875835,STN,n,,,y (other celltype?),,,y,,,
+242660426,STN,n,,,y,,,y,,,
+266718802,STN,n,,,y,,,y,,"20347, 14064, 5458 (self merger)",
+291719074,STN,n,,,y (other celltype?),,,y,,,
+333150399,STN,n,,,y (other celltype?),,,y,,,
+361963956,STN,n,,,y,,,y,,,
+390072183,STN,n,,,y,,,y,,,
+396750419,STN,n,,,y,,,y,,,
+432988156,STN,n,,,y,,,y,,,
+451680496,STN,n,,,y (other celltype?),,,y,,,
+481406285,STN,n,,,y (other celltype?),,,y,,,
+564472565,STN,n,,,y,,,y,,,
+662759023,STN,n,,,y,,,y,,,
+687119417,STN,n,,,y,,,y,,"1978, 19516, 10678 (self merger)",
+756622970,STN,n,,,y (other celltype?),,,y,,,
+775989712,STN,n,,,y,,,y,,,
+821097737,STN,n,,,y,,,y,,,
+825519277,STN,y,dendrite,1,y,,,n,merger,"24102, 2798, 12375",
+883552299,STN,n,,,y (other celltype?),,,y,,,
+895023368,STN,y,dendrite,1,y (other celltype?),,check - do not include,n,merger,"14358, 17369, 8947 (small fragment only; unclear if it has synapse)",
+980385678,STN,n,,,y,,,y,,,
+992703446,STN,n,,,y,,,y,,,
+1054782299,STN,n,,,y (other celltype?),,,y,,,
+1130665247,STN,n,,,y,,,y,,,
+1204864258,STN,n,,,y,,,y,,,
+1259113748,STN,n,,,y (other celltype?),,,y,,,
+1266095423,STN,n,,,y (other celltype?),,,y,,,
+1298013841,STN,n,,,y,,,y,,,
+1299023959,STN,n,,,y,,,y,,,
+1306618463,STN,n,,,y,,,y,,,
+1312459848,STN,n,,,y (other celltype?),,,y,,,
+1380947726,STN,n,,,y (other celltype?),,,y,,,
+1463980893,STN,n,,,y (other celltype?),,,y,,,
+1479772383,STN,n,,,y,,,y,,"9389, 14896, 13340 (self merger)",
+1554336852,STN,n,,,y,,,y,,,
+1590608874,STN,n,,,y,,,y,,,
+1598028160,STN,n,,,y (other celltype?),,,y,,,
+1645435353,STN,n,,,"y (other celltype, no axon?)",,"check - no axon, maybe it has evaded min axon filter?",n,not all compartments,jk: do not include,
+1703808260,STN,n,,,y (other celltype?),,,y,,,
+1846729013,STN,n,,,,y,,y,,,
+1926928359,STN,n,,,y (other celltype?),,,y,,,
+1985032745,STN,n,,,,y,,y,,,
+2001761429,STN,n,,,y,,,y,,,
+2072584686,STN,n,,,y (other celltype?),,,y,,,
+2307245899,STN,n,,,,y,,y,,"23779, 14878, 15246 (self)",
+4488613,TAN,y,axon,1,y,,,n,merger,"4049, 13723, 9228",
+10157981,TAN,y,axon,1,y,,,n,merger,"12166, 7913, 7724, (small fragment only, but has synapses)",
+24596473,TAN,y,axon,2,y,,,n,merger,"9248, 13592, 12533 (small fragment only), 8398, 15138, 12365, 8631, 14881, 12030",
+25372570,TAN,n,,,y,,,y,,,
+26353030,TAN,n,,,y,,,y,,,
+26958335,TAN,n,,,y,,,y,,,
+28209513,TAN,n,,,y,,,y,,,
+33605129,TAN,n,,,y,,,y,,,
+45452841,TAN,n,,,y,,,y,,"17142, 11560, 3675 (self merger)",
+52904364,TAN,n,,,y,,,y,,,
+78211969,TAN,y,axon,1,y,,,n,merger,"13231, 20332, 10895",
+175077676,TAN,n,,,y,,,y,,,
+244383709,TAN,n,,,y (no soma?),,check,n,not all compartments,"jk: do not include, no soma",
+4150116,GPe,n,,,y,,,y,,,n
+5803292,GPe,n,,,,y,,y,,,n
+10190245,GPe,n,,,y,,,y,,"21717, 8680, 515 (self merger), 23579, 8093, 275 (self merger)",n
+17748051,GPe,n,,,y,,,y,,"14023, 14134, 4752 (autapse)",y
+32019367,GPe,n,,,,y,,y,,,n
+32356701,GPe,n,,,y,,,y,,,n
+38767646,GPe,n,,,,y,check,n,not all compartments,jk: do not include,n
+40660209,GPe,n,,,y,,,y,,,n
+46092331,GPe,n,,,,y,,y,,,n
+50614045,GPe,n,,,y,,,y,,"2966, 19608, 2698 (autapse)",y
+61710549,GPe,n,,,,y,,y,,"14219, 24112, 4897 (autapse)",n
+122781754,GPe,n,,,y,,,y,,,n
+347218588,GPe,n,,,,y,,y,,,n
+354137851,GPe,n,,,y,,,y,,"22158, 13710, 7138 (autapse)",y
+600576536,GPe,n,,,,y,,y,,"20149, 21767, 7242 (autapse)",y
+606343972,GPe,n,,,y,,,y,,,n
+775215267,GPe,n,,,y,,,y,,"21871, 10950, 8645 (self merger), 21857, 10955, 8621 (autapse)",y
+824236472,GPe,n,,,,y,,y,,,n
+968947981,GPe,n,,,y,,,y,,,n
+1101410378,GPe,n,,,,y,,y,,,n
+1389045173,GPe,n,,,y,,,y,,,n
+1453824753,GPe,n,,,,y,,y,,"25631, 4751, 12882 (autapse)",y
+1557170527,GPe,n,,,,y,,y,,"7352, 10079, 12690 (autapse)",y
+1714433149,GPe,n,,,y,,,y,,"23629, 22190, 14487 (self merger)",n
+1753707157,GPe,n,,,,y,,y,,,n
+1858603352,GPe,n,,,,y,,y,,"17945, 5753, 12550 (autapse)",y
+1903488823,GPe,n,,,y,,,y,,,n
+1930165972,GPe,n,,,y,,,y,,"4771, 18828, 14018 (self merger)",n
+2834364,GPi,y,axon,1,y,,,n,merger,"22584, 4733, 803, 21676, 4958, 1261, 17210, 5086, 4478",n
+3341042,GPi,y,dendrite,1,y,,check,n,merger,"25503, 5563, 1260",n
+4151286,GPi,n,,,y,,,y,,,n
+8266372,GPi,n,,,,y,,y,,,n
+11541121,GPi,y,glia,1,y,,,n,merger,,
+11675355,GPi,n,,,y,,,y,,"3592, 10179, 4757 (autapse, not soma), ",y
+13394835,GPi,n,,,y,,,y,,,n
+15388259,GPi,n,,,y,,,y,,"9281, 12976, 4929 (self merger, auto-synapse)",y
+16060305,GPi,y,axon,,y,,check,y,,"14681, 10641, 431 (merger, small fragment, no synapses with other cells), 15324, 9682, 497 (auto-synapse)",y
+18963088,GPi,y,axon,1,y,,,n,merger,"7924, 15939, 15349",n
+20650554,GPi,n,,,y,,,y,,"17550, 14013, 9696 (auto-synapse), 17650, 12721, 9765 (auto-synapse)",y
+21022344,GPi,n,,,y,,,y,,,n
+23552465,GPi,n,,,y,,,y,,"13940, 5503, 6599 (auto-synapse)",y
+26252706,GPi,n,,,y,,,y,,"4645, 8341, 5025, 3575, 8124, 5388 (both autapses)",y
+26519659,GPi,n,,,y,,,y,,,n
+26790127,GPi,n,,,y,,,y,,"14762, 13862, 7796 (self merger)",n
+27531858,GPi,n,,,y,,,y,,,n
+28814601,GPi,n,,,y,,,y,,,n
+33643243,GPi,n,,,y,,,y,,"12060, 15279, 11879 (auto-synapse)",y
+34178656,GPi,n,,,y,,,y,,,n
+39847003,GPi,n,,,y,,,y,,,n
+44671829,GPi,n,,,y,,,y,,,n
+46999900,GPi,n,,,y,,,y,,,n
+58336508,GPi,n,,,y,,,n,not all compartments,,n
+58606391,GPi,n,,,y,,,y,,,n
+62419039,GPi,n,,,y,,,y,,,n
+63264864,GPi,y,axon,2,y (also other celltype?),,,n,merger,,n
+63336405,GPi,n,,,y,,,y,,"4186, 20091, 6534 (autapse)",y
+63431281,GPi,n,,,y,,,y,,,n
+64210280,GPi,y,dendrite,2,y,,,n,merger,"15160, 18388, 1666 (real merger), 5346, 20747, 8007 (autapse), 7973, 19949, 7608 (self-merger)",y
+67009484,GPi,n,,,y,,,y,,,n
+69200962,GPi,n,,,y,,,y,,,n
+72541034,GPi,n,,,y,,,y,,,n
+72879213,GPi,y,axon,1,y,,,n,merger,"3877, 13040, 13492",n
+83542452,GPi,n,,,y,,,y,,"8568, 25073, 4788, 8339, 24874, 4846 (both autapses)",y
+85598412,GPi,n,,,y,,,n,not all compartments,,n
+207333487,GPi,n,,,y,,,y,,"10795, 8776, 13342 (dendrite, autapse)",y
+314561390,GPi,n,,,y,,,y,,,n
+328866567,GPi,n,,,y,,,y,,"5756, 4052, 8334 (autapse, not soma), 6135, 3269, 7789 (autapse)",y
+369961324,GPi,n,,,y,,,y,,,n
+379072583,GPi,n,,,y,,,y,,"very long myelinated axon - reaching to other side of dataset; 1794, 11277, 8238 (dendrite, autapse)",y
+453097983,GPi,n,,,y,,,y,,"2215, 9203, 8726 (autapse; good for example image); 2040, 9653, 8688 (autapse)",y
+479415063,GPi,n,,,y,,,y,,"21924, 23540, 7700; 21924, 23540, 7700 (autapses, second one with AIS start)",y
+480798536,GPi,n,,,y,,,y,,,n
+580061165,GPi,n,,,y,,,y,,,n
+597605469,GPi,n,,,,y,,y,,"8476, 20113, 13092 / 1256, 23263, 9726 (self-merger, autapse)",y
+686948959,GPi,n,,,y,,,y,,"9856, 25026, 12870 (autapse)",y
+792864986,GPi,n,,,y,,,y,,"16236, 19114, 10406; 16222, 19588, 10832; 17208, 20484, 10019 (autapses)",y
+809390056,GPi,n,,,y,,,y,,,n
+844007128,GPi,n,,,y,,,y,,,n
+946881951,GPi,n,,,y,,,y,,"11391, 7752, 9673 (dendrite, autapse)",y
+1075431186,GPi,y,"dendrite, axon",2,y,,,n,merger,"7332, 15700, 15145; 11349, 11045, 11704; 9534, 16342, 11741; 18725, 15115, 10618",n
+1179179749,GPi,y,axon,1,y,,check,n,merger,"16311, 7246, 11244; 18985, 18400, 12326; 19793, 17424, 12394; 19990, 17772, 12269; 20892, 16858, 12099 (autapses)",y
+1193993147,GPi,n,,,y,,,y,,,n
+1431893661,GPi,n,,,y,,,y,,,n
+1594081077,GPi,n,,,y,,,y,,,n
+1724891551,GPi,n,,,,y,,y,,"15002, 21892, 13990 (autapse, dendrite)",y
+2094180358,GPi,n,,,y,,,y,,"22613, 18942, 15026 (self merger, autapse)",y
+4352945,LTS,n,,,,y,,y,,,
+4554974,LTS,n,,,y,,,y,,,
+7928917,LTS,n,,,,y,,y,,,
+15521116,LTS,n,,,y,,,y,,,
+17106332,LTS,n,,,y,,,y,,,
+20718752,LTS,n,,,,y,,y,,,
+21697917,LTS,n,,,,y,,y,,,
+22606703,LTS,n,,,,y,,y,,,
+25409235,LTS,n,,,y,,,y,,,
+30703527,LTS,n,,,y,,,y,,,
+41095452,LTS,n,,,,y,,y,,,
+42918146,LTS,n,,,,y,,y,,,
+43865970,LTS,n,,,,y,,y,,,
+44233162,LTS,n,,,,y,,y,,,
+44941740,LTS,n,,,y,,,y,,,
+48720742,LTS,n,,,,y,,y,,,
+48926571,LTS,n,,,,y,,y,,,
+51993379,LTS,n,,,y,,,y,,,
+55772296,LTS,n,,,,y,,y,,,
+62152255,LTS,n,,,,y,,y,,,
+67750051,LTS,n,,,,y,,y,,,
+88265889,LTS,n,,,,y,,y,,,
+139382594,LTS,n,,,y,,,y,,,
+173325651,LTS,n,,,,y,,y,,,
+239792676,LTS,n,,,,y,,y,,,
+398809969,LTS,n,,,y (other celltype?),,,y,,,
+480462378,LTS,n,,,,y,,y,,,
+481134355,LTS,n,,,,y,,y,,,
+514467771,LTS,n,,,,y,,y,,,
+639982340,LTS,n,,,,y,,y,,"8475, 8620, 10581 (self merger)",
+657459333,LTS,y,axon,1,y,,,n,merger,"13793, 4057, 8086",
+756218606,LTS,n,,,y,,,y,,,
+778925828,LTS,n,,,,y,,y,,,
+1040205511,LTS,n,,,,y,,y,,,
+1091356471,LTS,n,,,,y,,y,,,
+1270685701,LTS,n,,,,y,,y,,,
+1567090303,LTS,n,,,y,,,y,,,
+1950679306,LTS,n,,,y,,,y,,,

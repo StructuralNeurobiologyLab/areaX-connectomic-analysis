@@ -4,9 +4,9 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.handler.basics import load_pkl2obj
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_histogram_selection
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.result_helper import plot_histogram_selection
     import os as os
     import pandas as pd
     import numpy as np

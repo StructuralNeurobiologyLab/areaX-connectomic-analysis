@@ -3,8 +3,8 @@
 if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from analysis_morph_helper import map_axoness_cellid2org, map_cellid2org
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import map_axoness_cellid2org, map_cellid2org
+    from bio_analysis.general.analysis_params import Analysis_Params
     import numpy as np
     from syconn.mp.mp_utils import start_multiprocess_imap
     from syconn.reps.segmentation import SegmentationDataset

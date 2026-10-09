@@ -5,9 +5,9 @@ from syconn.reps.segmentation import SegmentationDataset
 from syconn.reps.super_segmentation import SuperSegmentationObject
 import pandas as pd
 import numpy as np
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_general
+from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_general
 from syconn.handler.config import initialize_logging
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+from bio_analysis.general.analysis_params import Analysis_Params
 from syconn.proc.meshes import write_meshes2kzip
 
 global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'

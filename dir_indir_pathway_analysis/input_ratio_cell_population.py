@@ -8,10 +8,10 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from syconn.reps.segmentation import SegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, \
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, \
         get_ct_syn_number_sumsize
     import matplotlib.pyplot as plt
     from scipy.stats import ttest_1samp

@@ -3,13 +3,15 @@
 #ct_mito_volume_density is obsolete then
 
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_colors import CelltypeColors
-    from analysis_morph_helper import get_percell_organell_volume_density, get_organelle_comp_density_presaved
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_morph_helper import get_percell_organell_volume_density, get_organelle_comp_density_presaved
+    from bio_analysis.general.analysis_morph_helper import organelle_comp_density_vectorised, organelle_density_axons_vectorised
+    from syconn.reps.super_segmentation import SuperSegmentationDataset
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd
@@ -30,6 +32,7 @@ if __name__ == '__main__':
     with_glia = False
     ct_dict = analysis_params.ct_dict(with_glia=with_glia)
     full_cells_only = False
+    use_vectorised = True  # one bincount instead of one np.in1d per cell, same numbers
     min_comp_len_cell = 200
     min_comp_len_ax = 200
     # color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw'}
@@ -143,7 +146,11 @@ if __name__ == '__main__':
                         cellid in suitable_ids_dict[ct]]
             else:
                 org_input = [[cellid, cached_org_ids, cached_org_volumes, all_cell_dict[ct][cellid], True, organelle_key] for cellid in suitable_ids_dict[ct]]
-            org_output = start_multiprocess_imap(get_percell_organell_volume_density, org_input)
+            if use_vectorised and organelle_key != 'er':
+                org_output = organelle_density_axons_vectorised(suitable_ids_dict[ct], SuperSegmentationDataset(working_dir=global_params.wd),
+                                                                organelle_key, cached_org_ids, cached_org_volumes, all_cell_dict[ct])
+            else:
+                org_output = start_multiprocess_imap(get_percell_organell_volume_density, org_input)
             org_output = np.array(org_output)
             comp_volume_density = org_output
             full_volume_density = comp_volume_density
@@ -158,11 +165,15 @@ if __name__ == '__main__':
             ct_org_map2ssvids = ct_org_map2ssvids[ct_ind]
             ct_org_sizes = ct_org_sizes[ct_ind]
             ct_org_axoness = ct_org_axoness[ct_ind]
-            org_input = [[cellid, ct_org_map2ssvids, ct_org_sizes, ct_org_axoness, all_cell_dict[ct][cellid], compartment] for cellid in suitable_ids_dict[ct]]
-            org_output = start_multiprocess_imap(get_organelle_comp_density_presaved, org_input)
-            org_output = np.array(org_output, dtype = float)
-            comp_volume_density = org_output[:, 0]
-            full_volume_density = org_output[:, 1]
+            if use_vectorised:
+                comp_volume_density, full_volume_density = organelle_comp_density_vectorised(
+                    suitable_ids_dict[ct], ct_org_map2ssvids, ct_org_sizes, ct_org_axoness, all_cell_dict[ct], compartment)
+            else:
+                org_input = [[cellid, ct_org_map2ssvids, ct_org_sizes, ct_org_axoness, all_cell_dict[ct][cellid], compartment] for cellid in suitable_ids_dict[ct]]
+                org_output = start_multiprocess_imap(get_organelle_comp_density_presaved, org_input)
+                org_output = np.array(org_output, dtype = float)
+                comp_volume_density = org_output[:, 0]
+                full_volume_density = org_output[:, 1]
         #for percell df
         ct_inds = np.in1d(percell_org_df['cellid'], suitable_ids_dict[ct])
         percell_org_df.loc[ct_inds, 'celltype'] = ct_str

@@ -15,7 +15,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl
     from scipy.stats import ranksums
-    from u.arother.bio_analysis.general.analysis_helper import get_comp_radii
+    from bio_analysis.general.analysis_helper import get_comp_radii
     global_params.wd = "/ssdscratch/pschuber/songbird/j0251/rag_flat_Jan2019_v3"
 
     ssd = SuperSegmentationDataset(working_dir=global_params.config.working_dir)

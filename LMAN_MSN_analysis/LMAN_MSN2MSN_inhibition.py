@@ -3,8 +3,8 @@
 #based on domain hypothesis published by Wicken et al., 1993, 1995
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     from scipy.stats import ranksums
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
 
     version = 'v6'
     bio_params = Analysis_Params(version=version)

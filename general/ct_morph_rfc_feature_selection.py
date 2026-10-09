@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os as os
 from syconn.handler.config import initialize_logging
-from analysis_params import Analysis_Params
-from analysis_colors import CelltypeColors
+from bio_analysis.general.analysis_params import Analysis_Params
+from bio_analysis.general.analysis_colors import CelltypeColors
 
 if __name__ == '__main__':
 

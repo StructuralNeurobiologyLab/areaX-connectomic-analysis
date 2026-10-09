@@ -2,12 +2,12 @@
 #compare celltypes based on morphology
 
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_colors import CelltypeColors
-    from analysis_morph_helper import check_comp_lengths_ct, get_spine_density, get_cell_soma_radius, get_myelin_fraction, get_median_comp_radii_cell
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_spine_density, get_cell_soma_radius, get_myelin_fraction, get_median_comp_radii_cell
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     from syconn.reps.super_segmentation import SuperSegmentationObject
     import pandas as pd
@@ -45,6 +45,7 @@ if __name__ == '__main__':
     use_syn_params = False
     use_golgi_density = False
     use_er_density = False
+    msn_only = False
     alpha = 0.5
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/251023_j0251{version}_ct_morph_analyses_newmergers_mcl_%i_ax%i_%s_fs%i" \
              f"npca{n_comps_PCA}_umap{n_umap_runs}_a{alpha}" % (
@@ -124,6 +125,13 @@ if __name__ == '__main__':
     morph_df['celltype'] = all_celltypes
     param_list = columns[2:]
 
+    # rerun/build_percell_table.py stores the outputs of the same worker functions per full cell in
+    # <prep>/percell_morph.csv; if present, use them instead of four skeleton passes
+    percell_table_path = f'{np_presaved_loc}/percell_morph.csv'
+    use_percell_table = os.path.exists(percell_table_path)
+    if use_percell_table:
+        percell_table = pd.read_csv(percell_table_path, index_col='cellid')
+        log.info(f'per-cell morphology table used: {percell_table_path}')
     if process_morph_parameters:
         log.info('Step 2/8: Get compartment surface area and length for cells, get compartment length, spine density, cell volume')
         #get only axon and not dendrite length as use dendrite length without spines for this value for
@@ -143,25 +151,29 @@ if __name__ == '__main__':
                     morph_df.loc[id_ind, 'axon surface area'] = cell_dict[cellid]['axon mesh surface area']
                     morph_df.loc[id_ind, 'dendrite surface area'] = cell_dict[cellid]['dendrite mesh surface area']
                     morph_df.loc[id_ind, 'soma surface area'] = cell_dict[cellid]['soma mesh surface area']
-                    cell = SuperSegmentationObject(cellid)
-                    cell_size = cell.size
-                    if cell_size < 0:
-                        cell.calculate_size()
+                    if use_percell_table:
+                        cell_volume = percell_table.loc[cellid, 'cell volume']
+                    else:
+                        cell = SuperSegmentationObject(cellid)
                         cell_size = cell.size
-                        assert (cell_size > 0)
-                    cell_volume = cell_size * np.prod(cell.scaling) * 10**(-9) #in µm³
+                        if cell_size < 0:
+                            cell.calculate_size()
+                            cell_size = cell.size
+                            assert (cell_size > 0)
+                        cell_volume = cell_size * np.prod(cell.scaling) * 10**(-9) #in µm³
                     morph_df.loc[id_ind, 'cell volume'] = cell_volume
                 ct_inds = morph_df['celltype'] == ct_dict[ct]
-                cell_input = [[cell_id, min_comp_len_cell, cell_dict[cell_id]] for cell_id in ct_ids]
-                spine_density_res = start_multiprocess_imap(get_spine_density, cell_input)
-                spine_density_res = np.array(spine_density_res, dtype='object')
-                spine_density = spine_density_res[:, 0]
-                no_spine_den_length = spine_density_res[:, 1]
+                if use_percell_table:
+                    spine_density = percell_table.loc[ct_ids, 'spine density'].values
+                    no_spine_den_length = percell_table.loc[ct_ids, 'dendrite length no spines'].values
+                else:
+                    cell_input = [[cell_id, min_comp_len_cell, cell_dict[cell_id]] for cell_id in ct_ids]
+                    spine_density_res = start_multiprocess_imap(get_spine_density, cell_input)
+                    spine_density_res = np.array(spine_density_res, dtype='object')
+                    spine_density = spine_density_res[:, 0]
+                    no_spine_den_length = spine_density_res[:, 1]
                 morph_df.loc[ct_inds, 'spine density'] = spine_density
                 morph_df.loc[ct_inds, 'dendrite length'] = no_spine_den_length
-
-        raise ValueError
-
 
         log.info('Step 3/9: Get axon and dendrite median radius from cell, remove spines from dendrite for that')
         if not full_cells_only:
@@ -180,18 +192,25 @@ if __name__ == '__main__':
                 full_cell_inds = np.in1d(all_celltypes_num, full_ct_types)
                 full_cell_ids = all_suitable_ids
         if not axon_only:
-            cell_input = [[cell_id, False, True] for cell_id in full_cell_ids]
-            ct_radii_res = start_multiprocess_imap(get_median_comp_radii_cell, cell_input)
-            ct_radii_res = np.array(ct_radii_res, dtype='object')
-            ct_ax_median_radius = ct_radii_res[:, 0]
-            ct_den_median_radius = ct_radii_res[:, 1]
+            if use_percell_table and 'dendrite median radius no spines' in percell_table.columns:
+                ct_ax_median_radius = percell_table.loc[full_cell_ids, 'axon median radius'].values
+                ct_den_median_radius = percell_table.loc[full_cell_ids, 'dendrite median radius no spines'].values
+            else:
+                cell_input = [[cell_id, False, True] for cell_id in full_cell_ids]
+                ct_radii_res = start_multiprocess_imap(get_median_comp_radii_cell, cell_input)
+                ct_radii_res = np.array(ct_radii_res, dtype='object')
+                ct_ax_median_radius = ct_radii_res[:, 0]
+                ct_den_median_radius = ct_radii_res[:, 1]
             morph_df.loc[full_cell_inds, 'axon median radius'] = ct_ax_median_radius
             morph_df.loc[full_cell_inds, 'dendrite median radius'] = ct_den_median_radius
 
             log.info('Step 4/9: Get soma diameter for cells')
-            ct_soma_results = start_multiprocess_imap(get_cell_soma_radius, full_cell_ids)
-            ct_soma_results = np.array(ct_soma_results, dtype='object')
-            ct_diameters = ct_soma_results[:, 1].astype(float) * 2
+            if use_percell_table:
+                ct_diameters = percell_table.loc[full_cell_ids, 'soma radius'].values.astype(float) * 2
+            else:
+                ct_soma_results = start_multiprocess_imap(get_cell_soma_radius, full_cell_ids)
+                ct_soma_results = np.array(ct_soma_results, dtype='object')
+                ct_diameters = ct_soma_results[:, 1].astype(float) * 2
             morph_df.loc[full_cell_inds, 'soma diameter'] = ct_diameters
 
         log.info('Step 5/9: Get myelin fraction from cells')
@@ -202,10 +221,13 @@ if __name__ == '__main__':
             ax_rel_myelin = ax_myelin_results[:, 1]
             morph_df.loc[axon_inds, 'axon myelin fraction'] = ax_rel_myelin
         if not axon_only:
-            cell_input = [[cellid, min_comp_len_cell, True, False] for cellid in full_cell_ids]
-            ct_myelin_results = start_multiprocess_imap(get_myelin_fraction, cell_input)
-            ct_myelin_results = np.array(ct_myelin_results, dtype='object')
-            rel_myelin = ct_myelin_results[:, 1]
+            if use_percell_table:
+                rel_myelin = percell_table.loc[full_cell_ids, 'axon myelin fraction'].values
+            else:
+                cell_input = [[cellid, min_comp_len_cell, True, False] for cellid in full_cell_ids]
+                ct_myelin_results = start_multiprocess_imap(get_myelin_fraction, cell_input)
+                ct_myelin_results = np.array(ct_myelin_results, dtype='object')
+                rel_myelin = ct_myelin_results[:, 1]
             morph_df.loc[full_cell_inds, 'axon myelin fraction'] = rel_myelin
 
         morph_df = morph_df.astype({param: float for param in param_list})
@@ -458,7 +480,8 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/{key}_violin.svg')
         plt.close()
 
-    morph_df = morph_df[morph_df['celltype'] == 'MSN']
+    if msn_only:  # 251023 '_MSNonly' control; the manuscript runs (250711) used all full cells
+        morph_df = morph_df[morph_df['celltype'] == 'MSN']
 
     log.info('Step 8/9: Get PCA of results')
     log.info(f'Number of components for PCA = {n_comps_PCA}')
@@ -584,14 +607,15 @@ if __name__ == '__main__':
             plt.close()
 
     log.info('Step 9/9: Get umap of results')
-    #seed umap analyses
+    #seed umap analyses: each run gets its own fixed random_state so that the layouts are reproducible
     np.random.seed(42)
+    umap_seed = 42
     #same as above make one umap on only axon types and one on full cells
-    log.info(f'UMAP will be run {n_umap_runs} times')
+    log.info(f'UMAP will be run {n_umap_runs} times, random_state = {umap_seed} + run index')
     #code inspired by Chatgpt4
     if not axon_only:
         for i in range(n_umap_runs + 1):
-            fc_reducer = umap.UMAP()
+            fc_reducer = umap.UMAP(random_state=umap_seed + i)
             fc_embedding = fc_reducer.fit_transform(fc_features_standardized)
             umap_df = pd.DataFrame(columns = ['cellid', 'celltype', 'UMAP 1', 'UMAP 2'])
             umap_df['cellid'] = full_cell_df['cellid']
@@ -612,7 +636,7 @@ if __name__ == '__main__':
             plt.close()
     if not full_cells_only:
         for i in range(n_umap_runs + 1):
-            ax_reducer = umap.UMAP()
+            ax_reducer = umap.UMAP(random_state=umap_seed + i)
             ax_embedding = ax_reducer.fit_transform(ax_features_standardized)
             umap_df = pd.DataFrame(columns=['cellid', 'celltype', 'UMAP 1', 'UMAP 2'])
             umap_df['cellid'] = axon_morph_df['cellid']

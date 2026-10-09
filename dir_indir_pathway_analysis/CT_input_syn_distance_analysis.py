@@ -2,11 +2,11 @@
 #script gets distance of different synaptic inputs to GPi soma and plots differences between different celltypes
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_general
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.synapse_input_distance import get_syn_distances
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_general
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.dir_indir_pathway_analysis.synapse_input_distance import get_syn_distances
+    from bio_analysis.general.analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params

@@ -9,11 +9,11 @@ if __name__ == '__main__':
     import os as os
     import pandas as pd
     import numpy as np
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, \
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, \
         get_spine_density, get_cell_soma_radius
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_histogram_selection
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.result_helper import plot_histogram_selection
     import seaborn as sns
     import matplotlib.pyplot as plt
     from syconn.mp.mp_utils import start_multiprocess_imap

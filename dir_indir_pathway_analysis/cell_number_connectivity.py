@@ -2,9 +2,9 @@
 #similar to cell_number_pathway_analysis but uses all suitable cells in one population
 #analysis only in one direction
 
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_ct_syn_number_sumsize, filter_synapse_caches_general
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_ct_syn_number_sumsize, filter_synapse_caches_general
+    from bio_analysis.general.analysis_params import Analysis_Params
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset

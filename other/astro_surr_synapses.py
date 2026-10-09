@@ -3,12 +3,12 @@
 #second get all synapses within sphere
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_cell_sphere_from_skel
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_general, get_surr_syns_per_cell
+    from bio_analysis.general.analysis_morph_helper import get_cell_sphere_from_skel
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_general, get_surr_syns_per_cell
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np
@@ -97,7 +97,6 @@ if __name__ == '__main__':
                    offset_radius, m_ids, m_sizes, m_rep_coord, f_name] for i in range(len(cellids))]
     #will save filtered meshes in separate folders per cellid, return dataframe for each cell with surrounding synapses
     cell_output = start_multiprocess_imap(get_surr_syns_per_cell, cell_input)
-    raise ValueError
     #merge dataframes into one
     surrounding_syn_df = pd.concat(cell_output, ignore_index=True)
     surrounding_syn_df.to_csv(f'{f_name}/surrounding_synapses.csv')

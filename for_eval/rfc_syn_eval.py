@@ -4,11 +4,11 @@
 #do once for all synapses and once for only those with min syn size and specific cell types
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np
@@ -66,6 +66,8 @@ if __name__ == '__main__':
     m_cts = m_cts[ax_inds]
     np.random.seed(42)
     log.info(f'There are {len(m_ids)} synapses in total where one partner is an axon.')
+    # histogram of the synapse probability (Fig S1A), 50 bins
+    _c, _e = np.histogram(syn_prob, bins=np.linspace(0, 1, 51)); pd.DataFrame({'bin_left': _e[:-1], 'bin_right': _e[1:], 'count': _c}).to_csv(f'{f_name}/syn_prob_hist_all.csv')
 
     columns = ['coord x', 'coord y', 'coord z', 'syn id',
                'celltype 1', 'celltype 2', 'syn size',
@@ -183,6 +185,8 @@ if __name__ == '__main__':
     syn_prob_cats = syn_prob_cats[den_so_inds]
     log.info(f'There are now {len(m_ids)} axo-dendritic or axo-somatic synapses with a minimal syn size of {min_syn_size} µm,'
              f'that come from {len(all_suitable_ids)} cell ids.')
+    # histogram of the filtered set (Fig S1B)
+    _c, _e = np.histogram(syn_prob, bins=np.linspace(0, 1, 51)); pd.DataFrame({'bin_left': _e[:-1], 'bin_right': _e[1:], 'count': _c}).to_csv(f'{f_name}/syn_prob_hist_filtered.csv')
     rndm_syn_ids = []
     #select radom ids
     for ct in tqdm(ct_types):

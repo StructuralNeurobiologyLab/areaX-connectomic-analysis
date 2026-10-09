@@ -10,12 +10,12 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     import os as os
     import pandas as pd
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_cell_length_chunks
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import get_cell_length_chunks
     from syconn.mp.mp_utils import start_multiprocess_imap
     from scipy.stats import kruskal, ranksums
     from itertools import combinations
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_colors import CelltypeColors
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
@@ -37,7 +37,6 @@ if __name__ == '__main__':
     if use_gt:
         #for gt: agglo2 uses v4 (11 neuron classes, no glia, no fragments), gt v4b (manually checked gt for mergers, add fragment class + some astros)
         #v5 wd uses v5: fragment class, astros, oligo + microglia, v6 wd: 6: INT1⁻3 instead of FS, NGF, + migrating neurons; add short axon fragments
-        #new wd v7 will use v7
         gt_path = "cajal/nvmescratch/projects/data/songbird/j0251/groundtruth/celltypes/j0251_celltype_gt_v6_j0251_72_seg_20210127_agglo2_IDs.csv"
         #gt_path = 'cajal/nvmescratch/users/arother/202301_syconnv5_wd_tests/20231013_new_celltype_gt/231115_ar_j0251_celltype_gt_v7_j0251_72_seg_20210127_agglo2_IDs.csv'
         gt = pd.read_csv(gt_path,names=["cellids", "celltype"])
@@ -82,6 +81,8 @@ if __name__ == '__main__':
         syn_axs[syn_axs == 4] = 1
         syn_ssv_partners = sd_synssv.load_numpy_data('neuron_partners')
         syn_cts = sd_synssv.load_numpy_data('partner_celltypes')
+        from bio_analysis.general.analysis_conn_helper import relabel_partner_celltypes
+        syn_cts = relabel_partner_celltypes(sd_synssv, syn_ssv_partners, syn_cts)  # partner types from the ssd array
         #filter for axo-dendritic or axo-somatic
         ax_inds = np.any(np.in1d(syn_axs, 1).reshape(len(syn_axs), 2), axis = 1)
         syn_axs = syn_axs[ax_inds]
@@ -294,7 +295,18 @@ if __name__ == '__main__':
         plt.savefig(f'{f_name}/syn_num_len_scatter.png')
         plt.savefig(f'{f_name}/syn_num_len_scatter.svg')
         plt.close()
-        sns.kdeplot(data=axon_df, x='skeleton length', y='syn number', hue='celltype', palette=ct_palette, alpha=0.2)
+        try:
+            sns.kdeplot(data=axon_df, x='skeleton length', y='syn number', hue='celltype', palette=ct_palette, alpha=0.2)
+        except ValueError as e:  # a hue level with (near-)constant values makes the 2D KDE contour levels non-increasing
+            log.info(f'2D KDE over all celltypes failed ({e}); plotting only celltypes with >= 3 distinct (length, syn) points')
+            plt.close()
+            ok_cts = [ct for ct in axon_df['celltype'].unique()
+                      if axon_df.loc[axon_df['celltype'] == ct, ['skeleton length', 'syn number']].drop_duplicates().shape[0] >= 3]
+            for ct_ in ok_cts:  # one type at a time; a type whose density still gives degenerate contour levels is skipped
+                try:
+                    sns.kdeplot(data=axon_df[axon_df['celltype'] == ct_], x='skeleton length', y='syn number', color=ct_palette[ct_], alpha=0.2, warn_singular=False)
+                except ValueError as e2:
+                    log.info(f'2D KDE skipped for {ct_}: {e2}')
         plt.ylabel('synapse number', fontsize=fontsize)
         plt.xlabel('skeleton length[µm]', fontsize=fontsize)
         plt.yticks(fontsize=fontsize)

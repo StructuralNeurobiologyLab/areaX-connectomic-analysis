@@ -12,9 +12,9 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes, get_cell_nodes_ax
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids, get_contact_size_axoness_per_cell
-from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
+from bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct, get_compartment_nodes, get_cell_nodes_ax
+from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, synapse_amount_sumsize_between2cts, filter_contact_caches_for_cellids, get_contact_size_axoness_per_cell
+from bio_analysis.general.result_helper import ComparingMultipleForPLotting, ResultsForPlotting
 from multiprocessing import pool
 from functools import partial
 

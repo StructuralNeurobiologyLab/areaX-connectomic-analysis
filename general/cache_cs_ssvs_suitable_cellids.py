@@ -1,8 +1,8 @@
 #cache cs_ssv_0 for cellids used with 200 µm
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_conn_helper import get_ct_information_npy, get_contact_size_axoness_per_cell
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_conn_helper import get_ct_information_npy, get_contact_size_axoness_per_cell
+    from bio_analysis.general.analysis_params import Analysis_Params
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset

@@ -8,10 +8,10 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from tqdm import tqdm
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     from syconn.mp.mp_utils import start_multiprocess_imap
     from sklearn.utils import shuffle
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_from_skel_data
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_from_skel_data
     import time
     from syconn.handler.basics import load_pkl2obj
 

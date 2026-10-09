@@ -7,6 +7,8 @@ class CelltypeColors():
     '''
     Here are colour palettes made to visualize 11 different celltypes
     '''
+    INT4_COLOR = '#B50E9C'  # INT4 (v8 cell types), same colour in every palette
+
     def __init__(self, ct_dict):
         self.ct_dict = ct_dict
         self.num_cts = len(ct_dict.keys())
@@ -64,10 +66,13 @@ class CelltypeColors():
         :param num: if True, use numbers as keys, else str
         :return: color palette
         '''
+        # INT4 (index 12 in v8) has one fixed colour in every palette; the glia keep their colours.
+        colors = [self.INT4_COLOR if self.ct_dict.get(i) == 'INT4' else self.colors[key][i - int(12 in self.ct_dict and self.ct_dict[12] == 'INT4' and i > 12)]
+                  for i in range(self.num_cts)]
         if num:
-            palette = {i: self.colors[key][i] for i in range(self.num_cts)}
+            palette = {i: colors[i] for i in range(self.num_cts)}
         else:
-            palette = {self.ct_dict[i]: self.colors[key][i] for i in range(self.num_cts)}
+            palette = {self.ct_dict[i]: colors[i] for i in range(self.num_cts)}
         return palette
 
     def ct_palette_add_groups(self, key, ct, add_groups, num=False, ):
@@ -82,10 +87,13 @@ class CelltypeColors():
         self.num_cts += len(add_groups) - 1
         for i,ag in enumerate(add_groups):
             self.ct_dict[ct + i] = ag
+        # INT4 (index 12 in v8) has one fixed colour in every palette; the glia keep their colours.
+        colors = [self.INT4_COLOR if self.ct_dict.get(i) == 'INT4' else self.colors[key][i - int(12 in self.ct_dict and self.ct_dict[12] == 'INT4' and i > 12)]
+                  for i in range(self.num_cts)]
         if num:
-            palette = {i: self.colors[key][i] for i in range(self.num_cts)}
+            palette = {i: colors[i] for i in range(self.num_cts)}
         else:
-            palette = {self.ct_dict[i]: self.colors[key][i] for i in range(self.num_cts)}
+            palette = {self.ct_dict[i]: colors[i] for i in range(self.num_cts)}
         return palette
 
 class SubCT_Colors(CelltypeColors):

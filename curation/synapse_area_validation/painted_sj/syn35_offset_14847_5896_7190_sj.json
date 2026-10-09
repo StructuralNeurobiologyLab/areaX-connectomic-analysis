@@ -1,0 +1,16 @@
+{
+ "syn_id": "syn35",
+ "origin": [
+  14847,
+  5896,
+  7190
+ ],
+ "shape": [
+  400,
+  400,
+  160
+ ],
+ "n_voxels": 1451,
+ "prediction_shown": false,
+ "duration_s": 97.2
+}

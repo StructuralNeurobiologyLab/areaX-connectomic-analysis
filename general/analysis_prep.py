@@ -6,8 +6,8 @@ if __name__ == '__main__':
     import time
     import os
     from syconn.handler.basics import load_pkl2obj, write_obj2pkl
-    from analysis_params import Analysis_Params
-    from analysis_prep_func import find_full_cells, synapse_amount_percell, get_axon_length_area_perct
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_prep_func import find_full_cells, synapse_amount_percell, get_axon_length_area_perct
     from syconn.handler.config import initialize_logging
     import pandas as pd
 

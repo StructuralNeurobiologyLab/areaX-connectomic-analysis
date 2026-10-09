@@ -2,11 +2,11 @@
 #modify code from connectivity fraction per ct
 
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses, filter_synapse_caches_general
-    from result_helper import ConnMatrix
-    from analysis_colors import CelltypeColors
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses, filter_synapse_caches_general
+    from bio_analysis.general.result_helper import ConnMatrix
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params

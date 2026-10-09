@@ -9,9 +9,9 @@ if __name__ == '__main__':
     from syconn import global_params
     from syconn.reps.segmentation import SegmentationDataset
     from syconn.reps.super_segmentation import SuperSegmentationObject
-    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import \
+    from bio_analysis.general.vesicle_helper import \
         get_vesicle_distance_information_per_cell
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np

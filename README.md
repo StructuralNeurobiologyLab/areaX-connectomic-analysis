@@ -5,7 +5,7 @@ This repository contains scripts to perform analysis on volume electron microsco
 This assumes that all cells are classified into cell types, have a skeleton representation, and include predictions of which parts are axon, dendrite, or soma.  
 Additionally, synapses and other organelles are mapped to the cells.  
 
-This work was developed as part of the PhD project of **Alexandra Rother** at the **Max Planck Institute of Biological Intelligence** with the goal of analysing a connectomics dataset in songbird Area X.  
+This work was developed by **Alexandra Rother** at the **Max Planck Institute of Biological Intelligence** in the Kornfeld lab, and by **Joergen Kornfeld** at the **MRC Laboratory of Molecular Biology**, with the goal of analysing a connectomics dataset in songbird Area X.  
 The more specific scripts in the folders `LMAN_MSN_analysis`, `TAN_DA_axo_analysis`, and `dir_indir_pathway_analysis` are therefore tailored to focus on biological questions for this dataset.  
 
 Scripts and helper files for general use are in the `general` folder. It includes helper functions for analysis, functions to further prepare your data, and functions to get a cell type–based connectivity matrix or different organelle densities.  
@@ -64,3 +64,11 @@ Further analyses that might be useful for other connectomic datasets:
 
 
 
+
+---
+
+# Analyses of Rother et al.
+---
+
+The figures and tables of the manuscript are produced by the scripts listed in `rerun/manifest.yml`; `rerun/README.md` describes the caches, the environment variables and how the scripts are run, and `curation/README.md` the manually curated inputs (exclusion lists, hand-picked cells, review tables, ground truth).  
+Scripts added for the manuscript analyses: `dir_indir_pathway_analysis/GPi_subpopulations.py` (Fig S8E–H), `dir_indir_pathway_analysis/INT_skeleton_features.py`, `INT_axon_radius_mesh.py` and `INT_connectivity_completeness_umap.py` (Fig 5B, Fig S11), `general/ct_morph_umap_outlier_groups.py` (Fig S6), `general/ct_comp_pathlength_fraction.py` (Table S8), `for_eval/nuclear_indentation_census.py` (Fig 5B, S11E), `for_eval/synapse_area_manual_validation.py` and `for_eval/synapse_area_validation/` (Fig S1E, F), `for_eval/celltype_classifier_cv_tables.py` and `for_eval/celltype_classifier_cv/` (Tables S5–S7; the cell type classifier itself is part of SyConn), `rerun/manual_review_tables_v8.py` (Tables S3, S12) and `rerun/paper_numbers.py` (the numbers quoted in the text).  

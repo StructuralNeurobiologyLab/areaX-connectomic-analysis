@@ -972,6 +972,10 @@ def plot_histogram_selection(dataframe, x_data, color_palette, label, count, fol
     plt.savefig(f'{foldername}/{label}_hist_perc.png')
     plt.savefig(f'{foldername}/{label}_hist_perc.svg')
     plt.close()
+    if not (dataframe[x_data] > 0).all():
+        # log-scale histograms are undefined for non-positive data (e.g. PCA scores); seaborn drops the
+        # affected hue group and crashes with a KeyError, so skip the two log plots in that case
+        return
     sns.histplot(x=x_data, data=dataframe, hue=hue_data, palette=color_palette, common_norm=False,
                  fill=False, element="step", linewidth=3, legend=True, log_scale=True)
     plt.ylabel(f'number of {count}', fontsize = fontsize)

@@ -1,6 +1,6 @@
 from syconn.reps.super_segmentation import SuperSegmentationObject
 from syconn.proc.meshes import write_mesh2kzip, compartmentalize_mesh_fromskel, make_ply_string_wocolor
-from analysis_params import Analysis_Params
+from bio_analysis.general.analysis_params import Analysis_Params
 import numpy as np
 
 

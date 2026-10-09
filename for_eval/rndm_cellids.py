@@ -7,9 +7,9 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from tqdm import tqdm
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     from sklearn.utils import shuffle
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
 
     version = 'v6'
     analysis_params = Analysis_Params('v6')

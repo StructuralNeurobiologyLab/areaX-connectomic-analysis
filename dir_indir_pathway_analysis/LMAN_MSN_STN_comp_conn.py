@@ -7,10 +7,10 @@
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import get_compartment_specific_connectivity
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CompColors
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import get_compartment_specific_connectivity
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_colors import CompColors
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params

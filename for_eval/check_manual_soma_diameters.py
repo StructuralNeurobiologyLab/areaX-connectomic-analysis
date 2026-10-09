@@ -12,7 +12,7 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     from scipy.stats import kruskal, ranksums
     from itertools import combinations
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
 
     f_name = "cajal/scratch/users/arother/bio_analysis_results/for_eval/231107_j0251v5_soma_diameter_comp"
     bio_params = Analysis_Params(working_dir=global_params.wd, version='v5')

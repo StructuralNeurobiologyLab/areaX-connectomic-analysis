@@ -9,7 +9,7 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from syconn.reps.segmentation import SegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import matplotlib.pyplot as plt
     from scipy.stats import ttest_1samp
     import seaborn as sns

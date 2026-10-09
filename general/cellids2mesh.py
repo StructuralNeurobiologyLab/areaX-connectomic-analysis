@@ -5,9 +5,9 @@ if __name__ == '__main__':
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationObject
     from syconn.reps.segmentation import SegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_organell_ids_comps
-    from analysis_conn_helper import filter_synapse_caches_for_ct
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import get_organell_ids_comps
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
     import numpy as np
     from tqdm import tqdm
     from syconn.proc.meshes import write_mesh2kzip, write_meshes2kzip, compartmentalize_mesh_fromskel
@@ -16,26 +16,26 @@ if __name__ == '__main__':
 
     #global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     #global_params.wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
-    f_name = 'cajal/scratch/users/arother/exported_meshes/250912_astro_mi_meshes'
+    f_name = 'cajal/scratch/users/arother/exported_meshes/'
     #f_name = 'cajal/scratch/users/arother/240115_LMAN_example_meshes'
 
     bio_params = Analysis_Params(version = 'v6')
     ct_dict = bio_params.ct_dict(with_glia = True)
     global_params.wd = bio_params.working_dir()
     axon_cts = bio_params.axon_cts()
-    whole_cell = True
+    whole_cell = False
     get_comp_sep_cell = False
-    organelle_class = ['mi']
-    get_orgs = False
+    organelle_class = ['mi', 'er']
+    get_orgs = True
     get_orgs_comp_sep = False
     get_only_myelin = False
-    get_single_ves_coords = False
+    get_single_ves_coords = True
     get_membrane_close_vesicles_separate = False
-    get_syns = False
+    get_syns = True
     get_syns_comp = None
     compartment_dict = {0:'dendrite', 1:'axon', 2:'soma'}
 
-    cellids = [1247912319, 1368397294]
+    cellids = [32356701, 7626258]
 
     if get_orgs:
         org_color_rgba = np.array([189, 195, 199, 1])

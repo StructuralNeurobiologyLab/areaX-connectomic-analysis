@@ -19,7 +19,7 @@ from tqdm import tqdm
 import seaborn as sns
 import matplotlib.pyplot as plt
 from syconn import global_params
-from analysis_params import Analysis_Params
+from bio_analysis.general.analysis_params import Analysis_Params
 
 #from vesicle_seg vesicle coord extration
 class DummyFile:

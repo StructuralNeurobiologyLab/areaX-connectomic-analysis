@@ -1,0 +1,303 @@
+# Manuscript runs of the analysis scripts: which hard-coded parameters to set (run_variant.py) so that the
+# script writes the run directory named in "published" (relative to the results root; v6 names, run_variants.py
+# substitutes the version). Executed by run_variants.py; each variant is one Slurm job.
+# Groups: fast (seconds to minutes on the caches), organelle, stage2 (skeleton passes), stage3/stage4 (read other runs).
+variants:
+  # ---- Fig 2F-H, 3C-E, S8, Table S8: synapse sizes / multisynapses
+  - name: synmulti_MSN
+    group: fast
+    script: dir_indir_pathway_analysis/syn_conn_details.py
+    set: {conn_ct: "3", ct2: "6", ct3: "7"}
+    published: dir_indir_pathway_analysis/241025_j0251v6_MSN_GPe_GPi_syn_multisyn_mcl_200_synprob_0.60_kde1_f20_stn_gt
+  - name: synmulti_STN
+    group: fast
+    script: dir_indir_pathway_analysis/syn_conn_details.py
+    set: {conn_ct: "4", ct2: "6", ct3: "7"}
+    published: dir_indir_pathway_analysis/241025_j0251v6_STN_GPe_GPi_syn_multisyn_mcl_200_synprob_0.60_kde1_f20_stn_gt
+  - name: synmulti_GPeGPi
+    group: fast
+    script: dir_indir_pathway_analysis/syn_conn_details.py
+    set: {conn_ct: "None", ct2: "6", ct3: "7"}
+    published: dir_indir_pathway_analysis/241025_j0251v6_GPe_GPi_syn_multisyn_mcl_200_synprob_0.60_kde1_f20
+  # ---- Fig S9: compartment-specific inputs per postsynaptic type
+  - name: comp_conn_{CT}
+    group: fast
+    script: dir_indir_pathway_analysis/CT_comp_conn_analysis.py
+    foreach: {CT: [MSN, STN, TAN, GPe, GPi, LTS, INT1, INT2, INT3]}
+    set: {post_ct: "{CTID}", cts_for_loading: "np.arange({NCT})"}
+    sub: [["2401025_", "241025_"], ["_fs%i_GPi_only", "_fs%i"]]
+    published: dir_indir_pathway_analysis/241025_j0251v6_{CT}_input_comps_mcl_200_ax50_synprob_0.60_STNGPINTv6_TeGy_fs20
+  # ---- Fig S10, Table S11: recurrence between two types and within GPi
+  - name: recurr_STN_GPi
+    group: fast
+    script: dir_indir_pathway_analysis/recurrent_conn_between2cts.py
+    set: {ct1: "4", ct2: "7"}
+    sub: [["250520_", "241025_"]]
+    published: dir_indir_pathway_analysis/241025_j0251v6_STN_GPi_recurr_conn_mcl_200_synprob_0.60_STNGPINTv6_fs20
+  - name: recurr_STN_GPe
+    group: fast
+    script: dir_indir_pathway_analysis/recurrent_conn_between2cts.py
+    set: {ct1: "4", ct2: "6"}
+    sub: [["250520_", "241025_"]]
+    published: dir_indir_pathway_analysis/241025_j0251v6_STN_GPe_recurr_conn_mcl_200_synprob_0.60_STNGPINTv6_fs20
+  - name: recurr_MSN_TAN
+    group: fast
+    script: dir_indir_pathway_analysis/recurrent_conn_between2cts.py
+    set: {ct1: "3", ct2: "5"}
+    sub: [["250520_", "241025_"]]
+    published: dir_indir_pathway_analysis/241025_j0251v6_MSN_TAN_recurr_conn_mcl_200_synprob_0.60_STNGPINTv6_fs20
+  - name: recurr_GPi
+    group: fast
+    script: dir_indir_pathway_analysis/recurrent_conn_1ct.py
+    set: {ct1: "7"}
+    published: dir_indir_pathway_analysis/250520_j0251v6_GPi_recurr_conn_mcl_200_synprob_0.60_STNGPINTv6_fs20
+  # ---- input / output ratios per population
+  - name: inratio_{CT}_LMAN_HVC
+    group: fast
+    script: dir_indir_pathway_analysis/input_ratio_cell_population.py
+    foreach: {CT: [MSN, STN, GPe, GPi, INT1, INT2, INT3]}
+    set: {celltype_population: "{CTID}", input_ct_1: "1", input_ct_2: "2", spiness: "None"}
+    sub: [["_input_ratio_fs", "_GP_input_ratio_fs"]]
+    published: dir_indir_pathway_analysis/250221_j0251v6_{CT}_LMAN_HVC_GP_input_ratio_fs20
+  - name: inratio_{CT}_LMAN_HVC_shaft
+    group: fast
+    script: dir_indir_pathway_analysis/input_ratio_cell_population.py
+    foreach: {CT: [MSN, STN, GPe, GPi, INT1, INT2, INT3]}
+    set: {celltype_population: "{CTID}", input_ct_1: "1", input_ct_2: "2", spiness: "2"}
+    sub: [["_input_ratio_fs", "_GP_input_ratio_fs"]]
+    published: "dir_indir_pathway_analysis/250221_j0251v6_{CT}_LMAN_HVC_GP_input_ratio_fs20_sp_dendritic shaft"
+  - name: inratio_{CT}_LMAN_HVC_head
+    group: fast
+    script: dir_indir_pathway_analysis/input_ratio_cell_population.py
+    foreach: {CT: [MSN, STN, GPe, GPi, INT1, INT2, INT3]}
+    set: {celltype_population: "{CTID}", input_ct_1: "1", input_ct_2: "2", spiness: "1"}
+    sub: [["_input_ratio_fs", "_GP_input_ratio_fs"]]
+    published: "dir_indir_pathway_analysis/250221_j0251v6_{CT}_LMAN_HVC_GP_input_ratio_fs20_sp_spine head"
+  - name: inratio_STN_GPe_GPi
+    group: fast
+    script: dir_indir_pathway_analysis/input_ratio_cell_population.py
+    set: {celltype_population: "4", input_ct_1: "6", input_ct_2: "7", spiness: "None"}
+    sub: [["_input_ratio_fs", "_GP_input_ratio_fs"]]
+    published: dir_indir_pathway_analysis/250221_j0251v6_STN_GPe_GPi_GP_input_ratio_fs20
+  - name: inratio_STN_GPe_GPi_shaft
+    group: fast
+    script: dir_indir_pathway_analysis/input_ratio_cell_population.py
+    set: {celltype_population: "4", input_ct_1: "6", input_ct_2: "7", spiness: "2"}
+    sub: [["_input_ratio_fs", "_GP_input_ratio_fs"]]
+    published: "dir_indir_pathway_analysis/250221_j0251v6_STN_GPe_GPi_GP_input_ratio_fs20_sp_dendritic shaft"
+  - name: inratio_STN_GPi_GPe
+    group: fast
+    script: dir_indir_pathway_analysis/input_ratio_cell_population.py
+    set: {celltype_population: "4", input_ct_1: "7", input_ct_2: "6", spiness: "None"}
+    sub: [["_input_ratio_fs", "_GP_input_ratio_fs"]]
+    published: dir_indir_pathway_analysis/250221_j0251v6_STN_GPi_GPe_GP_input_ratio_fs20
+  - name: outratio_{CT}_GPi_GPe
+    group: fast
+    script: dir_indir_pathway_analysis/output_ratio_cell_population.py
+    foreach: {CT: [MSN, STN, INT1]}
+    set: {celltype_population: "{CTID}", output_ct_1: "7", output_ct_2: "6", spiness: "None"}
+    published: dir_indir_pathway_analysis/250221_j0251v6_{CT}_GPi_GPe_output_ratio_fs20
+  # ---- Fig 2B/C, S5B: GPe/GPi morphology
+  - name: gpe_gpi_params
+    group: fast
+    script: dir_indir_pathway_analysis/GPe_i_myelin_mito_radius.py
+    published: dir_indir_pathway_analysis/241107_j0251v6_GPe_i_myelin_mito_radius_newmerger_mcl200_fs20_med1
+  - name: gpe_gpi_pca
+    group: fast
+    script: dir_indir_pathway_analysis/PCA_UMAP_morph_cts.py
+    published: dir_indir_pathway_analysis/241107_j0251v6_GPe_GPi_morph_PCA_20_cell_volume
+    note: Fig 2C (PC1 histogram GPe vs GPi); reads GPe_GPi_params.csv of gpe_gpi_params
+  # ---- Fig 5B/C, S11C: INT morphology
+  - name: int_morph_pca
+    group: fast
+    script: dir_indir_pathway_analysis/morph_comp_PCA.py
+    published: "dir_indir_pathway_analysis/241025_j0251v6_['INT1', 'INT2', 'INT3']_morph_comp_radius_spiness_examplecells_mcl200_fs20_med1_RdTeINTv6_nc1"
+  # ---- synapse density per surface, input of ct_morph_analyses
+  - name: avg_syn_density
+    group: fast
+    script: general/avg_synapse_density_per_ct.py
+    published: general/250711_j0251v6_avg_syn_den_sb_0.60_mcl_200_TePkBrNGF_newmerger
+  # ---- Fig 6 main run and its variants (Fig S2): mcl 50 / ax 0 / mergers in
+  - name: fig6_main
+    group: fast
+    script: general/connectivity_fraction_per_ct.py
+    published: general/251023_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_TePkBrNGF_newmergers_bw_fs_20_STNnoGP
+  - name: fig6_ax0
+    group: fast
+    script: general/connectivity_fraction_per_ct.py
+    set: {min_comp_len_ax: "0"}
+    sub: [["251023_j0251{version}_cts_percentages", "250828_j0251{version}_cts_percentages"], ["_bw_fs_%i_STNnoGP", "_bw_fs_%i"]]
+    published: general/250828_j0251v6_cts_percentages_mcl_200_ax0_synprob_0.60_TePkBrNGF_newmergers_bw_fs_20
+  - name: fig6_mergers_in
+    group: fast
+    script: general/connectivity_fraction_per_ct.py
+    set: {exclude_known_mergers: "False"}
+    sub: [["251023_j0251{version}_cts_percentages", "260916_j0251{version}_cts_percentages"], ["_bw_fs_%i_STNnoGP", "_bw_fs_%i_mergers_in"]]
+    published: general/260916_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_TePkBrNGF_newmergers_bw_fs_20_mergers_in
+  # ---- organelle volume densities (inputs of Fig S6 / ct_morph_analyses)
+  - name: mi_axon
+    group: organelle
+    script: general/ct_organell_volume_density.py
+    set: {organelle_key: "'mi'", compartment: "1"}
+    sub: [["250302_j0251{version}_ct_", "241025_j0251{version}_ct_"]]
+    published: general/241025_j0251v6_ct_mi_axon_vol_density_mcl_200_ax200_TePkBrNGF_fs20_nm
+  - name: mi_dendrite
+    group: organelle
+    script: general/ct_organell_volume_density.py
+    set: {organelle_key: "'mi'", compartment: "0", full_cells_only: "True"}   # axon classes have no dendrite; with False the celltype column gets NaN and np.unique fails
+    sub: [["250302_j0251{version}_ct_", "241025_j0251{version}_ct_"]]
+    published: general/241025_j0251v6_ct_mi_dendrite_vol_density_mcl_200_ax200_TePkBrNGF_fs20_nm
+  - name: mi_soma
+    group: organelle
+    script: general/ct_organell_volume_density.py
+    set: {organelle_key: "'mi'", compartment: "2", full_cells_only: "True"}
+    sub: [["250302_j0251{version}_ct_", "241106_j0251{version}_ct_"]]
+    published: general/241106_j0251v6_ct_mi_soma_vol_density_mcl_200_ax200_TePkBrNGF_fs20_nm
+  - name: vc_axon
+    group: organelle
+    script: general/ct_organell_volume_density.py
+    set: {organelle_key: "'vc'", compartment: "1"}
+    published: general/250302_j0251v6_ct_vc_axon_vol_density_mcl_200_ax200_TePkBrNGF_fs20_nm
+  - name: vc_axon_241025
+    group: organelle
+    script: general/ct_organell_volume_density.py
+    set: {organelle_key: "'vc'", compartment: "1"}
+    sub: [["250302_j0251{version}_ct_", "241025_j0251{version}_ct_"]]
+    published: general/241025_j0251v6_ct_vc_axon_vol_density_mcl_200_ax200_TePkBrNGF_fs20_nm
+  # ---- stage 2: skeleton passes and scripts that only need the caches
+  # ---- Fig S5 H-J: MSN groups (only GPe / only GPi / both / no GP) axon+dendrite pathlength, soma distance to border
+  - name: msn_gp_comparison
+    group: stage2
+    script: dir_indir_pathway_analysis/MSN_GPconnectivity_comparison.py
+    published: dir_indir_pathway_analysis/241029_j0251v6_MSN_GPe_GPi_comparison_mcl_200_ax50_synprob_0.6
+  - name: msn_spine_MSN_fullden
+    group: stage2
+    script: dir_indir_pathway_analysis/msn_spine_density_gp_ratio.py
+    set: {conn_ct: "3", check_dens: "True"}
+    published: dir_indir_pathway_analysis/241025_j0251v6_MSN_3_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20_fullden
+  - name: msn_spine_MSN
+    group: stage2
+    script: dir_indir_pathway_analysis/msn_spine_density_gp_ratio.py
+    set: {conn_ct: "3", check_dens: "False"}
+    sub: [["_f{fontsize_jointplot}_fullden\"", "_f{fontsize_jointplot}\""]]
+    published: dir_indir_pathway_analysis/241025_j0251v6_MSN_3_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20
+  - name: msn_spine_STN
+    group: stage2
+    script: dir_indir_pathway_analysis/msn_spine_density_gp_ratio.py
+    set: {conn_ct: "4", check_dens: "False"}
+    sub: [["_f{fontsize_jointplot}_fullden\"", "_f{fontsize_jointplot}\""]]
+    published: dir_indir_pathway_analysis/241025_j0251v6_STN_4_GPe_GPiratio_spine_density_mcl_200_synprob_0.60_kde1_f20
+  - name: fig6_mcl50_241024
+    group: stage2
+    script: general/connectivity_fraction_per_ct.py
+    set: {min_comp_len_cells: "50"}
+    sub: [["251023_j0251{version}_cts_percentages", "241024_j0251{version}_cts_percentages"], ["_bw_fs_%i_STNnoGP", "_bw_fs_%i"]]
+    published: general/241024_j0251v6_cts_percentages_mcl_50_ax50_synprob_0.60_TePkBrNGF_newmergers_bw_fs_20
+  - name: syn_locations
+    group: stage2
+    script: dir_indir_pathway_analysis/HVC_LMAN2MSN_syn_locations.py
+    published: dir_indir_pathway_analysis/250429_j0251v6_LMAN_HVC_2_MSN_syn_locations_200_50_STNGPINTv6
+  - name: lman_number_msn
+    group: stage2
+    script: LMAN_MSN_analysis/LMAN_number_per_MSN.py
+    published: LMAN_MSN_analysis/250807_j0251v6_lman_number_msn_mcl200_syn0.6
+  # ---- Fig S1 A/B: synapse-probability histograms (all axon synapses / filtered)
+  - name: rfc_syn_hist
+    group: fast
+    script: for_eval/rfc_syn_eval.py
+    published: for_eval/240919_j0251v6_rfc_syn_eval_mcl_200_ax50_ms_0.100000
+  # ---- Fig S4 B: ground-truth projection axons per length bin (the cell type GT csv is read from the prep directory)
+  - name: axlen_gt
+    group: fast
+    script: for_eval/proj_axon_length_comparison.py
+    set: {use_gt: "True", filter_syns: "False", gt_path: "f'{bio_params.file_locations}/j0251_celltype_gt_{version}_j0251_72_seg_20210127_agglo2_IDs.csv'"}
+    sub: [["_ax_fraglengths_f{fontsize}_filter_syns\"", "_ax_fraglengths_gt_f{fontsize}\""], ["250213_j0251{version}_ax_fraglengths_gt", "240301_j0251{version}_ax_fraglengths_gt"]]
+    published: for_eval/240301_j0251v6_ax_fraglengths_gt_f20
+  - name: axlen_filter_syns
+    group: stage2
+    script: for_eval/proj_axon_length_comparison.py
+    set: {filter_syns: "True"}
+    published: for_eval/250213_j0251v6_ax_fraglengths_f20_filter_syns
+  - name: axlen_filter
+    group: stage2
+    script: for_eval/proj_axon_length_comparison.py
+    set: {filter_syns: "False"}
+    sub: [["_filter_syns\"", "_filter\""]]
+    published: for_eval/250213_j0251v6_ax_fraglengths_f20_filter
+  # ---- stage 3: scripts that read other runs' csvs (fast/organelle/stage2 must exist)
+  - name: cellnum_{TRIPLE}
+    group: stage3
+    script: dir_indir_pathway_analysis/cell_number_pathway_analysis.py
+    foreach: {TRIPLE: [GPe_GPi_STN, HVC_MSN_GPi, HVC_STN_GPi, INT2_GPe_GPi, INT3_GPe_GPi, LMAN_MSN_GPi, LMAN_STN_GPi, MSN_GPe_GPi, MSN_GPi_GPe, STN_GPe_GPi, STN_GPi_GPe]}
+    set: {ct1: "{T1}", ct2: "{T2}", ct3: "{T3}"}
+    published: "dir_indir_pathway_analysis/250429_j0251v6_cellnumber_pathway_analysis_{TRIPLE}_{LEN}_STNGPINTv6"
+  - name: shuffle_it100
+    group: stage3
+    script: dir_indir_pathway_analysis/MSN_GP_shuffle2.py
+    set: {n_it: "100", hist_bins: "30"}
+    published: dir_indir_pathway_analysis/250311_j0251v6_MSN_GP_ratio_shuffle2_it100_fs20_hb30
+  - name: shuffle_it1000
+    group: stage3
+    script: dir_indir_pathway_analysis/MSN_GP_shuffle2.py
+    set: {n_it: "1000", hist_bins: "30"}
+    published: dir_indir_pathway_analysis/250311_j0251v6_MSN_GP_ratio_shuffle2_it1000_fs20_hb30
+  - name: stn_morph_conn
+    group: stage3
+    script: dir_indir_pathway_analysis/STN_morph_conn_diffs.py
+    # the morphology table with mito/vc/syn/ER densities is the ct_morph_synmivcer run
+    sub: [["241108_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_fc_synfullmivesgolgier", "250711_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5_synmivcer"]]
+    published: dir_indir_pathway_analysis/250225_j0251v6_STN_morph_conn_subpop_20
+  - name: stn_morph_conn_2gp
+    group: stage3
+    script: dir_indir_pathway_analysis/STN_morph_conn_diffs.py
+    set: {togp_only: "True"}
+    sub: [["241108_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_fc_synfullmivesgolgier", "250711_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5_synmivcer"],
+          ["_morph_conn_subpop_{fontsize}\"", "_morph_conn_subpop_{fontsize}_2gp_only\""]]
+    published: dir_indir_pathway_analysis/250225_j0251v6_STN_morph_conn_subpop_20_2gp_only
+  - name: ct_morph_main
+    group: stage3
+    script: general/ct_morph_analyses.py
+    set: {min_comp_len_cell: "200", min_comp_len_ax: "200"}
+    sub: [["251023_j0251{version}_ct_morph", "250711_j0251{version}_ct_morph"]]
+    published: general/250711_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5
+  # ---- ER area densities (axon/dendrite/soma) feeding the ct_morph_synmivcer table used by STN_morph_conn_diffs
+  - name: er_axon_area
+    group: organelle
+    script: general/ct_organell_comp_surface_area_density.py
+    set: {organelle_key: "'er'", compartment: "[1]"}
+    published: general/250804_j0251v6_ct_er_axon_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger_mesh surface area
+  - name: er_dendrite_area
+    group: organelle
+    script: general/ct_organell_comp_surface_area_density.py
+    set: {organelle_key: "'er'", compartment: "[0]", full_cells_only: "True"}
+    published: general/250804_j0251v6_ct_er_dendrite_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger_mesh surface area
+  - name: er_soma_area
+    group: organelle
+    script: general/ct_organell_comp_surface_area_density.py
+    set: {organelle_key: "'er'", compartment: "[2]", full_cells_only: "True"}
+    published: general/250804_j0251v6_ct_er_soma_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger_mesh surface area
+  - name: ct_morph_synmivcer
+    group: stage4
+    script: general/ct_morph_analyses.py
+    set: {min_comp_len_cell: "200", min_comp_len_ax: "200", process_morph_parameters: "False", use_mito_density: "True", use_vc_density: "True", use_syn_params: "True", use_er_density: "True"}
+    sub: [["251023_j0251{version}_ct_morph", "250711_j0251{version}_ct_morph"], ["_a{alpha}\" % (", "_a{alpha}_synmivcer\" % ("], ["241108_j0251v6_ct_er_soma_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger", "250804_j0251v6_ct_er_soma_area_density_mcl_200_ax200_TePkBrNGF_fs20_new_merger_mesh surface area"]]
+    published: general/250711_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5_synmivcer
+  # ---- Fig S6 rows A (MSN only) and B (no MSN): UMAP runs of the synmivc feature set
+  - name: ct_morph_synmivc_MSNonly
+    group: stage4
+    script: general/ct_morph_analyses.py
+    set: {min_comp_len_cell: "200", min_comp_len_ax: "200", process_morph_parameters: "False", use_mito_density: "True", use_vc_density: "True", use_syn_params: "True", msn_only: "True"}
+    sub: [["251023_j0251{version}_ct_morph", "250711_j0251{version}_ct_morph"], ["_a{alpha}\" % (", "_a{alpha}_synmivc_MSNonly\" % ("]]
+    published: general/250711_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5_synmivc_MSNonly
+  - name: ct_morph_synmivc_noMSN
+    group: stage4
+    script: general/ct_morph_analyses.py
+    set: {min_comp_len_cell: "200", min_comp_len_ax: "200", process_morph_parameters: "False", use_mito_density: "True", use_vc_density: "True", use_syn_params: "True"}
+    sub: [["251023_j0251{version}_ct_morph", "250711_j0251{version}_ct_morph"], ["_a{alpha}\" % (", "_a{alpha}_synmivc_noMSN\" % ("], ["#ct_types = ct_types[1:]", "ct_types = ct_types[1:]"]]
+    published: general/250711_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5_synmivc_noMSN
+  - name: ct_morph_synmivc
+    group: stage4
+    script: general/ct_morph_analyses.py
+    set: {min_comp_len_cell: "200", min_comp_len_ax: "200", process_morph_parameters: "False", use_mito_density: "True", use_vc_density: "True", use_syn_params: "True"}
+    sub: [["251023_j0251{version}_ct_morph", "250711_j0251{version}_ct_morph"], ["_a{alpha}\" % (", "_a{alpha}_synmivc\" % ("]]
+    published: general/250711_j0251v6_ct_morph_analyses_newmergers_mcl_200_ax200_TeBKv6MSNyw_fs20npca1_umap5_a0.5_synmivc

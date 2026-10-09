@@ -12,11 +12,11 @@ from syconn.handler.config import initialize_logging
 from syconn.handler.basics import load_pkl2obj
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums, kruskal
-from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, ComparingMultipleForPLotting
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, get_compartment_bbvolume, \
+from bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, ComparingMultipleForPLotting
+from bio_analysis.general.analysis_morph_helper import get_compartment_length, get_compartment_bbvolume, \
     get_compartment_radii, get_compartment_tortuosity_complete, get_compartment_tortuosity_sampled, get_spine_density, get_cell_soma_radius
 from syconn.reps.super_segmentation import SuperSegmentationObject
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+from bio_analysis.general.analysis_colors import CelltypeColors
 from syconn.mp.mp_utils import start_multiprocess_imap
 from itertools import combinations
 

@@ -2,10 +2,10 @@
 #make table with cellid pre and post, post synaptic compartment, synapse size
 #cell type pre and post, location of synapse relative to soma
 
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_syn_location_per_cell
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_histogram_selection
+from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_syn_location_per_cell
+from bio_analysis.general.analysis_params import Analysis_Params
+from bio_analysis.general.result_helper import plot_histogram_selection
 from syconn.mp.mp_utils import start_multiprocess_imap
 from syconn.handler.config import initialize_logging
 from syconn import global_params

@@ -4,15 +4,15 @@
 #GPe/GPi ratios = GPi/(GPi + GPe
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_spine_density, get_cell_soma_radius, \
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_spine_density, get_cell_soma_radius, \
         get_dendrite_info_cell, check_cutoff_dendrites
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_ct_syn_number_sumsize, filter_contact_sites_axoness
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_ct_syn_number_sumsize, filter_contact_sites_axoness
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     from syconn.reps.segmentation import SegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_colors import CelltypeColors
     import os as os
     import pandas as pd
     import numpy as np

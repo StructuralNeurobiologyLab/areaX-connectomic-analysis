@@ -1,9 +1,9 @@
 #get radius of soma for all celltypes
 
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct, get_cell_soma_radius
-    from analysis_colors import CelltypeColors
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_cell_soma_radius
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params

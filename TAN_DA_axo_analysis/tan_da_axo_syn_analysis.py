@@ -11,8 +11,8 @@ if __name__ == '__main__':
     import time
     from syconn.handler.config import initialize_logging
     from syconn.handler.basics import load_pkl2obj, write_obj2pkl
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from wholebrain.scratch.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
     from tqdm import tqdm
 
     start = time.time()

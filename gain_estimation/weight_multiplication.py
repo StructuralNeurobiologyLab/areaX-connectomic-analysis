@@ -2,10 +2,10 @@
 #in the end get all GPi ids and see what the result is
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ConnMatrix
+    from bio_analysis.general.result_helper import ConnMatrix
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np

@@ -1,0 +1,31 @@
+cellid,celltype,merger?,merger with ,number of mergers,AR check,RM check,JK check,final,merger locations,comments,autapse?
+185201455,INT1,n,,,y,n,,y,"25253, 25429, 5079; 25433, 25256, 4865; 25039, 24348, 4418; 24435, 24810, 3957 (all self-mergers)",,
+73452048,INT1,n,,,y,n,,y,"16453, 25996, 1910, 16590, 26146, 1781 (self merger)",,y (small)
+617645784,INT1,y,dendrite,1,y (other celltype?),n,,n,"24930, 1419, 7786",,n
+1474000401,INT1,n,,,y,n,,y,,,n
+1582074009,INT1,n,,,y,n,,y,"18025, 14100, 12035 (self merger with RM)",,n
+177407557,INT1,n,,,y (other celltype?),n,,y,,,n
+702065851,INT1,n,,,y,n,,y,"8630, 22612, 6962 (autapse); 9892, 22468, 6943; 8548, 21246, 7061; 9334, 23938, 6630; 10562, 25165, 8244; 7962, 24169, 6846",,y (small)
+945905333,INT1,y,bloodvessel/glia,1,y,y,,n,"23512, 9710, 9944 (bv merger), 22657, 8957, 9516, ",,
+51353357,INT1,y,dendrite,1,y,y,,n,"18507, 17980, 600",,
+864117497,INT1,n,,,y (other celltype?),n,,y,,,n
+896472954,INT2,n,,,y,n,,y,"3661, 26515, 7983 (self merger)",,n
+2426483413,INT2,n,,,y,n,,y,,,n
+316179505,INT2,n,,,y,n,,y,,,n
+85903087,INT2,n,,,y (other celltype?),n,,y,,,n
+657494197,INT2,n,,,y,n,,y,,,unclear
+1107246316,INT2,n,,,y (other celltype?),n,,y,,,n
+48723488,INT2,n,,,y,n,,y,,,n
+79930190,INT2,y,cell,1,y (other celltype?),y,,n,"9682, 24129, 4357",,n
+924915907,INT2,n,,,y (other celltype?),n,,y,,,n
+624496225,INT2,n,,,y,n,,y,,,n
+1763525469,INT3,n,,,y,n,,y,"12741, 5525, 14092 (autapse)",,y
+1660482168,INT3,y,glia/ cell,2,y,y,,n,"23990, 12433, 13933",,n
+62489778,INT3,n,,,y,n,,y,"21447, 21801, 566 (autapse)",,y
+325492436,INT3,n,,,y,n,,y,"18978, 8477, 8066 (autapse)",,y
+10293994,INT3,n,,,y,n,,y,"18860, 13551, 2928 (autapse)",,y
+35700843,INT3,n,,,y,n,,y,"16049, 10739, 6154 (autapse)",,y
+40154408,INT3,n,,,y,n,,y,"18895, 16260, 173 (autapse)",,y
+1084372433,INT3,n,,,y,n,,y,"8594, 19259, 10134 (autapse)",,y
+490749885,INT3,n,,,y,n,,y,"13626, 17504, 9566 (autapse)",,y
+4117198,INT3,n,,,y (other celltype?),n,,y,,,n

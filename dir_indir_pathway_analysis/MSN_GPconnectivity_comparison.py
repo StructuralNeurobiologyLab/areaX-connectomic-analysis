@@ -1,16 +1,16 @@
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
+    from bio_analysis.dir_indir_pathway_analysis.subpopulations_per_connectivity import sort_by_connectivity
+    from bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity, synapses_ax2ct, compare_connectivity_multiple
+    from bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
         axon_den_arborization_ct, compare_compartment_volume_ct_multiple, compare_soma_diameters
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     from syconn.reps.segmentation import SegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_nx_graph
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.result_helper import plot_nx_graph
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     import pandas as pd
     import numpy as np

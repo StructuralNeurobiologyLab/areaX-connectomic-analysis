@@ -1,11 +1,11 @@
 #get fraction of compartment per celltype full cells vs all cells
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_compartment_length_chunks
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_compartment_length_chunks
+    from bio_analysis.general.analysis_colors import CelltypeColors
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     import pandas as pd

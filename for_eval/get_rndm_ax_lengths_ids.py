@@ -6,7 +6,7 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     import os as os
     import pandas as pd
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
 
     global_params.wd = "/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811"
     bio_params = Analysis_Params(working_dir=global_params.wd, version='v5')

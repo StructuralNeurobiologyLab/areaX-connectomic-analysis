@@ -1,14 +1,14 @@
 #analysis to see which fraction of vesicles close to membrane is close to the synapse
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct,  filter_synapse_caches_general
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct,  filter_synapse_caches_general
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_synapse_proximity_vesicle_percell
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.vesicle_helper import get_synapse_proximity_vesicle_percell
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd

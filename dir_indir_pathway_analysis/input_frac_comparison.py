@@ -3,8 +3,8 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.handler.basics import load_pkl2obj
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_colors import CelltypeColors
     import os as os
     import pandas as pd
     import numpy as np
@@ -24,9 +24,9 @@ if __name__ == '__main__':
     color_key = 'RdTeINTv6'
     fontsize = 20
     #select which incoming an outgoing celltypes should be plottet extra as well
-    input_ct = 7
+    input_ct = 2
     input_ct_str = ct_dict[input_ct]
-    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/240915_j0251{version}_input_comp_{input_ct_str}_INT_f{fontsize}"
+    f_name = f"cajal/scratch/users/arother/bio_analysis_results/dir_indir_pathway_analysis/251124_j0251{version}_input_comp_{input_ct_str}_INT_f{fontsize}"
     if not os.path.exists(f_name):
         os.mkdir(f_name)
     log = initialize_logging('Input_conn_comp', log_dir=f_name)
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     comp_ct_str = [ct_dict[ct] for ct in comp_cts]
 
 
-    conn_filename = 'cajal/scratch/users/arother/bio_analysis_results/general/240411_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_TePkBrNGF_annot_bw_fs_20'
+    conn_filename = 'cajal/scratch/users/arother/bio_analysis_results/general/250828_j0251v6_cts_percentages_mcl_200_ax50_synprob_0.60_TePkBrNGF_newmergers_bw_fs_20'
     log.info(f'Step 1/4: Load connectivity data from {conn_filename}')
     conn_dict = load_pkl2obj(f'{conn_filename}/synapse_dict_per_ct.pkl')
 

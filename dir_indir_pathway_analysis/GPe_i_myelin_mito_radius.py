@@ -10,10 +10,10 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from scipy.stats import ranksums
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, get_cell_soma_radius
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_per_cell_mito_myelin_info, get_cell_soma_radius
     from syconn.handler.basics import write_obj2pkl
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import  ComparingResultsForPLotting
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.result_helper import  ComparingResultsForPLotting
+    from bio_analysis.general.analysis_params import Analysis_Params
     import itertools
     import seaborn as sns
     import matplotlib.pyplot as plt

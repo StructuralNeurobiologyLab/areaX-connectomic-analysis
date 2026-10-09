@@ -1,0 +1,31 @@
+cellid,v8_type,type_at_review,review,exclude_because,merger_with,in_v6_list
+2834364,GPe,GPi,2024 full review,merger,axon,y
+3341042,GPe,GPi,2024 full review,merger,dendrite,y
+3948140,LMAN,STN,2024 full review,not all compartments,,y
+4488613,TAN,TAN,2024 full review,merger,axon,y
+4590645,STN,STN,2026-10-01 review,merger,axon,n
+10157981,TAN,TAN,2024 full review,merger,axon,y
+11541121,GPi,GPi,2024 full review,merger,glia,y
+15320718,INT3,STN,2024 full review,merger,axon,y
+18963088,GPi,GPi,2024 full review,merger,axon,y
+24596473,TAN,TAN,2024 full review,merger,axon,y
+38767646,GPe,GPe,2024 full review,not all compartments,,y
+58336508,LMAN,GPi,2024 full review,not all compartments,,y
+63264864,MSN,GPi,2024 full review,merger,axon,y
+64210280,GPe,GPi,2024 full review,merger,dendrite,y
+72879213,GPi,GPi,2024 full review,merger,axon,y
+78211969,TAN,TAN,2024 full review,merger,axon,y
+79930190,LTS,LTS,2026-10-01 review (re-check),merger,glia,n
+82937782,STN,STN,2024 full review,merger,axon,y
+85598412,LMAN,GPi,2024 full review,not all compartments,,y
+244383709,TAN,TAN,2024 full review,not all compartments,,y
+657459333,LTS,LTS,2024 full review,merger,axon,y
+743802111,LTS,LTS,2026-10-01 review,too little axon present,,n
+821198622,LTS,LTS,2026-10-01 review,too little axon present,,n
+825519277,STN,STN,2024 full review,merger,dendrite,y
+826024820,STN,STN,2026-10-01 review,too little axon present,,n
+895023368,INT4,STN,2024 full review,merger,dendrite,y
+1075431186,GPi,GPi,2024 full review,merger,"dendrite, axon",y
+1179179749,GPi,GPi,2024 full review,merger,axon,y
+1645435353,LTS,STN,2024 full review,not all compartments,,y
+2207310366,LTS,LTS,2026-10-01 review,too little axon present,,n

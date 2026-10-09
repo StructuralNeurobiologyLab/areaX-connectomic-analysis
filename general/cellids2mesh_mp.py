@@ -1,9 +1,9 @@
 
 if __name__ == '__main__':
     from syconn import global_params
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     from cellid2mesh_helper import whole_cellid2mesh, comp2mesh
-    from analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
     import numpy as np
     import os as os
     from syconn.handler.config import initialize_logging

@@ -9,13 +9,13 @@ if __name__ == '__main__':
     import pandas as pd
     import numpy as np
     from tqdm import tqdm
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     from syconn.mp.mp_utils import start_multiprocess_imap
     from syconn.reps.segmentation import SegmentationDataset
     from sklearn.utils import shuffle
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_synprob_data
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, generate_colored_mesh_synprob_data
     from syconn.handler.basics import load_pkl2obj
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
     import seaborn as sns
     import matplotlib.pyplot as plt
     import matplotlib.colors as co

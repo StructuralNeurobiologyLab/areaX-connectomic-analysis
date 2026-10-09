@@ -1,0 +1,119 @@
+# Figure / table of Rother et al. -> analysis script -> variant name in rerun/variants.yml (or the script's own
+# __main__ block). Scripts read the SyConn working directory and the prep cache (see rerun/README.md).
+version: v8
+filters: {min_comp_len_cells: 200, min_comp_len_axons: 50, syn_prob: 0.6, min_syn_size: 0.1,
+          celltype_key: celltype_pts_v8_analysis, exclude_known_mergers: true}
+
+analyses:
+  connectivity_fraction_per_ct:
+    script: general/connectivity_fraction_per_ct.py
+    panels: [Fig6A-C, Fig3F, Fig3G, Fig4C, Fig4D, Fig5D, FigS2A-D, FigS5A, FigS12C, FigS13C, TableS9, "text: cell numbers"]
+    variants: [fig6_main, fig6_mcl50_241024, fig6_ax0, fig6_mergers_in]
+    note: plot_connmatrix_only = False also writes the per-type bar plots (Fig 3F/G, 4C/D, 5D, S5A, S12C, S13C); Fig S2D = the synapse-number matrices of fig6_main
+  replot_connectivity:
+    scripts: [dir_indir_pathway_analysis/compare_conn_perc.py, dir_indir_pathway_analysis/summarise_conn_perct.py,
+              dir_indir_pathway_analysis/input_frac_comparison.py]
+    depends: [connectivity_fraction_per_ct]
+  msn_spine_density_gp_ratio:
+    script: dir_indir_pathway_analysis/msn_spine_density_gp_ratio.py
+    panels: [Fig2D, FigS5C-J, FigS7, "text: complete-dendrite MSN (7 um border rule)"]
+    variants: [msn_spine_MSN, msn_spine_MSN_fullden, msn_spine_STN]
+  msn_gp_comparison:
+    script: dir_indir_pathway_analysis/MSN_GPconnectivity_comparison.py
+    panels: [FigS5H-J]
+    variants: [msn_gp_comparison]
+  msn_gp_shuffle:
+    script: dir_indir_pathway_analysis/MSN_GP_shuffle2.py
+    depends: [msn_spine_density_gp_ratio]
+    panels: [Fig2E, FigS7]
+    variants: [shuffle_it100, shuffle_it1000]
+  syn_conn_details:
+    script: dir_indir_pathway_analysis/syn_conn_details.py
+    panels: [Fig2F-H, Fig3C-E, FigS8B-D, TableS9]
+    variants: [synmulti_MSN, synmulti_STN, synmulti_GPeGPi]
+  gpi_subpopulations:
+    script: dir_indir_pathway_analysis/GPi_subpopulations.py
+    depends: [connectivity_fraction_per_ct]
+    panels: [FigS8E-H, "text: GPi1 / GPi2"]
+  gpe_gpi_morph:
+    scripts: [dir_indir_pathway_analysis/GPe_i_myelin_mito_radius.py, dir_indir_pathway_analysis/PCA_UMAP_morph_cts.py]
+    panels: [Fig2B, Fig2C, FigS5B]
+    variants: [gpe_gpi_params, gpe_gpi_pca]
+  int_morph:
+    scripts: [dir_indir_pathway_analysis/morph_comp_PCA.py, dir_indir_pathway_analysis/INT_skeleton_features.py,
+              dir_indir_pathway_analysis/INT_axon_radius_mesh.py, dir_indir_pathway_analysis/INT_connectivity_completeness_umap.py,
+              for_eval/nuclear_indentation_census.py]
+    depends: [connectivity_fraction_per_ct]
+    panels: [Fig5B, Fig5C, FigS11B-H]
+    variants: [int_morph_pca]
+  organelle_densities:
+    script: general/ct_organell_volume_density.py
+    panels: [inputs of FigS6]
+    variants: [mi_axon, mi_dendrite, mi_soma, vc_axon, vc_axon_241025]
+  er_densities:
+    script: general/ct_organell_comp_surface_area_density.py
+    panels: [inputs of ct_morph_synmivcer]
+    variants: [er_axon_area, er_dendrite_area, er_soma_area]
+  avg_synapse_density:
+    script: general/avg_synapse_density_per_ct.py
+    variants: [avg_syn_density]
+  ct_morph_analyses:
+    script: general/ct_morph_analyses.py
+    depends: [organelle_densities, er_densities, avg_synapse_density]
+    panels: [FigS6A-C, FigS3D]
+    variants: [ct_morph_main, ct_morph_synmivc, ct_morph_synmivc_noMSN, ct_morph_synmivc_MSNonly, ct_morph_synmivcer]
+  umap_outlier_groups:
+    script: general/ct_morph_umap_outlier_groups.py
+    depends: [ct_morph_analyses]
+    panels: ["text: Fig S6 outlier groups"]
+  ct_comp_conn:
+    script: dir_indir_pathway_analysis/CT_comp_conn_analysis.py
+    panels: [FigS9A-J]
+    variants: ["comp_conn_{CT}"]
+  recurrent_conn:
+    scripts: [dir_indir_pathway_analysis/recurrent_conn_between2cts.py, dir_indir_pathway_analysis/recurrent_conn_1ct.py]
+    panels: [FigS10, TableS11]
+    variants: [recurr_STN_GPi, recurr_STN_GPe, recurr_MSN_TAN, recurr_GPi]
+  io_ratio_populations:
+    scripts: [dir_indir_pathway_analysis/input_ratio_cell_population.py, dir_indir_pathway_analysis/output_ratio_cell_population.py,
+              dir_indir_pathway_analysis/STN_morph_conn_diffs.py]
+    panels: [TableS10]
+    variants: ["inratio_{CT}_LMAN_HVC", "inratio_{CT}_LMAN_HVC_shaft", "inratio_{CT}_LMAN_HVC_head", inratio_STN_GPe_GPi,
+               inratio_STN_GPe_GPi_shaft, inratio_STN_GPi_GPe, "outratio_{CT}_GPi_GPe", stn_morph_conn, stn_morph_conn_2gp]
+  cell_number_pathway:
+    scripts: [dir_indir_pathway_analysis/cell_number_pathway_analysis.py, dir_indir_pathway_analysis/cell_number_connectivity.py]
+    depends: [connectivity_fraction_per_ct]
+    panels: [Fig2I, Fig3B, Fig4B numbers]
+    variants: ["cellnum_{TRIPLE}"]
+  syn_locations:
+    script: dir_indir_pathway_analysis/HVC_LMAN2MSN_syn_locations.py
+    variants: [syn_locations]
+  axon_fragment_lengths:
+    scripts: [for_eval/proj_axon_length_comparison.py, dir_indir_pathway_analysis/check_gt_proj_axon_lengths.py]
+    panels: [FigS4B, FigS4C, "text: axons >= 50 um per projection type"]
+    variants: [axlen_gt, axlen_filter_syns, axlen_filter]
+  synapse_validation:
+    scripts: [for_eval/rfc_syn_eval.py, for_eval/syn_prob_comparison.py, for_eval/synapse_area_manual_validation.py]
+    panels: [FigS1A-F, TableS1]
+    variants: [rfc_syn_hist]
+  celltype_classifier:
+    scripts: [for_eval/celltype_classifier_cv_tables.py, for_eval/celltype_classifier_cv/]
+    panels: [TableS5, TableS6, TableS7]
+  pathlength_fraction:
+    script: general/ct_comp_pathlength_fraction.py
+    panels: [TableS8]
+  manual_review_tables:
+    script: rerun/manual_review_tables_v8.py
+    panels: [TableS3, TableS12]
+  lman_msn:
+    scripts: [LMAN_MSN_analysis/LMAN_number_per_MSN.py, LMAN_MSN_analysis/LMAN_overlap_analysis.py]
+    variants: [lman_number_msn]
+  autapses:
+    script: dir_indir_pathway_analysis/GPi_autoapse_comp.py
+    panels: ["text: autapses"]
+  paper_numbers:
+    script: rerun/paper_numbers.py
+    panels: ["every number quoted in the text, looked up in the result csvs"]
+
+not_in_manuscript: ["single_vesicle_analysis/*", "gain_estimation/*", "TAN_DA_axo_analysis/*",
+                    general/ct_morph_rfc_feature_selection.py, general/get_ECS_estimate.py, "all v3/v4/v5 scripts"]

@@ -4,7 +4,7 @@ if __name__ == '__main__':
     from syconn import global_params
     import numpy as np
     from syconn.handler.config import initialize_logging
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     from syconn.reps.super_segmentation import SuperSegmentationDataset
     from tqdm import tqdm
     from syconn.handler.basics import write_obj2pkl

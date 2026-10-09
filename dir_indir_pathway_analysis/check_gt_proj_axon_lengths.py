@@ -9,8 +9,8 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     import os as os
     import pandas as pd
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_cell_length
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import get_cell_length
     from syconn.mp.mp_utils import start_multiprocess_imap
     from scipy.stats import kruskal, ranksums
     from itertools import combinations

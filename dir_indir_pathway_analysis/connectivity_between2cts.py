@@ -8,10 +8,10 @@ from syconn.handler.basics import load_pkl2obj
 from tqdm import tqdm
 from syconn.handler.basics import write_obj2pkl
 from scipy.stats import ranksums
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_compartment_syn_number_sumsize
-from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph, ComparingMultipleForPLotting
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+from bio_analysis.general.analysis_morph_helper import get_compartment_length, check_comp_lengths_ct
+from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_compartment_syn_number_sumsize
+from bio_analysis.general.result_helper import ResultsForPlotting, ComparingResultsForPLotting, plot_nx_graph, ComparingMultipleForPLotting
+from bio_analysis.general.analysis_params import Analysis_Params
 
 
 

@@ -2,12 +2,12 @@
 #get celltype, certainty, volume and total pathlength in µm
 
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_colors import CelltypeColors
-    from analysis_morph_helper import check_comp_lengths_ct, get_cell_length, get_cell_volume_certainty_mp
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct, get_cell_length, get_cell_volume_certainty_mp
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     import os as os
     from syconn.reps.super_segmentation import SuperSegmentationObject
     import pandas as pd

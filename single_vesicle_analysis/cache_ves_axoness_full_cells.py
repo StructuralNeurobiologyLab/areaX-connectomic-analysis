@@ -4,8 +4,8 @@ if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
     from syconn.reps.super_segmentation import SuperSegmentationDataset
-    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import map_axoness2ves
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.vesicle_helper import map_axoness2ves
+    from bio_analysis.general.analysis_params import Analysis_Params
     import numpy as np
     from syconn.mp.mp_utils import start_multiprocess_imap
 

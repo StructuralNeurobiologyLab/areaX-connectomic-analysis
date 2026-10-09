@@ -1,10 +1,10 @@
 #script for looking at GPe/i connectivity with FS, STN, TAN
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
+    from bio_analysis.dir_indir_pathway_analysis.connectivity_between2cts import synapses_between2cts, compare_connectivity
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.dir_indir_pathway_analysis.compartment_volume_celltype import \
         axon_den_arborization_ct, compare_compartment_volume_ct
     import time
     from syconn.handler.config import initialize_logging
@@ -13,7 +13,7 @@ if __name__ == '__main__':
     from syconn.reps.segmentation import SegmentationDataset
     import os as os
     import pandas as pd
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import plot_nx_graph
+    from bio_analysis.general.result_helper import plot_nx_graph
     from syconn.handler.basics import write_obj2pkl, load_pkl2obj
     import numpy as np
 

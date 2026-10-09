@@ -4,8 +4,8 @@
 if __name__ == '__main__':
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_params import Analysis_Params
     import numpy as np
     import pandas as pd
 

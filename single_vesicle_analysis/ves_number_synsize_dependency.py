@@ -2,12 +2,12 @@
 #plot for each celltype, for complete cells, also once averaged per cell
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, filter_synapse_caches_general
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, filter_synapse_caches_general
     from syconn.handler.config import initialize_logging
     from syconn import global_params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.vesicle_helper import get_ves_synsize_percell
+    from bio_analysis.general.vesicle_helper import get_ves_synsize_percell
     import os as os
     from syconn.reps.segmentation import SegmentationDataset
     import pandas as pd
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     from syconn.mp.mp_utils import start_multiprocess_imap
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
     from itertools import combinations
     from scipy.stats import spearmanr, kruskal, ranksums
 

@@ -1,7 +1,7 @@
 #functions related to getting the distance to soma of synaptic inputs
 
 import numpy as np
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_syn_input_distance_percell
+from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_syn_input_distance_percell
 from syconn.reps.super_segmentation import SuperSegmentationObject
 import pandas as pd
 from multiprocessing import pool

@@ -7,10 +7,10 @@ if __name__ == '__main__':
     import seaborn as sns
     import matplotlib.pyplot as plt
     import os as os
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_colors import CelltypeColors
     from scipy.stats import kruskal, ranksums
     from itertools import combinations
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
 
     #v6_wd = '/cajal/nvmescratch/projects/data/songbird/j0251/j0251_72_seg_20210127_agglo2_syn_20220811_celltypes_20230822'
     #v5_wd = '/cajal/nvmescratch/projects/data/songbird_tmp/j0251/j0251_72_seg_20210127_agglo2_syn_20220811'

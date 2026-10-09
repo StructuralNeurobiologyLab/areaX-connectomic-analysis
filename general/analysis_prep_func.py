@@ -1,6 +1,6 @@
 from collections import defaultdict
 import numpy as np
-from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import get_compartment_length, get_compartment_mesh_area, get_cell_soma_radius
+from bio_analysis.general.analysis_morph_helper import get_compartment_length, get_compartment_mesh_area, get_cell_soma_radius
 from tqdm import tqdm
 import pandas as pd
 from collections import defaultdict

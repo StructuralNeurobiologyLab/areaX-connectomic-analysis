@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bio_analysis"
+version = "1.0.0"
+description = "Analysis code of Rother et al., the song-related basal ganglia connectome (zebra finch Area X, SyConn dataset j0251)"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+
+[tool.setuptools]
+package-dir = {"bio_analysis" = "."}
+packages = ["bio_analysis", "bio_analysis.general", "bio_analysis.dir_indir_pathway_analysis",
+            "bio_analysis.LMAN_MSN_analysis", "bio_analysis.TAN_DA_axo_analysis",
+            "bio_analysis.single_vesicle_analysis", "bio_analysis.gain_estimation",
+            "bio_analysis.for_eval", "bio_analysis.other", "bio_analysis.rerun"]

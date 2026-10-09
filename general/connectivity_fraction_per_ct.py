@@ -12,11 +12,11 @@
 #save this in dictionary, table as well (can plot table as matrix then; one table for input (fragments, full cells), output)
 
 if __name__ == '__main__':
-    from analysis_morph_helper import check_comp_lengths_ct
-    from analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses, filter_synapse_caches_general
-    from result_helper import ConnMatrix
-    from analysis_colors import CelltypeColors
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct, get_number_sum_size_synapses, filter_synapse_caches_general
+    from bio_analysis.general.result_helper import ConnMatrix
+    from bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_params import Analysis_Params
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     cls = CelltypeColors(ct_dict=ct_dict)
     #color keys: 'BlRdGy', 'MudGrays', 'BlGrTe','TePkBr', 'BlYw', 'STNGP', 'STNGPINTv6', 'RdTeINTv6', 'TePkBrNGF'}
     color_key = 'TePkBrNGF'
-    plot_connmatrix_only = True
+    plot_connmatrix_only = False  # False: also the per-cell-type bar plots (Fig 4C/D)
     fontsize = 20
     annot = True
     f_name = f"cajal/scratch/users/arother/bio_analysis_results/general/251023_j0251{version}_cts_percentages_mcl_%i_ax%i_synprob_%.2f_%s_newmergers_bw_fs_%i_STNnoGP" % (
@@ -561,8 +561,6 @@ if __name__ == '__main__':
                                      title='Summed sizes of outgoing synapses globally normalised',
                                      filename=f_name, cmap=cmap_heatmap)
     out_sizes_abs_sum_dn.get_heatmap(save_svg=save_svg, annot=annot, fontsize=fontsize)
-
-    raise ValueError
 
     log.info('Connectivity analysis finished')
 

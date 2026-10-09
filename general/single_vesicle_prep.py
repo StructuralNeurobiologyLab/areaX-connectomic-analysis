@@ -5,7 +5,7 @@ if __name__ == '__main__':
     from syconn.reps.super_segmentation import  SuperSegmentationDataset
     from syconn.handler.config import initialize_logging
     from tqdm import tqdm
-    from analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
 
     version = 'v6'
     analysis_params = Analysis_Params(version=version)

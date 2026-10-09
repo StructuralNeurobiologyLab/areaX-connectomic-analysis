@@ -1,7 +1,7 @@
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import remove_myelinated_part_axon, compute_overlap_skeleton
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ComparingResultsForPLotting
+    from bio_analysis.general.analysis_morph_helper import remove_myelinated_part_axon, compute_overlap_skeleton
+    from bio_analysis.general.result_helper import ComparingResultsForPLotting
 
     import time
     from syconn.handler.config import initialize_logging
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     from scipy.stats import ranksums
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_params import Analysis_Params
 
     version = 'v6'
     bio_params = Analysis_Params(version=version)

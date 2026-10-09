@@ -993,6 +993,99 @@ def get_dendrite_info_cell(input):
     branching_points = []
     for indiv_dendrite in dendrite_subgraphs:
         sub_branching_points = pot_branching_points[np.in1d(pot_branching_points, indiv_dendrite.nodes)]
+        branching_points += _branching_points_without_spines(indiv_dendrite, sub_branching_points)
+    number_branching_points = len(branching_points)
+    return dendrite_length, primary_dendrite_number, number_branching_points
+
+
+def _branching_points_without_spines(indiv_dendrite, sub_branching_points, min_branch_len=8):
+    """
+    rerun-2026: the candidate loop of get_dendrite_info_cell (remove the candidate node, count the connected components
+    of the remaining dendrite and their summed edge weights) on the component's edge array with
+    scipy.sparse.csgraph.connected_components instead of a networkx copy per candidate (identical criterion: at least
+    three remaining components, each longer than min_branch_len µm; the removed node's own isolated component is not
+    counted, as in the networkx version where the node is deleted). Hours -> minutes for the 8,000 MSNs.
+    :param indiv_dendrite: networkx subgraph of one dendrite (with spines)
+    :param sub_branching_points: candidate node ids (degree > 2 in the whole-cell graph) contained in it
+    :return: list of the candidates that are branching points
+    """
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    if len(sub_branching_points) == 0:
+        return []
+    nodes = np.array(list(indiv_dendrite.nodes))
+    index = {int(n): i for i, n in enumerate(nodes)}
+    n_nodes = len(nodes)
+    edge_list = [(index[u], index[v], w) for u, v, w in indiv_dendrite.edges(data='weight')]
+    if len(edge_list) == 0:
+        return []
+    edges = np.array(edge_list, dtype=np.float64)
+    e0, e1, weights = edges[:, 0].astype(np.int64), edges[:, 1].astype(np.int64), edges[:, 2]
+    result = []
+    for b in sub_branching_points:
+        bi = index[int(b)]
+        keep = (e0 != bi) & (e1 != bi)
+        if keep.sum() == len(keep):
+            continue  # candidate has no dendrite edges in this component (can not split it)
+        adjacency = coo_matrix((np.ones(int(keep.sum())), (e0[keep], e1[keep])), shape=(n_nodes, n_nodes))
+        n_comp, labels = connected_components(adjacency, directed=False)
+        if n_comp - 1 < 3:
+            continue
+        comp_lengths = np.bincount(labels[e0[keep]], weights=weights[keep], minlength=n_comp) / 1000  # in µm
+        comp_lengths = np.delete(comp_lengths, labels[bi])
+        if comp_lengths.min() > min_branch_len:
+            result.append(b)
+    return result
+
+
+def get_dendrite_info_cell_nx(input):
+    '''
+    Get information about the dendrtíes of a cell with a specified total minimum length.
+    Calculates total dendritic length without spines, number of primary dendrites.
+    Number of branching points needs to be interpretet carefully as it needs a manual
+    threshold. With a threshold too small there are spines included which should be
+    avoided but with a threshold too high real branching points are missed out.
+    The threshold used will always be a compromise between the two, giving as many real
+    branching points but trying to avoid most spines or other branches.
+    :param input: combination of the three parameters below
+    :param cellid: id of cell
+    :param min_comp_len: minimum total length of dendrite
+    :return: total dendritic length, number of primary dendrites
+    '''
+    cellid, min_comp_len = input
+    if min_comp_len is None:
+        min_comp_len = 0
+    cell = SuperSegmentationObject(cellid)
+    cell.load_skeleton()
+    g = cell.weighted_graph(add_node_attr=('axoness_avg10000',))
+    #code from get_compartment_length
+    #get dendrite compartments
+    axoness = cell.skeleton["axoness_avg10000"]
+    axoness[axoness == 3] = 1
+    axoness[axoness == 4] = 1
+    non_comp_inds = np.nonzero(axoness != 0)[0]
+    dendrite_graph = g.copy()
+    dendrite_graph.remove_nodes_from(non_comp_inds)
+    #remove spines
+    spine_head_inds = np.nonzero(cell.skeleton["spiness"] == 1)[0]
+    spine_neck_inds = np.nonzero(cell.skeleton["spiness"] == 0)[0]
+    spine_inds = np.hstack([spine_head_inds, spine_neck_inds])
+    dendrite_no_spine_graph = dendrite_graph.copy()
+    dendrite_no_spine_graph.remove_nodes_from(spine_inds)
+    dendrite_length = dendrite_no_spine_graph.size(weight="weight") / 1000  # in µm
+    if dendrite_length < min_comp_len:
+        return [np.nan, np.nan, np.nan]
+    #get number of primary dendrites
+    dendrite_subgraphs = list(dendrite_graph.subgraph(c) for c in nx.connected_components(dendrite_graph))
+    primary_dendrite_number = len(dendrite_subgraphs)
+    #get number of branching points
+    degrees = np.zeros(len(g))
+    for ix, node_id in enumerate(g.nodes):
+        degrees[ix] = g.degree[node_id]
+    pot_branching_points = np.where(degrees > 2)[0]
+    branching_points = []
+    for indiv_dendrite in dendrite_subgraphs:
+        sub_branching_points = pot_branching_points[np.in1d(pot_branching_points, indiv_dendrite.nodes)]
         for b in sub_branching_points:
             test_sub = indiv_dendrite.copy()
             test_sub.remove_node(b)
@@ -1262,3 +1355,73 @@ def check_cutoff_dendrites(cell_input):
 
 
 
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Re-run additions (rerun/README.md): vectorised organelle volume densities. Same numbers as the per-cell workers
+# get_organelle_comp_density_presaved / get_percell_organell_volume_density, but one bincount over the cached
+# organelle arrays instead of one np.in1d over the whole array per cell (8.5 h -> seconds for mitochondria).
+# ---------------------------------------------------------------------------------------------------------------
+def organelle_comp_density_vectorised(cellids, org_ssv_ids, org_sizes, org_axoness, cell_dict, compartment,
+                                      scaling=(10, 10, 25)):
+    """
+    Vectorised get_organelle_comp_density_presaved for all cellids at once.
+    :param cellids: cell ids (order of the returned arrays)
+    :param org_ssv_ids, org_sizes, org_axoness: the <CT>_<org>_{mapping_ssv_ids,sizes,axoness_coarse}_fullcells.npy caches
+    :param cell_dict: full cell dict of the cell type (keys 'complete pathlength', '<comp> length', 'soma radius')
+    :param compartment: 0 dendrite, 1 axon, 2 soma
+    :return: comp_volume_density, full_volume_density (arrays aligned with cellids)
+    """
+    comp_dict = {0: 'dendrite', 1: 'axon', 2: 'soma'}
+    cellids = np.asarray(cellids)
+    n = len(cellids)
+    order = np.argsort(cellids)
+    sorted_ids = cellids[order]
+    pos = np.searchsorted(sorted_ids, org_ssv_ids)
+    pos = np.clip(pos, 0, n - 1)
+    valid = sorted_ids[pos] == org_ssv_ids
+    idx = order[pos[valid]]
+    sizes = np.asarray(org_sizes, dtype=np.float64)[valid]
+    axo = np.asarray(org_axoness)[valid]
+    vx_vol = 10 ** (-9) * np.prod(scaling)
+    full_vol = np.bincount(idx, weights=sizes, minlength=n) * vx_vol
+    comp_vol = np.bincount(idx[axo == compartment], weights=sizes[axo == compartment], minlength=n) * vx_vol
+    full_len = np.array([cell_dict[c]['complete pathlength'] for c in cellids], dtype=np.float64)
+    if compartment == 2:
+        soma_radius = np.array([cell_dict[c]['soma radius'] for c in cellids], dtype=np.float64)
+        comp_denom = (4 / 3) * np.pi * soma_radius ** 3
+    else:
+        comp_denom = np.array([cell_dict[c][f'{comp_dict[compartment]} length'] for c in cellids], dtype=np.float64)
+    return comp_vol / comp_denom, full_vol / full_len
+
+
+def organelle_density_axons_vectorised(cellids, ssd, organelle_key, cached_org_ids, cached_org_volumes, cell_dict,
+                                       scaling=(10, 10, 25)):
+    """
+    Vectorised get_percell_organell_volume_density for projecting axons (proj_axon=True): organelle ids per SSV come
+    from the dataset array ssd 'mapping_<org>_ids' (the same lists as SuperSegmentationObject.lookup_in_attribute_dict),
+    volumes from the organelle SegmentationDataset caches. Returns the density per axon length, aligned with cellids.
+    """
+    cellids = np.asarray(cellids)
+    # the organelle lists of the attribute dicts (what lookup_in_attribute_dict returns) are the mapping-decision
+    # filtered lists, not the raw 'mapping_<org>_ids' candidates of the ssd arrays; load them per cell in parallel
+    from syconn.mp.mp_utils import start_multiprocess_imap
+    lists = start_multiprocess_imap(_lookup_org_ids_worker, [[int(c), organelle_key] for c in cellids], show_progress=False)
+    lists = [np.asarray(l, dtype=np.uint64).ravel() for l in lists]
+    lens = np.array([len(l) for l in lists])
+    flat = np.concatenate(lists) if lens.sum() > 0 else np.zeros(0, dtype=np.uint64)
+    owner = np.repeat(np.arange(len(cellids)), lens)
+    oo = np.argsort(cached_org_ids)
+    sorted_org = cached_org_ids[oo]
+    p = np.clip(np.searchsorted(sorted_org, flat), 0, len(sorted_org) - 1)
+    valid = sorted_org[p] == flat
+    vols = np.asarray(cached_org_volumes, dtype=np.float64)[oo][p][valid]
+    org_vol = np.bincount(owner[valid], weights=vols, minlength=len(cellids)) * 10 ** (-9) * np.prod(scaling)
+    axon_len = np.array([cell_dict[c]['axon length'] for c in cellids], dtype=np.float64)
+    return org_vol / axon_len
+
+
+def _lookup_org_ids_worker(params):
+    cellid, organelle_key = params
+    ids = SuperSegmentationObject(cellid).lookup_in_attribute_dict(organelle_key)
+    return [] if ids is None else list(ids)

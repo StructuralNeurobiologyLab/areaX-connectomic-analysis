@@ -1,8 +1,8 @@
 
 if __name__ == '__main__':
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
-    from cajal.nvmescratch.users.arother.bio_analysis.general.result_helper import ResultsForPlotting
+    from bio_analysis.general.analysis_morph_helper import check_comp_lengths_ct
+    from bio_analysis.general.analysis_conn_helper import filter_synapse_caches_for_ct
+    from bio_analysis.general.result_helper import ResultsForPlotting
     import time
     from syconn.handler.config import initialize_logging
     from syconn import global_params
@@ -13,8 +13,8 @@ if __name__ == '__main__':
     import numpy as np
     from tqdm import tqdm
     import scipy
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_params import Analysis_Params
-    from cajal.nvmescratch.users.arother.bio_analysis.general.analysis_colors import CelltypeColors
+    from bio_analysis.general.analysis_params import Analysis_Params
+    from bio_analysis.general.analysis_colors import CelltypeColors
     import seaborn as sns
     import matplotlib.pyplot as plt
 
